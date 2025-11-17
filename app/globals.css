@@ -1,26 +1,167 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ============================================================================
+   cLean Design System - SaaS 2025 Style
+   Pastel colors, minimal & warm aesthetic
+   ============================================================================ */
+
+@theme {
+  /* Primary - Soft Blue */
+  --color-primary-50: #f0f8fb;
+  --color-primary-100: #d9eef5;
+  --color-primary-200: #b3dcea;
+  --color-primary-300: #8dcae0;
+  --color-primary-400: #7fb3d5;
+  --color-primary-500: #5a9dc9;
+  --color-primary-600: #4a8ab8;
+  --color-primary-700: #3a6f95;
+  --color-primary-800: #2a5472;
+  --color-primary-900: #1a394f;
+
+  /* Secondary - Powder Pink */
+  --color-secondary-50: #fef5f5;
+  --color-secondary-100: #fce8e8;
+  --color-secondary-200: #f9d1d1;
+  --color-secondary-300: #f4c2c2;
+  --color-secondary-400: #efb3b3;
+  --color-secondary-500: #ea9e9e;
+  --color-secondary-600: #e07777;
+  --color-secondary-700: #d55050;
+  --color-secondary-800: #b03333;
+  --color-secondary-900: #7a2323;
+
+  /* Accent - Pastel Yellow */
+  --color-accent-50: #fffbf0;
+  --color-accent-300: #ffe5b4;
+  --color-accent-500: #ffc966;
+  --color-accent-700: #e69500;
+
+  /* Success - Mint Green */
+  --color-success-50: #f0faf6;
+  --color-success-200: #b5ead7;
+  --color-success-500: #49d1a4;
+  --color-success-700: #2b9670;
+
+  /* Danger - Soft Red */
+  --color-danger-50: #fef2f2;
+  --color-danger-500: #f27777;
+  --color-danger-600: #ef5555;
+  --color-danger-700: #e62626;
+
+  /* Warning - Soft Orange */
+  --color-warning-50: #fff8f0;
+  --color-warning-500: #ffab40;
+  --color-warning-700: #e68000;
+
+  /* Neutral - Warm Grays */
+  --color-neutral-50: #fafaf9;
+  --color-neutral-100: #f5f5f4;
+  --color-neutral-200: #e7e5e4;
+  --color-neutral-300: #d6d3d1;
+  --color-neutral-400: #a8a29e;
+  --color-neutral-500: #78716c;
+  --color-neutral-600: #57534e;
+  --color-neutral-700: #44403c;
+  --color-neutral-800: #292524;
+  --color-neutral-900: #1c1917;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+  background-color: theme(colors.neutral.50);
+  color: theme(colors.neutral.800);
+  line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.card {
+  background: white;
+  border-radius: theme(borderRadius.lg);
+  box-shadow: theme(boxShadow.sm);
+  transition: box-shadow 200ms;
+}
+
+.card:hover {
+  box-shadow: theme(boxShadow.md);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  border-radius: theme(borderRadius.lg);
+  transition: all 200ms;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-primary {
+  background-color: theme(colors.primary.500);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: theme(colors.primary.600);
+  transform: translateY(-1px);
+  box-shadow: theme(boxShadow.md);
+}
+
+.btn-secondary {
+  background-color: theme(colors.secondary.300);
+  color: theme(colors.neutral.800);
+}
+
+.btn-secondary:hover {
+  background-color: theme(colors.secondary.400);
+}
+
+.tablet-mode .btn {
+  padding: 1.5rem 3rem;
+  font-size: 1.5rem;
+  min-height: 4rem;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 200ms;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: theme(colors.neutral.300);
+  border-radius: 9999px;
 }
