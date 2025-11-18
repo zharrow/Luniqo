@@ -85,7 +85,7 @@ export default function TabletRoomPage() {
         .single()
 
       if (roomError) throw roomError
-      setRoom(roomData as Room)
+      setRoom(roomData as unknown as Room)
 
       // Load assigned tasks for this room
       const { data: tasksData, error: tasksError } = await supabase
@@ -192,9 +192,9 @@ export default function TabletRoomPage() {
           .single()
 
         if (createError) throw createError
-        sessionId = newSession.id
+        sessionId = (newSession as any).id
       } else {
-        sessionId = existingSession.id
+        sessionId = (existingSession as any).id
       }
 
       // Save completed tasks as cleaning logs

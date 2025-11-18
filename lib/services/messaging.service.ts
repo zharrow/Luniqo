@@ -76,7 +76,7 @@ class MessagingService {
 
     // Get unread count for each conversation
     const conversationsWithUnread = await Promise.all(
-      (data || []).map(async (conv) => {
+      (data || []).map(async (conv: any) => {
         const { count } = await supabase
           .from('message')
           .select('*', { count: 'exact', head: true })
@@ -104,7 +104,7 @@ class MessagingService {
       .single()
 
     if (existing && !findError) {
-      return existing
+      return existing as unknown as Conversation
     }
 
     // Create new conversation
@@ -122,7 +122,7 @@ class MessagingService {
       throw error
     }
 
-    return data
+    return data as unknown as Conversation
   }
 
   async getConversationById(conversationId: string): Promise<Conversation | null> {
@@ -141,7 +141,7 @@ class MessagingService {
       return null
     }
 
-    return data
+    return data as unknown as Conversation
   }
 
   // ============================================================================
@@ -160,7 +160,7 @@ class MessagingService {
       throw error
     }
 
-    return data || []
+    return (data as unknown as Message[]) || []
   }
 
   async sendMessage(message: {
@@ -196,7 +196,7 @@ class MessagingService {
       .update({ last_message_at: new Date().toISOString() })
       .eq('id', message.conversation_id)
 
-    return data
+    return data as unknown as Message
   }
 
   async markMessageAsRead(messageId: string): Promise<void> {
@@ -262,7 +262,7 @@ class MessagingService {
       throw error
     }
 
-    return data || []
+    return (data as unknown as Notification[]) || []
   }
 
   async createNotification(notification: {
@@ -298,7 +298,7 @@ class MessagingService {
       throw error
     }
 
-    return data
+    return data as unknown as Notification
   }
 
   async markNotificationAsRead(notificationId: string): Promise<void> {

@@ -184,7 +184,7 @@ export class RoomsService {
       const { count } = await this.supabase
         .from('cleaning_log')
         .select('assigned_task!inner(*)', { count: 'exact', head: true })
-        .eq('session_id', session.id)
+        .eq('session_id', (session as any).id)
         .eq('status', 'FAIT')
         .eq('assigned_task.room_id', roomId)
 
