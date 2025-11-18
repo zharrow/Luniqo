@@ -265,7 +265,6 @@ async function seedAssignedTasks(enterpriseId: string, roomIds: string[], taskId
 
   const assignedTasks = roomIds.flatMap(roomId =>
     taskIds.slice(0, 5).map(taskId => ({
-      enterprise_id: enterpriseId,
       room_id: roomId,
       task_template_id: taskId,
       default_performer_id: userIds[Math.floor(Math.random() * userIds.length)],
@@ -336,10 +335,10 @@ async function seedSuppliers(enterpriseId: string) {
   console.log('🏪 Creating suppliers...')
 
   const suppliers = [
-    { name: 'Bio Fruits & Légumes', contact_name: 'Pierre Durand', phone: '0123456789', email: 'contact@biofruits.fr' },
-    { name: 'Laiterie Régionale', contact_name: 'Marie Legrand', phone: '0234567890', email: 'info@laiterie.fr' },
-    { name: 'Boucherie du Marché', contact_name: 'Jean Moreau', phone: '0345678901', email: 'boucher@marche.fr' }
-  ].map(s => ({ ...s, enterprise_id: enterpriseId, is_active: true }))
+    { name: 'Bio Fruits & Légumes', contact_name: 'Pierre Durand', phone: '0123456789', email: 'contact@biofruits.fr', haccp_certified: true },
+    { name: 'Laiterie Régionale', contact_name: 'Marie Legrand', phone: '0234567890', email: 'info@laiterie.fr', haccp_certified: true },
+    { name: 'Boucherie du Marché', contact_name: 'Jean Moreau', phone: '0345678901', email: 'boucher@marche.fr', haccp_certified: false }
+  ].map(s => ({ ...s, enterprise_id: enterpriseId }))
 
   const { data, error } = await supabase
     .from('supplier')
@@ -354,20 +353,31 @@ async function seedSuppliers(enterpriseId: string) {
 async function seedProducts(enterpriseId: string, supplierIds: string[]) {
   console.log('🥦 Creating products...')
 
+  const today = new Date()
+
   const products = [
-    { name: 'Lait entier Bio', category: 'Produits laitiers', allergens: 'Lactose', shelf_life_days: 7 },
-    { name: 'Yaourt nature', category: 'Produits laitiers', allergens: 'Lactose', shelf_life_days: 21 },
-    { name: 'Carottes Bio', category: 'Légumes', allergens: null, shelf_life_days: 10 },
-    { name: 'Pommes Golden', category: 'Fruits', allergens: null, shelf_life_days: 14 },
-    { name: 'Poulet fermier', category: 'Viandes', allergens: null, shelf_life_days: 3 },
-    { name: 'Pâtes complètes', category: 'Féculents', allergens: 'Gluten', shelf_life_days: 365 },
-    { name: 'Compote de pommes', category: 'Desserts', allergens: null, shelf_life_days: 90 }
-  ].map(p => ({
-    ...p,
-    enterprise_id: enterpriseId,
-    supplier_id: supplierIds[Math.floor(Math.random() * supplierIds.length)],
-    is_active: true
-  }))
+    { name: 'Lait entier Bio', category: 'Produits laitiers', allergens: 'Lactose', stock_unit: 'L', current_stock: 10.5, expiry_days: 7 },
+    { name: 'Yaourt nature', category: 'Produits laitiers', allergens: 'Lactose', stock_unit: 'kg', current_stock: 5.0, expiry_days: 21 },
+    { name: 'Carottes Bio', category: 'Légumes', allergens: null, stock_unit: 'kg', current_stock: 15.0, expiry_days: 10 },
+    { name: 'Pommes Golden', category: 'Fruits', allergens: null, stock_unit: 'kg', current_stock: 8.5, expiry_days: 14 },
+    { name: 'Poulet fermier', category: 'Viandes', allergens: null, stock_unit: 'kg', current_stock: 3.5, expiry_days: 3 },
+    { name: 'Pâtes complètes', category: 'Féculents', allergens: 'Gluten', stock_unit: 'kg', current_stock: 20.0, expiry_days: 365 },
+    { name: 'Compote de pommes', category: 'Desserts', allergens: null, stock_unit: 'kg', current_stock: 12.0, expiry_days: 90 }
+  ].map(p => {
+    const expiryDate = new Date(today)
+    expiryDate.setDate(expiryDate.getDate() + p.expiry_days)
+
+    return {
+      name: p.name,
+      category: p.category,
+      allergens: p.allergens,
+      stock_unit: p.stock_unit,
+      current_stock: p.current_stock,
+      expiry_date: expiryDate.toISOString().split('T')[0],
+      enterprise_id: enterpriseId,
+      supplier_id: supplierIds[Math.floor(Math.random() * supplierIds.length)]
+    }
+  })
 
   const { data, error } = await supabase
     .from('product')

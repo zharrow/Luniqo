@@ -66,14 +66,14 @@ export default function DashboardPage() {
 
       // Get today's session completion
       const today = new Date().toISOString().split('T')[0]
-      const { data: todaySession } = await supabase
+      const { data: todaySession, error: sessionError } = await supabase
         .from('cleaning_session')
         .select('status')
         .eq('enterprise_id', enterpriseId)
-        .eq('date', today)
-        .single()
+        .eq('session_date', today)
+        .maybeSingle() as { data: { status: string } | null; error: any }
 
-      const completion = todaySession?.status === 'COMPLETEE' ? 100 : 0
+      const completion = todaySession && !sessionError && todaySession.status === 'COMPLETED' ? 100 : 0
 
       setStats({
         totalRooms: roomsCount || 0,
@@ -145,7 +145,7 @@ export default function DashboardPage() {
             Tableau de bord
           </h1>
           <p className="text-neutral-600">
-            Bienvenue {session?.user?.first_name} ! Voici un aperçu de votre crèche.
+            Bienvenue {(session?.user as any)?.first_name || (session?.user as any)?.email} ! Voici un aperçu de votre crèche.
           </p>
         </div>
 

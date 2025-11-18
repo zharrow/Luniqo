@@ -94,13 +94,17 @@ export async function loginWithEmail(email: string, password: string): Promise<A
       return { success: false, error: 'Invalid credentials' }
     }
 
-    const firebaseUid = authData.user.id
+    const userEmail = authData.user.email
+
+    if (!userEmail) {
+      return { success: false, error: 'Email not found' }
+    }
 
     // Check if Developer
     const { data: developer, error: devError } = await supabase
       .from('developer')
       .select('*')
-      .eq('firebase_uid', firebaseUid)
+      .eq('email', userEmail)
       .single()
 
     if (developer && !devError) {
@@ -114,8 +118,8 @@ export async function loginWithEmail(email: string, password: string): Promise<A
     // Check if Admin
     const { data: admin, error: adminError } = await supabase
       .from('admin')
-      .select('*, enterprise:enterprise_id(*)')
-      .eq('firebase_uid', firebaseUid)
+      .select('*, enterprise!admin_id(*)')
+      .eq('email', userEmail)
       .eq('is_active', true)
       .single()
 

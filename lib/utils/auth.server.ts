@@ -14,13 +14,17 @@ export async function getCurrentSession() {
     return null
   }
 
-  const firebaseUid = session.user.id
+  const email = session.user.email
+
+  if (!email) {
+    return null
+  }
 
   // Check Developer
   const { data: developer, error: devError } = await supabase
     .from('developer')
     .select('*')
-    .eq('firebase_uid', firebaseUid)
+    .eq('email', email)
     .single()
 
   if (developer && !devError) {
@@ -30,8 +34,8 @@ export async function getCurrentSession() {
   // Check Admin
   const { data: admin, error: adminError } = await supabase
     .from('admin')
-    .select('*, enterprise:enterprise_id(*)')
-    .eq('firebase_uid', firebaseUid)
+    .select('*, enterprise!admin_id(*)')
+    .eq('email', email)
     .eq('is_active', true)
     .single()
 

@@ -6,6 +6,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout'
 import { sessionsService, type SessionWithStats, type CreateLogInput, type LogStatus } from '@/lib/services/sessions.service'
 import { roomsService } from '@/lib/services/rooms.service'
 import { usersService } from '@/lib/services/users.service'
+import { pdfExportService } from '@/lib/services/pdf-export.service'
 import {
   CalendarIcon,
   ClockIcon,
@@ -213,6 +214,33 @@ export default function SessionDetailPage({ params }: PageProps) {
     })
   }
 
+  function handleExportPDF() {
+    if (!session || !authSession?.enterprise) return
+
+    const exportData = {
+      id: session.id,
+      date: session.date,
+      status: session.status,
+      completed_tasks: session.completed_tasks,
+      total_tasks: session.total_tasks,
+      completion_percentage: session.completion_percentage,
+      logs: logs.map(log => ({
+        room_name: log.assigned_task.room.name,
+        task_name: log.assigned_task.task_template.name,
+        task_description: log.assigned_task.task_template.description || undefined,
+        status: log.status,
+        performed_by: log.performed_by
+          ? `${log.performed_by.first_name} ${log.performed_by.last_name}`
+          : undefined,
+        performed_at: log.performed_at || undefined,
+        note: log.note || undefined
+      })),
+      enterprise_name: authSession.enterprise.name
+    }
+
+    pdfExportService.exportSession(exportData)
+  }
+
   if (authLoading || loading) {
     return (
       <DashboardLayout>
@@ -328,10 +356,18 @@ export default function SessionDetailPage({ params }: PageProps) {
               </div>
             </div>
 
-            <button onClick={openAddModal} className="btn btn-primary inline-flex items-center gap-2">
-              <PlusIcon className="w-5 h-5" />
-              Ajouter un log
-            </button>
+            <div className="flex gap-3">
+              <button onClick={handleExportPDF} className="btn btn-secondary inline-flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Export PDF
+              </button>
+              <button onClick={openAddModal} className="btn btn-primary inline-flex items-center gap-2">
+                <PlusIcon className="w-5 h-5" />
+                Ajouter un log
+              </button>
+            </div>
           </div>
         </div>
 
