@@ -96,7 +96,7 @@ export default function TabletHomePage() {
       <div className="flex justify-between items-center mb-12">
         <div>
           <h1 className="text-5xl font-bold text-neutral-900 mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
-            Bonjour {session?.user?.first_name} !
+            Bonjour {session?.user && 'first_name' in session.user ? session.user.first_name : session?.user?.email} !
           </h1>
           <p className="text-2xl text-neutral-600">Sélectionnez une pièce pour commencer</p>
         </div>
