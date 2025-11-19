@@ -10,8 +10,22 @@ import {
   PencilIcon,
   TrashIcon,
   UserGroupIcon,
-  KeyIcon
+  KeyIcon,
+  EllipsisVerticalIcon
 } from '@heroicons/react/24/outline'
+import { Card, CardContent } from '@/components/ui/card'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
+import Badge from '@/components/ui/Badge'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
+} from '@/components/ui/dropdown-menu'
 
 export default function UsersPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Admin'])
@@ -198,81 +212,90 @@ export default function UsersPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {users.map((user) => (
-              <div
+              <Card
                 key={user.id}
-                className={`card p-6 ${!user.is_active && 'opacity-50'}`}
+                className={`${!user.is_active && 'opacity-50'} hover:shadow-lg transition-shadow`}
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-primary-50 flex items-center justify-center">
-                      <span className="text-lg font-semibold text-primary-600">
-                        {user.first_name[0]}{user.last_name[0]}
-                      </span>
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-12 w-12">
+                        <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                          {user.first_name[0]}{user.last_name[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <h3 className="font-semibold">
+                          {user.first_name} {user.last_name}
+                        </h3>
+                        {!user.is_active && (
+                          <Badge variant="danger">Désactivé</Badge>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-neutral-900">
-                        {user.first_name} {user.last_name}
-                      </h3>
-                      {!user.is_active && (
-                        <span className="text-xs text-danger-600">Désactivé</span>
-                      )}
-                    </div>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" title="Actions">
+                          <EllipsisVerticalIcon className="w-5 h-5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openEditModal(user)}>
+                          <PencilIcon className="w-4 h-4" />
+                          Modifier
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => handleDelete(user)}
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                          Désactiver
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => openEditModal(user)}
-                      className="p-2 rounded-lg hover:bg-neutral-100 transition-colors"
-                      title="Modifier"
-                    >
-                      <PencilIcon className="w-4 h-4 text-neutral-600" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(user)}
-                      className="p-2 rounded-lg hover:bg-danger-50 transition-colors"
-                      title="Désactiver"
-                    >
-                      <TrashIcon className="w-4 h-4 text-danger-600" />
-                    </button>
-                  </div>
-                </div>
 
-                {user.email && (
-                  <p className="text-sm text-neutral-600 mb-3">
-                    {user.email}
-                  </p>
-                )}
-
-                <div className="flex items-center gap-2 mb-3">
-                  <KeyIcon className="w-4 h-4 text-neutral-400" />
-                  <span className="text-sm text-neutral-500">Code PIN configuré</span>
-                </div>
-
-                <div className="pt-3 border-t border-neutral-100">
-                  <p className="text-xs text-neutral-500 mb-2">Accès aux pièces</p>
-                  {user.accessible_rooms.length === 0 ? (
-                    <p className="text-sm text-neutral-400">Aucune pièce assignée</p>
-                  ) : (
-                    <div className="flex flex-wrap gap-1">
-                      {user.accessible_rooms.slice(0, 3).map(roomId => {
-                        const room = rooms.find(r => r.id === roomId)
-                        return room ? (
-                          <span
-                            key={roomId}
-                            className="px-2 py-1 rounded text-xs bg-primary-50 text-primary-700"
-                          >
-                            {room.name}
-                          </span>
-                        ) : null
-                      })}
-                      {user.accessible_rooms.length > 3 && (
-                        <span className="px-2 py-1 rounded text-xs bg-neutral-100 text-neutral-600">
-                          +{user.accessible_rooms.length - 3}
-                        </span>
-                      )}
-                    </div>
+                  {user.email && (
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {user.email}
+                    </p>
                   )}
-                </div>
-              </div>
+
+                  <div className="flex items-center gap-2 mb-3">
+                    <KeyIcon className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">Code PIN configuré</span>
+                  </div>
+
+                  <div className="pt-3 border-t">
+                    <p className="text-xs text-muted-foreground mb-2">Accès aux pièces</p>
+                    {user.accessible_rooms.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">Aucune pièce assignée</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-1">
+                        {user.accessible_rooms.slice(0, 3).map(roomId => {
+                          const room = rooms.find(r => r.id === roomId)
+                          return room ? (
+                            <Badge
+                              key={roomId}
+                              variant="primary"
+                              size="sm"
+                            >
+                              {room.name}
+                            </Badge>
+                          ) : null
+                        })}
+                        {user.accessible_rooms.length > 3 && (
+                          <Badge variant="neutral" size="sm">
+                            +{user.accessible_rooms.length - 3}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         )}

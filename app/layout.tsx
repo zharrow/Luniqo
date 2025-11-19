@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { AuthProvider } from "@/lib/contexts/AuthContext";
-import { ThemeProvider } from "@/lib/contexts/ThemeContext";
+import { Providers } from "@/components/Providers";
 
 export const metadata: Metadata = {
   title: "cLean - Gestion de crèche intelligente",
@@ -16,11 +15,9 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body className="antialiased">
-        <ThemeProvider>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
-        </ThemeProvider>
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

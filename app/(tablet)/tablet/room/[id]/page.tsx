@@ -226,8 +226,14 @@ export default function TabletRoomPage() {
 
       if (logsError) throw logsError
 
-      // Success - redirect back to home
-      router.push('/tablet/home')
+      // Success - redirect to success page with stats
+      const params = new URLSearchParams({
+        room: room?.name || '',
+        completed: completedCount.toString(),
+        total: totalCount.toString(),
+        progress: progress.toString()
+      })
+      router.push(`/tablet/room/success?${params.toString()}`)
 
     } catch (err: any) {
       console.error('Error saving tasks:', err)

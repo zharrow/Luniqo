@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import { haccpService } from '@/lib/services/haccp.service'
+import { pdfExportService } from '@/lib/services/pdf-export.service'
 import {
   UserGroupIcon,
   ShoppingBagIcon,
@@ -12,9 +13,16 @@ import {
   ClipboardDocumentCheckIcon,
   BeakerIcon,
   WrenchIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  InformationCircleIcon,
+  ArrowDownTrayIcon
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
+import { Card, CardContent } from '@/components/ui/card'
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
+import { SparklesText } from '@/components/ui/sparkles-text'
+import { ShineBorder } from '@/components/ui/shine-border'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 interface HaccpStats {
   totalChildren: number
@@ -54,6 +62,69 @@ export default function HaccpDashboardPage() {
       console.error('Error loading HACCP stats:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleExportHACCP() {
+    if (!session?.enterprise) return
+
+    try {
+      // Get date range (last 30 days)
+      const endDate = new Date()
+      const startDate = new Date()
+      startDate.setDate(startDate.getDate() - 30)
+
+      const startDateStr = startDate.toISOString().split('T')[0]
+      const endDateStr = endDate.toISOString().split('T')[0]
+
+      // Fetch all HACCP data
+      const [meals, temperatures, nonCompliances, equipment] = await Promise.all([
+        haccpService.getMeals(session.enterprise.id, startDateStr, endDateStr),
+        haccpService.getTemperatures(session.enterprise.id, startDateStr, endDateStr),
+        haccpService.getNonCompliances(session.enterprise.id),
+        haccpService.getEquipment(session.enterprise.id)
+      ])
+
+      // Prepare export data
+      const exportData = {
+        enterpriseName: session.enterprise.name,
+        startDate: startDateStr,
+        endDate: endDateStr,
+        meals: meals.map(meal => ({
+          date: meal.date,
+          type: meal.type,
+          menu: meal.menu,
+          allergens: meal.allergens_present,
+          validated: meal.is_validated
+        })),
+        temperatures: temperatures.map(temp => ({
+          date: temp.measured_at,
+          checkpoint: temp.checkpoint_type,
+          value: temp.temperature_value,
+          compliant: temp.is_compliant,
+          notes: temp.notes
+        })),
+        nonCompliances: nonCompliances
+          .filter(nc => new Date(nc.discovered_at) >= startDate && new Date(nc.discovered_at) <= endDate)
+          .map(nc => ({
+            date: nc.discovered_at,
+            type: nc.type,
+            description: nc.description,
+            status: nc.status,
+            correctiveAction: nc.corrective_action
+          })),
+        equipment: equipment.map(equip => ({
+          name: equip.name,
+          category: equip.category,
+          lastMaintenance: equip.last_maintenance_date,
+          nextMaintenance: equip.next_maintenance_date
+        }))
+      }
+
+      await pdfExportService.exportHACCP(exportData)
+    } catch (error) {
+      console.error('Error exporting HACCP report:', error)
+      alert('Erreur lors de l\'export du rapport HACCP')
     }
   }
 
@@ -176,17 +247,50 @@ export default function HaccpDashboardPage() {
   return (
     <DashboardLayout>
       <div className="max-w-7xl mx-auto">
+        {/* Breadcrumb */}
+        <Breadcrumb className="mb-4">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>HACCP</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+
         {/* Page header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-lg bg-success-100 flex items-center justify-center">
-              <BeakerIcon className="w-6 h-6 text-success-600" />
+            <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+              <BeakerIcon className="w-6 h-6 text-success" />
             </div>
-            <h1 className="text-3xl font-bold text-neutral-900" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+            <SparklesText className="text-3xl font-bold" colors={{ first: '#10b981', second: '#3b82f6' }}>
               HACCP - Traçabilité Alimentaire
-            </h1>
+            </SparklesText>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="text-muted-foreground hover:text-primary transition-colors">
+                  <InformationCircleIcon className="w-6 h-6" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-96" align="start">
+                <div className="space-y-3">
+                  <h4 className="font-semibold">Qu'est-ce que HACCP ?</h4>
+                  <p className="text-sm text-muted-foreground">
+                    HACCP (Hazard Analysis Critical Control Point) est un système qui permet d'identifier,
+                    d'évaluer et de maîtriser les dangers significatifs au regard de la sécurité des aliments.
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Cette section vous permet de gérer la traçabilité alimentaire complète de votre crèche :
+                    enfants et allergènes, repas, produits, fournisseurs, températures, équipements et non-conformités.
+                  </p>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
-          <p className="text-neutral-600">
+          <p className="text-muted-foreground">
             Gestion complète de la sécurité alimentaire et de la traçabilité
           </p>
         </div>
@@ -228,7 +332,7 @@ export default function HaccpDashboardPage() {
 
         {/* Modules grid */}
         <div>
-          <h2 className="text-xl font-semibold text-neutral-900 mb-4">
+          <h2 className="text-xl font-semibold mb-4">
             Modules HACCP
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -237,24 +341,29 @@ export default function HaccpDashboardPage() {
               const colorClass = colorClasses[module.color as keyof typeof colorClasses]
 
               return (
-                <Link
-                  key={module.name}
-                  href={module.href}
-                  className="card p-6 hover:shadow-lg transition-all cursor-pointer group"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className={`p-3 rounded-lg ${colorClass} group-hover:scale-110 transition-transform flex-shrink-0`}>
-                      <Icon className="w-6 h-6" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-neutral-900 mb-1 group-hover:text-primary-600 transition-colors">
-                        {module.name}
-                      </h3>
-                      <p className="text-sm text-neutral-600">
-                        {module.description}
-                      </p>
-                    </div>
-                  </div>
+                <Link key={module.name} href={module.href}>
+                  <ShineBorder
+                    className="hover:shadow-lg transition-all cursor-pointer group"
+                    color={module.color === 'primary' ? '#a855f7' : module.color === 'success' ? '#10b981' : '#3b82f6'}
+                  >
+                    <Card className="border-0">
+                      <CardContent className="p-6">
+                        <div className="flex items-start gap-4">
+                          <div className={`p-3 rounded-lg ${colorClass} group-hover:scale-110 transition-transform flex-shrink-0`}>
+                            <Icon className="w-6 h-6" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold mb-1 group-hover:text-primary transition-colors">
+                              {module.name}
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              {module.description}
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </ShineBorder>
                 </Link>
               )
             })}
@@ -266,7 +375,7 @@ export default function HaccpDashboardPage() {
           <h2 className="text-lg font-semibold text-neutral-900 mb-4">
             Actions rapides
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Link
               href="/dashboard/haccp/meals"
               className="flex items-center gap-3 p-4 rounded-lg hover:bg-neutral-50 transition-colors border border-neutral-200"
@@ -299,6 +408,17 @@ export default function HaccpDashboardPage() {
                 <p className="text-sm text-neutral-500">Signaler une non-conformité</p>
               </div>
             </Link>
+
+            <button
+              onClick={handleExportHACCP}
+              className="flex items-center gap-3 p-4 rounded-lg hover:bg-success-50 transition-colors border border-success-200 bg-success-50/50"
+            >
+              <ArrowDownTrayIcon className="w-8 h-8 text-success-600" />
+              <div className="text-left">
+                <p className="font-medium text-neutral-900">Export PDF HACCP</p>
+                <p className="text-sm text-neutral-500">Rapport des 30 derniers jours</p>
+              </div>
+            </button>
           </div>
         </div>
       </div>

@@ -9,8 +9,23 @@ import {
   PencilIcon,
   TrashIcon,
   ClipboardDocumentListIcon,
-  FunnelIcon
+  FunnelIcon,
+  EllipsisVerticalIcon,
+  InformationCircleIcon
 } from '@heroicons/react/24/outline'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import Badge from '@/components/ui/Badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
+} from '@/components/ui/dropdown-menu'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 export default function TasksPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Admin'])
@@ -143,6 +158,16 @@ export default function TasksPage() {
     }
   }
 
+  const getTypeBadgeVariant = (type: TaskType): 'primary' | 'success' | 'danger' | 'warning' | 'neutral' => {
+    switch (type) {
+      case 'DAILY': return 'primary'
+      case 'WEEKLY': return 'neutral'
+      case 'MONTHLY': return 'warning'
+      case 'OCCASIONAL': return 'success'
+      default: return 'neutral'
+    }
+  }
+
   const getTypeLabel = (type: TaskType) => {
     return taskTypes.find(t => t.value === type)?.label || type
   }
@@ -153,118 +178,152 @@ export default function TasksPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-neutral-900 mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
-              Tâches
-            </h1>
-            <p className="text-neutral-600">
+            <div className="flex items-center gap-2 mb-2">
+              <h1 className="text-3xl font-bold">
+                Tâches
+              </h1>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="text-muted-foreground hover:text-primary transition-colors">
+                    <InformationCircleIcon className="w-6 h-6" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-96" align="start">
+                  <div className="space-y-3">
+                    <h4 className="font-semibold">Types de tâches</h4>
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <span className="font-medium text-primary">Quotidiennes :</span>
+                        <span className="text-muted-foreground"> Tâches à effectuer chaque jour</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-secondary">Hebdomadaires :</span>
+                        <span className="text-muted-foreground"> Tâches à effectuer une fois par semaine</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-accent">Mensuelles :</span>
+                        <span className="text-muted-foreground"> Tâches à effectuer une fois par mois</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-success-600">Occasionnelles :</span>
+                        <span className="text-muted-foreground"> Tâches ponctuelles ou à la demande</span>
+                      </div>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+            <p className="text-muted-foreground">
               Gérez les templates de tâches de nettoyage
             </p>
           </div>
-          <button
-            onClick={openCreateModal}
-            className="btn btn-primary flex items-center gap-2"
-          >
+          <Button onClick={openCreateModal} className="flex items-center gap-2">
             <PlusIcon className="w-5 h-5" />
             Nouvelle tâche
-          </button>
+          </Button>
         </div>
 
         {/* Filters */}
         <div className="flex items-center gap-3 mb-6">
-          <FunnelIcon className="w-5 h-5 text-neutral-500" />
+          <FunnelIcon className="w-5 h-5 text-muted-foreground" />
           <div className="flex gap-2 flex-wrap">
             {taskTypes.map((type) => (
-              <button
+              <Button
                 key={type.value}
+                variant={filterType === type.value ? 'default' : 'outline'}
+                size="sm"
                 onClick={() => setFilterType(type.value)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  filterType === type.value
-                    ? 'bg-primary-500 text-white'
-                    : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-                }`}
               >
                 {type.label}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
 
         {/* Tasks grid */}
         {filteredTasks.length === 0 ? (
-          <div className="card p-12 text-center">
-            <ClipboardDocumentListIcon className="w-16 h-16 text-neutral-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-neutral-900 mb-2">
+          <Card className="p-12 text-center">
+            <ClipboardDocumentListIcon className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+            <h3 className="text-lg font-medium mb-2">
               {filterType === 'ALL' ? 'Aucune tâche' : `Aucune tâche ${getTypeLabel(filterType as TaskType).toLowerCase()}`}
             </h3>
-            <p className="text-neutral-600 mb-4">
+            <p className="text-muted-foreground mb-4">
               Commencez par créer votre première tâche
             </p>
-            <button onClick={openCreateModal} className="btn btn-primary">
+            <Button onClick={openCreateModal}>
               Créer une tâche
-            </button>
-          </div>
+            </Button>
+          </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredTasks.map((task) => (
-              <div
+              <Card
                 key={task.id}
-                className={`card p-6 ${!task.is_active && 'opacity-50'}`}
+                className={!task.is_active ? 'opacity-50' : ''}
               >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-neutral-900 mb-2">
-                      {task.name}
-                    </h3>
-                    <div className="flex items-center gap-2">
-                      <span className={`px-2 py-1 rounded text-xs font-medium border ${getTypeColor(task.type)}`}>
-                        {getTypeLabel(task.type)}
-                      </span>
-                      {!task.is_active && (
-                        <span className="px-2 py-1 rounded text-xs font-medium bg-danger-50 text-danger-700 border border-danger-200">
-                          Désactivée
-                        </span>
-                      )}
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <h3 className="font-semibold mb-2">
+                        {task.name}
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={getTypeBadgeVariant(task.type)} size="sm">
+                          {getTypeLabel(task.type)}
+                        </Badge>
+                        {!task.is_active && (
+                          <Badge variant="danger" size="sm">
+                            Désactivée
+                          </Badge>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => openEditModal(task)}
-                      className="p-2 rounded-lg hover:bg-neutral-100 transition-colors"
-                      title="Modifier"
-                    >
-                      <PencilIcon className="w-4 h-4 text-neutral-600" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(task)}
-                      className="p-2 rounded-lg hover:bg-danger-50 transition-colors"
-                      title="Désactiver"
-                    >
-                      <TrashIcon className="w-4 h-4 text-danger-600" />
-                    </button>
-                  </div>
-                </div>
 
-                {task.description && (
-                  <p className="text-sm text-neutral-600 mb-4 line-clamp-2">
-                    {task.description}
-                  </p>
-                )}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" title="Actions">
+                          <EllipsisVerticalIcon className="w-5 h-5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openEditModal(task)}>
+                          <PencilIcon className="w-4 h-4" />
+                          Modifier
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => handleDelete(task)}
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                          Désactiver
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
 
-                <div className="space-y-2 text-sm">
-                  {task.category && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-neutral-500">Catégorie</span>
-                      <span className="font-medium text-neutral-900">{task.category}</span>
-                    </div>
+                  {task.description && (
+                    <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                      {task.description}
+                    </p>
                   )}
-                  {task.estimated_duration && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-neutral-500">Durée estimée</span>
-                      <span className="font-medium text-neutral-900">{task.estimated_duration} min</span>
-                    </div>
-                  )}
-                </div>
-              </div>
+
+                  <div className="space-y-2 text-sm">
+                    {task.category && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Catégorie</span>
+                        <span className="font-medium">{task.category}</span>
+                      </div>
+                    )}
+                    {task.estimated_duration && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Durée estimée</span>
+                        <span className="font-medium">{task.estimated_duration} min</span>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         )}
@@ -274,115 +333,117 @@ export default function TasksPage() {
           <>
             <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setShowModal(false)}></div>
             <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-              <div className="card w-full max-w-md p-6 animate-slide-up max-h-[90vh] overflow-y-auto">
-                <h2 className="text-xl font-bold text-neutral-900 mb-4">
-                  {editingTask ? 'Modifier la tâche' : 'Nouvelle tâche'}
-                </h2>
+              <Card className="w-full max-w-md animate-slide-up max-h-[90vh] overflow-y-auto">
+                <CardContent className="p-6">
+                  <h2 className="text-xl font-bold mb-4">
+                    {editingTask ? 'Modifier la tâche' : 'Nouvelle tâche'}
+                  </h2>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">
-                      Nom de la tâche *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      placeholder="ex: Nettoyer les sols"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">
-                      Type de tâche *
-                    </label>
-                    <select
-                      value={formData.type}
-                      onChange={(e) => setFormData({ ...formData, type: e.target.value as TaskType })}
-                      className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      required
-                    >
-                      <option value="DAILY">Quotidienne</option>
-                      <option value="WEEKLY">Hebdomadaire</option>
-                      <option value="MONTHLY">Mensuelle</option>
-                      <option value="OCCASIONAL">Occasionnelle</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">
-                      Catégorie
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      placeholder="ex: Sols, Sanitaires, Cuisine"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">
-                      Description
-                    </label>
-                    <textarea
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      placeholder="Description détaillée"
-                      rows={3}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
+                  <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-1">
-                        Durée estimée (min)
+                      <label className="block text-sm font-medium mb-1">
+                        Nom de la tâche *
                       </label>
-                      <input
-                        type="number"
-                        value={formData.estimated_duration || ''}
-                        onChange={(e) => setFormData({ ...formData, estimated_duration: e.target.value ? parseInt(e.target.value) : undefined })}
-                        className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        placeholder="15"
-                        min="1"
+                      <Input
+                        type="text"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="ex: Nettoyer les sols"
+                        required
                       />
                     </div>
+
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-1">
-                        Durée par défaut (min)
+                      <label className="block text-sm font-medium mb-1">
+                        Type de tâche *
                       </label>
-                      <input
-                        type="number"
-                        value={formData.default_duration || ''}
-                        onChange={(e) => setFormData({ ...formData, default_duration: e.target.value ? parseInt(e.target.value) : undefined })}
-                        className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        placeholder="15"
-                        min="1"
+                      <Select
+                        value={formData.type}
+                        onValueChange={(value) => setFormData({ ...formData, type: value as TaskType })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="DAILY">Quotidienne</SelectItem>
+                          <SelectItem value="WEEKLY">Hebdomadaire</SelectItem>
+                          <SelectItem value="MONTHLY">Mensuelle</SelectItem>
+                          <SelectItem value="OCCASIONAL">Occasionnelle</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Catégorie
+                      </label>
+                      <Input
+                        type="text"
+                        value={formData.category}
+                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                        placeholder="ex: Sols, Sanitaires, Cuisine"
                       />
                     </div>
-                  </div>
 
-                  <div className="flex gap-3 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => setShowModal(false)}
-                      className="flex-1 px-4 py-2 rounded-lg border border-neutral-200 text-neutral-700 hover:bg-neutral-50"
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      type="submit"
-                      className="flex-1 btn btn-primary"
-                    >
-                      {editingTask ? 'Modifier' : 'Créer'}
-                    </button>
-                  </div>
-                </form>
-              </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Description
+                      </label>
+                      <textarea
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        placeholder="Description détaillée"
+                        rows={3}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          Durée estimée (min)
+                        </label>
+                        <Input
+                          type="number"
+                          value={formData.estimated_duration || ''}
+                          onChange={(e) => setFormData({ ...formData, estimated_duration: e.target.value ? parseInt(e.target.value) : undefined })}
+                          placeholder="15"
+                          min="1"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          Durée par défaut (min)
+                        </label>
+                        <Input
+                          type="number"
+                          value={formData.default_duration || ''}
+                          onChange={(e) => setFormData({ ...formData, default_duration: e.target.value ? parseInt(e.target.value) : undefined })}
+                          placeholder="15"
+                          min="1"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowModal(false)}
+                        className="flex-1"
+                      >
+                        Annuler
+                      </Button>
+                      <Button
+                        type="submit"
+                        className="flex-1"
+                      >
+                        {editingTask ? 'Modifier' : 'Créer'}
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
             </div>
           </>
         )}

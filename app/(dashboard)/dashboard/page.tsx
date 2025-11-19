@@ -8,8 +8,13 @@ import {
   BuildingOfficeIcon,
   ClipboardDocumentListIcon,
   UserGroupIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  InformationCircleIcon
 } from '@heroicons/react/24/outline'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { SparklesText } from '@/components/ui/sparkles-text'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Button } from '@/components/ui/button'
 
 interface DashboardStats {
   totalRooms: number
@@ -104,28 +109,32 @@ export default function DashboardPage() {
       value: stats.totalRooms,
       icon: BuildingOfficeIcon,
       color: 'primary',
-      href: '/dashboard/rooms'
+      href: '/dashboard/rooms',
+      description: 'Nombre total de pièces actives dans votre établissement. Cliquez pour gérer vos pièces.'
     },
     {
       name: 'Tâches',
       value: stats.totalTasks,
       icon: ClipboardDocumentListIcon,
       color: 'secondary',
-      href: '/dashboard/tasks'
+      href: '/dashboard/tasks',
+      description: 'Nombre de templates de tâches de nettoyage configurés. Ces tâches peuvent être quotidiennes, hebdomadaires ou mensuelles.'
     },
     {
       name: 'Employés',
       value: stats.totalUsers,
       icon: UserGroupIcon,
       color: 'accent',
-      href: '/dashboard/users'
+      href: '/dashboard/users',
+      description: 'Nombre d\'employés actifs ayant accès au système. Gérez les accès et les codes PIN depuis cette section.'
     },
     {
       name: 'Complétion du jour',
       value: `${stats.todayCompletion}%`,
       icon: CheckCircleIcon,
       color: 'success',
-      href: '/dashboard/sessions'
+      href: '/dashboard/sessions',
+      description: 'Progression de la session de nettoyage d\'aujourd\'hui. 100% indique que toutes les tâches planifiées sont terminées.'
     }
   ]
 
@@ -141,10 +150,13 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto">
         {/* Page header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-neutral-900 mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+          <SparklesText
+            className="text-4xl font-bold mb-2"
+            colors={{ first: '#a855f7', second: '#ec4899' }}
+          >
             Tableau de bord
-          </h1>
-          <p className="text-neutral-600">
+          </SparklesText>
+          <p className="text-muted-foreground text-lg">
             Bienvenue {(session?.user as any)?.first_name || (session?.user as any)?.email} ! Voici un aperçu de votre crèche.
           </p>
         </div>
@@ -156,25 +168,44 @@ export default function DashboardPage() {
             const colorClass = colorClasses[stat.color as keyof typeof colorClasses]
 
             return (
-              <a
-                key={stat.name}
-                href={stat.href}
-                className="card p-6 hover:shadow-lg transition-all cursor-pointer group"
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-neutral-600 mb-1">
-                      {stat.name}
-                    </p>
-                    <p className="text-3xl font-bold text-neutral-900">
-                      {stat.value}
-                    </p>
-                  </div>
-                  <div className={`p-3 rounded-lg ${colorClass} group-hover:scale-110 transition-transform`}>
-                    <Icon className="w-6 h-6" />
-                  </div>
-                </div>
-              </a>
+              <div key={stat.name} className="relative">
+                <a href={stat.href}>
+                  <Card className="hover:shadow-xl transition-all cursor-pointer group border-2 hover:border-primary/50">
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="text-sm font-medium text-muted-foreground">
+                              {stat.name}
+                            </p>
+                            <Popover>
+                              <PopoverTrigger asChild onClick={(e) => e.preventDefault()}>
+                                <button className="text-muted-foreground hover:text-primary transition-colors">
+                                  <InformationCircleIcon className="w-4 h-4" />
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-80" align="start">
+                                <div className="space-y-2">
+                                  <h4 className="font-semibold text-sm">{stat.name}</h4>
+                                  <p className="text-sm text-muted-foreground">
+                                    {stat.description}
+                                  </p>
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                          <p className="text-3xl font-bold bg-gradient-to-br from-primary to-primary/60 bg-clip-text text-transparent">
+                            {stat.value}
+                          </p>
+                        </div>
+                        <div className={`p-3 rounded-xl ${colorClass} group-hover:scale-110 transition-transform`}>
+                          <Icon className="w-6 h-6" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </a>
+              </div>
             )
           })}
         </div>
@@ -182,52 +213,56 @@ export default function DashboardPage() {
         {/* Quick actions */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Recent activity */}
-          <div className="card p-6">
-            <h2 className="text-lg font-semibold text-neutral-900 mb-4">
-              Activité récente
-            </h2>
-            <div className="space-y-3">
-              <p className="text-sm text-neutral-500 text-center py-8">
-                Aucune activité récente
-              </p>
-            </div>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Activité récente</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  Aucune activité récente
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Quick links */}
-          <div className="card p-6">
-            <h2 className="text-lg font-semibold text-neutral-900 mb-4">
-              Actions rapides
-            </h2>
-            <div className="space-y-3">
-              <a
-                href="/dashboard/sessions"
-                className="flex items-center justify-between p-3 rounded-lg hover:bg-neutral-50 transition-colors"
-              >
-                <span className="text-sm font-medium text-neutral-700">
-                  Nouvelle session de nettoyage
-                </span>
-                <span className="text-primary-600">→</span>
-              </a>
-              <a
-                href="/dashboard/rooms"
-                className="flex items-center justify-between p-3 rounded-lg hover:bg-neutral-50 transition-colors"
-              >
-                <span className="text-sm font-medium text-neutral-700">
-                  Gérer les pièces
-                </span>
-                <span className="text-primary-600">→</span>
-              </a>
-              <a
-                href="/dashboard/haccp"
-                className="flex items-center justify-between p-3 rounded-lg hover:bg-neutral-50 transition-colors"
-              >
-                <span className="text-sm font-medium text-neutral-700">
-                  Traçabilité HACCP
-                </span>
-                <span className="text-primary-600">→</span>
-              </a>
-            </div>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Actions rapides</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <a
+                  href="/dashboard/sessions"
+                  className="flex items-center justify-between p-3 rounded-lg hover:bg-accent transition-colors"
+                >
+                  <span className="text-sm font-medium">
+                    Nouvelle session de nettoyage
+                  </span>
+                  <span className="text-primary">→</span>
+                </a>
+                <a
+                  href="/dashboard/rooms"
+                  className="flex items-center justify-between p-3 rounded-lg hover:bg-accent transition-colors"
+                >
+                  <span className="text-sm font-medium">
+                    Gérer les pièces
+                  </span>
+                  <span className="text-primary">→</span>
+                </a>
+                <a
+                  href="/dashboard/haccp"
+                  className="flex items-center justify-between p-3 rounded-lg hover:bg-accent transition-colors"
+                >
+                  <span className="text-sm font-medium">
+                    Traçabilité HACCP
+                  </span>
+                  <span className="text-primary">→</span>
+                </a>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </DashboardLayout>

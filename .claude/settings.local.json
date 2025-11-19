@@ -3,7 +3,9 @@
     "allow": [
       "Bash(npx tsc:*)",
       "Bash(npm run build:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(pnpm dlx:*)",
+      "Bash(npm run dev:*)"
     ],
     "deny": [],
     "ask": []

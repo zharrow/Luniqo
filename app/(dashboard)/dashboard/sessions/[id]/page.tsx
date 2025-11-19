@@ -214,7 +214,7 @@ export default function SessionDetailPage({ params }: PageProps) {
     })
   }
 
-  function handleExportPDF() {
+  async function handleExportPDF() {
     if (!session || !authSession?.enterprise) return
 
     const exportData = {
@@ -233,12 +233,18 @@ export default function SessionDetailPage({ params }: PageProps) {
           ? `${log.performed_by.first_name} ${log.performed_by.last_name}`
           : undefined,
         performed_at: log.performed_at || undefined,
-        note: log.note || undefined
+        note: log.note || undefined,
+        photo_urls: log.photo_urls || undefined
       })),
       enterprise_name: authSession.enterprise.name
     }
 
-    pdfExportService.exportSession(exportData)
+    try {
+      await pdfExportService.exportSession(exportData)
+    } catch (error) {
+      console.error('Error exporting PDF:', error)
+      alert('Erreur lors de l\'export PDF')
+    }
   }
 
   if (authLoading || loading) {

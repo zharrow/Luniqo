@@ -148,6 +148,91 @@ export async function logout() {
 }
 
 /**
+ * Login employee with PIN (new flow: admin login -> select employee -> enter PIN)
+ * @param userId - The specific user ID to authenticate
+ * @param pin - The 4-digit PIN code
+ */
+export async function loginEmployeeWithPin(userId: string, pin: string): Promise<AuthResponse> {
+  try {
+    const supabase = createClient()
+
+    // Get the specific user
+    const { data: user, error: userError } = await supabase
+      .from('user')
+      .select('*, enterprise:enterprise_id(*)')
+      .eq('id', userId)
+      .eq('is_active', true)
+      .single()
+
+    if (userError || !user) {
+      return { success: false, error: 'Employé non trouvé' }
+    }
+
+    // Verify PIN
+    const isValidPin = await verifyPin(pin, (user as any).pin_code)
+
+    if (!isValidPin) {
+      return { success: false, error: 'Code PIN incorrect' }
+    }
+
+    // Get accessible rooms
+    const { data: userRooms } = await supabase
+      .from('user_rooms')
+      .select('room_id')
+      .eq('user_id', userId)
+
+    const accessibleRooms = (userRooms as any[])?.map(ur => ur.room_id) || []
+
+    return {
+      success: true,
+      data: user as any,
+      enterprise: (user as any).enterprise,
+      role: 'User',
+      accessibleRooms
+    }
+  } catch (error) {
+    console.error('Employee login error:', error)
+    return { success: false, error: 'Échec de la connexion' }
+  }
+}
+
+/**
+ * Get all active employees for an enterprise (for employee selection)
+ */
+export async function getEnterpriseEmployees(enterpriseId: string): Promise<Array<{
+  id: string
+  first_name: string
+  last_name: string
+  email: string | null
+}>> {
+  try {
+    const supabase = createClient()
+
+    const { data: employees, error } = await supabase
+      .from('user')
+      .select('id, first_name, last_name, email')
+      .eq('enterprise_id', enterpriseId)
+      .eq('is_active', true)
+      .order('first_name')
+
+    if (error) {
+      console.error('Error fetching employees:', error)
+      return []
+    }
+
+    return ((employees || []) as unknown) as Array<{
+      id: string
+      first_name: string
+      last_name: string
+      email: string | null
+    }>
+  } catch (error) {
+    console.error('Error fetching employees:', error)
+    return []
+  }
+}
+
+/**
  * Check if user has access to enterprise
  */
 export function checkEnterpriseAccess(

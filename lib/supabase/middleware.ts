@@ -35,11 +35,17 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/auth')
-  ) {
+  // Check if this is a tablet route (employees with PIN use localStorage, not Supabase Auth)
+  const isTabletRoute = request.nextUrl.pathname.startsWith('/tablet')
+  const isPublicRoute =
+    request.nextUrl.pathname.startsWith('/login') ||
+    request.nextUrl.pathname.startsWith('/auth')
+
+  // Only redirect to login if:
+  // - No Supabase Auth user
+  // - Not a tablet route (PIN auth)
+  // - Not already on a public route
+  if (!user && !isTabletRoute && !isPublicRoute) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone()
     url.pathname = '/login'

@@ -11,6 +11,11 @@ import {
   UserGroupIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline'
+import { Card, CardContent } from '@/components/ui/card'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
+import Badge from '@/components/ui/Badge'
 
 export default function ChildrenPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Admin'])
@@ -150,23 +155,37 @@ export default function ChildrenPage() {
   return (
     <DashboardLayout>
       <div className="max-w-7xl mx-auto">
+        {/* Breadcrumb */}
+        <Breadcrumb className="mb-4">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/dashboard/haccp">HACCP</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Enfants</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-neutral-900 mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+            <h1 className="text-3xl font-bold mb-2">
               Enfants
             </h1>
-            <p className="text-neutral-600">
+            <p className="text-muted-foreground">
               Gestion des enfants inscrits et suivi des allergènes
             </p>
           </div>
-          <button
-            onClick={openCreateModal}
-            className="btn btn-primary flex items-center gap-2"
-          >
+          <Button onClick={openCreateModal} className="flex items-center gap-2">
             <PlusIcon className="w-5 h-5" />
             Nouvel enfant
-          </button>
+          </Button>
         </div>
 
         {/* Children grid */}

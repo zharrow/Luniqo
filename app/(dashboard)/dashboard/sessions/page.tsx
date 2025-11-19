@@ -12,6 +12,14 @@ import {
   ChartBarIcon
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import Badge from '@/components/ui/Badge'
+import { SparklesText } from '@/components/ui/sparkles-text'
+import { Calendar } from '@/components/ui/calendar'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { format } from 'date-fns'
+import { fr } from 'date-fns/locale'
 
 export default function SessionsPage() {
   const { session: authSession, isLoading: authLoading } = useRequireAuth(['Admin'])
@@ -19,6 +27,8 @@ export default function SessionsPage() {
   const [recentSessions, setRecentSessions] = useState<SessionWithStats[]>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
+  const [showDatePicker, setShowDatePicker] = useState(false)
 
   useEffect(() => {
     if (authSession?.enterprise) {
@@ -65,6 +75,28 @@ export default function SessionsPage() {
     }
   }
 
+  async function createSessionForDate(date: Date) {
+    if (!authSession?.enterprise?.id) return
+
+    try {
+      setCreating(true)
+      const formattedDate = format(date, 'yyyy-MM-dd')
+
+      await sessionsService.create(authSession.enterprise.id, {
+        date: formattedDate
+      })
+
+      setShowDatePicker(false)
+      setSelectedDate(undefined)
+      loadSessions()
+    } catch (error) {
+      console.error('Error creating session:', error)
+      alert('Erreur lors de la création de la session')
+    } finally {
+      setCreating(false)
+    }
+  }
+
   if (authLoading || loading) {
     return (
       <DashboardLayout>
@@ -75,16 +107,12 @@ export default function SessionsPage() {
     )
   }
 
-  const getStatusColor = (status: string) => {
+  const getStatusBadgeVariant = (status: string): 'primary' | 'success' | 'danger' | 'warning' | 'neutral' => {
     switch (status) {
-      case 'COMPLETEE':
-        return 'bg-success-50 text-success-700 border-success-200'
-      case 'EN_COURS':
-        return 'bg-primary-50 text-primary-700 border-primary-200'
-      case 'INCOMPLETE':
-        return 'bg-warning-50 text-warning-700 border-warning-200'
-      default:
-        return 'bg-neutral-50 text-neutral-700 border-neutral-200'
+      case 'COMPLETEE': return 'success'
+      case 'EN_COURS': return 'primary'
+      case 'INCOMPLETE': return 'warning'
+      default: return 'neutral'
     }
   }
 
@@ -121,154 +149,184 @@ export default function SessionsPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-neutral-900 mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+            <SparklesText
+              className="text-3xl font-bold mb-2"
+              colors={{ first: '#a855f7', second: '#3b82f6' }}
+            >
               Sessions de Nettoyage
-            </h1>
-            <p className="text-neutral-600">
+            </SparklesText>
+            <p className="text-muted-foreground">
               Gérez vos sessions de nettoyage quotidiennes
             </p>
           </div>
+
+          <Popover open={showDatePicker} onOpenChange={setShowDatePicker}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2">
+                <CalendarIcon className="w-5 h-5" />
+                Créer une session pour une date
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={(date) => {
+                  if (date) {
+                    setSelectedDate(date)
+                    createSessionForDate(date)
+                  }
+                }}
+                locale={fr}
+                disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* Today's Session */}
         <div className="mb-8">
-          <h2 className="text-xl font-semibold text-neutral-900 mb-4">
+          <h2 className="text-xl font-semibold mb-4">
             Session du jour
           </h2>
 
           {!todaySession ? (
-            <div className="card p-8 text-center">
-              <CalendarIcon className="w-16 h-16 text-neutral-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-neutral-900 mb-2">
+            <Card className="p-8 text-center">
+              <CalendarIcon className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+              <h3 className="text-lg font-medium mb-2">
                 Aucune session pour aujourd'hui
               </h3>
-              <p className="text-neutral-600 mb-6">
+              <p className="text-muted-foreground mb-6">
                 Créez la session de nettoyage du {formatDate(new Date().toISOString())}
               </p>
-              <button
+              <Button
                 onClick={createTodaySession}
                 disabled={creating}
-                className="btn btn-primary inline-flex items-center gap-2"
+                className="inline-flex items-center gap-2"
               >
                 <PlusIcon className="w-5 h-5" />
                 {creating ? 'Création...' : 'Créer la session du jour'}
-              </button>
-            </div>
+              </Button>
+            </Card>
           ) : (
             <Link href={`/dashboard/sessions/${todaySession.id}`}>
-              <div className="card p-6 hover:shadow-lg transition-all cursor-pointer">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold text-neutral-900">
-                        {formatDate(todaySession.date)}
-                      </h3>
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(todaySession.status)}`}>
-                        {getStatusLabel(todaySession.status)}
+              <Card className="hover:shadow-lg transition-all cursor-pointer">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-lg font-semibold">
+                          {formatDate(todaySession.date)}
+                        </h3>
+                        <Badge variant={getStatusBadgeVariant(todaySession.status)} size="md">
+                          {getStatusLabel(todaySession.status)}
+                        </Badge>
+                      </div>
+                      {todaySession.notes && (
+                        <p className="text-sm text-muted-foreground">{todaySession.notes}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Progress */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Progression</span>
+                      <span className="font-semibold">
+                        {todaySession.completed_tasks} / {todaySession.total_tasks} tâches
                       </span>
                     </div>
-                    {todaySession.notes && (
-                      <p className="text-sm text-neutral-600">{todaySession.notes}</p>
-                    )}
-                  </div>
-                </div>
 
-                {/* Progress */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-neutral-600">Progression</span>
-                    <span className="font-semibold text-neutral-900">
-                      {todaySession.completed_tasks} / {todaySession.total_tasks} tâches
-                    </span>
-                  </div>
+                    <div className="relative w-full h-3 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="absolute top-0 left-0 h-full bg-linear-to-r from-primary to-primary/80 transition-all duration-300"
+                        style={{ width: `${todaySession.completion_percentage}%` }}
+                      ></div>
+                    </div>
 
-                  <div className="relative w-full h-3 bg-neutral-100 rounded-full overflow-hidden">
-                    <div
-                      className="absolute top-0 left-0 h-full bg-gradient-to-r from-primary-500 to-primary-600 transition-all duration-300"
-                      style={{ width: `${todaySession.completion_percentage}%` }}
-                    ></div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <ChartBarIcon className="w-4 h-4 text-neutral-500" />
-                      <span className="text-sm text-neutral-600">
-                        {todaySession.completion_percentage}% complété
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <ChartBarIcon className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">
+                          {todaySession.completion_percentage}% complété
+                        </span>
+                      </div>
+                      <span className="text-sm text-primary font-medium">
+                        Voir les détails →
                       </span>
                     </div>
-                    <span className="text-sm text-primary-600 font-medium">
-                      Voir les détails →
-                    </span>
                   </div>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             </Link>
           )}
         </div>
 
         {/* Recent Sessions */}
         <div>
-          <h2 className="text-xl font-semibold text-neutral-900 mb-4">
+          <h2 className="text-xl font-semibold mb-4">
             Sessions récentes
           </h2>
 
           {recentSessions.length === 0 ? (
-            <div className="card p-8 text-center">
-              <ClockIcon className="w-16 h-16 text-neutral-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-neutral-900 mb-2">
+            <Card className="p-8 text-center">
+              <ClockIcon className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+              <h3 className="text-lg font-medium mb-2">
                 Aucune session
               </h3>
-              <p className="text-neutral-600">
+              <p className="text-muted-foreground">
                 Les sessions passées apparaîtront ici
               </p>
-            </div>
+            </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {recentSessions.map((session) => (
                 <Link key={session.id} href={`/dashboard/sessions/${session.id}`}>
-                  <div className="card p-6 hover:shadow-lg transition-all cursor-pointer h-full">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <CalendarIcon className="w-5 h-5 text-neutral-400" />
-                        <h3 className="font-semibold text-neutral-900">
-                          {formatDateShort(session.date)}
-                        </h3>
-                      </div>
-                      <span className={`px-2 py-1 rounded text-xs font-medium border ${getStatusColor(session.status)}`}>
-                        {getStatusLabel(session.status)}
-                      </span>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-neutral-600">Tâches</span>
-                        <span className="font-medium text-neutral-900">
-                          {session.completed_tasks} / {session.total_tasks}
-                        </span>
+                  <Card className="hover:shadow-lg transition-all cursor-pointer h-full">
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <CalendarIcon className="w-5 h-5 text-muted-foreground" />
+                          <h3 className="font-semibold">
+                            {formatDateShort(session.date)}
+                          </h3>
+                        </div>
+                        <Badge variant={getStatusBadgeVariant(session.status)} size="sm">
+                          {getStatusLabel(session.status)}
+                        </Badge>
                       </div>
 
-                      <div className="relative w-full h-2 bg-neutral-100 rounded-full overflow-hidden">
-                        <div
-                          className={`absolute top-0 left-0 h-full transition-all ${
-                            session.completion_percentage === 100
-                              ? 'bg-success-500'
-                              : 'bg-primary-500'
-                          }`}
-                          style={{ width: `${session.completion_percentage}%` }}
-                        ></div>
-                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Tâches</span>
+                          <span className="font-medium">
+                            {session.completed_tasks} / {session.total_tasks}
+                          </span>
+                        </div>
 
-                      <div className="flex items-center justify-between text-xs text-neutral-500">
-                        <span>{session.completion_percentage}%</span>
-                        {session.completion_percentage === 100 && (
-                          <div className="flex items-center gap-1 text-success-600">
-                            <CheckCircleIcon className="w-4 h-4" />
-                            <span>Terminée</span>
-                          </div>
-                        )}
+                        <div className="relative w-full h-2 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className={`absolute top-0 left-0 h-full transition-all ${
+                              session.completion_percentage === 100
+                                ? 'bg-success-500'
+                                : 'bg-primary'
+                            }`}
+                            style={{ width: `${session.completion_percentage}%` }}
+                          ></div>
+                        </div>
+
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>{session.completion_percentage}%</span>
+                          {session.completion_percentage === 100 && (
+                            <div className="flex items-center gap-1 text-success-600">
+                              <CheckCircleIcon className="w-4 h-4" />
+                              <span>Terminée</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
                 </Link>
               ))}
             </div>

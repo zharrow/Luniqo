@@ -4,6 +4,12 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/contexts/AuthContext'
 import { messagingService, type Conversation } from '@/lib/services/messaging.service'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { SparklesText } from '@/components/ui/sparkles-text'
+import { CountBadge } from '@/components/ui/Badge'
+import { PlusIcon, ChatBubbleLeftRightIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 
 export default function MessagesPage() {
   const [conversations, setConversations] = useState<Conversation[]>([])
@@ -105,8 +111,13 @@ export default function MessagesPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-neutral-900 mb-2">Messages</h1>
-          <p className="text-neutral-600">
+          <SparklesText
+            className="text-3xl font-bold mb-2"
+            colors={{ first: '#a855f7', second: '#06b6d4' }}
+          >
+            Messages
+          </SparklesText>
+          <p className="text-muted-foreground">
             {session?.role === 'Admin'
               ? 'Communiquez avec le support'
               : 'Messages des administrateurs'}
@@ -114,55 +125,36 @@ export default function MessagesPage() {
         </div>
 
         {session?.role === 'Admin' && (
-          <button onClick={handleCreateConversation} className="btn btn-primary">
-            <svg className="w-5 h-5 mr-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
+          <Button onClick={handleCreateConversation} className="inline-flex items-center gap-2">
+            <PlusIcon className="w-5 h-5" />
             Nouvelle conversation
-          </button>
+          </Button>
         )}
       </div>
 
       {/* Error Message */}
       {error && (
-        <div className="card p-4 mb-6 bg-danger-50 border-2 border-danger-200">
-          <p className="text-danger-700">{error}</p>
-        </div>
+        <Card className="p-4 mb-6 bg-destructive/10 border-destructive/20">
+          <p className="text-destructive">{error}</p>
+        </Card>
       )}
 
       {/* Conversations List */}
       {conversations.length === 0 ? (
-        <div className="card p-12 text-center">
-          <svg
-            className="w-24 h-24 mx-auto mb-4 text-neutral-300"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-            />
-          </svg>
-          <h2 className="text-2xl font-bold text-neutral-700 mb-2">Aucune conversation</h2>
-          <p className="text-neutral-500 mb-6">
+        <Card className="p-12 text-center">
+          <ChatBubbleLeftRightIcon className="w-24 h-24 mx-auto mb-4 text-muted-foreground/30" />
+          <h2 className="text-2xl font-bold mb-2">Aucune conversation</h2>
+          <p className="text-muted-foreground mb-6">
             {session?.role === 'Admin'
               ? 'Commencez une nouvelle conversation avec le support'
               : 'Aucun message pour le moment'}
           </p>
           {session?.role === 'Admin' && (
-            <button onClick={handleCreateConversation} className="btn btn-primary">
+            <Button onClick={handleCreateConversation}>
               Nouvelle conversation
-            </button>
+            </Button>
           )}
-        </div>
+        </Card>
       ) : (
         <div className="grid gap-4">
           {conversations.map((conversation) => {
@@ -170,64 +162,61 @@ export default function MessagesPage() {
               session?.role === 'Admin' ? conversation.developer : conversation.admin
 
             return (
-              <button
+              <Card
                 key={conversation.id}
+                className="hover:shadow-lg transition-all cursor-pointer group"
                 onClick={() => router.push(`/dashboard/messages/${conversation.id}`)}
-                className="card p-6 hover:shadow-lg transition-all text-left group relative"
               >
-                <div className="flex items-center gap-4">
-                  {/* Avatar */}
-                  <div className="w-14 h-14 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-bold text-xl flex-shrink-0">
-                    {(() => {
-                      if (otherParty && 'first_name' in otherParty && typeof otherParty.first_name === 'string') {
-                        return otherParty.first_name[0]?.toUpperCase()
-                      }
-                      return otherParty?.email?.[0]?.toUpperCase() || '?'
-                    })()}
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <h3 className="text-lg font-bold text-neutral-900 truncate">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    {/* Avatar */}
+                    <Avatar className="h-14 w-14 flex-shrink-0">
+                      <AvatarFallback className="bg-primary/10 text-primary font-bold text-xl">
                         {(() => {
-                          if (otherParty && 'first_name' in otherParty && 'last_name' in otherParty) {
-                            const admin = otherParty as { first_name?: string; last_name?: string; email: string }
-                            if (admin.first_name && admin.last_name) {
-                              return `${admin.first_name} ${admin.last_name}`
-                            }
+                          if (otherParty && 'first_name' in otherParty && typeof otherParty.first_name === 'string') {
+                            return otherParty.first_name[0]?.toUpperCase()
                           }
-                          return otherParty?.email || 'Utilisateur inconnu'
+                          return otherParty?.email?.[0]?.toUpperCase() || '?'
                         })()}
-                      </h3>
-                      <span className="text-sm text-neutral-500 ml-2 flex-shrink-0">
-                        {formatDate(conversation.last_message_at)}
-                      </span>
+                      </AvatarFallback>
+                    </Avatar>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <h3 className="text-lg font-bold truncate">
+                          {(() => {
+                            if (otherParty && 'first_name' in otherParty && 'last_name' in otherParty) {
+                              const admin = otherParty as { first_name?: string; last_name?: string; email: string }
+                              if (admin.first_name && admin.last_name) {
+                                return `${admin.first_name} ${admin.last_name}`
+                              }
+                            }
+                            return otherParty?.email || 'Utilisateur inconnu'
+                          })()}
+                        </h3>
+                        <span className="text-sm text-muted-foreground ml-2 flex-shrink-0">
+                          {formatDate(conversation.last_message_at)}
+                        </span>
+                      </div>
+
+                      {otherParty?.email && (
+                        <p className="text-sm text-muted-foreground truncate">{otherParty.email}</p>
+                      )}
                     </div>
 
-                    {otherParty?.email && (
-                      <p className="text-sm text-neutral-500 truncate">{otherParty.email}</p>
+                    {/* Unread Badge */}
+                    {conversation.unread_count && conversation.unread_count > 0 && (
+                      <div className="flex-shrink-0">
+                        <CountBadge count={conversation.unread_count} />
+                      </div>
                     )}
+
+                    {/* Arrow */}
+                    <ChevronRightIcon className="w-6 h-6 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0" />
                   </div>
-
-                  {/* Unread Badge */}
-                  {conversation.unread_count && conversation.unread_count > 0 && (
-                    <div className="w-8 h-8 rounded-full bg-danger-500 text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
-                      {conversation.unread_count > 9 ? '9+' : conversation.unread_count}
-                    </div>
-                  )}
-
-                  {/* Arrow */}
-                  <svg
-                    className="w-6 h-6 text-neutral-400 group-hover:text-primary-500 group-hover:translate-x-1 transition-all flex-shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </button>
+                </CardContent>
+              </Card>
             )
           })}
         </div>

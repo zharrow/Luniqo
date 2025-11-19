@@ -1,8 +1,9 @@
 'use client'
 
 import { ReactNode } from 'react'
-import Sidebar from './Sidebar'
+import { AppSidebar } from './AppSidebar'
 import Header from './Header'
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -10,18 +11,16 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
-    <div className="min-h-screen bg-neutral-50">
-      <Sidebar />
-
-      {/* Main content area - offset by sidebar */}
-      <div className="ml-64 transition-all duration-300">
+    <SidebarProvider defaultOpen={true}>
+      <AppSidebar />
+      <SidebarInset className="bg-neutral-50 dark:bg-dark-50">
         <Header />
 
         {/* Page content */}
         <main className="p-6">
           {children}
         </main>
-      </div>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }

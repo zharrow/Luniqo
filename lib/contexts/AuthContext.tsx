@@ -48,13 +48,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data: { session: supabaseSession } } = await supabase.auth.getSession()
 
       if (supabaseSession) {
-        const firebaseUid = supabaseSession.user.id
+        const userEmail = supabaseSession.user.email
+
+        if (!userEmail) {
+          setIsLoading(false)
+          return
+        }
 
         // Check if Developer
         const { data: developer, error: devError } = await supabase
           .from('developer')
           .select('*')
-          .eq('firebase_uid', firebaseUid)
+          .eq('email', userEmail)
           .single()
 
         if (developer && !devError) {
@@ -70,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { data: admin, error: adminError } = await supabase
           .from('admin')
           .select('*, enterprise:enterprise_id(*)')
-          .eq('firebase_uid', firebaseUid)
+          .eq('email', userEmail)
           .eq('is_active', true)
           .single()
 

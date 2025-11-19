@@ -12,6 +12,7 @@ import {
   UserCircleIcon,
   ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/outline'
+import { SidebarTrigger } from '@/components/ui/sidebar'
 
 export default function Header() {
   const { session, logout } = useAuth()
@@ -80,9 +81,9 @@ export default function Header() {
 
   return (
     <header className="h-16 bg-white/80 dark:bg-dark-100/80 backdrop-blur-xl border-b border-neutral-200 dark:border-dark-300 flex items-center justify-between px-6 sticky top-0 z-40">
-      {/* Page title will be set by individual pages */}
-      <div>
-        {/* Placeholder - pages will inject their title here */}
+      {/* Left section with sidebar trigger */}
+      <div className="flex items-center gap-3">
+        <SidebarTrigger className="hover:bg-neutral-100 dark:hover:bg-dark-200" />
       </div>
 
       {/* Right section */}

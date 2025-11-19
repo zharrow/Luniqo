@@ -45,8 +45,8 @@ export class AnalyticsService {
       const { count: sessionsCount, error: sessionsError } = await this.supabase
         .from('cleaning_session')
         .select('*', { count: 'exact', head: true })
-        .gte('session_date', firstDayOfMonth.toISOString())
-        .lte('session_date', lastDayOfMonth.toISOString());
+        .gte('date', firstDayOfMonth.toISOString())
+        .lte('date', lastDayOfMonth.toISOString());
 
       if (sessionsError) throw sessionsError;
 
@@ -77,8 +77,7 @@ export class AnalyticsService {
             id,
             email,
             first_name,
-            last_name,
-            last_login
+            last_name
           )
         `)
         .order('name');
@@ -107,8 +106,8 @@ export class AnalyticsService {
             .from('cleaning_session')
             .select('*', { count: 'exact', head: true })
             .eq('enterprise_id', enterprise.id)
-            .gte('session_date', firstDayOfMonth.toISOString())
-            .lte('session_date', lastDayOfMonth.toISOString());
+            .gte('date', firstDayOfMonth.toISOString())
+            .lte('date', lastDayOfMonth.toISOString());
 
           if (sessionsError) console.error('Error fetching sessions:', sessionsError);
 
@@ -123,7 +122,7 @@ export class AnalyticsService {
             admin_email: admin?.email || 'N/A',
             employee_count: employeeCount || 0,
             sessions_this_month: sessionsCount || 0,
-            last_admin_login: admin?.last_login || null,
+            last_admin_login: null, // Removed last_login field (not in schema)
           };
         })
       );
