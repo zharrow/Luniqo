@@ -313,15 +313,15 @@ export default function HaccpDashboardPage() {
                       <Icon className="w-6 h-6" />
                     </div>
                   </div>
-                  <p className="text-sm font-medium text-neutral-600 mb-1">
+                  <p className="text-sm font-medium text-muted-foreground mb-1">
                     {stat.name}
                   </p>
                   <div className="flex items-baseline gap-2">
-                    <p className="text-3xl font-bold text-neutral-900">
+                    <p className="text-3xl font-bold">
                       {stat.value}
                     </p>
                     {'total' in stat && stat.total !== stat.value && (
-                      <p className="text-sm text-neutral-500">/ {stat.total}</p>
+                      <p className="text-sm text-muted-foreground">/ {stat.total}</p>
                     )}
                   </div>
                 </div>
@@ -372,51 +372,51 @@ export default function HaccpDashboardPage() {
 
         {/* Quick actions */}
         <div className="mt-8 card p-6">
-          <h2 className="text-lg font-semibold text-neutral-900 mb-4">
+          <h2 className="text-lg font-semibold mb-4">
             Actions rapides
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Link
               href="/dashboard/haccp/meals"
-              className="flex items-center gap-3 p-4 rounded-lg hover:bg-neutral-50 transition-colors border border-neutral-200"
+              className="flex items-center gap-3 p-4 rounded-lg hover:bg-muted transition-colors border border-border"
             >
-              <ClipboardDocumentCheckIcon className="w-8 h-8 text-primary-600" />
+              <ClipboardDocumentCheckIcon className="w-8 h-8 text-primary" />
               <div>
-                <p className="font-medium text-neutral-900">Nouveau repas</p>
-                <p className="text-sm text-neutral-500">Planifier un repas</p>
+                <p className="font-medium">Nouveau repas</p>
+                <p className="text-sm text-muted-foreground">Planifier un repas</p>
               </div>
             </Link>
 
             <Link
               href="/dashboard/haccp/temperatures"
-              className="flex items-center gap-3 p-4 rounded-lg hover:bg-neutral-50 transition-colors border border-neutral-200"
+              className="flex items-center gap-3 p-4 rounded-lg hover:bg-muted transition-colors border border-border"
             >
-              <BeakerIcon className="w-8 h-8 text-secondary-600" />
+              <BeakerIcon className="w-8 h-8 text-secondary-foreground" />
               <div>
-                <p className="font-medium text-neutral-900">Contrôle température</p>
-                <p className="text-sm text-neutral-500">Enregistrer une température</p>
+                <p className="font-medium">Contrôle température</p>
+                <p className="text-sm text-muted-foreground">Enregistrer une température</p>
               </div>
             </Link>
 
             <Link
               href="/dashboard/haccp/non-compliances"
-              className="flex items-center gap-3 p-4 rounded-lg hover:bg-neutral-50 transition-colors border border-neutral-200"
+              className="flex items-center gap-3 p-4 rounded-lg hover:bg-muted transition-colors border border-border"
             >
-              <ExclamationTriangleIcon className="w-8 h-8 text-danger-600" />
+              <ExclamationTriangleIcon className="w-8 h-8 text-destructive" />
               <div>
-                <p className="font-medium text-neutral-900">Déclarer un incident</p>
-                <p className="text-sm text-neutral-500">Signaler une non-conformité</p>
+                <p className="font-medium">Déclarer un incident</p>
+                <p className="text-sm text-muted-foreground">Signaler une non-conformité</p>
               </div>
             </Link>
 
             <button
               onClick={handleExportHACCP}
-              className="flex items-center gap-3 p-4 rounded-lg hover:bg-success-50 transition-colors border border-success-200 bg-success-50/50"
+              className="flex items-center gap-3 p-4 rounded-lg hover:bg-accent transition-colors border border-border bg-accent/50"
             >
-              <ArrowDownTrayIcon className="w-8 h-8 text-success-600" />
+              <ArrowDownTrayIcon className="w-8 h-8 text-primary" />
               <div className="text-left">
-                <p className="font-medium text-neutral-900">Export PDF HACCP</p>
-                <p className="text-sm text-neutral-500">Rapport des 30 derniers jours</p>
+                <p className="font-medium">Export PDF HACCP</p>
+                <p className="text-sm text-muted-foreground">Rapport des 30 derniers jours</p>
               </div>
             </button>
           </div>

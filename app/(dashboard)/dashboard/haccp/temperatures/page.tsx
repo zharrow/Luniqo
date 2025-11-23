@@ -79,7 +79,7 @@ export default function HaccpTemperaturesPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary-200 border-t-primary-500 mx-auto mb-4"></div>
-          <p className="text-neutral-600">Chargement...</p>
+          <p className="text-muted-foreground">Chargement...</p>
         </div>
       </div>
     )
@@ -107,8 +107,8 @@ export default function HaccpTemperaturesPage() {
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-neutral-900 mb-2">Contrôle des Températures</h1>
-          <p className="text-neutral-600">Suivi des températures HACCP</p>
+          <h1 className="text-3xl font-bold mb-2">Contrôle des Températures</h1>
+          <p className="text-muted-foreground">Suivi des températures HACCP</p>
         </div>
         <button
           onClick={() => router.push('/dashboard/haccp')}
@@ -133,8 +133,8 @@ export default function HaccpTemperaturesPage() {
               🌡️
             </div>
             <div>
-              <p className="text-sm text-neutral-600">Total</p>
-              <p className="text-2xl font-bold text-neutral-900">{stats.total}</p>
+              <p className="text-sm text-muted-foreground">Total</p>
+              <p className="text-2xl font-bold">{stats.total}</p>
             </div>
           </div>
         </div>
@@ -145,7 +145,7 @@ export default function HaccpTemperaturesPage() {
               ✅
             </div>
             <div>
-              <p className="text-sm text-neutral-600">Conformes</p>
+              <p className="text-sm text-muted-foreground">Conformes</p>
               <p className="text-2xl font-bold text-success-600">{stats.compliant}</p>
             </div>
           </div>
@@ -157,7 +157,7 @@ export default function HaccpTemperaturesPage() {
               ❌
             </div>
             <div>
-              <p className="text-sm text-neutral-600">Non conformes</p>
+              <p className="text-sm text-muted-foreground">Non conformes</p>
               <p className="text-2xl font-bold text-danger-600">{stats.nonCompliant}</p>
             </div>
           </div>
@@ -169,8 +169,8 @@ export default function HaccpTemperaturesPage() {
               📊
             </div>
             <div>
-              <p className="text-sm text-neutral-600">Taux conformité</p>
-              <p className="text-2xl font-bold text-neutral-900">
+              <p className="text-sm text-muted-foreground">Taux conformité</p>
+              <p className="text-2xl font-bold">
                 {stats.total > 0 ? Math.round((stats.compliant / stats.total) * 100) : 0}%
               </p>
             </div>
@@ -183,13 +183,13 @@ export default function HaccpTemperaturesPage() {
         <div className="flex gap-4">
           {/* Checkpoint Filter */}
           <div className="flex-1">
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
+            <label className="block text-sm font-medium mb-2">
               Point de contrôle
             </label>
             <select
               value={filterCheckpoint}
               onChange={(e) => setFilterCheckpoint(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="all">Tous les points</option>
               {Object.entries(checkpointInfo).map(([key, info]) => (
@@ -202,13 +202,13 @@ export default function HaccpTemperaturesPage() {
 
           {/* Compliance Filter */}
           <div className="flex-1">
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
+            <label className="block text-sm font-medium mb-2">
               Conformité
             </label>
             <select
               value={filterCompliance}
               onChange={(e) => setFilterCompliance(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="all">Tous</option>
               <option value="compliant">Conformes uniquement</option>
@@ -243,7 +243,7 @@ export default function HaccpTemperaturesPage() {
                     {/* Details */}
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-bold text-neutral-900">
+                        <h3 className="text-lg font-bold">
                           {info?.label || temp.checkpoint_type}
                         </h3>
                         <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
@@ -257,26 +257,26 @@ export default function HaccpTemperaturesPage() {
 
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div>
-                          <p className="text-neutral-600">Température</p>
-                          <p className="font-bold text-neutral-900 text-xl">
+                          <p className="text-muted-foreground">Température</p>
+                          <p className="font-bold text-xl">
                             {temp.temperature_value}°C
                           </p>
                         </div>
                         <div>
-                          <p className="text-neutral-600">Date</p>
-                          <p className="font-semibold text-neutral-900">
+                          <p className="text-muted-foreground">Date</p>
+                          <p className="font-semibold">
                             {new Date(temp.measured_at).toLocaleDateString('fr-FR')}
                           </p>
                         </div>
                         <div>
-                          <p className="text-neutral-600">Heure</p>
-                          <p className="font-semibold text-neutral-900">
+                          <p className="text-muted-foreground">Heure</p>
+                          <p className="font-semibold">
                             {new Date(temp.measured_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                           </p>
                         </div>
                         <div>
-                          <p className="text-neutral-600">Repas</p>
-                          <p className="font-semibold text-neutral-900">
+                          <p className="text-muted-foreground">Repas</p>
+                          <p className="font-semibold">
                             {temp.meal?.meal_type === 'Breakfast' && '🥐 Petit-déj'}
                             {temp.meal?.meal_type === 'Lunch' && '🍽️ Déjeuner'}
                             {temp.meal?.meal_type === 'Snack' && '🍪 Goûter'}
@@ -285,8 +285,8 @@ export default function HaccpTemperaturesPage() {
                       </div>
 
                       {temp.notes && (
-                        <div className="mt-3 p-3 bg-neutral-50 rounded-lg">
-                          <p className="text-sm text-neutral-700">{temp.notes}</p>
+                        <div className="mt-3 p-3 bg-muted rounded-lg">
+                          <p className="text-sm">{temp.notes}</p>
                         </div>
                       )}
                     </div>
@@ -298,11 +298,11 @@ export default function HaccpTemperaturesPage() {
         </div>
       ) : (
         <div className="card p-12 text-center">
-          <svg className="w-16 h-16 text-neutral-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
-          <p className="text-neutral-500">Aucun contrôle de température enregistré</p>
-          <p className="text-sm text-neutral-400 mt-2">
+          <p className="text-muted-foreground">Aucun contrôle de température enregistré</p>
+          <p className="text-sm text-muted-foreground/60 mt-2">
             Les employés peuvent enregistrer les températures via l'interface tablette
           </p>
         </div>

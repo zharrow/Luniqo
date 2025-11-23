@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { SparklesText } from '@/components/ui/sparkles-text'
-import { CountBadge } from '@/components/ui/Badge'
+import { CountBadge } from '@/components/ui/badge'
 import { PlusIcon, ChatBubbleLeftRightIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 
 export default function MessagesPage() {

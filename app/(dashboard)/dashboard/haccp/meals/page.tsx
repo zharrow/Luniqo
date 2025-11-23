@@ -153,7 +153,7 @@ export default function MealsPage() {
       case 'Breakfast': return 'bg-primary-50 text-primary-700 border-primary-200'
       case 'Lunch': return 'bg-secondary-50 text-secondary-700 border-secondary-200'
       case 'Snack': return 'bg-accent-50 text-accent-700 border-accent-200'
-      default: return 'bg-neutral-50 text-neutral-700 border-neutral-200'
+      default: return 'bg-muted text-muted-foreground border-border'
     }
   }
 
@@ -192,10 +192,10 @@ export default function MealsPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-neutral-900 mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+            <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
               Repas
             </h1>
-            <p className="text-neutral-600">
+            <p className="text-muted-foreground">
               Planification des repas et traçabilité alimentaire
             </p>
           </div>
@@ -213,14 +213,14 @@ export default function MealsPage() {
           <div className="flex items-center justify-between">
             <button
               onClick={previousWeek}
-              className="p-2 rounded-lg hover:bg-neutral-100 transition-colors"
+              className="p-2 rounded-lg hover:bg-muted transition-colors"
             >
-              <ChevronLeftIcon className="w-5 h-5 text-neutral-600" />
+              <ChevronLeftIcon className="w-5 h-5 text-muted-foreground" />
             </button>
 
             <div className="flex items-center gap-4">
-              <CalendarIcon className="w-5 h-5 text-neutral-500" />
-              <span className="font-semibold text-neutral-900">
+              <CalendarIcon className="w-5 h-5 text-muted-foreground" />
+              <span className="font-semibold">
                 Semaine du {format(weekStart, 'd MMMM yyyy', { locale: fr })}
               </span>
               <button
@@ -233,9 +233,9 @@ export default function MealsPage() {
 
             <button
               onClick={nextWeek}
-              className="p-2 rounded-lg hover:bg-neutral-100 transition-colors"
+              className="p-2 rounded-lg hover:bg-muted transition-colors"
             >
-              <ChevronRightIcon className="w-5 h-5 text-neutral-600" />
+              <ChevronRightIcon className="w-5 h-5 text-muted-foreground" />
             </button>
           </div>
         </div>
@@ -245,7 +245,7 @@ export default function MealsPage() {
           <table className="w-full border-collapse">
             <thead>
               <tr>
-                <th className="p-3 text-left text-sm font-medium text-neutral-500 bg-neutral-50 border border-neutral-200 sticky left-0 z-10">
+                <th className="p-3 text-left text-sm font-medium text-muted-foreground bg-muted border border-border sticky left-0 z-10">
                   Type de repas
                 </th>
                 {weekDays.map((day) => {
@@ -253,8 +253,8 @@ export default function MealsPage() {
                   return (
                     <th
                       key={day.toISOString()}
-                      className={`p-3 text-center text-sm font-medium border border-neutral-200 ${
-                        isToday ? 'bg-primary-50 text-primary-700' : 'bg-neutral-50 text-neutral-500'
+                      className={`p-3 text-center text-sm font-medium border border-border ${
+                        isToday ? 'bg-primary-50 text-primary-700' : 'bg-muted text-muted-foreground'
                       }`}
                     >
                       <div className="font-semibold">{format(day, 'EEEE', { locale: fr })}</div>
@@ -267,7 +267,7 @@ export default function MealsPage() {
             <tbody>
               {mealTypes.map((type) => (
                 <tr key={type}>
-                  <td className="p-3 font-medium text-neutral-900 bg-neutral-50 border border-neutral-200 sticky left-0 z-10">
+                  <td className="p-3 font-medium bg-muted border border-border sticky left-0 z-10">
                     <span className={`px-3 py-1 rounded-lg text-sm font-medium border ${getMealTypeColor(type)}`}>
                       {getMealTypeLabel(type)}
                     </span>
@@ -279,13 +279,13 @@ export default function MealsPage() {
                     return (
                       <td
                         key={`${day.toISOString()}-${type}`}
-                        className={`p-2 border border-neutral-200 ${isToday ? 'bg-primary-50/30' : ''}`}
+                        className={`p-2 border border-border ${isToday ? 'bg-primary-50/30' : ''}`}
                       >
                         {meal ? (
                           <div className="space-y-2">
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-neutral-900 line-clamp-2">
+                                <p className="text-sm font-medium line-clamp-2">
                                   {meal.menu || 'Menu non défini'}
                                 </p>
                                 {meal.allergens_present && (
@@ -301,7 +301,7 @@ export default function MealsPage() {
                                   className={`p-1 rounded transition-colors ${
                                     meal.is_validated
                                       ? 'text-success-600 hover:bg-success-50'
-                                      : 'text-neutral-400 hover:bg-neutral-100'
+                                      : 'text-muted-foreground/60 hover:bg-muted'
                                   }`}
                                   title={meal.is_validated ? 'Validé' : 'Non validé'}
                                 >
@@ -309,10 +309,10 @@ export default function MealsPage() {
                                 </button>
                                 <button
                                   onClick={() => openEditModal(meal)}
-                                  className="p-1 rounded hover:bg-neutral-100 transition-colors"
+                                  className="p-1 rounded hover:bg-muted transition-colors"
                                   title="Modifier"
                                 >
-                                  <PencilIcon className="w-3 h-3 text-neutral-600" />
+                                  <PencilIcon className="w-3 h-3 text-muted-foreground" />
                                 </button>
                                 <button
                                   onClick={() => handleDelete(meal)}
@@ -327,7 +327,7 @@ export default function MealsPage() {
                         ) : (
                           <button
                             onClick={() => openCreateModal(day, type)}
-                            className="w-full p-3 rounded-lg border-2 border-dashed border-neutral-200 hover:border-primary-300 hover:bg-primary-50 transition-colors text-sm text-neutral-400 hover:text-primary-600"
+                            className="w-full p-3 rounded-lg border-2 border-dashed border-border hover:border-primary-300 hover:bg-primary-50 transition-colors text-sm text-muted-foreground/60 hover:text-primary-600"
                           >
                             + Ajouter
                           </button>
@@ -347,33 +347,33 @@ export default function MealsPage() {
             <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setShowModal(false)}></div>
             <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
               <div className="card w-full max-w-md p-6 animate-slide-up max-h-[90vh] overflow-y-auto">
-                <h2 className="text-xl font-bold text-neutral-900 mb-4">
+                <h2 className="text-xl font-bold mb-4">
                   {editingMeal ? 'Modifier le repas' : 'Nouveau repas'}
                 </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-1">
+                      <label className="block text-sm font-medium mb-1">
                         Date *
                       </label>
                       <input
                         type="date"
                         value={formData.date}
                         onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                        className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                         required
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-1">
+                      <label className="block text-sm font-medium mb-1">
                         Type *
                       </label>
                       <select
                         value={formData.type}
                         onChange={(e) => setFormData({ ...formData, type: e.target.value as MealType })}
-                        className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                         required
                       >
                         <option value="Breakfast">Petit-déjeuner</option>
@@ -384,42 +384,42 @@ export default function MealsPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    <label className="block text-sm font-medium mb-1">
                       Menu
                     </label>
                     <textarea
                       value={formData.menu}
                       onChange={(e) => setFormData({ ...formData, menu: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                       placeholder="Décrivez le menu du repas"
                       rows={4}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    <label className="block text-sm font-medium mb-1">
                       Allergènes présents
                     </label>
                     <input
                       type="text"
                       value={formData.allergens_present}
                       onChange={(e) => setFormData({ ...formData, allergens_present: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                       placeholder="ex: Lactose, Gluten, Oeufs"
                     />
-                    <p className="text-xs text-neutral-500 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       Séparez les allergènes par des virgules
                     </p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    <label className="block text-sm font-medium mb-1">
                       Responsable *
                     </label>
                     <select
                       value={formData.responsible_id}
                       onChange={(e) => setFormData({ ...formData, responsible_id: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                       required
                     >
                       <option value="">Sélectionner un responsable</option>
@@ -435,7 +435,7 @@ export default function MealsPage() {
                     <button
                       type="button"
                       onClick={() => setShowModal(false)}
-                      className="flex-1 px-4 py-2 rounded-lg border border-neutral-200 text-neutral-700 hover:bg-neutral-50"
+                      className="flex-1 px-4 py-2 rounded-lg border border-border hover:bg-muted"
                     >
                       Annuler
                     </button>

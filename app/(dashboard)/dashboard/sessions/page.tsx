@@ -14,7 +14,7 @@ import {
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import Badge from '@/components/ui/Badge'
+import { Badge } from '@/components/ui/badge'
 import { SparklesText } from '@/components/ui/sparkles-text'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'

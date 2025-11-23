@@ -18,7 +18,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
-import Badge from '@/components/ui/Badge'
+import { Badge } from '@/components/ui/badge'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -179,10 +179,10 @@ export default function UsersPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-neutral-900 mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+            <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
               Employés
             </h1>
-            <p className="text-neutral-600">
+            <p className="text-muted-foreground">
               Gérez vos employés et leurs accès aux pièces
             </p>
           </div>
@@ -198,16 +198,16 @@ export default function UsersPage() {
         {/* Users grid */}
         {users.length === 0 ? (
           <div className="card p-12 text-center">
-            <UserGroupIcon className="w-16 h-16 text-neutral-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-neutral-900 mb-2">
+            <UserGroupIcon className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+            <h3 className="text-lg font-medium mb-2">
               Aucun employé
             </h3>
-            <p className="text-neutral-600 mb-4">
+            <p className="text-muted-foreground mb-4">
               Commencez par créer votre premier employé
             </p>
-            <button onClick={openCreateModal} className="btn btn-primary">
+            <Button onClick={openCreateModal}>
               Créer un employé
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -306,90 +306,83 @@ export default function UsersPage() {
             <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setShowModal(false)}></div>
             <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
               <div className="card w-full max-w-2xl p-6 animate-slide-up max-h-[90vh] overflow-y-auto">
-                <h2 className="text-xl font-bold text-neutral-900 mb-4">
+                <h2 className="text-xl font-bold mb-4">
                   {editingUser ? 'Modifier l\'employé' : 'Nouvel employé'}
                 </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-1">
+                      <label className="block text-sm font-medium mb-1">
                         Prénom *
                       </label>
-                      <input
+                      <Input
                         type="text"
                         value={formData.first_name}
                         onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                        className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-1">
+                      <label className="block text-sm font-medium mb-1">
                         Nom *
                       </label>
-                      <input
+                      <Input
                         type="text"
                         value={formData.last_name}
                         onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                        className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
                         required
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    <label className="block text-sm font-medium mb-1">
                       Email
                     </label>
-                    <input
+                    <Input
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
                       placeholder="optionnel"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    <label className="block text-sm font-medium mb-1">
                       Code PIN {!editingUser && '*'} (4-6 chiffres)
                     </label>
-                    <input
+                    <Input
                       type="text"
                       value={formData.pin}
                       onChange={(e) => setFormData({ ...formData, pin: e.target.value.replace(/\D/g, '').slice(0, 6) })}
-                      className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
                       placeholder={editingUser ? 'Laisser vide pour ne pas modifier' : '1234'}
                       required={!editingUser}
                       maxLength={6}
-                      pattern="[0-9]{4,6}"
                     />
-                    <p className="text-xs text-neutral-500 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       {editingUser ? 'Laisser vide pour conserver le PIN actuel' : 'Le code PIN sera utilisé pour la connexion sur tablette'}
                     </p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">
+                    <label className="block text-sm font-medium mb-2">
                       Accès aux pièces
                     </label>
                     {rooms.length === 0 ? (
-                      <p className="text-sm text-neutral-500">Aucune pièce disponible</p>
+                      <p className="text-sm text-muted-foreground">Aucune pièce disponible</p>
                     ) : (
-                      <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 border border-neutral-200 rounded-lg">
+                      <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 border border-border rounded-lg">
                         {rooms.map((room) => (
                           <label
                             key={room.id}
-                            className="flex items-center gap-2 p-2 rounded hover:bg-neutral-50 cursor-pointer"
+                            className="flex items-center gap-2 p-2 rounded hover:bg-muted cursor-pointer"
                           >
-                            <input
-                              type="checkbox"
+                            <Checkbox
                               checked={(formData.room_ids || []).includes(room.id)}
-                              onChange={() => toggleRoom(room.id)}
-                              className="w-4 h-4 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
+                              onCheckedChange={() => toggleRoom(room.id)}
                             />
-                            <span className="text-sm text-neutral-700">{room.name}</span>
+                            <span className="text-sm">{room.name}</span>
                           </label>
                         ))}
                       </div>
@@ -397,19 +390,20 @@ export default function UsersPage() {
                   </div>
 
                   <div className="flex gap-3 pt-4">
-                    <button
+                    <Button
                       type="button"
+                      variant="outline"
                       onClick={() => setShowModal(false)}
-                      className="flex-1 px-4 py-2 rounded-lg border border-neutral-200 text-neutral-700 hover:bg-neutral-50"
+                      className="flex-1"
                     >
                       Annuler
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="submit"
-                      className="flex-1 btn btn-primary"
+                      className="flex-1"
                     >
                       {editingUser ? 'Modifier' : 'Créer'}
-                    </button>
+                    </Button>
                   </div>
                 </form>
               </div>

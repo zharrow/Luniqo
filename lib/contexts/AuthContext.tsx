@@ -74,16 +74,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Check if Admin
         const { data: admin, error: adminError } = await supabase
           .from('admin')
-          .select('*, enterprise:enterprise_id(*)')
+          .select('*')
           .eq('email', userEmail)
           .eq('is_active', true)
           .single()
 
         if (admin && !adminError) {
+          // Fetch enterprise linked to this admin (enterprise.admin_id = admin.id)
+          const { data: enterprise } = await supabase
+            .from('enterprise')
+            .select('*')
+            .eq('admin_id', (admin as any).id)
+            .single()
+
           setSession({
             user: admin as any,
             role: 'Admin',
-            enterprise: (admin as any).enterprise
+            enterprise: (enterprise as any) || undefined
           })
           setIsLoading(false)
           return

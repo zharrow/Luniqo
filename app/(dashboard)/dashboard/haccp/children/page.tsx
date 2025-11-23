@@ -15,7 +15,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
-import Badge from '@/components/ui/Badge'
+import { Badge } from '@/components/ui/badge'
 
 export default function ChildrenPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Admin'])
@@ -129,7 +129,7 @@ export default function ChildrenPage() {
       case 'Babies': return 'bg-primary-50 text-primary-700 border-primary-200'
       case 'Toddlers': return 'bg-secondary-50 text-secondary-700 border-secondary-200'
       case 'Preschoolers': return 'bg-accent-50 text-accent-700 border-accent-200'
-      default: return 'bg-neutral-50 text-neutral-700 border-neutral-200'
+      default: return 'bg-muted text-muted-foreground border-border'
     }
   }
 
@@ -191,16 +191,16 @@ export default function ChildrenPage() {
         {/* Children grid */}
         {children.length === 0 ? (
           <div className="card p-12 text-center">
-            <UserGroupIcon className="w-16 h-16 text-neutral-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-neutral-900 mb-2">
+            <UserGroupIcon className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+            <h3 className="text-lg font-medium mb-2">
               Aucun enfant inscrit
             </h3>
-            <p className="text-neutral-600 mb-4">
+            <p className="text-muted-foreground mb-4">
               Commencez par inscrire votre premier enfant
             </p>
-            <button onClick={openCreateModal} className="btn btn-primary">
+            <Button onClick={openCreateModal}>
               Inscrire un enfant
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -217,10 +217,10 @@ export default function ChildrenPage() {
                       </span>
                     </div>
                     <div className="min-w-0">
-                      <h3 className="font-semibold text-neutral-900 truncate">
+                      <h3 className="font-semibold truncate">
                         {child.first_name} {child.last_name}
                       </h3>
-                      <p className="text-sm text-neutral-500">
+                      <p className="text-sm text-muted-foreground">
                         {calculateAge(child.birth_date)}
                       </p>
                     </div>
@@ -228,10 +228,10 @@ export default function ChildrenPage() {
                   <div className="flex gap-2 flex-shrink-0">
                     <button
                       onClick={() => openEditModal(child)}
-                      className="p-2 rounded-lg hover:bg-neutral-100 transition-colors"
+                      className="p-2 rounded-lg hover:bg-muted transition-colors"
                       title="Modifier"
                     >
-                      <PencilIcon className="w-4 h-4 text-neutral-600" />
+                      <PencilIcon className="w-4 h-4 text-muted-foreground" />
                     </button>
                     <button
                       onClick={() => handleDelete(child)}
@@ -245,7 +245,7 @@ export default function ChildrenPage() {
 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-neutral-500">Section</span>
+                    <span className="text-sm text-muted-foreground">Section</span>
                     <span className={`px-2 py-1 rounded text-xs font-medium border ${getSectionColor(child.section)}`}>
                       {getSectionLabel(child.section)}
                     </span>
@@ -271,7 +271,7 @@ export default function ChildrenPage() {
                   )}
 
                   {!child.is_active && (
-                    <div className="pt-2 border-t border-neutral-100">
+                    <div className="pt-2 border-t border-border">
                       <span className="text-xs text-danger-600 font-medium">Désactivé</span>
                     </div>
                   )}
@@ -287,59 +287,59 @@ export default function ChildrenPage() {
             <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setShowModal(false)}></div>
             <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
               <div className="card w-full max-w-md p-6 animate-slide-up max-h-[90vh] overflow-y-auto">
-                <h2 className="text-xl font-bold text-neutral-900 mb-4">
+                <h2 className="text-xl font-bold mb-4">
                   {editingChild ? 'Modifier l\'enfant' : 'Nouvel enfant'}
                 </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-1">
+                      <label className="block text-sm font-medium mb-1">
                         Prénom *
                       </label>
                       <input
                         type="text"
                         value={formData.first_name}
                         onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                        className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-1">
+                      <label className="block text-sm font-medium mb-1">
                         Nom *
                       </label>
                       <input
                         type="text"
                         value={formData.last_name}
                         onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                        className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                         required
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    <label className="block text-sm font-medium mb-1">
                       Date de naissance *
                     </label>
                     <input
                       type="date"
                       value={formData.birth_date}
                       onChange={(e) => setFormData({ ...formData, birth_date: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    <label className="block text-sm font-medium mb-1">
                       Section *
                     </label>
                     <select
                       value={formData.section}
                       onChange={(e) => setFormData({ ...formData, section: e.target.value as Section })}
-                      className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                       required
                     >
                       <option value="Babies">Bébés</option>
@@ -349,29 +349,29 @@ export default function ChildrenPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    <label className="block text-sm font-medium mb-1">
                       Allergies
                     </label>
                     <input
                       type="text"
                       value={formData.allergies}
                       onChange={(e) => setFormData({ ...formData, allergies: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                       placeholder="ex: Arachides, Lactose, Oeufs"
                     />
-                    <p className="text-xs text-neutral-500 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       Séparez les allergies par des virgules
                     </p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    <label className="block text-sm font-medium mb-1">
                       Restrictions alimentaires
                     </label>
                     <textarea
                       value={formData.dietary_restrictions}
                       onChange={(e) => setFormData({ ...formData, dietary_restrictions: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                       placeholder="ex: Végétarien, Sans gluten"
                       rows={2}
                     />
@@ -381,7 +381,7 @@ export default function ChildrenPage() {
                     <button
                       type="button"
                       onClick={() => setShowModal(false)}
-                      className="flex-1 px-4 py-2 rounded-lg border border-neutral-200 text-neutral-700 hover:bg-neutral-50"
+                      className="flex-1 px-4 py-2 rounded-lg border border-border hover:bg-muted"
                     >
                       Annuler
                     </button>

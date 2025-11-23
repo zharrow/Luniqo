@@ -118,16 +118,23 @@ export async function loginWithEmail(email: string, password: string): Promise<A
     // Check if Admin
     const { data: admin, error: adminError } = await supabase
       .from('admin')
-      .select('*, enterprise!admin_id(*)')
+      .select('*')
       .eq('email', userEmail)
       .eq('is_active', true)
       .single()
 
     if (admin && !adminError) {
+      // Fetch enterprise linked to this admin
+      const { data: enterprise } = await supabase
+        .from('enterprise')
+        .select('*')
+        .eq('admin_id', (admin as any).id)
+        .single()
+
       return {
         success: true,
         data: admin as any,
-        enterprise: (admin as any).enterprise,
+        enterprise: (enterprise as any) || undefined,
         role: 'Admin'
       }
     }

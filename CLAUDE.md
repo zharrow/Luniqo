@@ -2,6 +2,14 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 📚 Documentation Structure
+
+**IMPORTANT**: At the start of each new conversation, read these documents in order:
+
+1. **CLAUDE.md** (this file) - Project architecture and technical guidelines
+2. **TODO.md** - Current tasks, bugs, and roadmap
+3. **DESIGN-SYSTEM.md** - Complete design system, components catalog, and UI patterns
+
 ## Project Overview
 
 **cLean** is a modern childcare management application with HACCP traceability, built with Next.js 16 and Supabase. It serves French-speaking users (crèches) with a soft pastel design system.
@@ -38,9 +46,10 @@ The application has 3 distinct authentication layers:
 
 2. **Admin (Childcare Manager)**
    - Auth: Supabase Auth (email/password)
-   - Table: `admin` (linked to `enterprise`)
+   - Table: `admin` (linked to `enterprise` via `enterprise.admin_id`)
    - Access: Full back-office (`/dashboard`)
    - Manages one childcare facility (1 admin = 1 enterprise)
+   - **First login flow**: Admin without enterprise is redirected to `/setup` to create their enterprise
 
 3. **User (Employee)**
    - Auth: 4-6 digit PIN code (bcrypt hashed)
@@ -59,8 +68,10 @@ The app uses Next.js App Router with route groups:
 - `(dashboard)/` - Protected admin/developer routes
   - `/analytics` - Developer-only analytics
   - `/dashboard` - Admin dashboard and all management pages
+  - `/dashboard/profil` - Admin profile with enterprise management
   - `/dashboard/haccp/*` - HACCP module pages
   - `/dashboard/rooms`, `/dashboard/users`, etc.
+  - `/setup` - First-time enterprise creation (admins only)
 
 - `(tablet)/` - Tablet interface for employees
   - `/tablet/login` - Employee PIN login
@@ -95,7 +106,7 @@ import { useAuth, useRequireAuth } from '@/lib/contexts/AuthContext'
 const { session, isLoading } = useRequireAuth(['Admin']) // or ['Developer'] or ['User']
 
 // Login methods
-const { loginWithEmail, loginWithPin, logout } = useAuth()
+const { loginWithEmail, loginWithPin, logout, refreshSession } = useAuth()
 ```
 
 ### Enterprise Data Isolation
@@ -114,6 +125,42 @@ const { data } = await supabase.from('room').select('*')
 ```
 
 The only exception is the Developer role, which can query across enterprises for analytics.
+
+### Admin-Enterprise Relationship
+
+**IMPORTANT**: The relationship between `admin` and `enterprise` is:
+- `enterprise.admin_id` references `admin.id` (NOT the other way around)
+- One admin can have ZERO or ONE enterprise
+- To fetch an admin's enterprise:
+
+```typescript
+// ✅ CORRECT
+const { data: enterprise } = await supabase
+  .from('enterprise')
+  .select('*')
+  .eq('admin_id', admin.id)
+  .single()
+
+// ❌ WRONG - admin table has no enterprise_id column
+const { data: admin } = await supabase
+  .from('admin')
+  .select('*, enterprise!enterprise_id(*)')
+```
+
+### First Login Flow (New Admins)
+
+When a developer creates a new admin account:
+
+1. Developer provides credentials to client
+2. Client logs in → `AuthContext` checks for enterprise
+3. **If no enterprise** → Middleware redirects to `/setup`
+4. Admin fills enterprise form → Creates enterprise with `admin_id`
+5. Session refreshes → Redirect to `/dashboard`
+
+Key files:
+- `lib/supabase/middleware.ts` - Auto-redirect logic
+- `app/(dashboard)/setup/page.tsx` - Enterprise creation page
+- `components/EnterpriseSetupForm.tsx` - Form component
 
 ## Database Schema
 
@@ -139,12 +186,14 @@ Schema is located in `supabase/migrations/00_schema.sql`.
 
 ```
 components/
-  ui/           - shadcn/ui components (button, card, etc.)
-  layout/       - Layout components (Header, Sidebar, etc.)
+  ui/           - shadcn/ui components (button, card, badge, etc.)
+  layout/       - Layout components (Header, AppSidebar, DashboardLayout)
   shared/       - Shared components across modules
   analytics/    - Analytics-specific components
   theme/        - Theme-related components
 ```
+
+**See DESIGN-SYSTEM.md for complete component catalog and usage patterns.**
 
 ### Type Definitions
 
@@ -157,17 +206,15 @@ types/
 
 ### Design System
 
-Tailwind CSS v4 with pastel color palette:
+**See DESIGN-SYSTEM.md for complete design guidelines.**
 
+Quick reference:
 - **Primary** (Blue): `#5a9dc9` - Cleanliness, serenity
 - **Secondary** (Pink): `#f4c2c2` - Warmth, childcare
 - **Accent** (Yellow): `#ffe5b4` - Positive actions
 - **Success** (Mint): `#b5ead7` - HACCP compliance
 
-Custom CSS classes in `app/globals.css`:
-- `.card` - Card with subtle shadow
-- `.btn`, `.btn-primary`, `.btn-secondary` - Button variants
-- `.tablet-mode` - XXL buttons and high contrast for tablet interface
+Tailwind CSS v4 with pastel palette. Use shadcn/ui components for consistency.
 
 ### Environment Variables
 
@@ -187,15 +234,19 @@ NODE_ENV=development
 
 2. **Context Providers**: The app uses two context providers wrapped in `components/Providers.tsx`:
    - `ThemeProvider` - Theme management
-   - `AuthProvider` - Authentication state
+   - `AuthProvider` - Authentication state (with `refreshSession()` method)
 
-3. **Middleware**: Uses `@supabase/ssr` for session management. See `middleware.ts` and `lib/supabase/middleware.ts`.
+3. **Middleware**: Uses `@supabase/ssr` for session management. Automatically redirects admins without enterprise to `/setup`. See `middleware.ts` and `lib/supabase/middleware.ts`.
 
-4. **TypeScript**: Strict mode enabled. Path alias `@/*` maps to project root.
+4. **TypeScript**: Strict mode enabled. Path alias `@/*` maps to project root. Use `as unknown as Type` or `as any` for complex Supabase types if needed.
 
 5. **React & Next.js Versions**: Uses React 19 and Next.js 16 (App Router) - be aware of breaking changes from earlier versions.
 
 6. **bcryptjs for PIN Hashing**: Employee PINs are hashed with bcrypt before storage. Always use `verifyPin()` for comparison.
+
+7. **Sidebar Navigation**: The `isActive` logic for `/dashboard` must check exact equality to avoid highlighting on all sub-routes. See `components/layout/AppSidebar.tsx`.
+
+8. **Select Components**: Never use `value=""` in shadcn Select components. Use `value="none"` instead and convert to empty string in handlers. See DESIGN-SYSTEM.md for pattern.
 
 ## Database Setup
 
@@ -214,3 +265,36 @@ When adding features that involve database operations:
 2. Test with different role types (Developer, Admin, User)
 3. Check the appropriate authentication method is used
 4. Ensure tablet interface uses large touch targets when in tablet context
+5. Use shadcn/ui components (check DESIGN-SYSTEM.md first)
+6. Follow responsive patterns (mobile-first)
+7. Add loading states and empty states
+8. Include success/error messages
+
+## UI Component Checklist
+
+When creating a new page:
+
+- [ ] Use `DashboardLayout` or `DeveloperLayout`
+- [ ] Protect with `useRequireAuth(['Admin'])` or appropriate role
+- [ ] Filter all queries by `enterprise_id`
+- [ ] Add loading state (`isLoading` + `LoadingSpinner`)
+- [ ] Add empty state (`EmptyState` component)
+- [ ] Include success/error messages (Card with colored bg)
+- [ ] Use shadcn/ui components (Button, Card, Input, Select, Badge, etc.)
+- [ ] Follow responsive grid pattern (`grid-cols-1 md:grid-cols-2 lg:grid-cols-3`)
+- [ ] Add Heroicons for visual clarity
+- [ ] Use pastel color palette
+
+**Refer to DESIGN-SYSTEM.md for detailed patterns and examples.**
+
+## Recent Updates
+
+- ✅ First login flow for new admins with enterprise creation
+- ✅ Profile page with modern shadcn/ui components
+- ✅ Badge component migrated to shadcn standard with extended variants
+- ✅ Sidebar `isActive` logic fixed for `/dashboard` route
+- ✅ Select component pattern for empty values (`"none"` instead of `""`)
+
+---
+
+**Last updated**: 2025-11-19

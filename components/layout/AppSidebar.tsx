@@ -113,7 +113,10 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {filteredMainNav.map((item) => {
-                  const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
+                  // For /dashboard, only match exact path. For others, match path and subpaths
+                  const isActive = item.href === '/dashboard'
+                    ? pathname === '/dashboard'
+                    : pathname === item.href || pathname?.startsWith(item.href + '/')
                   const Icon = item.icon
 
                   return (
@@ -146,7 +149,10 @@ export function AppSidebar() {
               <SidebarGroupContent>
                 <SidebarMenu>
                   {filteredOperationsNav.map((item) => {
-                    const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
+                    // For /dashboard, only match exact path. For others, match path and subpaths
+                    const isActive = item.href === '/dashboard'
+                      ? pathname === '/dashboard'
+                      : pathname === item.href || pathname?.startsWith(item.href + '/')
                     const Icon = item.icon
 
                     return (
@@ -180,7 +186,10 @@ export function AppSidebar() {
               <SidebarGroupContent>
                 <SidebarMenu>
                   {filteredCommunicationNav.map((item) => {
-                    const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
+                    // For /dashboard, only match exact path. For others, match path and subpaths
+                    const isActive = item.href === '/dashboard'
+                      ? pathname === '/dashboard'
+                      : pathname === item.href || pathname?.startsWith(item.href + '/')
                     const Icon = item.icon
 
                     return (
@@ -209,10 +218,10 @@ export function AppSidebar() {
       <SidebarFooter className="border-t border-neutral-200 dark:border-dark-300">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Paramètres">
-              <Link href="/dashboard/settings">
+            <SidebarMenuButton asChild tooltip="Mon Profil">
+              <Link href="/dashboard/profil">
                 <Cog6ToothIcon className="w-5 h-5" />
-                <span>Paramètres</span>
+                <span>Mon Profil</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

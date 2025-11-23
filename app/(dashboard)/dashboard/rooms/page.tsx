@@ -14,7 +14,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import Badge from '@/components/ui/Badge'
+import { Badge } from '@/components/ui/badge'
 import { ShineBorder } from '@/components/ui/shine-border'
 import {
   DropdownMenu,
@@ -134,16 +134,16 @@ export default function RoomsPage() {
         {/* Rooms grid */}
         {rooms.length === 0 ? (
           <div className="card p-12 text-center">
-            <BuildingOfficeIcon className="w-16 h-16 text-neutral-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-neutral-900 mb-2">
+            <BuildingOfficeIcon className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+            <h3 className="text-lg font-medium mb-2">
               Aucune pièce
             </h3>
-            <p className="text-neutral-600 mb-4">
+            <p className="text-muted-foreground mb-4">
               Commencez par créer votre première pièce
             </p>
-            <button onClick={openCreateModal} className="btn btn-primary">
+            <Button onClick={openCreateModal}>
               Créer une pièce
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

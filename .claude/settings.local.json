@@ -5,7 +5,8 @@
       "Bash(npm run build:*)",
       "Bash(git log:*)",
       "Bash(pnpm dlx:*)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

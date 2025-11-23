@@ -80,7 +80,7 @@ export default function HistoryPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary-200 border-t-primary-500 mx-auto mb-4"></div>
-          <p className="text-neutral-600">Chargement...</p>
+          <p className="text-muted-foreground">Chargement...</p>
         </div>
       </div>
     )
@@ -101,8 +101,8 @@ export default function HistoryPage() {
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-neutral-900 mb-2">Historique & Rapports</h1>
-          <p className="text-neutral-600">Suivi des sessions de nettoyage</p>
+          <h1 className="text-3xl font-bold mb-2">Historique & Rapports</h1>
+          <p className="text-muted-foreground">Suivi des sessions de nettoyage</p>
         </div>
         <button
           onClick={() => router.push('/dashboard')}
@@ -127,8 +127,8 @@ export default function HistoryPage() {
               📋
             </div>
             <div>
-              <p className="text-sm text-neutral-600">Total sessions</p>
-              <p className="text-2xl font-bold text-neutral-900">{stats.total}</p>
+              <p className="text-sm text-muted-foreground">Total sessions</p>
+              <p className="text-2xl font-bold">{stats.total}</p>
             </div>
           </div>
         </div>
@@ -139,7 +139,7 @@ export default function HistoryPage() {
               ✅
             </div>
             <div>
-              <p className="text-sm text-neutral-600">Complétées</p>
+              <p className="text-sm text-muted-foreground">Complétées</p>
               <p className="text-2xl font-bold text-success-600">{stats.completed}</p>
             </div>
           </div>
@@ -151,7 +151,7 @@ export default function HistoryPage() {
               🔄
             </div>
             <div>
-              <p className="text-sm text-neutral-600">En cours</p>
+              <p className="text-sm text-muted-foreground">En cours</p>
               <p className="text-2xl font-bold text-primary-600">{stats.inProgress}</p>
             </div>
           </div>
@@ -163,7 +163,7 @@ export default function HistoryPage() {
               ⚠️
             </div>
             <div>
-              <p className="text-sm text-neutral-600">Incomplètes</p>
+              <p className="text-sm text-muted-foreground">Incomplètes</p>
               <p className="text-2xl font-bold text-warning-600">{stats.incomplete}</p>
             </div>
           </div>
@@ -175,8 +175,8 @@ export default function HistoryPage() {
               📊
             </div>
             <div>
-              <p className="text-sm text-neutral-600">Taux moyen</p>
-              <p className="text-2xl font-bold text-neutral-900">{stats.avgCompletion}%</p>
+              <p className="text-sm text-muted-foreground">Taux moyen</p>
+              <p className="text-2xl font-bold">{stats.avgCompletion}%</p>
             </div>
           </div>
         </div>
@@ -186,13 +186,13 @@ export default function HistoryPage() {
       <div className="card p-6 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
+            <label className="block text-sm font-medium mb-2">
               Statut
             </label>
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="all">Tous les statuts</option>
               <option value="COMPLETEE">Complétée</option>
@@ -202,26 +202,26 @@ export default function HistoryPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
+            <label className="block text-sm font-medium mb-2">
               Date début
             </label>
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
+            <label className="block text-sm font-medium mb-2">
               Date fin
             </label>
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
         </div>
@@ -239,7 +239,7 @@ export default function HistoryPage() {
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-lg font-bold text-neutral-900">
+                    <h3 className="text-lg font-bold">
                       {new Date(session.date).toLocaleDateString('fr-FR', {
                         weekday: 'long',
                         day: 'numeric',
@@ -258,13 +258,13 @@ export default function HistoryPage() {
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-6 text-sm text-neutral-600">
+                  <div className="flex items-center gap-6 text-sm text-muted-foreground">
                     <span>{session.completed_tasks} / {session.total_tasks} tâches</span>
                     <span>{session.completion_percentage}% complété</span>
                   </div>
 
                   {/* Progress Bar */}
-                  <div className="mt-3 w-full h-2 bg-neutral-200 rounded-full overflow-hidden">
+                  <div className="mt-3 w-full h-2 bg-muted rounded-full overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-r from-primary-500 to-success-500 transition-all"
                       style={{ width: `${session.completion_percentage}%` }}
@@ -283,10 +283,10 @@ export default function HistoryPage() {
         </div>
       ) : (
         <div className="card p-12 text-center">
-          <svg className="w-16 h-16 text-neutral-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
-          <p className="text-neutral-500">Aucune session trouvée pour ces critères</p>
+          <p className="text-muted-foreground">Aucune session trouvée pour ces critères</p>
         </div>
       )}
     </div>

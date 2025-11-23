@@ -40,6 +40,7 @@ export async function updateSession(request: NextRequest) {
   const isPublicRoute =
     request.nextUrl.pathname.startsWith('/login') ||
     request.nextUrl.pathname.startsWith('/auth')
+  const isSetupRoute = request.nextUrl.pathname === '/setup'
 
   // Only redirect to login if:
   // - No Supabase Auth user
@@ -50,6 +51,37 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
+  }
+
+  // Check if user is Admin without enterprise and redirect to setup
+  if (user && !isTabletRoute && !isPublicRoute && !isSetupRoute) {
+    const userEmail = user.email
+
+    if (userEmail) {
+      // Check if Admin
+      const { data: admin } = await supabase
+        .from('admin')
+        .select('id')
+        .eq('email', userEmail)
+        .eq('is_active', true)
+        .single()
+
+      if (admin) {
+        // Check if enterprise exists for this admin
+        const { data: enterprise } = await supabase
+          .from('enterprise')
+          .select('id')
+          .eq('admin_id', admin.id)
+          .single()
+
+        // Redirect to setup if no enterprise
+        if (!enterprise) {
+          const url = request.nextUrl.clone()
+          url.pathname = '/setup'
+          return NextResponse.redirect(url)
+        }
+      }
+    }
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
