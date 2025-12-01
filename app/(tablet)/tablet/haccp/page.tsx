@@ -35,10 +35,10 @@ export default function TabletHaccpPage() {
       {/* Header */}
       <div className="flex justify-between items-center mb-12">
         <div>
-          <h1 className="text-5xl font-bold text-neutral-900 mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+          <h1 className="text-5xl font-bold mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
             HACCP
           </h1>
-          <p className="text-2xl text-neutral-600">Traçabilité alimentaire</p>
+          <p className="text-2xl text-muted-foreground">Traçabilité alimentaire</p>
         </div>
         <button
           onClick={() => router.push('/tablet/home')}
@@ -77,12 +77,12 @@ export default function TabletHaccpPage() {
           </div>
 
           {/* Title */}
-          <h2 className="text-4xl font-bold text-neutral-900 mb-4 text-center group-hover:text-success-500 transition-colors">
+          <h2 className="text-4xl font-bold mb-4 text-center group-hover:text-success-500 transition-colors">
             Repas
           </h2>
 
           {/* Description */}
-          <p className="text-xl text-neutral-600 text-center mb-6">
+          <p className="text-xl text-muted-foreground text-center mb-6">
             Enregistrer les repas servis aux enfants
           </p>
 
@@ -118,12 +118,12 @@ export default function TabletHaccpPage() {
           </div>
 
           {/* Title */}
-          <h2 className="text-4xl font-bold text-neutral-900 mb-4 text-center group-hover:text-danger-500 transition-colors">
+          <h2 className="text-4xl font-bold mb-4 text-center group-hover:text-danger-500 transition-colors">
             Températures
           </h2>
 
           {/* Description */}
-          <p className="text-xl text-neutral-600 text-center mb-6">
+          <p className="text-xl text-muted-foreground text-center mb-6">
             Contrôler les températures des repas
           </p>
 
@@ -140,7 +140,7 @@ export default function TabletHaccpPage() {
       {/* Enterprise Info */}
       {session?.enterprise && (
         <div className="mt-12 text-center">
-          <p className="text-xl text-neutral-500">
+          <p className="text-xl text-muted-foreground">
             {session.enterprise.name}
           </p>
         </div>

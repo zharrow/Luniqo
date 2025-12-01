@@ -132,7 +132,7 @@ export default function ConversationPage({ params }: PageProps) {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary-200 border-t-primary-500 mx-auto mb-4"></div>
-          <p className="text-neutral-600">Chargement...</p>
+          <p className="text-muted-foreground">Chargement...</p>
         </div>
       </div>
     )
@@ -156,7 +156,7 @@ export default function ConversationPage({ params }: PageProps) {
   return (
     <div className="flex flex-col h-screen">
       {/* Header */}
-      <div className="bg-white border-b border-neutral-200 px-6 py-4">
+      <div className="bg-card border-b border-border px-6 py-4">
         <div className="container mx-auto flex items-center gap-4">
           <button
             onClick={() => router.push('/dashboard/messages')}
@@ -177,7 +177,7 @@ export default function ConversationPage({ params }: PageProps) {
           </div>
 
           <div>
-            <h1 className="text-xl font-bold text-neutral-900">
+            <h1 className="text-xl font-bold">
               {(() => {
                 if (otherParty && 'first_name' in otherParty && 'last_name' in otherParty) {
                   const admin = otherParty as { first_name?: string; last_name?: string; email: string }
@@ -188,7 +188,7 @@ export default function ConversationPage({ params }: PageProps) {
                 return otherParty?.email || 'Utilisateur inconnu'
               })()}
             </h1>
-            {otherParty?.email && <p className="text-sm text-neutral-500">{otherParty.email}</p>}
+            {otherParty?.email && <p className="text-sm text-muted-foreground">{otherParty.email}</p>}
           </div>
         </div>
       </div>
@@ -203,12 +203,12 @@ export default function ConversationPage({ params }: PageProps) {
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto bg-neutral-50 px-6 py-6">
+      <div className="flex-1 overflow-y-auto bg-muted px-6 py-6">
         <div className="container mx-auto max-w-4xl space-y-4">
           {messages.length === 0 ? (
             <div className="text-center py-12">
               <svg
-                className="w-16 h-16 mx-auto mb-4 text-neutral-300"
+                className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -220,8 +220,8 @@ export default function ConversationPage({ params }: PageProps) {
                   d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
                 />
               </svg>
-              <p className="text-neutral-500">Aucun message pour le moment</p>
-              <p className="text-neutral-400 text-sm mt-2">Envoyez le premier message ci-dessous</p>
+              <p className="text-muted-foreground">Aucun message pour le moment</p>
+              <p className="text-muted-foreground/60 text-sm mt-2">Envoyez le premier message ci-dessous</p>
             </div>
           ) : (
             messages.map((message) => {
@@ -232,13 +232,13 @@ export default function ConversationPage({ params }: PageProps) {
                     className={`max-w-lg px-4 py-3 rounded-2xl ${
                       isMe
                         ? 'bg-primary-500 text-white rounded-br-sm'
-                        : 'bg-white text-neutral-900 rounded-bl-sm shadow-sm'
+                        : 'bg-card rounded-bl-sm shadow-sm'
                     }`}
                   >
                     <p className="whitespace-pre-wrap break-words">{message.content}</p>
                     <div
                       className={`text-xs mt-2 flex items-center gap-2 ${
-                        isMe ? 'text-primary-100 justify-end' : 'text-neutral-500'
+                        isMe ? 'text-primary-100 justify-end' : 'text-muted-foreground'
                       }`}
                     >
                       <span>{formatMessageTime(message.created_at)}</span>
@@ -262,7 +262,7 @@ export default function ConversationPage({ params }: PageProps) {
       </div>
 
       {/* Message Input */}
-      <div className="bg-white border-t border-neutral-200 px-6 py-4">
+      <div className="bg-card border-t border-border px-6 py-4">
         <div className="container mx-auto max-w-4xl">
           <form onSubmit={handleSendMessage} className="flex gap-3">
             <textarea
@@ -275,7 +275,7 @@ export default function ConversationPage({ params }: PageProps) {
                 }
               }}
               placeholder="Écrivez votre message... (Entrée pour envoyer, Maj+Entrée pour nouvelle ligne)"
-              className="flex-1 px-4 py-3 rounded-xl border-2 border-neutral-200 focus:outline-none focus:ring-4 focus:ring-primary-500 resize-none"
+              className="flex-1 px-4 py-3 rounded-xl border-2 border-border focus:outline-none focus:ring-4 focus:ring-primary-500 resize-none bg-background"
               rows={3}
               disabled={isSending}
             />

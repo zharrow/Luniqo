@@ -261,7 +261,7 @@ export default function SessionDetailPage({ params }: PageProps) {
     return (
       <DashboardLayout>
         <div className="text-center py-12">
-          <h2 className="text-2xl font-bold text-neutral-900 mb-4">Session introuvable</h2>
+          <h2 className="text-2xl font-bold mb-4">Session introuvable</h2>
           <Link href="/dashboard/sessions" className="btn btn-primary">
             Retour aux sessions
           </Link>
@@ -279,7 +279,7 @@ export default function SessionDetailPage({ params }: PageProps) {
       case 'INCOMPLETE':
         return 'bg-warning-50 text-warning-700 border-warning-200'
       default:
-        return 'bg-neutral-50 text-neutral-700 border-neutral-200'
+        return 'bg-muted text-muted-foreground border-border'
     }
   }
 
@@ -299,11 +299,11 @@ export default function SessionDetailPage({ params }: PageProps) {
       case 'PARTIEL':
         return 'bg-warning-50 text-warning-700 border-warning-200'
       case 'REPORTE':
-        return 'bg-neutral-50 text-neutral-700 border-neutral-200'
+        return 'bg-muted text-muted-foreground border-border'
       case 'IMPOSSIBLE':
         return 'bg-danger-50 text-danger-700 border-danger-200'
       default:
-        return 'bg-neutral-50 text-neutral-700 border-neutral-200'
+        return 'bg-muted text-muted-foreground border-border'
     }
   }
 
@@ -349,14 +349,14 @@ export default function SessionDetailPage({ params }: PageProps) {
 
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-neutral-900 mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+              <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
                 Session du {formatDate(session.date)}
               </h1>
               <div className="flex items-center gap-3">
                 <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(session.status)}`}>
                   {getStatusLabel(session.status)}
                 </span>
-                <span className="text-neutral-600">
+                <span className="text-muted-foreground">
                   {session.completed_tasks} / {session.total_tasks} tâches complétées
                 </span>
               </div>
@@ -380,7 +380,7 @@ export default function SessionDetailPage({ params }: PageProps) {
         {/* Progress Card */}
         <div className="card p-6 mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-neutral-900">Progression</h2>
+            <h2 className="text-lg font-semibold">Progression</h2>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => handleUpdateSessionStatus('EN_COURS')}
@@ -406,7 +406,7 @@ export default function SessionDetailPage({ params }: PageProps) {
             </div>
           </div>
 
-          <div className="relative w-full h-4 bg-neutral-100 rounded-full overflow-hidden">
+          <div className="relative w-full h-4 bg-muted rounded-full overflow-hidden">
             <div
               className="absolute top-0 left-0 h-full bg-gradient-to-r from-primary-500 to-primary-600 transition-all duration-300"
               style={{ width: `${session.completion_percentage}%` }}
@@ -414,7 +414,7 @@ export default function SessionDetailPage({ params }: PageProps) {
           </div>
 
           <div className="flex items-center justify-between mt-2">
-            <span className="text-sm text-neutral-600">
+            <span className="text-sm text-muted-foreground">
               {session.completion_percentage}% complété
             </span>
             {session.completion_percentage === 100 && (
@@ -430,11 +430,11 @@ export default function SessionDetailPage({ params }: PageProps) {
         <div className="space-y-6">
           {Object.keys(groupedLogs).length === 0 ? (
             <div className="card p-8 text-center">
-              <ClockIcon className="w-16 h-16 text-neutral-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-neutral-900 mb-2">
+              <ClockIcon className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+              <h3 className="text-lg font-medium mb-2">
                 Aucun log pour cette session
               </h3>
-              <p className="text-neutral-600 mb-4">
+              <p className="text-muted-foreground mb-4">
                 Ajoutez des logs de nettoyage pour suivre la progression
               </p>
               <button onClick={openAddModal} className="btn btn-primary inline-flex items-center gap-2">
@@ -445,7 +445,7 @@ export default function SessionDetailPage({ params }: PageProps) {
           ) : (
             Object.entries(groupedLogs).map(([roomId, { room, logs }]) => (
               <div key={roomId} className="card p-6">
-                <h3 className="text-xl font-semibold text-neutral-900 mb-4">
+                <h3 className="text-xl font-semibold mb-4">
                   {room.name}
                 </h3>
 
@@ -453,16 +453,16 @@ export default function SessionDetailPage({ params }: PageProps) {
                   {logs.map((log) => (
                     <div
                       key={log.id}
-                      className="flex items-start justify-between p-4 bg-neutral-50 rounded-lg hover:bg-neutral-100 transition-colors"
+                      className="flex items-start justify-between p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
                     >
                       <div className="flex-1">
                         <div className="flex items-start gap-3 mb-2">
                           <div>
-                            <h4 className="font-medium text-neutral-900">
+                            <h4 className="font-medium">
                               {log.assigned_task.task_template.name}
                             </h4>
                             {log.assigned_task.task_template.description && (
-                              <p className="text-sm text-neutral-600">
+                              <p className="text-sm text-muted-foreground">
                                 {log.assigned_task.task_template.description}
                               </p>
                             )}
@@ -472,7 +472,7 @@ export default function SessionDetailPage({ params }: PageProps) {
                           </span>
                         </div>
 
-                        <div className="flex items-center gap-4 text-sm text-neutral-600">
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           {log.performed_by && (
                             <span>
                               Par {log.performed_by.first_name} {log.performed_by.last_name}
@@ -487,15 +487,15 @@ export default function SessionDetailPage({ params }: PageProps) {
                         </div>
 
                         {log.note && (
-                          <p className="mt-2 text-sm text-neutral-700 italic">
+                          <p className="mt-2 text-sm text-muted-foreground italic">
                             {log.note}
                           </p>
                         )}
 
                         {log.photo_urls && log.photo_urls.length > 0 && (
                           <div className="flex items-center gap-2 mt-2">
-                            <PhotoIcon className="w-4 h-4 text-neutral-500" />
-                            <span className="text-sm text-neutral-600">
+                            <PhotoIcon className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm text-muted-foreground">
                               {log.photo_urls.length} photo{log.photo_urls.length > 1 ? 's' : ''}
                             </span>
                           </div>
@@ -504,7 +504,7 @@ export default function SessionDetailPage({ params }: PageProps) {
 
                       <button
                         onClick={() => openEditModal(log)}
-                        className="p-2 text-neutral-500 hover:text-primary-600 transition-colors"
+                        className="p-2 text-muted-foreground hover:text-primary-600 transition-colors"
                       >
                         <PencilIcon className="w-5 h-5" />
                       </button>
@@ -520,20 +520,20 @@ export default function SessionDetailPage({ params }: PageProps) {
         {showAddModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="card w-full max-w-2xl p-6">
-              <h2 className="text-2xl font-bold text-neutral-900 mb-6">
+              <h2 className="text-2xl font-bold mb-6">
                 Ajouter un log
               </h2>
 
               <form onSubmit={handleAddLog} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  <label className="block text-sm font-medium mb-2">
                     Tâche *
                   </label>
                   <select
                     value={formData.assigned_task_id}
                     onChange={(e) => setFormData({ ...formData, assigned_task_id: e.target.value })}
                     required
-                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-background"
                   >
                     <option value="">Sélectionner une tâche</option>
                     {availableTasks.map((task) => (
@@ -545,13 +545,13 @@ export default function SessionDetailPage({ params }: PageProps) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  <label className="block text-sm font-medium mb-2">
                     Effectué par
                   </label>
                   <select
                     value={formData.performed_by_id}
                     onChange={(e) => setFormData({ ...formData, performed_by_id: e.target.value })}
-                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-background"
                   >
                     <option value="">Non spécifié</option>
                     {availableUsers.map((user) => (
@@ -563,14 +563,14 @@ export default function SessionDetailPage({ params }: PageProps) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  <label className="block text-sm font-medium mb-2">
                     Statut *
                   </label>
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as LogStatus })}
                     required
-                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-background"
                   >
                     <option value="FAIT">Fait</option>
                     <option value="PARTIEL">Partiel</option>
@@ -580,7 +580,7 @@ export default function SessionDetailPage({ params }: PageProps) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  <label className="block text-sm font-medium mb-2">
                     Note
                   </label>
                   <textarea
@@ -588,7 +588,7 @@ export default function SessionDetailPage({ params }: PageProps) {
                     onChange={(e) => setFormData({ ...formData, note: e.target.value })}
                     rows={3}
                     placeholder="Ajouter une note..."
-                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
+                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none bg-background"
                   />
                 </div>
 
@@ -613,32 +613,32 @@ export default function SessionDetailPage({ params }: PageProps) {
         {showEditModal && editingLog && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="card w-full max-w-2xl p-6">
-              <h2 className="text-2xl font-bold text-neutral-900 mb-6">
+              <h2 className="text-2xl font-bold mb-6">
                 Modifier le log
               </h2>
 
               <form onSubmit={handleUpdateLog} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  <label className="block text-sm font-medium mb-2">
                     Tâche
                   </label>
                   <input
                     type="text"
                     value={`${editingLog.assigned_task.room.name} - ${editingLog.assigned_task.task_template.name}`}
                     disabled
-                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg bg-neutral-50 text-neutral-600"
+                    className="w-full px-4 py-2 border border-border rounded-lg bg-muted text-muted-foreground"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  <label className="block text-sm font-medium mb-2">
                     Statut *
                   </label>
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as LogStatus })}
                     required
-                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-background"
                   >
                     <option value="FAIT">Fait</option>
                     <option value="PARTIEL">Partiel</option>
@@ -648,7 +648,7 @@ export default function SessionDetailPage({ params }: PageProps) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  <label className="block text-sm font-medium mb-2">
                     Note
                   </label>
                   <textarea
@@ -656,7 +656,7 @@ export default function SessionDetailPage({ params }: PageProps) {
                     onChange={(e) => setFormData({ ...formData, note: e.target.value })}
                     rows={3}
                     placeholder="Ajouter une note..."
-                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
+                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none bg-background"
                   />
                 </div>
 

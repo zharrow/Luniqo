@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/contexts/AuthContext'
-import ThemeToggle from '@/components/theme/ThemeToggle'
 import {
   ChartBarIcon,
   BuildingOfficeIcon,
@@ -136,9 +135,6 @@ export default function DeveloperLayout({ children }: DeveloperLayoutProps) {
                 <BellIcon className="w-5 h-5" />
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
               </button>
-
-              {/* Theme Toggle */}
-              <ThemeToggle />
             </div>
           </div>
         </header>

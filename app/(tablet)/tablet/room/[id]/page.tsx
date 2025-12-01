@@ -248,7 +248,7 @@ export default function TabletRoomPage() {
       <div className="tablet-mode min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-secondary-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-24 w-24 border-8 border-primary-200 border-t-primary-500 mx-auto mb-6"></div>
-          <p className="text-2xl text-neutral-600">Chargement...</p>
+          <p className="text-2xl text-muted-foreground">Chargement...</p>
         </div>
       </div>
     )
@@ -272,11 +272,11 @@ export default function TabletRoomPage() {
             </svg>
           </button>
           <div>
-            <h1 className="text-5xl font-bold text-neutral-900 mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+            <h1 className="text-5xl font-bold mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
               {room?.name}
             </h1>
             {room?.description && (
-              <p className="text-2xl text-neutral-600">{room.description}</p>
+              <p className="text-2xl text-muted-foreground">{room.description}</p>
             )}
           </div>
         </div>
@@ -286,7 +286,7 @@ export default function TabletRoomPage() {
           <div className="text-5xl font-bold text-primary-500 mb-2">
             {progress}%
           </div>
-          <p className="text-xl text-neutral-600">
+          <p className="text-xl text-muted-foreground">
             {completedCount} / {totalCount} tâches
           </p>
         </div>
@@ -301,7 +301,7 @@ export default function TabletRoomPage() {
 
       {/* Progress Bar */}
       <div className="card p-6 mb-8">
-        <div className="w-full h-8 bg-neutral-200 rounded-full overflow-hidden">
+        <div className="w-full h-8 bg-muted rounded-full overflow-hidden">
           <div
             className="h-full bg-gradient-to-r from-primary-500 to-success-500 transition-all duration-500 ease-out"
             style={{ width: `${progress}%` }}
@@ -332,7 +332,7 @@ export default function TabletRoomPage() {
                     className={`flex-shrink-0 w-16 h-16 rounded-2xl border-4 flex items-center justify-center transition-all ${
                       isCompleted
                         ? 'bg-success-500 border-success-600 scale-110'
-                        : 'bg-white border-neutral-300 hover:border-primary-500'
+                        : 'bg-card border-border hover:border-primary-500'
                     }`}
                   >
                     {isCompleted && (
@@ -345,21 +345,21 @@ export default function TabletRoomPage() {
                   {/* Task Info */}
                   <div className="flex-1">
                     <div className="flex items-center gap-4 mb-3">
-                      <h3 className="text-3xl font-bold text-neutral-900">
+                      <h3 className="text-3xl font-bold">
                         {task.task_template.name}
                       </h3>
                       <span className={`px-4 py-2 rounded-full text-sm font-semibold ${
                         task.task_template.task_type === 'DAILY' ? 'bg-primary-100 text-primary-700' :
                         task.task_template.task_type === 'WEEKLY' ? 'bg-secondary-100 text-secondary-700' :
                         task.task_template.task_type === 'MONTHLY' ? 'bg-warning-100 text-warning-700' :
-                        'bg-neutral-100 text-neutral-700'
+                        'bg-muted text-muted-foreground'
                       }`}>
                         {task.task_template.task_type}
                       </span>
                     </div>
 
                     {task.task_template.description && (
-                      <p className="text-xl text-neutral-600 mb-4">
+                      <p className="text-xl text-muted-foreground mb-4">
                         {task.task_template.description}
                       </p>
                     )}
@@ -368,20 +368,20 @@ export default function TabletRoomPage() {
                     {isCompleted && (
                       <div className="mt-4 space-y-6">
                         <div>
-                          <label className="block text-lg font-medium text-neutral-700 mb-2">
+                          <label className="block text-lg font-medium mb-2">
                             Note (optionnel)
                           </label>
                           <textarea
                             value={status.note}
                             onChange={(e) => updateTaskNote(task.id, e.target.value)}
-                            className="w-full px-4 py-3 text-lg rounded-xl border-2 border-neutral-200 focus:outline-none focus:ring-4 focus:ring-primary-500 focus:border-transparent"
+                            className="w-full px-4 py-3 text-lg rounded-xl border-2 border-border focus:outline-none focus:ring-4 focus:ring-primary-500 focus:border-transparent bg-background"
                             rows={3}
                             placeholder="Ajouter une remarque..."
                           />
                         </div>
 
                         <div>
-                          <label className="block text-lg font-medium text-neutral-700 mb-3">
+                          <label className="block text-lg font-medium mb-3">
                             Photos (optionnel)
                           </label>
                           <PhotoUpload
@@ -401,10 +401,10 @@ export default function TabletRoomPage() {
         </div>
       ) : (
         <div className="card p-12 text-center">
-          <svg className="w-24 h-24 text-neutral-300 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-24 h-24 text-muted-foreground/30 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
-          <p className="text-2xl text-neutral-500">Aucune tâche assignée à cette pièce</p>
+          <p className="text-2xl text-muted-foreground">Aucune tâche assignée à cette pièce</p>
         </div>
       )}
 

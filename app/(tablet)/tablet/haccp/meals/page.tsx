@@ -127,7 +127,7 @@ export default function TabletHaccpMealsPage() {
       <div className="tablet-mode min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-secondary-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-24 w-24 border-8 border-primary-200 border-t-primary-500 mx-auto mb-6"></div>
-          <p className="text-2xl text-neutral-600">Chargement...</p>
+          <p className="text-2xl text-muted-foreground">Chargement...</p>
         </div>
       </div>
     )
@@ -143,7 +143,7 @@ export default function TabletHaccpMealsPage() {
             </svg>
           </div>
           <h2 className="text-4xl font-bold text-success-600 mb-4">Enregistré !</h2>
-          <p className="text-2xl text-neutral-600">Retour au menu HACCP...</p>
+          <p className="text-2xl text-muted-foreground">Retour au menu HACCP...</p>
         </div>
       </div>
     )
@@ -169,10 +169,10 @@ export default function TabletHaccpMealsPage() {
             </svg>
           </button>
           <div>
-            <h1 className="text-5xl font-bold text-neutral-900 mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+            <h1 className="text-5xl font-bold mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
               Enregistrer les Repas
             </h1>
-            <p className="text-2xl text-neutral-600">{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+            <p className="text-2xl text-muted-foreground">{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
           </div>
         </div>
       </div>
@@ -186,7 +186,7 @@ export default function TabletHaccpMealsPage() {
 
       {/* Meal Selection */}
       <div className="card p-8 mb-8">
-        <label className="block text-2xl font-bold text-neutral-900 mb-4">
+        <label className="block text-2xl font-bold mb-4">
           Sélectionnez le repas
         </label>
 
@@ -199,7 +199,7 @@ export default function TabletHaccpMealsPage() {
                 className={`p-6 rounded-2xl border-4 text-xl font-semibold transition-all ${
                   selectedMeal === meal.id
                     ? 'bg-primary-500 border-primary-600 text-white scale-105'
-                    : 'bg-white border-neutral-200 text-neutral-700 hover:border-primary-500'
+                    : 'bg-card border-border hover:border-primary-500'
                 }`}
               >
                 {meal.meal_type === 'Breakfast' && '🥐 Petit-déjeuner'}
@@ -209,7 +209,7 @@ export default function TabletHaccpMealsPage() {
             ))}
           </div>
         ) : (
-          <p className="text-xl text-neutral-600">Aucun repas validé pour aujourd'hui</p>
+          <p className="text-xl text-muted-foreground">Aucun repas validé pour aujourd'hui</p>
         )}
       </div>
 
@@ -218,7 +218,7 @@ export default function TabletHaccpMealsPage() {
         <div className="space-y-8 mb-32">
           {Object.entries(groupedChildren).map(([section, sectionChildren]) => (
             <div key={section} className="card p-8">
-              <h3 className="text-3xl font-bold text-neutral-900 mb-6">
+              <h3 className="text-3xl font-bold mb-6">
                 {section === 'Babies' && '👶 Bébés'}
                 {section === 'Toddlers' && '🧒 Moyens'}
                 {section === 'Preschoolers' && '👦 Grands'}
@@ -226,9 +226,9 @@ export default function TabletHaccpMealsPage() {
 
               <div className="space-y-4">
                 {sectionChildren.map((child) => (
-                  <div key={child.id} className="bg-neutral-50 p-6 rounded-xl">
+                  <div key={child.id} className="bg-muted p-6 rounded-xl">
                     <div className="flex items-center justify-between mb-4">
-                      <h4 className="text-2xl font-bold text-neutral-900">
+                      <h4 className="text-2xl font-bold">
                         {child.first_name} {child.last_name}
                       </h4>
                     </div>
@@ -241,7 +241,7 @@ export default function TabletHaccpMealsPage() {
                           className={`p-4 rounded-xl text-lg font-semibold transition-all ${
                             servings[child.id]?.portion_size === size
                               ? 'bg-success-500 text-white scale-105'
-                              : 'bg-white border-2 border-neutral-200 text-neutral-700'
+                              : 'bg-card border-2 border-border'
                           }`}
                         >
                           {size === 'Petite' && '🍽️ Petite'}
@@ -254,7 +254,7 @@ export default function TabletHaccpMealsPage() {
                     <textarea
                       value={servings[child.id]?.comments || ''}
                       onChange={(e) => updateServing(child.id, 'comments', e.target.value)}
-                      className="w-full mt-4 px-4 py-3 text-lg rounded-xl border-2 border-neutral-200 focus:outline-none focus:ring-4 focus:ring-primary-500"
+                      className="w-full mt-4 px-4 py-3 text-lg rounded-xl border-2 border-border focus:outline-none focus:ring-4 focus:ring-primary-500 bg-background"
                       rows={2}
                       placeholder="Remarque (optionnel)..."
                     />

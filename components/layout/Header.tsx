@@ -5,23 +5,42 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/contexts/AuthContext'
 import { getUserDisplayName } from '@/lib/utils/auth.client'
 import { messagingService } from '@/lib/services/messaging.service'
-import ThemeToggle from '@/components/theme/ThemeToggle'
+import { createClient } from '@/lib/supabase/client'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   BellIcon,
   UserCircleIcon,
-  ArrowRightOnRectangleIcon
+  ArrowRightOnRectangleIcon,
+  BuildingOfficeIcon,
+  ClipboardDocumentListIcon,
+  UserGroupIcon,
+  CheckCircleIcon
 } from '@heroicons/react/24/outline'
 import { SidebarTrigger } from '@/components/ui/sidebar'
+
+interface DashboardStats {
+  totalRooms: number
+  totalTasks: number
+  totalUsers: number
+  todayCompletion: number
+}
 
 export default function Header() {
   const { session, logout } = useAuth()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [stats, setStats] = useState<DashboardStats>({
+    totalRooms: 0,
+    totalTasks: 0,
+    totalUsers: 0,
+    todayCompletion: 0
+  })
   const router = useRouter()
+  const supabase = createClient()
 
   const userDisplayName = session?.user ? getUserDisplayName(session.user) : 'User'
   const userRole = session?.role || 'User'
+  const isAdmin = userRole === 'Admin'
 
   const roleLabels = {
     Developer: 'Développeur',
@@ -40,6 +59,11 @@ export default function Header() {
 
     loadUnreadCount()
 
+    // Load stats for Admin users
+    if (isAdmin && session.enterprise) {
+      loadStats()
+    }
+
     // Subscribe to real-time notifications
     const channel = messagingService.subscribeToNotifications(
       session.role as 'Developer' | 'Admin' | 'User',
@@ -52,7 +76,7 @@ export default function Header() {
     return () => {
       messagingService.unsubscribe(channel)
     }
-  }, [session])
+  }, [session, isAdmin])
 
   async function loadUnreadCount() {
     if (!session?.user?.id || !session.role) return
@@ -69,6 +93,55 @@ export default function Header() {
     }
   }
 
+  async function loadStats() {
+    if (!session?.enterprise?.id) return
+
+    try {
+      const enterpriseId = session.enterprise.id
+
+      // Count rooms
+      const { count: roomsCount } = await supabase
+        .from('room')
+        .select('*', { count: 'exact', head: true })
+        .eq('enterprise_id', enterpriseId)
+        .eq('is_active', true)
+
+      // Count tasks
+      const { count: tasksCount } = await supabase
+        .from('task_template')
+        .select('*', { count: 'exact', head: true })
+        .eq('enterprise_id', enterpriseId)
+        .eq('is_active', true)
+
+      // Count users
+      const { count: usersCount } = await supabase
+        .from('user')
+        .select('*', { count: 'exact', head: true })
+        .eq('enterprise_id', enterpriseId)
+        .eq('is_active', true)
+
+      // Get today's session completion
+      const today = new Date().toISOString().split('T')[0]
+      const { data: todaySession, error: sessionError } = await supabase
+        .from('cleaning_session')
+        .select('status')
+        .eq('enterprise_id', enterpriseId)
+        .eq('session_date', today)
+        .maybeSingle() as { data: { status: string } | null; error: any }
+
+      const completion = todaySession && !sessionError && todaySession.status === 'COMPLETED' ? 100 : 0
+
+      setStats({
+        totalRooms: roomsCount || 0,
+        totalTasks: tasksCount || 0,
+        totalUsers: usersCount || 0,
+        todayCompletion: completion
+      })
+    } catch (error) {
+      console.error('Error loading stats:', error)
+    }
+  }
+
   // Get initials for avatar
   const getInitials = (name: string) => {
     return name
@@ -80,25 +153,56 @@ export default function Header() {
   }
 
   return (
-    <header className="h-16 bg-white/80 dark:bg-dark-100/80 backdrop-blur-xl border-b border-neutral-200 dark:border-dark-300 flex items-center justify-between px-6 sticky top-0 z-40">
+    <header className="h-16 bg-white/80 backdrop-blur-xl border-b border-neutral-200 flex items-center justify-between px-6 sticky top-0 z-40">
       {/* Left section with sidebar trigger */}
       <div className="flex items-center gap-3">
-        <SidebarTrigger className="hover:bg-neutral-100 dark:hover:bg-dark-200" />
+        <SidebarTrigger className="hover:bg-neutral-100" />
       </div>
+
+      {/* Center section - Stats (Admin only) */}
+      {isAdmin && (
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 px-2 py-1 bg-primary-50 rounded-lg border border-primary-200">
+            <BuildingOfficeIcon className="w-4 h-4 text-primary-600" />
+            <div className="flex items-baseline gap-1">
+              <span className="text-lg font-bold text-primary-700">{stats.totalRooms}</span>
+              <span className="text-[10px] text-muted-foreground">pièces</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 px-2 py-1 bg-secondary-50 rounded-lg border border-secondary-200">
+            <ClipboardDocumentListIcon className="w-4 h-4 text-secondary-600" />
+            <div className="flex items-baseline gap-1">
+              <span className="text-lg font-bold text-secondary-700">{stats.totalTasks}</span>
+              <span className="text-[10px] text-muted-foreground">tâches</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 px-2 py-1 bg-accent-50 rounded-lg border border-accent-200">
+            <UserGroupIcon className="w-4 h-4 text-accent-700" />
+            <div className="flex items-baseline gap-1">
+              <span className="text-lg font-bold text-accent-700">{stats.totalUsers}</span>
+              <span className="text-[10px] text-muted-foreground">employés</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 px-2 py-1 bg-success-50 rounded-lg border border-success-200">
+            <CheckCircleIcon className="w-4 h-4 text-success-600" />
+            <div className="flex items-baseline gap-1">
+              <span className="text-lg font-bold text-success-700">{stats.todayCompletion}%</span>
+              <span className="text-[10px] text-muted-foreground">aujourd'hui</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Right section */}
       <div className="flex items-center gap-3">
-        {/* Theme Toggle */}
-        <ThemeToggle />
-
         {/* Notifications */}
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => router.push('/dashboard/notifications')}
-          className="relative p-2 rounded-xl hover:bg-neutral-100 dark:hover:bg-dark-200 transition-colors"
+          className="relative p-2 rounded-xl hover:bg-neutral-100 transition-colors"
         >
-          <BellIcon className="w-5 h-5 text-neutral-600 dark:text-dark-700" />
+          <BellIcon className="w-5 h-5 text-neutral-600" />
 
           {/* Animated notification badge */}
           <AnimatePresence>
@@ -121,17 +225,17 @@ export default function Header() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center gap-3 pl-3 pr-2 py-2 rounded-xl hover:bg-neutral-100 dark:hover:bg-dark-200 transition-colors"
+            className="flex items-center gap-3 pl-3 pr-2 py-2 rounded-xl hover:bg-neutral-100 transition-colors"
           >
             <div className="text-right">
-              <p className="text-sm font-semibold text-neutral-900 dark:text-dark-900">{userDisplayName}</p>
+              <p className="text-sm font-semibold text-neutral-900">{userDisplayName}</p>
               <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full border ${roleBadgeColors[userRole]}`}>
                 {roleLabels[userRole]}
               </span>
             </div>
 
             {/* Avatar with initials */}
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
+            <div className="w-10 h-10 rounded-full bg-linear-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
               {getInitials(userDisplayName)}
             </div>
           </motion.button>
@@ -155,17 +259,17 @@ export default function Header() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -10, scale: 0.95 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute right-0 mt-2 w-64 bg-white/95 dark:bg-dark-100/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-neutral-200 dark:border-dark-300 py-2 z-20 overflow-hidden"
+                  className="absolute right-0 mt-2 w-64 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-neutral-200 py-2 z-20 overflow-hidden"
                 >
                   {/* Header with gradient */}
-                  <div className="px-4 py-3 bg-gradient-to-br from-primary-50 to-secondary-50 dark:from-dark-200 dark:to-dark-200 border-b border-neutral-200 dark:border-dark-300">
+                  <div className="px-4 py-3 bg-linear-to-br from-primary-50 to-secondary-50 border-b border-neutral-200">
                     <div className="flex items-center gap-3 mb-2">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-bold shadow-md">
+                      <div className="w-12 h-12 rounded-full bg-linear-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-bold shadow-md">
                         {getInitials(userDisplayName)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-neutral-900 dark:text-dark-900 truncate">{userDisplayName}</p>
-                        <p className="text-xs text-neutral-600 dark:text-dark-600 truncate">{session?.user?.email || 'Pas d\'email'}</p>
+                        <p className="text-sm font-bold text-neutral-900 truncate">{userDisplayName}</p>
+                        <p className="text-xs text-neutral-600 truncate">{session?.user?.email || 'Pas d\'email'}</p>
                       </div>
                     </div>
                     <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full border ${roleBadgeColors[userRole]}`}>
@@ -177,9 +281,9 @@ export default function Header() {
                     <motion.a
                       whileHover={{ x: 4 }}
                       href="/dashboard/profil"
-                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-neutral-700 dark:text-dark-700 hover:bg-neutral-100 dark:hover:bg-dark-200 transition-colors"
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-neutral-700 hover:bg-neutral-100 transition-colors"
                     >
-                      <UserCircleIcon className="w-5 h-5 text-neutral-500 dark:text-dark-500" />
+                      <UserCircleIcon className="w-5 h-5 text-neutral-500" />
                       <span className="font-medium">Mon profil</span>
                     </motion.a>
 
@@ -189,7 +293,7 @@ export default function Header() {
                         setShowUserMenu(false)
                         logout()
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors"
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-danger-600 hover:bg-danger-50 transition-colors"
                     >
                       <ArrowRightOnRectangleIcon className="w-5 h-5" />
                       <span className="font-medium">Déconnexion</span>

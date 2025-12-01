@@ -15,7 +15,6 @@ import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { SparklesText } from '@/components/ui/sparkles-text'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { format } from 'date-fns'
@@ -149,12 +148,9 @@ export default function SessionsPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <SparklesText
-              className="text-3xl font-bold mb-2"
-              colors={{ first: '#a855f7', second: '#3b82f6' }}
-            >
+            <h1 className="text-3xl font-bold mb-2">
               Sessions de Nettoyage
-            </SparklesText>
+            </h1>
             <p className="text-muted-foreground">
               Gérez vos sessions de nettoyage quotidiennes
             </p>

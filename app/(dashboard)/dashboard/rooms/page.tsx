@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import { roomsService, type Room, type CreateRoomInput } from '@/lib/services/rooms.service'
@@ -9,13 +10,13 @@ import {
   PencilIcon,
   TrashIcon,
   BuildingOfficeIcon,
-  EllipsisVerticalIcon
+  EllipsisVerticalIcon,
+  ClipboardDocumentListIcon
 } from '@heroicons/react/24/outline'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { ShineBorder } from '@/components/ui/shine-border'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +26,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 
 export default function RoomsPage() {
+  const router = useRouter()
   const { session, isLoading: authLoading } = useRequireAuth(['Admin'])
   const [rooms, setRooms] = useState<Room[]>([])
   const [loading, setLoading] = useState(true)
@@ -36,10 +38,12 @@ export default function RoomsPage() {
   })
 
   useEffect(() => {
-    if (session?.enterprise) {
+    if (session?.enterprise?.id) {
       loadRooms()
+    } else if (!authLoading && session && !session.enterprise) {
+      setLoading(false)
     }
-  }, [session])
+  }, [session?.enterprise?.id, authLoading])
 
   async function loadRooms() {
     if (!session?.enterprise?.id) return
@@ -148,12 +152,7 @@ export default function RoomsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {rooms.map((room) => (
-              <ShineBorder
-                key={room.id}
-                color="#a855f7"
-                className={`${!room.is_active && 'opacity-50'}`}
-              >
-                <Card className="border-0">
+              <Card key={room.id} className={`${!room.is_active && 'opacity-50'}`}>
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3">
@@ -177,6 +176,11 @@ export default function RoomsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => router.push(`/dashboard/rooms/${room.id}`)}>
+                            <ClipboardDocumentListIcon className="w-4 h-4" />
+                            Gérer les tâches
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => openEditModal(room)}>
                             <PencilIcon className="w-4 h-4" />
                             Modifier
@@ -207,7 +211,6 @@ export default function RoomsPage() {
                     </div>
                   </CardContent>
                 </Card>
-              </ShineBorder>
             ))}
           </div>
         )}

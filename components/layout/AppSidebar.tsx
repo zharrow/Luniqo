@@ -83,8 +83,8 @@ export function AppSidebar() {
   const filteredCommunicationNav = filterNav(communicationNavigation)
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-neutral-200 dark:border-dark-300">
-      <SidebarHeader className="border-b border-neutral-200 dark:border-dark-300 p-4">
+    <Sidebar collapsible="icon" className="border-r border-neutral-200">
+      <SidebarHeader className="border-b border-neutral-200 p-4">
         <div className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-lg flex-shrink-0">
             <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -215,7 +215,7 @@ export function AppSidebar() {
         )}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-neutral-200 dark:border-dark-300">
+      <SidebarFooter className="border-t border-neutral-200">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Mon Profil">

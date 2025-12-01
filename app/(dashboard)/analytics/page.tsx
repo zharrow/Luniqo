@@ -21,7 +21,6 @@ import {
   InformationCircleIcon,
 } from '@heroicons/react/24/outline';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { SparklesText } from '@/components/ui/sparkles-text';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line } from 'recharts';
 
@@ -121,9 +120,9 @@ export default function AnalyticsPage() {
       <div className="p-6 max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <SparklesText className="text-4xl font-bold mb-2" colors={{ first: '#3b82f6', second: '#8b5cf6' }}>
+          <h1 className="text-4xl font-bold mb-2">
             Analytics Dashboard
-          </SparklesText>
+          </h1>
           <p className="text-muted-foreground">Vue d'ensemble des métriques globales</p>
         </div>
 

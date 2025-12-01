@@ -126,7 +126,7 @@ export default function HaccpEquipmentPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary-200 border-t-primary-500 mx-auto mb-4"></div>
-          <p className="text-neutral-600">Chargement...</p>
+          <p className="text-muted-foreground">Chargement...</p>
         </div>
       </div>
     )
@@ -146,8 +146,8 @@ export default function HaccpEquipmentPage() {
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-neutral-900 mb-2">Équipements</h1>
-          <p className="text-neutral-600">Gestion de la maintenance des équipements</p>
+          <h1 className="text-3xl font-bold mb-2">Équipements</h1>
+          <p className="text-muted-foreground">Gestion de la maintenance des équipements</p>
         </div>
         <div className="flex gap-3">
           <button
@@ -180,8 +180,8 @@ export default function HaccpEquipmentPage() {
               🔧
             </div>
             <div>
-              <p className="text-sm text-neutral-600">Total équipements</p>
-              <p className="text-2xl font-bold text-neutral-900">{activeEquipment.length}</p>
+              <p className="text-sm text-muted-foreground">Total équipements</p>
+              <p className="text-2xl font-bold">{activeEquipment.length}</p>
             </div>
           </div>
         </div>
@@ -192,7 +192,7 @@ export default function HaccpEquipmentPage() {
               ⚠️
             </div>
             <div>
-              <p className="text-sm text-neutral-600">Maintenance à venir (7j)</p>
+              <p className="text-sm text-muted-foreground">Maintenance à venir (7j)</p>
               <p className="text-2xl font-bold text-warning-600">{needsMaintenance.length}</p>
             </div>
           </div>
@@ -204,7 +204,7 @@ export default function HaccpEquipmentPage() {
               ✅
             </div>
             <div>
-              <p className="text-sm text-neutral-600">À jour</p>
+              <p className="text-sm text-muted-foreground">À jour</p>
               <p className="text-2xl font-bold text-success-600">
                 {activeEquipment.length - needsMaintenance.length}
               </p>
@@ -232,7 +232,7 @@ export default function HaccpEquipmentPage() {
                 }`}
               >
                 <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-xl font-bold text-neutral-900">{equip.name}</h3>
+                  <h3 className="text-xl font-bold">{equip.name}</h3>
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleEdit(equip)}
@@ -257,22 +257,22 @@ export default function HaccpEquipmentPage() {
 
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-neutral-600">Type</span>
+                    <span className="text-muted-foreground">Type</span>
                     <span className="font-semibold">{equip.equipment_type}</span>
                   </div>
                   {equip.location && (
                     <div className="flex justify-between">
-                      <span className="text-neutral-600">Emplacement</span>
+                      <span className="text-muted-foreground">Emplacement</span>
                       <span className="font-semibold">{equip.location}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <span className="text-neutral-600">Fréquence</span>
+                    <span className="text-muted-foreground">Fréquence</span>
                     <span className="font-semibold">{equip.maintenance_frequency}</span>
                   </div>
                   {equip.last_maintenance_date && (
                     <div className="flex justify-between">
-                      <span className="text-neutral-600">Dernière maintenance</span>
+                      <span className="text-muted-foreground">Dernière maintenance</span>
                       <span className="font-semibold">
                         {new Date(equip.last_maintenance_date).toLocaleDateString('fr-FR')}
                       </span>
@@ -280,7 +280,7 @@ export default function HaccpEquipmentPage() {
                   )}
                   {equip.next_maintenance_date && (
                     <div className="flex justify-between">
-                      <span className="text-neutral-600">Prochaine maintenance</span>
+                      <span className="text-muted-foreground">Prochaine maintenance</span>
                       <span className={`font-semibold ${
                         isOverdue ? 'text-danger-600' :
                         isSoon ? 'text-warning-600' :
@@ -293,8 +293,8 @@ export default function HaccpEquipmentPage() {
                 </div>
 
                 {equip.notes && (
-                  <div className="mt-4 p-3 bg-neutral-50 rounded-lg">
-                    <p className="text-sm text-neutral-700">{equip.notes}</p>
+                  <div className="mt-4 p-3 bg-muted rounded-lg">
+                    <p className="text-sm">{equip.notes}</p>
                   </div>
                 )}
 
@@ -309,10 +309,10 @@ export default function HaccpEquipmentPage() {
         </div>
       ) : (
         <div className="card p-12 text-center">
-          <svg className="w-16 h-16 text-neutral-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
           </svg>
-          <p className="text-neutral-500 mb-4">Aucun équipement enregistré</p>
+          <p className="text-muted-foreground mb-4">Aucun équipement enregistré</p>
           <button onClick={handleAdd} className="btn btn-primary">
             + Ajouter le premier équipement
           </button>
@@ -322,9 +322,9 @@ export default function HaccpEquipmentPage() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-neutral-200">
-              <h2 className="text-2xl font-bold text-neutral-900">
+          <div className="bg-card rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-border">
+              <h2 className="text-2xl font-bold">
                 {editingEquipment ? 'Modifier l\'équipement' : 'Nouvel équipement'}
               </h2>
             </div>
@@ -332,53 +332,53 @@ export default function HaccpEquipmentPage() {
             <form onSubmit={handleSubmit} className="p-6">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
+                  <label className="block text-sm font-medium mb-1">
                     Nom <span className="text-danger-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
+                  <label className="block text-sm font-medium mb-1">
                     Type <span className="text-danger-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={formData.equipment_type}
                     onChange={(e) => setFormData({ ...formData, equipment_type: e.target.value })}
-                    className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                     placeholder="Réfrigérateur, Four, etc."
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
+                  <label className="block text-sm font-medium mb-1">
                     Emplacement
                   </label>
                   <input
                     type="text"
                     value={formData.location}
                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                    className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                     placeholder="Cuisine, Salle de repas, etc."
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
+                  <label className="block text-sm font-medium mb-1">
                     Fréquence de maintenance
                   </label>
                   <select
                     value={formData.maintenance_frequency}
                     onChange={(e) => setFormData({ ...formData, maintenance_frequency: e.target.value })}
-                    className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     <option value="Daily">Quotidienne</option>
                     <option value="Weekly">Hebdomadaire</option>
@@ -388,25 +388,25 @@ export default function HaccpEquipmentPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
+                  <label className="block text-sm font-medium mb-1">
                     Date dernière maintenance
                   </label>
                   <input
                     type="date"
                     value={formData.last_maintenance_date}
                     onChange={(e) => setFormData({ ...formData, last_maintenance_date: e.target.value })}
-                    className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
+                  <label className="block text-sm font-medium mb-1">
                     Notes
                   </label>
                   <textarea
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                     rows={3}
                     placeholder="Remarques, instructions..."
                   />

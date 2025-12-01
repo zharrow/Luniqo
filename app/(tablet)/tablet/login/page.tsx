@@ -166,10 +166,10 @@ export default function TabletLoginPage() {
               />
             </svg>
           </div>
-          <h1 className="text-5xl font-bold text-neutral-900 mb-3" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+          <h1 className="text-5xl font-bold mb-3" style={{ fontFamily: 'Quicksand, sans-serif' }}>
             Connexion Employé
           </h1>
-          <p className="text-2xl text-neutral-600">
+          <p className="text-2xl text-muted-foreground">
             {step === 'admin-login' && 'Connexion administrateur'}
             {step === 'employee-selection' && `${enterpriseName} - Sélectionnez votre nom`}
             {step === 'pin-entry' && `Bonjour ${selectedEmployee?.first_name}`}
@@ -181,14 +181,14 @@ export default function TabletLoginPage() {
           <div className="bg-white rounded-3xl shadow-xl p-8 animate-slide-up">
             <form onSubmit={handleAdminLogin} className="space-y-6">
               <div>
-                <label className="block text-xl font-medium text-neutral-700 mb-3">
+                <label className="block text-xl font-medium mb-3">
                   Email administrateur
                 </label>
                 <input
                   type="email"
                   value={adminEmail}
                   onChange={(e) => setAdminEmail(e.target.value)}
-                  className="w-full px-6 py-4 text-xl rounded-xl border-2 border-neutral-200 focus:outline-none focus:ring-4 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-6 py-4 text-xl rounded-xl border-2 border-border focus:outline-none focus:ring-4 focus:ring-primary-500 focus:border-transparent bg-background"
                   placeholder="admin@example.com"
                   required
                   disabled={isLoading}
@@ -197,14 +197,14 @@ export default function TabletLoginPage() {
               </div>
 
               <div>
-                <label className="block text-xl font-medium text-neutral-700 mb-3">
+                <label className="block text-xl font-medium mb-3">
                   Mot de passe
                 </label>
                 <input
                   type="password"
                   value={adminPassword}
                   onChange={(e) => setAdminPassword(e.target.value)}
-                  className="w-full px-6 py-4 text-xl rounded-xl border-2 border-neutral-200 focus:outline-none focus:ring-4 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-6 py-4 text-xl rounded-xl border-2 border-border focus:outline-none focus:ring-4 focus:ring-primary-500 focus:border-transparent bg-background"
                   placeholder="••••••••"
                   required
                   disabled={isLoading}
@@ -263,11 +263,11 @@ export default function TabletLoginPage() {
                       {employee.first_name.charAt(0)}{employee.last_name.charAt(0)}
                     </span>
                   </div>
-                  <h3 className="text-2xl font-semibold text-neutral-900 mb-1">
+                  <h3 className="text-2xl font-semibold mb-1">
                     {employee.first_name} {employee.last_name}
                   </h3>
                   {employee.email && (
-                    <p className="text-lg text-neutral-600">{employee.email}</p>
+                    <p className="text-lg text-muted-foreground">{employee.email}</p>
                   )}
                 </button>
               ))}
@@ -293,7 +293,7 @@ export default function TabletLoginPage() {
                   className={`w-20 h-20 rounded-2xl flex items-center justify-center text-4xl font-bold border-4 transition-all ${
                     i < pin.length
                       ? 'bg-primary-500 border-primary-600 text-white scale-110'
-                      : 'bg-neutral-100 border-neutral-200 text-neutral-400'
+                      : 'bg-muted border-border text-muted-foreground/60'
                   }`}
                 >
                   {i < pin.length ? '•' : ''}

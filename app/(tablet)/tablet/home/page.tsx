@@ -84,7 +84,7 @@ export default function TabletHomePage() {
       <div className="tablet-mode min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-secondary-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-24 w-24 border-8 border-primary-200 border-t-primary-500 mx-auto mb-6"></div>
-          <p className="text-2xl text-neutral-600">Chargement...</p>
+          <p className="text-2xl text-muted-foreground">Chargement...</p>
         </div>
       </div>
     )
@@ -95,10 +95,10 @@ export default function TabletHomePage() {
       {/* Header */}
       <div className="flex justify-between items-center mb-12">
         <div>
-          <h1 className="text-5xl font-bold text-neutral-900 mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+          <h1 className="text-5xl font-bold mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
             Bonjour {session?.user && 'first_name' in session.user ? session.user.first_name : session?.user?.email} !
           </h1>
-          <p className="text-2xl text-neutral-600">Sélectionnez une pièce pour commencer</p>
+          <p className="text-2xl text-muted-foreground">Sélectionnez une pièce pour commencer</p>
         </div>
         <div className="flex gap-4">
           <button
@@ -156,13 +156,13 @@ export default function TabletHomePage() {
               </div>
 
               {/* Room Name */}
-              <h2 className="text-3xl font-bold text-neutral-900 mb-3 group-hover:text-primary-500 transition-colors">
+              <h2 className="text-3xl font-bold mb-3 group-hover:text-primary-500 transition-colors">
                 {room.name}
               </h2>
 
               {/* Room Description */}
               {room.description && (
-                <p className="text-xl text-neutral-600 mb-6">{room.description}</p>
+                <p className="text-xl text-muted-foreground mb-6">{room.description}</p>
               )}
 
               {/* Action Arrow */}
@@ -177,17 +177,17 @@ export default function TabletHomePage() {
         </div>
       ) : (
         <div className="card p-12 text-center">
-          <svg className="w-24 h-24 text-neutral-300 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-24 h-24 text-muted-foreground/30 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
           </svg>
-          <p className="text-2xl text-neutral-500">Aucune pièce disponible</p>
+          <p className="text-2xl text-muted-foreground">Aucune pièce disponible</p>
         </div>
       )}
 
       {/* Enterprise Info */}
       {session?.enterprise && (
         <div className="mt-12 text-center">
-          <p className="text-xl text-neutral-500">
+          <p className="text-xl text-muted-foreground">
             {session.enterprise.name}
           </p>
         </div>

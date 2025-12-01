@@ -140,10 +140,10 @@ export default function ProductsPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-neutral-900 mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+            <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
               Produits
             </h1>
-            <p className="text-neutral-600">
+            <p className="text-muted-foreground">
               Gestion des produits alimentaires et allergènes
             </p>
           </div>
@@ -159,11 +159,11 @@ export default function ProductsPage() {
 
         {suppliers.length === 0 ? (
           <div className="card p-12 text-center">
-            <ShoppingBagIcon className="w-16 h-16 text-neutral-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-neutral-900 mb-2">
+            <ShoppingBagIcon className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+            <h3 className="text-lg font-medium mb-2">
               Aucun fournisseur
             </h3>
-            <p className="text-neutral-600 mb-4">
+            <p className="text-muted-foreground mb-4">
               Vous devez d'abord créer des fournisseurs avant d'ajouter des produits
             </p>
             <a href="/dashboard/haccp/suppliers" className="btn btn-primary">
@@ -175,7 +175,7 @@ export default function ProductsPage() {
             {/* Filters */}
             {categories.length > 1 && (
               <div className="flex items-center gap-3 mb-6">
-                <FunnelIcon className="w-5 h-5 text-neutral-500" />
+                <FunnelIcon className="w-5 h-5 text-muted-foreground" />
                 <div className="flex gap-2 flex-wrap">
                   {categories.map((category) => (
                     <button
@@ -184,7 +184,7 @@ export default function ProductsPage() {
                       className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                         filterCategory === category
                           ? 'bg-primary-500 text-white'
-                          : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                          : 'bg-muted hover:bg-muted/80'
                       }`}
                     >
                       {category === 'ALL' ? 'Tous' : category}
@@ -197,11 +197,11 @@ export default function ProductsPage() {
             {/* Products grid */}
             {filteredProducts.length === 0 ? (
               <div className="card p-12 text-center">
-                <ShoppingBagIcon className="w-16 h-16 text-neutral-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-neutral-900 mb-2">
+                <ShoppingBagIcon className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">
                   {filterCategory === 'ALL' ? 'Aucun produit' : `Aucun produit dans la catégorie "${filterCategory}"`}
                 </h3>
-                <p className="text-neutral-600 mb-4">
+                <p className="text-muted-foreground mb-4">
                   Commencez par ajouter votre premier produit
                 </p>
                 <button onClick={openCreateModal} className="btn btn-primary">
@@ -221,21 +221,21 @@ export default function ProductsPage() {
                           <ShoppingBagIcon className="w-6 h-6 text-accent-600" />
                         </div>
                         <div className="min-w-0">
-                          <h3 className="font-semibold text-neutral-900 truncate">
+                          <h3 className="font-semibold truncate">
                             {product.name}
                           </h3>
                           {product.category && (
-                            <span className="text-xs text-neutral-500">{product.category}</span>
+                            <span className="text-xs text-muted-foreground">{product.category}</span>
                           )}
                         </div>
                       </div>
                       <div className="flex gap-2 flex-shrink-0">
                         <button
                           onClick={() => openEditModal(product)}
-                          className="p-2 rounded-lg hover:bg-neutral-100 transition-colors"
+                          className="p-2 rounded-lg hover:bg-muted transition-colors"
                           title="Modifier"
                         >
-                          <PencilIcon className="w-4 h-4 text-neutral-600" />
+                          <PencilIcon className="w-4 h-4 text-muted-foreground" />
                         </button>
                         <button
                           onClick={() => handleDelete(product)}
@@ -251,24 +251,24 @@ export default function ProductsPage() {
                       {/* Supplier */}
                       {product.supplier && (
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-neutral-500">Fournisseur</span>
-                          <span className="font-medium text-neutral-900 truncate ml-2">{product.supplier.name}</span>
+                          <span className="text-muted-foreground">Fournisseur</span>
+                          <span className="font-medium truncate ml-2">{product.supplier.name}</span>
                         </div>
                       )}
 
                       {/* Shelf life */}
                       {product.shelf_life_days && (
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-neutral-500">Conservation</span>
-                          <span className="font-medium text-neutral-900">{product.shelf_life_days} jours</span>
+                          <span className="text-muted-foreground">Conservation</span>
+                          <span className="font-medium">{product.shelf_life_days} jours</span>
                         </div>
                       )}
 
                       {/* Storage conditions */}
                       {product.storage_conditions && (
                         <div className="text-sm">
-                          <span className="text-neutral-500">Stockage: </span>
-                          <span className="text-neutral-700">{product.storage_conditions}</span>
+                          <span className="text-muted-foreground">Stockage: </span>
+                          <span className="text-muted-foreground">{product.storage_conditions}</span>
                         </div>
                       )}
 
@@ -286,7 +286,7 @@ export default function ProductsPage() {
                       )}
 
                       {!product.is_active && (
-                        <div className="pt-2 border-t border-neutral-100">
+                        <div className="pt-2 border-t border-border">
                           <span className="text-xs text-danger-600 font-medium">Désactivé</span>
                         </div>
                       )}
@@ -304,33 +304,33 @@ export default function ProductsPage() {
             <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setShowModal(false)}></div>
             <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
               <div className="card w-full max-w-md p-6 animate-slide-up max-h-[90vh] overflow-y-auto">
-                <h2 className="text-xl font-bold text-neutral-900 mb-4">
+                <h2 className="text-xl font-bold mb-4">
                   {editingProduct ? 'Modifier le produit' : 'Nouveau produit'}
                 </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    <label className="block text-sm font-medium mb-1">
                       Nom du produit *
                     </label>
                     <input
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary-500 bg-background"
                       placeholder="ex: Lait entier Bio"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    <label className="block text-sm font-medium mb-1">
                       Fournisseur *
                     </label>
                     <select
                       value={formData.supplier_id}
                       onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary-500 bg-background"
                       required
                     >
                       <option value="">Sélectionner un fournisseur</option>
@@ -343,56 +343,56 @@ export default function ProductsPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    <label className="block text-sm font-medium mb-1">
                       Catégorie
                     </label>
                     <input
                       type="text"
                       value={formData.category}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary-500 bg-background"
                       placeholder="ex: Produits laitiers, Légumes, Viandes"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    <label className="block text-sm font-medium mb-1">
                       Allergènes
                     </label>
                     <input
                       type="text"
                       value={formData.allergens}
                       onChange={(e) => setFormData({ ...formData, allergens: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary-500 bg-background"
                       placeholder="ex: Lactose, Gluten"
                     />
-                    <p className="text-xs text-neutral-500 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       Séparez les allergènes par des virgules
                     </p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    <label className="block text-sm font-medium mb-1">
                       Durée de conservation (jours)
                     </label>
                     <input
                       type="number"
                       value={formData.shelf_life_days || ''}
                       onChange={(e) => setFormData({ ...formData, shelf_life_days: e.target.value ? parseInt(e.target.value) : undefined })}
-                      className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary-500 bg-background"
                       placeholder="ex: 7"
                       min="1"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    <label className="block text-sm font-medium mb-1">
                       Conditions de stockage
                     </label>
                     <textarea
                       value={formData.storage_conditions}
                       onChange={(e) => setFormData({ ...formData, storage_conditions: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary-500 bg-background"
                       placeholder="ex: Réfrigéré 4°C, À l'abri de la lumière"
                       rows={2}
                     />
@@ -402,7 +402,7 @@ export default function ProductsPage() {
                     <button
                       type="button"
                       onClick={() => setShowModal(false)}
-                      className="flex-1 px-4 py-2 rounded-lg border border-neutral-200 text-neutral-700 hover:bg-neutral-50"
+                      className="flex-1 px-4 py-2 rounded-lg border border-border hover:bg-muted"
                     >
                       Annuler
                     </button>

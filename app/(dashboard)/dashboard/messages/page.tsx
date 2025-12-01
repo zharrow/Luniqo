@@ -7,7 +7,6 @@ import { messagingService, type Conversation } from '@/lib/services/messaging.se
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { SparklesText } from '@/components/ui/sparkles-text'
 import { CountBadge } from '@/components/ui/badge'
 import { PlusIcon, ChatBubbleLeftRightIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 
@@ -100,7 +99,7 @@ export default function MessagesPage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary-200 border-t-primary-500 mx-auto mb-4"></div>
-          <p className="text-neutral-600">Chargement...</p>
+          <p className="text-muted-foreground">Chargement...</p>
         </div>
       </div>
     )
@@ -111,12 +110,9 @@ export default function MessagesPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <SparklesText
-            className="text-3xl font-bold mb-2"
-            colors={{ first: '#a855f7', second: '#06b6d4' }}
-          >
+          <h1 className="text-3xl font-bold mb-2">
             Messages
-          </SparklesText>
+          </h1>
           <p className="text-muted-foreground">
             {session?.role === 'Admin'
               ? 'Communiquez avec le support'

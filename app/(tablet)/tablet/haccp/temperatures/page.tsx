@@ -120,7 +120,7 @@ export default function TabletHaccpTemperaturesPage() {
       <div className="tablet-mode min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-secondary-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-24 w-24 border-8 border-primary-200 border-t-primary-500 mx-auto mb-6"></div>
-          <p className="text-2xl text-neutral-600">Chargement...</p>
+          <p className="text-2xl text-muted-foreground">Chargement...</p>
         </div>
       </div>
     )
@@ -136,7 +136,7 @@ export default function TabletHaccpTemperaturesPage() {
             </svg>
           </div>
           <h2 className="text-4xl font-bold text-success-600 mb-4">Enregistré !</h2>
-          <p className="text-2xl text-neutral-600">Retour au menu HACCP...</p>
+          <p className="text-2xl text-muted-foreground">Retour au menu HACCP...</p>
         </div>
       </div>
     )
@@ -163,10 +163,10 @@ export default function TabletHaccpTemperaturesPage() {
             </svg>
           </button>
           <div>
-            <h1 className="text-5xl font-bold text-neutral-900 mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+            <h1 className="text-5xl font-bold mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
               Contrôle Températures
             </h1>
-            <p className="text-2xl text-neutral-600">{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+            <p className="text-2xl text-muted-foreground">{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
           </div>
         </div>
       </div>
@@ -180,7 +180,7 @@ export default function TabletHaccpTemperaturesPage() {
 
       {/* Meal Selection */}
       <div className="card p-8 mb-8">
-        <label className="block text-2xl font-bold text-neutral-900 mb-4">
+        <label className="block text-2xl font-bold mb-4">
           Sélectionnez le repas
         </label>
 
@@ -193,7 +193,7 @@ export default function TabletHaccpTemperaturesPage() {
                 className={`p-6 rounded-2xl border-4 text-xl font-semibold transition-all ${
                   selectedMeal === meal.id
                     ? 'bg-danger-500 border-danger-600 text-white scale-105'
-                    : 'bg-white border-neutral-200 text-neutral-700 hover:border-danger-500'
+                    : 'bg-card border-border hover:border-danger-500'
                 }`}
               >
                 {meal.meal_type === 'Breakfast' && '🥐 Petit-déjeuner'}
@@ -203,7 +203,7 @@ export default function TabletHaccpTemperaturesPage() {
             ))}
           </div>
         ) : (
-          <p className="text-xl text-neutral-600">Aucun repas validé pour aujourd'hui</p>
+          <p className="text-xl text-muted-foreground">Aucun repas validé pour aujourd'hui</p>
         )}
       </div>
 
@@ -222,8 +222,8 @@ export default function TabletHaccpTemperaturesPage() {
                     {info.icon}
                   </div>
                   <div>
-                    <h3 className="text-3xl font-bold text-neutral-900">{info.label}</h3>
-                    <p className="text-lg text-neutral-600">
+                    <h3 className="text-3xl font-bold">{info.label}</h3>
+                    <p className="text-lg text-muted-foreground">
                       Plage normale : {info.minTemp}°C à {info.maxTemp}°C
                     </p>
                   </div>
@@ -231,7 +231,7 @@ export default function TabletHaccpTemperaturesPage() {
 
                 {/* Temperature Input */}
                 <div className="mb-6">
-                  <label className="block text-xl font-medium text-neutral-700 mb-3">
+                  <label className="block text-xl font-medium mb-3">
                     Température (°C)
                   </label>
                   <input
@@ -242,7 +242,7 @@ export default function TabletHaccpTemperaturesPage() {
                     className={`w-full px-6 py-4 text-3xl font-bold rounded-xl border-4 text-center focus:outline-none focus:ring-4 transition-all ${
                       isOutOfRange
                         ? 'border-danger-500 bg-danger-50 text-danger-700 focus:ring-danger-500'
-                        : 'border-neutral-200 focus:ring-primary-500'
+                        : 'border-border bg-background focus:ring-primary-500'
                     }`}
                     placeholder="--.-"
                   />
@@ -255,7 +255,7 @@ export default function TabletHaccpTemperaturesPage() {
 
                 {/* Compliance Toggle */}
                 <div className="mb-6">
-                  <label className="block text-xl font-medium text-neutral-700 mb-3">
+                  <label className="block text-xl font-medium mb-3">
                     Conformité
                   </label>
                   <div className="flex gap-4">
@@ -264,7 +264,7 @@ export default function TabletHaccpTemperaturesPage() {
                       className={`flex-1 p-4 rounded-xl text-lg font-semibold transition-all ${
                         temp.compliant
                           ? 'bg-success-500 text-white scale-105'
-                          : 'bg-white border-2 border-neutral-200 text-neutral-700'
+                          : 'bg-card border-2 border-border'
                       }`}
                     >
                       ✅ Conforme
@@ -274,7 +274,7 @@ export default function TabletHaccpTemperaturesPage() {
                       className={`flex-1 p-4 rounded-xl text-lg font-semibold transition-all ${
                         !temp.compliant
                           ? 'bg-danger-500 text-white scale-105'
-                          : 'bg-white border-2 border-neutral-200 text-neutral-700'
+                          : 'bg-card border-2 border-border'
                       }`}
                     >
                       ❌ Non conforme
@@ -284,13 +284,13 @@ export default function TabletHaccpTemperaturesPage() {
 
                 {/* Notes */}
                 <div>
-                  <label className="block text-xl font-medium text-neutral-700 mb-3">
+                  <label className="block text-xl font-medium mb-3">
                     Remarques (optionnel)
                   </label>
                   <textarea
                     value={temp.notes}
                     onChange={(e) => updateTemperature(index, 'notes', e.target.value)}
-                    className="w-full px-4 py-3 text-lg rounded-xl border-2 border-neutral-200 focus:outline-none focus:ring-4 focus:ring-primary-500"
+                    className="w-full px-4 py-3 text-lg rounded-xl border-2 border-border focus:outline-none focus:ring-4 focus:ring-primary-500 bg-background"
                     rows={2}
                     placeholder="Ajouter une remarque..."
                   />

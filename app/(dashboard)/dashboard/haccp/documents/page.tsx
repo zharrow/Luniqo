@@ -153,7 +153,7 @@ export default function HaccpDocumentsPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary-200 border-t-primary-500 mx-auto mb-4"></div>
-          <p className="text-neutral-600">Chargement...</p>
+          <p className="text-muted-foreground">Chargement...</p>
         </div>
       </div>
     )
@@ -180,8 +180,8 @@ export default function HaccpDocumentsPage() {
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-neutral-900 mb-2">Documents HACCP</h1>
-          <p className="text-neutral-600">Gestion des documents de conformité</p>
+          <h1 className="text-3xl font-bold mb-2">Documents HACCP</h1>
+          <p className="text-muted-foreground">Gestion des documents de conformité</p>
         </div>
         <div className="flex gap-3">
           <button
@@ -211,8 +211,8 @@ export default function HaccpDocumentsPage() {
         <div className="card p-4">
           <div className="text-center">
             <p className="text-3xl mb-1">📁</p>
-            <p className="text-2xl font-bold text-neutral-900">{stats.total}</p>
-            <p className="text-sm text-neutral-600">Total</p>
+            <p className="text-2xl font-bold">{stats.total}</p>
+            <p className="text-sm text-muted-foreground">Total</p>
           </div>
         </div>
         {stats.byCategory.map(({ category, count }) => {
@@ -221,8 +221,8 @@ export default function HaccpDocumentsPage() {
             <div key={category} className="card p-4">
               <div className="text-center">
                 <p className="text-3xl mb-1">{info.icon}</p>
-                <p className="text-2xl font-bold text-neutral-900">{count}</p>
-                <p className="text-sm text-neutral-600">{info.label}</p>
+                <p className="text-2xl font-bold">{count}</p>
+                <p className="text-sm text-muted-foreground">{info.label}</p>
               </div>
             </div>
           )
@@ -232,13 +232,13 @@ export default function HaccpDocumentsPage() {
       {/* Filter */}
       <div className="card p-6 mb-6">
         <div className="flex items-center gap-4">
-          <label className="text-sm font-medium text-neutral-700">
+          <label className="text-sm font-medium">
             Catégorie :
           </label>
           <select
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
-            className="px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary-500 bg-background"
           >
             <option value="all">Toutes les catégories</option>
             {Object.entries(categories).map(([key, info]) => (
@@ -278,9 +278,9 @@ export default function HaccpDocumentsPage() {
                   </button>
                 </div>
 
-                <h3 className="text-lg font-bold text-neutral-900 mb-2">{doc.title}</h3>
+                <h3 className="text-lg font-bold mb-2">{doc.title}</h3>
 
-                <div className="flex items-center justify-between text-xs text-neutral-500 mb-4">
+                <div className="flex items-center justify-between text-xs text-muted-foreground mb-4">
                   <span>Ajouté le {new Date(doc.created_at).toLocaleDateString('fr-FR')}</span>
                 </div>
 
@@ -298,10 +298,10 @@ export default function HaccpDocumentsPage() {
         </div>
       ) : (
         <div className="card p-12 text-center">
-          <svg className="w-16 h-16 text-neutral-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          <p className="text-neutral-500 mb-4">Aucun document enregistré</p>
+          <p className="text-muted-foreground mb-4">Aucun document enregistré</p>
           <button onClick={handleAdd} className="btn btn-primary">
             + Ajouter le premier document
           </button>
@@ -311,34 +311,34 @@ export default function HaccpDocumentsPage() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-neutral-200">
-              <h2 className="text-2xl font-bold text-neutral-900">Nouveau document</h2>
+          <div className="bg-card rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-border">
+              <h2 className="text-2xl font-bold">Nouveau document</h2>
             </div>
 
             <form onSubmit={handleSubmit} className="p-6">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
+                  <label className="block text-sm font-medium mb-1">
                     Titre <span className="text-danger-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary-500 bg-background"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
+                  <label className="block text-sm font-medium mb-1">
                     Catégorie <span className="text-danger-500">*</span>
                   </label>
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value as DocumentCategory })}
-                    className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary-500 bg-background"
                   >
                     {Object.entries(categories).map(([key, info]) => (
                       <option key={key} value={key}>
@@ -349,16 +349,16 @@ export default function HaccpDocumentsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
+                  <label className="block text-sm font-medium mb-1">
                     Fichier (optionnel)
                   </label>
                   <input
                     type="file"
                     accept=".pdf,.doc,.docx,image/*"
                     onChange={(e) => setFormData({ ...formData, file: e.target.files?.[0] || null })}
-                    className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary-500 bg-background"
                   />
-                  <p className="text-xs text-neutral-500 mt-1">PDF, Word, ou images (max 10MB)</p>
+                  <p className="text-xs text-muted-foreground mt-1">PDF, Word, ou images (max 10MB)</p>
                 </div>
               </div>
 

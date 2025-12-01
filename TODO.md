@@ -1,7 +1,7 @@
 # TODO - cLean Project
 
-**Dernière mise à jour**: 2025-11-19 18:00
-**Progression globale**: 100% (83/83 tâches) - 🎉 PROJET TERMINÉ ! 🎉
+**Dernière mise à jour**: 2025-11-29 19:30
+**Progression globale**: 100% (86/86 tâches) - 🎉 PROJET TERMINÉ ! 🎉
 
 ---
 
@@ -32,7 +32,14 @@
 - ✅ Déploiement (Vercel configuré, prêt pour production)
 - ✅ Documentation (6 fichiers complets)
 
-**Derniers ajouts** (2025-11-19):
+**Derniers ajouts** (2025-11-29):
+- 📅 **CALENDRIER HEBDOMADAIRE** - Vue semaine complète (lundi-vendredi)
+- 🏠 Correction affichage des pièces (retrait ShineBorder)
+- 🔧 Refactoring services avec lazy Supabase client (getClient())
+- 📋 Système d'assignation des tâches aux pièces complet
+- 📄 Documentation ASSIGNATION-TACHES.md + CALENDRIER-HEBDOMADAIRE.md
+
+**Ajouts précédents** (2025-11-19):
 - 📚 Documentation complète : INDEX.md, API-PATTERNS.md, QUICK-START.md, ERRORS-SOLUTIONS.md
 - 🎨 Page login moderne en 2 colonnes (style shadcn/studio)
 - 💼 Interface Developer complète avec sidebar et logout
@@ -60,7 +67,7 @@
 
 ---
 
-## ✅ Complété (83/83 tâches - 100%)
+## ✅ Complété (86/86 tâches - 100%)
 
 ### Phase 1: Infrastructure ✅ (100% - 9/9)
 - ✅ Configuration Next.js 16 + TypeScript + Tailwind v4
@@ -73,7 +80,7 @@
 - ✅ Context React (AuthContext, ThemeContext)
 - ✅ Layout racine avec providers
 
-### Phase 2: Module cLean ✅ (100% - 19/19)
+### Phase 2: Module cLean ✅ (100% - 22/22)
 - ✅ Dashboard admin avec stats en temps réel
 - ✅ CRUD Rooms (création, modification, désactivation)
 - ✅ CRUD Tasks (templates avec filtres par type)
@@ -83,6 +90,21 @@
 - ✅ History & Reports (historique complet, filtres, stats)
 - ✅ Services: rooms, tasks, users, sessions
 - ✅ Components: DashboardLayout, Sidebar, Header
+- ✅ **Assignation des tâches aux pièces** (2025-11-29)
+  - Service assigned-tasks.service.ts complet
+  - Page /dashboard/rooms/[id] pour gérer les assignations
+  - Bouton "Gérer les tâches" dans menu dropdown des pièces
+  - Documentation ASSIGNATION-TACHES.md
+- ✅ **Calendrier hebdomadaire** (2025-11-29) - [P0] COMPLÉTÉ
+  - Service calendar.service.ts avec logique métier complète
+  - Composant WeeklyCalendar avec filtrage et navigation
+  - Affichage lundi-vendredi (crèche fermée weekend)
+  - Badges colorés par type (Quotidien/Hebdo/Mensuel)
+  - Badges de statut (À faire/En cours/Fait)
+  - Filtrage par pièce + Navigation entre semaines
+  - Responsive (1/3/5 colonnes selon écran)
+  - Intégré au dashboard principal
+  - Documentation CALENDRIER-HEBDOMADAIRE.md
 
 ### Phase 3: Module HACCP ✅ (100% - 16/16)
 - ✅ Dashboard HACCP avec stats + navigation 8 modules
@@ -418,6 +440,104 @@ Le projet est complet, mais voici des pistes d'amélioration classées par prior
 ---
 
 ## 🔄 Historique des sessions
+
+### Session 2025-11-29 - 19h00-19h30 (Calendrier hebdomadaire)
+**Travaux effectués:**
+- ✅ **Implémentation complète du calendrier hebdomadaire** - Tâche [P0] TERMINÉE
+  - Analyse des services existants (tasks, rooms, assigned-tasks)
+  - Création `lib/services/calendar.service.ts` (280 lignes)
+  - Logique métier pour affichage des tâches par type (DAILY/WEEKLY/MONTHLY)
+  - Récupération du statut des tâches depuis cleaning_log
+  - Support de la configuration frequency (dayOfWeek, dayOfMonth)
+- ✅ **Composant WeeklyCalendar**
+  - Création `components/dashboard/WeeklyCalendar.tsx` (320 lignes)
+  - Affichage lundi-vendredi uniquement (crèche fermée weekend)
+  - Filtrage par pièce avec Select dropdown
+  - Navigation entre semaines (précédent/suivant/aujourd'hui)
+  - Badges colorés par type de tâche
+  - Badges de statut (À faire/En cours/Fait)
+  - Responsive : 1 colonne mobile, 3 tablette, 5 desktop
+- ✅ **Intégration au dashboard**
+  - Ajout du calendrier à `/dashboard` (page principale)
+  - Vérification TypeScript (session?.enterprise?.id)
+- ✅ **Documentation**
+  - Création CALENDRIER-HEBDOMADAIRE.md (400+ lignes)
+  - Guide complet : architecture, logique métier, troubleshooting
+  - Exemples de configuration frequency
+  - Mise à jour TODO.md
+
+**Fichiers créés:**
+- 🆕 `lib/services/calendar.service.ts` (280 lignes)
+- 🆕 `components/dashboard/WeeklyCalendar.tsx` (320 lignes)
+- 🆕 `CALENDRIER-HEBDOMADAIRE.md` (400+ lignes)
+
+**Fichiers modifiés:**
+- 📝 `app/(dashboard)/dashboard/page.tsx` (intégration WeeklyCalendar)
+- 📝 `lib/services/rooms.service.ts` (fix TypeScript)
+- 📝 `TODO.md` (mise à jour progression 86/86 tâches)
+
+**État du projet:**
+- **🎉 100% TERMINÉ** (86/86 tâches) 🏆 ⬆️ +1 tâche depuis session précédente
+- Module cLean: 100% ✅ (22/22 tâches - ajout calendrier hebdomadaire)
+- Documentation: 8/8 fichiers (ajout CALENDRIER-HEBDOMADAIRE.md)
+
+**Features livrées:**
+- 📅 Vue calendrier semaine complète (lundi-vendredi)
+- 🎨 Design cohérent avec design system pastel
+- 🔍 Filtrage dynamique par pièce
+- 📊 Suivi en temps réel du statut des tâches
+- 📱 Interface 100% responsive
+
+**Prochaine étape suggérée:**
+- Les suggestions [P1] restent disponibles (réinitialisation MDP, graphiques dashboard, etc.)
+
+---
+
+### Session 2025-11-29 - 18h00-19h00 (Correction affichage pièces + Assignation tâches)
+**Travaux effectués:**
+- ✅ **Correction affichage des pièces**
+  - Problème identifié : Composant ShineBorder rendait les cartes invisibles
+  - Solution : Retrait de ShineBorder, utilisation directe de Card
+  - Résultat : 11 pièces maintenant visibles correctement
+- ✅ **Refactoring Supabase client**
+  - Changement de `private supabase = createClient()` vers `private getClient()`
+  - Initialisation lazy du client pour éviter problèmes de timing avec session
+  - Appliqué à rooms.service.ts
+- ✅ **Système d'assignation des tâches aux pièces**
+  - Création `lib/services/assigned-tasks.service.ts` avec CRUD complet
+  - Méthodes : getByRoom, create, bulkAssign, unassign, isAssigned, getCountByRoom
+  - Création page `app/(dashboard)/dashboard/rooms/[id]/page.tsx`
+  - Interface complète pour assigner/retirer des tâches par pièce
+  - Ajout bouton "Gérer les tâches" dans dropdown des pièces
+- ✅ **Documentation**
+  - Création ASSIGNATION-TACHES.md (209 lignes)
+  - Guide complet avec architecture, flux d'utilisation, troubleshooting
+  - Mise à jour TODO.md avec les nouvelles tâches
+
+**Fichiers créés:**
+- 🆕 `lib/services/assigned-tasks.service.ts` (170 lignes)
+- 🆕 `app/(dashboard)/dashboard/rooms/[id]/page.tsx` (220 lignes)
+- 🆕 `ASSIGNATION-TACHES.md` (209 lignes)
+
+**Fichiers modifiés:**
+- 📝 `lib/services/rooms.service.ts` (refactoring getClient)
+- 📝 `app/(dashboard)/dashboard/rooms/page.tsx` (retrait ShineBorder, ajout bouton)
+- 📝 `lib/contexts/AuthContext.tsx` (nettoyage logs)
+- 📝 `TODO.md` (mise à jour progression + nouvelle suggestion [P0])
+
+**État du projet:**
+- **🎉 100% TERMINÉ** (85/85 tâches) 🏆 ⬆️ +2 tâches depuis session précédente
+- Module cLean: 100% ✅ (21/21 tâches - ajout assignation tâches/pièces)
+- Documentation: 7/7 fichiers (ajout ASSIGNATION-TACHES.md)
+
+**Bugs corrigés:**
+- ❌ Pièces invisibles sur /dashboard/rooms (ShineBorder CSS issue)
+- ❌ Supabase client créé trop tôt avant chargement session
+
+**Prochaine étape suggérée:**
+- [P0] Calendrier hebdomadaire des tâches sur le dashboard principal
+
+---
 
 ### Session 2025-11-19 - 18h00-18h15 (Documentation finale)
 **Travaux effectués:**

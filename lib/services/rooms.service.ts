@@ -28,13 +28,16 @@ export interface UpdateRoomInput {
 }
 
 export class RoomsService {
-  private supabase = createClient()
+  private getClient() {
+    return createClient()
+  }
 
   /**
    * Get all rooms for an enterprise
    */
   async getAll(enterpriseId: string): Promise<Room[]> {
-    const { data, error } = await this.supabase
+    const supabase = this.getClient()
+    const { data, error } = await supabase
       .from('room')
       .select('*')
       .eq('enterprise_id', enterpriseId)
@@ -48,7 +51,8 @@ export class RoomsService {
    * Get active rooms only
    */
   async getActive(enterpriseId: string): Promise<Room[]> {
-    const { data, error } = await this.supabase
+    const supabase = this.getClient()
+    const { data, error } = await supabase
       .from('room')
       .select('*')
       .eq('enterprise_id', enterpriseId)
@@ -63,7 +67,8 @@ export class RoomsService {
    * Get a single room by ID
    */
   async getById(id: string, enterpriseId: string): Promise<Room | null> {
-    const { data, error } = await this.supabase
+    const supabase = this.getClient()
+    const { data, error } = await supabase
       .from('room')
       .select('*')
       .eq('id', id)
@@ -82,7 +87,8 @@ export class RoomsService {
    * Create a new room
    */
   async create(enterpriseId: string, input: CreateRoomInput): Promise<Room> {
-    const { data, error } = await this.supabase
+    const supabase = this.getClient()
+    const { data, error } = await supabase
       .from('room')
       .insert({
         enterprise_id: enterpriseId,
@@ -103,7 +109,8 @@ export class RoomsService {
    * Update a room
    */
   async update(id: string, enterpriseId: string, input: UpdateRoomInput): Promise<Room> {
-    const { data, error } = await this.supabase
+    const supabase = this.getClient()
+    const { data, error } = await supabase
       .from('room')
       .update(input)
       .eq('id', id)
@@ -119,7 +126,8 @@ export class RoomsService {
    * Delete a room (soft delete - sets is_active to false)
    */
   async softDelete(id: string, enterpriseId: string): Promise<void> {
-    const { error } = await this.supabase
+    const supabase = this.getClient()
+    const { error } = await supabase
       .from('room')
       .update({ is_active: false })
       .eq('id', id)
@@ -132,7 +140,8 @@ export class RoomsService {
    * Hard delete a room (permanent)
    */
   async hardDelete(id: string, enterpriseId: string): Promise<void> {
-    const { error } = await this.supabase
+    const supabase = this.getClient()
+    const { error } = await supabase
       .from('room')
       .delete()
       .eq('id', id)
@@ -145,8 +154,9 @@ export class RoomsService {
    * Reorder rooms
    */
   async reorder(enterpriseId: string, roomOrders: { id: string; display_order: number }[]): Promise<void> {
+    const supabase = this.getClient()
     const promises = roomOrders.map(({ id, display_order }) =>
-      this.supabase
+      supabase
         .from('room')
         .update({ display_order })
         .eq('id', id)
@@ -163,8 +173,9 @@ export class RoomsService {
     totalTasks: number
     completedToday: number
   }> {
+    const supabase = this.getClient()
     // Get total tasks assigned to this room
-    const { count: totalTasks } = await this.supabase
+    const { count: totalTasks } = await supabase
       .from('assigned_task')
       .select('*', { count: 'exact', head: true })
       .eq('room_id', roomId)
@@ -172,7 +183,7 @@ export class RoomsService {
 
     // Get today's session
     const today = new Date().toISOString().split('T')[0]
-    const { data: session } = await this.supabase
+    const { data: session } = await supabase
       .from('cleaning_session')
       .select('id')
       .eq('enterprise_id', enterpriseId)
@@ -181,7 +192,7 @@ export class RoomsService {
 
     let completedToday = 0
     if (session) {
-      const { count } = await this.supabase
+      const { count } = await supabase
         .from('cleaning_log')
         .select('assigned_task!inner(*)', { count: 'exact', head: true })
         .eq('session_id', (session as any).id)

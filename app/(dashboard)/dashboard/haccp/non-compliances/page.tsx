@@ -113,7 +113,7 @@ export default function NonCompliancesPage() {
       case 'Open': return 'bg-danger-50 text-danger-700 border-danger-200'
       case 'Corrected': return 'bg-accent-50 text-accent-700 border-accent-200'
       case 'Closed': return 'bg-success-50 text-success-700 border-success-200'
-      default: return 'bg-neutral-50 text-neutral-700 border-neutral-200'
+      default: return 'bg-muted text-muted-foreground border-border'
     }
   }
 
@@ -140,8 +140,8 @@ export default function NonCompliancesPage() {
       case 'Product': return 'bg-accent-50 text-accent-700'
       case 'Temperature': return 'bg-primary-50 text-primary-700'
       case 'Hygiene': return 'bg-secondary-50 text-secondary-700'
-      case 'Other': return 'bg-neutral-50 text-neutral-700'
-      default: return 'bg-neutral-50 text-neutral-700'
+      case 'Other': return 'bg-muted text-muted-foreground'
+      default: return 'bg-muted text-muted-foreground'
     }
   }
 
@@ -175,10 +175,10 @@ export default function NonCompliancesPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-neutral-900 mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+            <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
               Non-conformités
             </h1>
-            <p className="text-neutral-600">
+            <p className="text-muted-foreground">
               Suivi des incidents et actions correctives
             </p>
           </div>
@@ -206,8 +206,8 @@ export default function NonCompliancesPage() {
                 filterStatus === stat.status ? 'ring-2 ring-primary-500' : ''
               }`}
             >
-              <p className="text-sm text-neutral-600 mb-1">{stat.label}</p>
-              <p className="text-2xl font-bold text-neutral-900">{stat.value}</p>
+              <p className="text-sm text-muted-foreground mb-1">{stat.label}</p>
+              <p className="text-2xl font-bold">{stat.value}</p>
             </button>
           ))}
         </div>
@@ -216,10 +216,10 @@ export default function NonCompliancesPage() {
         {filteredNCs.length === 0 ? (
           <div className="card p-12 text-center">
             <CheckCircleIcon className="w-16 h-16 text-success-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-neutral-900 mb-2">
+            <h3 className="text-lg font-medium mb-2">
               {filterStatus === 'ALL' ? 'Aucune non-conformité' : `Aucune non-conformité ${getStatusLabel(filterStatus as ComplianceStatus).toLowerCase()}`}
             </h3>
-            <p className="text-neutral-600 mb-4">
+            <p className="text-muted-foreground mb-4">
               {filterStatus === 'Open' ? 'Aucun incident ouvert actuellement' : 'Bonne nouvelle !'}
             </p>
           </div>
@@ -246,11 +246,11 @@ export default function NonCompliancesPage() {
                           </span>
                         </div>
 
-                        <h3 className="font-semibold text-neutral-900 mb-2">
+                        <h3 className="font-semibold mb-2">
                           {nc.description}
                         </h3>
 
-                        <div className="flex items-center gap-4 text-sm text-neutral-600 mb-3">
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                           <span>
                             Découvert le {format(new Date(nc.discovered_at), 'd MMMM yyyy à HH:mm', { locale: fr })}
                           </span>
@@ -278,10 +278,10 @@ export default function NonCompliancesPage() {
 
                     <button
                       onClick={() => openEditModal(nc)}
-                      className="p-2 rounded-lg hover:bg-neutral-100 transition-colors flex-shrink-0"
+                      className="p-2 rounded-lg hover:bg-muted transition-colors flex-shrink-0"
                       title="Modifier"
                     >
-                      <PencilIcon className="w-5 h-5 text-neutral-600" />
+                      <PencilIcon className="w-5 h-5 text-muted-foreground" />
                     </button>
                   </div>
                 </div>
@@ -296,19 +296,19 @@ export default function NonCompliancesPage() {
             <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setShowModal(false)}></div>
             <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
               <div className="card w-full max-w-md p-6 animate-slide-up max-h-[90vh] overflow-y-auto">
-                <h2 className="text-xl font-bold text-neutral-900 mb-4">
+                <h2 className="text-xl font-bold mb-4">
                   {editingNC ? 'Modifier la non-conformité' : 'Déclarer une non-conformité'}
                 </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    <label className="block text-sm font-medium mb-1">
                       Type *
                     </label>
                     <select
                       value={formData.type}
                       onChange={(e) => setFormData({ ...formData, type: e.target.value as ComplianceType })}
-                      className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary-500 bg-background"
                       required
                     >
                       <option value="Product">Produit</option>
@@ -320,14 +320,14 @@ export default function NonCompliancesPage() {
 
                   {!editingNC && (
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-1">
+                      <label className="block text-sm font-medium mb-1">
                         Date et heure de découverte *
                       </label>
                       <input
                         type="datetime-local"
                         value={formData.discovered_at}
                         onChange={(e) => setFormData({ ...formData, discovered_at: e.target.value })}
-                        className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary-500 bg-background"
                         required
                       />
                     </div>
@@ -335,13 +335,13 @@ export default function NonCompliancesPage() {
 
                   {!editingNC && (
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-1">
+                      <label className="block text-sm font-medium mb-1">
                         Découvert par *
                       </label>
                       <select
                         value={formData.discovered_by_id}
                         onChange={(e) => setFormData({ ...formData, discovered_by_id: e.target.value })}
-                        className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary-500 bg-background"
                         required
                       >
                         <option value="">Sélectionner une personne</option>
@@ -355,13 +355,13 @@ export default function NonCompliancesPage() {
                   )}
 
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    <label className="block text-sm font-medium mb-1">
                       Description *
                     </label>
                     <textarea
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary-500 bg-background"
                       placeholder="Décrivez l'incident en détail"
                       rows={4}
                       required
@@ -369,13 +369,13 @@ export default function NonCompliancesPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    <label className="block text-sm font-medium mb-1">
                       Action corrective
                     </label>
                     <textarea
                       value={formData.corrective_action}
                       onChange={(e) => setFormData({ ...formData, corrective_action: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary-500 bg-background"
                       placeholder="Décrivez l'action corrective mise en place"
                       rows={3}
                     />
@@ -383,13 +383,13 @@ export default function NonCompliancesPage() {
 
                   {editingNC && (
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-1">
+                      <label className="block text-sm font-medium mb-1">
                         Statut *
                       </label>
                       <select
                         value={formData.status}
                         onChange={(e) => setFormData({ ...formData, status: e.target.value as ComplianceStatus })}
-                        className="w-full px-4 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary-500 bg-background"
                         required
                       >
                         <option value="Open">Ouvert</option>
@@ -403,7 +403,7 @@ export default function NonCompliancesPage() {
                     <button
                       type="button"
                       onClick={() => setShowModal(false)}
-                      className="flex-1 px-4 py-2 rounded-lg border border-neutral-200 text-neutral-700 hover:bg-neutral-50"
+                      className="flex-1 px-4 py-2 rounded-lg border border-border hover:bg-muted"
                     >
                       Annuler
                     </button>

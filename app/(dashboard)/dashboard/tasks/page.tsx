@@ -154,7 +154,7 @@ export default function TasksPage() {
       case 'WEEKLY': return 'bg-secondary-50 text-secondary-700 border-secondary-200'
       case 'MONTHLY': return 'bg-accent-50 text-accent-700 border-accent-200'
       case 'OCCASIONAL': return 'bg-success-50 text-success-700 border-success-200'
-      default: return 'bg-neutral-50 text-neutral-700 border-neutral-200'
+      default: return 'bg-muted text-muted-foreground border-border'
     }
   }
 

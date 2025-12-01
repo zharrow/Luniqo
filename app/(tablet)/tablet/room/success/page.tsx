@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { CheckCircleIcon } from '@heroicons/react/24/outline'
 import { Confetti } from '@/components/ui/confetti'
-import { SparklesText } from '@/components/ui/sparkles-text'
 
 export default function SuccessPage() {
   const router = useRouter()
@@ -46,12 +45,9 @@ export default function SuccessPage() {
 
         {/* Success Message */}
         <div className="space-y-4">
-          <SparklesText
-            className="text-6xl font-bold"
-            colors={{ first: '#a855f7', second: '#ec4899' }}
-          >
+          <h1 className="text-6xl font-bold">
             Félicitations !
-          </SparklesText>
+          </h1>
 
           <h2 className="text-4xl font-semibold text-foreground/80">
             Tâches validées avec succès

@@ -20,7 +20,6 @@ import {
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
-import { SparklesText } from '@/components/ui/sparkles-text'
 import { ShineBorder } from '@/components/ui/shine-border'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
@@ -266,9 +265,9 @@ export default function HaccpDashboardPage() {
             <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
               <BeakerIcon className="w-6 h-6 text-success" />
             </div>
-            <SparklesText className="text-3xl font-bold" colors={{ first: '#10b981', second: '#3b82f6' }}>
+            <h1 className="text-3xl font-bold">
               HACCP - Traçabilité Alimentaire
-            </SparklesText>
+            </h1>
             <Popover>
               <PopoverTrigger asChild>
                 <button className="text-muted-foreground hover:text-primary transition-colors">
