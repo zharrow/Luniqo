@@ -12,7 +12,6 @@ import {
   ClockIcon,
   BeakerIcon,
   ChatBubbleLeftRightIcon,
-  BellIcon,
   ChartBarIcon,
   Cog6ToothIcon
 } from '@heroicons/react/24/outline'
@@ -38,18 +37,6 @@ interface NavItem {
   roles?: ('Developer' | 'Admin')[]
 }
 
-const navigation: NavItem[] = [
-  { name: 'Tableau de bord', href: '/dashboard', icon: HomeIcon, roles: ['Admin'] },
-  { name: 'Pièces', href: '/dashboard/rooms', icon: BuildingOfficeIcon, roles: ['Admin'] },
-  { name: 'Tâches', href: '/dashboard/tasks', icon: ClipboardDocumentListIcon, roles: ['Admin'] },
-  { name: 'Employés', href: '/dashboard/users', icon: UserGroupIcon, roles: ['Admin'] },
-  { name: 'Sessions', href: '/dashboard/sessions', icon: CalendarIcon, roles: ['Admin'] },
-  { name: 'Historique', href: '/dashboard/history', icon: ClockIcon, roles: ['Admin'] },
-  { name: 'HACCP', href: '/dashboard/haccp', icon: BeakerIcon, roles: ['Admin'] },
-  { name: 'Messages', href: '/dashboard/messages', icon: ChatBubbleLeftRightIcon, roles: ['Admin', 'Developer'] },
-  { name: 'Notifications', href: '/dashboard/notifications', icon: BellIcon, roles: ['Admin', 'Developer'] },
-  { name: 'Analytics', href: '/analytics', icon: ChartBarIcon, roles: ['Developer'] },
-]
 
 const mainNavigation: NavItem[] = [
   { name: 'Tableau de bord', href: '/dashboard', icon: HomeIcon, roles: ['Admin'] },
@@ -66,7 +53,6 @@ const operationsNavigation: NavItem[] = [
 
 const communicationNavigation: NavItem[] = [
   { name: 'Messages', href: '/dashboard/messages', icon: ChatBubbleLeftRightIcon, roles: ['Admin', 'Developer'] },
-  { name: 'Notifications', href: '/dashboard/notifications', icon: BellIcon, roles: ['Admin', 'Developer'] },
   { name: 'Analytics', href: '/analytics', icon: ChartBarIcon, roles: ['Developer'] },
 ]
 
