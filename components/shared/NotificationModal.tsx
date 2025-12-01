@@ -134,22 +134,22 @@ export default function NotificationModal({
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
+          {/* Invisible backdrop for closing on outside click */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+            className="fixed inset-0 z-40"
           />
 
-          {/* Modal */}
+          {/* Notification Panel - Slide from top-right */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ duration: 0.2 }}
-            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[80vh] bg-white rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden"
+            initial={{ opacity: 0, x: 400, y: 0 }}
+            animate={{ opacity: 1, x: 0, y: 0 }}
+            exit={{ opacity: 0, x: 400, y: 0 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="fixed top-0 right-0 sm:top-4 sm:right-4 w-full sm:max-w-md h-screen sm:h-[calc(100vh-2rem)] bg-white sm:rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden border-l sm:border border-neutral-200"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 bg-gradient-to-r from-primary-50 to-secondary-50">
@@ -169,15 +169,17 @@ export default function NotificationModal({
                 {notifications.some(n => !n.read) && (
                   <button
                     onClick={markAllAsRead}
-                    className="px-3 py-1.5 text-sm font-medium text-primary-600 hover:bg-primary-100 rounded-lg transition-colors"
+                    className="px-2 sm:px-3 py-1.5 text-sm font-medium text-primary-600 hover:bg-primary-100 rounded-lg transition-colors flex items-center gap-1"
+                    title="Tout marquer comme lu"
                   >
-                    <CheckIcon className="w-4 h-4 inline mr-1" />
-                    Tout marquer comme lu
+                    <CheckIcon className="w-4 h-4" />
+                    <span className="hidden sm:inline">Tout marquer comme lu</span>
                   </button>
                 )}
                 <button
                   onClick={onClose}
                   className="p-2 rounded-lg hover:bg-neutral-100 transition-colors"
+                  aria-label="Fermer"
                 >
                   <XMarkIcon className="w-5 h-5 text-neutral-600" />
                 </button>
