@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import { haccpService, type NonCompliance, type CreateNonComplianceInput, type ComplianceType, type ComplianceStatus } from '@/lib/services/haccp.service'
@@ -11,7 +12,8 @@ import {
   ExclamationTriangleIcon,
   CheckCircleIcon,
   XCircleIcon,
-  ClockIcon
+  ClockIcon,
+  ArrowLeftIcon
 } from '@heroicons/react/24/outline'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
@@ -19,6 +21,7 @@ import { FormDialog } from '@/components/shared/FormDialog'
 
 export default function NonCompliancesPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Admin'])
+  const router = useRouter()
   const [nonCompliances, setNonCompliances] = useState<NonCompliance[]>([])
   const [users, setUsers] = useState<UserWithRooms[]>([])
   const [loading, setLoading] = useState(true)
@@ -178,22 +181,31 @@ export default function NonCompliancesPage() {
     <DashboardLayout>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
-              Non-conformités
-            </h1>
-            <p className="text-muted-foreground">
-              Suivi des incidents et actions correctives
-            </p>
+        <div className="mb-8">
+          <div className="flex items-center gap-4 mb-6">
+            <button
+              onClick={() => router.push('/dashboard/haccp')}
+              className="p-2 rounded-lg hover:bg-muted transition-colors"
+              title="Retour au HACCP"
+            >
+              <ArrowLeftIcon className="w-5 h-5 text-muted-foreground" />
+            </button>
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+                Non-conformités
+              </h1>
+              <p className="text-muted-foreground">
+                Suivi des incidents et actions correctives
+              </p>
+            </div>
+            <button
+              onClick={openCreateModal}
+              className="btn btn-primary flex items-center gap-2"
+            >
+              <PlusIcon className="w-5 h-5" />
+              Déclarer un incident
+            </button>
           </div>
-          <button
-            onClick={openCreateModal}
-            className="btn btn-primary flex items-center gap-2"
-          >
-            <PlusIcon className="w-5 h-5" />
-            Déclarer un incident
-          </button>
         </div>
 
         {/* Stats */}

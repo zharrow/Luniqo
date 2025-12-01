@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/lib/contexts/AuthContext'
+import { useRequireAuth } from '@/lib/contexts/AuthContext'
+import DashboardLayout from '@/components/layout/DashboardLayout'
 import { haccpService } from '@/lib/services/haccp.service'
+import { ArrowLeftIcon } from '@heroicons/react/24/outline'
 
 interface Temperature {
   id: string
@@ -21,6 +23,8 @@ interface Temperature {
 }
 
 export default function HaccpTemperaturesPage() {
+  const { session, isLoading: authLoading } = useRequireAuth(['Admin'])
+  const router = useRouter()
   const [temperatures, setTemperatures] = useState<Temperature[]>([])
   const [filteredTemperatures, setFilteredTemperatures] = useState<Temperature[]>([])
   const [filterCheckpoint, setFilterCheckpoint] = useState<string>('all')
@@ -28,16 +32,10 @@ export default function HaccpTemperaturesPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const { session } = useAuth()
-  const router = useRouter()
-
   useEffect(() => {
-    if (!session || !['Admin', 'Developer'].includes(session.role)) {
-      router.push('/login')
-      return
+    if (session?.enterprise) {
+      loadTemperatures()
     }
-
-    loadTemperatures()
   }, [session])
 
   useEffect(() => {
@@ -74,14 +72,13 @@ export default function HaccpTemperaturesPage() {
     setFilteredTemperatures(filtered)
   }
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary-200 border-t-primary-500 mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Chargement...</p>
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
         </div>
-      </div>
+      </DashboardLayout>
     )
   }
 
@@ -103,20 +100,26 @@ export default function HaccpTemperaturesPage() {
   }
 
   return (
-    <div className="p-8">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Contrôle des Températures</h1>
-          <p className="text-muted-foreground">Suivi des températures HACCP</p>
+    <DashboardLayout>
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-4 mb-6">
+            <button
+              onClick={() => router.push('/dashboard/haccp')}
+              className="p-2 rounded-lg hover:bg-muted transition-colors"
+              title="Retour au HACCP"
+            >
+              <ArrowLeftIcon className="w-5 h-5 text-muted-foreground" />
+            </button>
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+                Contrôle des Températures
+              </h1>
+              <p className="text-muted-foreground">Suivi des températures HACCP</p>
+            </div>
+          </div>
         </div>
-        <button
-          onClick={() => router.push('/dashboard/haccp')}
-          className="btn btn-secondary"
-        >
-          ← Retour au HACCP
-        </button>
-      </div>
 
       {/* Error Message */}
       {error && (
@@ -307,6 +310,7 @@ export default function HaccpTemperaturesPage() {
           </p>
         </div>
       )}
-    </div>
+      </div>
+    </DashboardLayout>
   )
 }

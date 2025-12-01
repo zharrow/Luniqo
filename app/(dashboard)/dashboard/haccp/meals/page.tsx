@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import { haccpService, type Meal, type CreateMealInput, type MealType } from '@/lib/services/haccp.service'
@@ -14,7 +15,8 @@ import {
   ExclamationTriangleIcon,
   CalendarIcon,
   ChevronLeftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  ArrowLeftIcon
 } from '@heroicons/react/24/outline'
 import { format, startOfWeek, endOfWeek, addDays, subWeeks, addWeeks } from 'date-fns'
 import { fr } from 'date-fns/locale'
@@ -23,6 +25,7 @@ import { FormDialog } from '@/components/shared/FormDialog'
 
 export default function MealsPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Admin'])
+  const router = useRouter()
   const [meals, setMeals] = useState<Meal[]>([])
   const [users, setUsers] = useState<UserWithRooms[]>([])
   const [loading, setLoading] = useState(true)
@@ -31,7 +34,6 @@ export default function MealsPage() {
   const [mealToDelete, setMealToDelete] = useState<Meal | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [selectedDate, setSelectedDate] = useState(new Date())
   const [weekStart, setWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }))
   const [formData, setFormData] = useState<CreateMealInput>({
     date: format(new Date(), 'yyyy-MM-dd'),
@@ -205,22 +207,31 @@ export default function MealsPage() {
     <DashboardLayout>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
-              Repas
-            </h1>
-            <p className="text-muted-foreground">
-              Planification des repas et traçabilité alimentaire
-            </p>
+        <div className="mb-8">
+          <div className="flex items-center gap-4 mb-6">
+            <button
+              onClick={() => router.push('/dashboard/haccp')}
+              className="p-2 rounded-lg hover:bg-muted transition-colors"
+              title="Retour au HACCP"
+            >
+              <ArrowLeftIcon className="w-5 h-5 text-muted-foreground" />
+            </button>
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+                Repas
+              </h1>
+              <p className="text-muted-foreground">
+                Planification des repas et traçabilité alimentaire
+              </p>
+            </div>
+            <button
+              onClick={() => openCreateModal()}
+              className="btn btn-primary flex items-center gap-2"
+            >
+              <PlusIcon className="w-5 h-5" />
+              Nouveau repas
+            </button>
           </div>
-          <button
-            onClick={() => openCreateModal()}
-            className="btn btn-primary flex items-center gap-2"
-          >
-            <PlusIcon className="w-5 h-5" />
-            Nouveau repas
-          </button>
         </div>
 
         {/* Week navigation */}

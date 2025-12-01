@@ -17,6 +17,7 @@ import {
   CheckCircleIcon
 } from '@heroicons/react/24/outline'
 import { SidebarTrigger } from '@/components/ui/sidebar'
+import NotificationModal from '@/components/shared/NotificationModal'
 
 interface DashboardStats {
   totalRooms: number
@@ -28,6 +29,7 @@ interface DashboardStats {
 export default function Header() {
   const { session, logout } = useAuth()
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [showNotificationModal, setShowNotificationModal] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
   const [stats, setStats] = useState<DashboardStats>({
     totalRooms: 0,
@@ -199,7 +201,7 @@ export default function Header() {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => router.push('/dashboard/notifications')}
+          onClick={() => setShowNotificationModal(true)}
           className="relative p-2 rounded-xl hover:bg-neutral-100 transition-colors"
         >
           <BellIcon className="w-5 h-5 text-neutral-600" />
@@ -211,7 +213,7 @@ export default function Header() {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 exit={{ scale: 0 }}
-                className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-gradient-to-br from-danger-500 to-danger-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 shadow-lg"
+                className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-linear-to-br from-danger-500 to-danger-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 shadow-lg"
               >
                 {unreadCount > 9 ? '9+' : unreadCount}
               </motion.span>
@@ -305,6 +307,17 @@ export default function Header() {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Notification Modal */}
+      {session?.user?.id && session?.role && (
+        <NotificationModal
+          isOpen={showNotificationModal}
+          onClose={() => setShowNotificationModal(false)}
+          userId={session.user.id}
+          userRole={session.role as 'Admin' | 'Developer' | 'User'}
+          enterpriseId={session.enterprise?.id}
+        />
+      )}
     </header>
   )
 }

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/lib/contexts/AuthContext'
+import { useRequireAuth } from '@/lib/contexts/AuthContext'
+import DashboardLayout from '@/components/layout/DashboardLayout'
 import { messagingService, type Conversation } from '@/lib/services/messaging.service'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -11,11 +12,11 @@ import { CountBadge } from '@/components/ui/badge'
 import { PlusIcon, ChatBubbleLeftRightIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 
 export default function MessagesPage() {
+  const { session, isLoading: authLoading } = useRequireAuth(['Admin', 'Developer'])
+  const router = useRouter()
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
-  const { session } = useAuth()
-  const router = useRouter()
 
   useEffect(() => {
     if (!session?.user?.id) return
@@ -94,19 +95,19 @@ export default function MessagesPage() {
     return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
   }
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary-200 border-t-primary-500 mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Chargement...</p>
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
         </div>
-      </div>
+      </DashboardLayout>
     )
   }
 
   return (
-    <div className="container mx-auto px-6 py-8">
+    <DashboardLayout>
+      <div className="max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -217,6 +218,7 @@ export default function MessagesPage() {
           })}
         </div>
       )}
-    </div>
+      </div>
+    </DashboardLayout>
   )
 }

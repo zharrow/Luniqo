@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/lib/contexts/AuthContext'
+import { useRequireAuth } from '@/lib/contexts/AuthContext'
 import { sessionsService, type SessionWithStats } from '@/lib/services/sessions.service'
+import DashboardLayout from '@/components/layout/DashboardLayout'
 import Link from 'next/link'
 
 export default function HistoryPage() {
+  const { session, isLoading: authLoading } = useRequireAuth(['Admin'])
   const [sessions, setSessions] = useState<SessionWithStats[]>([])
   const [filteredSessions, setFilteredSessions] = useState<SessionWithStats[]>([])
   const [filterStatus, setFilterStatus] = useState<string>('all')
@@ -15,25 +17,21 @@ export default function HistoryPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const { session } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    if (!session || !['Admin', 'Developer'].includes(session.role)) {
-      router.push('/login')
-      return
+    if (session?.enterprise?.id) {
+      // Set default date range (last 30 days)
+      const end = new Date()
+      const start = new Date()
+      start.setDate(start.getDate() - 30)
+
+      setStartDate(start.toISOString().split('T')[0])
+      setEndDate(end.toISOString().split('T')[0])
+
+      loadSessions()
     }
-
-    // Set default date range (last 30 days)
-    const end = new Date()
-    const start = new Date()
-    start.setDate(start.getDate() - 30)
-
-    setStartDate(start.toISOString().split('T')[0])
-    setEndDate(end.toISOString().split('T')[0])
-
-    loadSessions()
-  }, [session])
+  }, [session?.enterprise?.id])
 
   useEffect(() => {
     applyFilters()
@@ -75,14 +73,13 @@ export default function HistoryPage() {
     setFilteredSessions(filtered)
   }
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary-200 border-t-primary-500 mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Chargement...</p>
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
         </div>
-      </div>
+      </DashboardLayout>
     )
   }
 
@@ -97,30 +94,25 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="p-8">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Historique & Rapports</h1>
-          <p className="text-muted-foreground">Suivi des sessions de nettoyage</p>
+    <DashboardLayout>
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Historique & Rapports</h1>
+            <p className="text-muted-foreground">Suivi des sessions de nettoyage</p>
+          </div>
         </div>
-        <button
-          onClick={() => router.push('/dashboard')}
-          className="btn btn-secondary"
-        >
-          ← Retour
-        </button>
-      </div>
 
-      {/* Error Message */}
-      {error && (
-        <div className="card p-4 mb-6 bg-danger-50 border border-danger-200">
-          <p className="text-danger-700">{error}</p>
-        </div>
-      )}
+        {/* Error Message */}
+        {error && (
+          <div className="card p-4 mb-6 bg-danger-50 border border-danger-200">
+            <p className="text-danger-700">{error}</p>
+          </div>
+        )}
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
         <div className="card p-6">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-primary-100 flex items-center justify-center text-2xl">
@@ -180,10 +172,10 @@ export default function HistoryPage() {
             </div>
           </div>
         </div>
-      </div>
+        </div>
 
-      {/* Filters */}
-      <div className="card p-6 mb-6">
+        {/* Filters */}
+        <div className="card p-6 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium mb-2">
@@ -225,11 +217,11 @@ export default function HistoryPage() {
             />
           </div>
         </div>
-      </div>
+        </div>
 
-      {/* Sessions List */}
-      {filteredSessions.length > 0 ? (
-        <div className="space-y-4">
+        {/* Sessions List */}
+        {filteredSessions.length > 0 ? (
+          <div className="space-y-4">
           {filteredSessions.map((session) => (
             <Link
               key={session.id}
@@ -280,15 +272,16 @@ export default function HistoryPage() {
               </div>
             </Link>
           ))}
-        </div>
-      ) : (
-        <div className="card p-12 text-center">
-          <svg className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-          </svg>
-          <p className="text-muted-foreground">Aucune session trouvée pour ces critères</p>
-        </div>
-      )}
-    </div>
+          </div>
+        ) : (
+          <div className="card p-12 text-center">
+            <svg className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <p className="text-muted-foreground">Aucune session trouvée pour ces critères</p>
+          </div>
+        )}
+      </div>
+    </DashboardLayout>
   )
 }
