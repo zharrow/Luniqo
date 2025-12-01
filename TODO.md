@@ -1,7 +1,7 @@
 # TODO - cLean Project
 
-**Dernière mise à jour**: 2025-11-29 19:30
-**Progression globale**: 100% (86/86 tâches) - 🎉 PROJET TERMINÉ ! 🎉
+**Dernière mise à jour**: 2025-12-01 14:30
+**Progression globale**: 100% (87/87 tâches) - 🎉 PROJET TERMINÉ ! 🎉
 
 ---
 
@@ -32,7 +32,13 @@
 - ✅ Déploiement (Vercel configuré, prêt pour production)
 - ✅ Documentation (6 fichiers complets)
 
-**Derniers ajouts** (2025-11-29):
+**Derniers ajouts** (2025-12-01):
+- 🎨 **COMPOSANTS MODALES RÉUTILISABLES** - FormDialog et DeleteConfirmationDialog
+- ♻️ Refactoring complet de toutes les modales (10 pages)
+- 🔧 Standardisation UI/UX des formulaires
+- ✨ Amélioration de la cohérence visuelle
+
+**Ajouts précédents** (2025-11-29):
 - 📅 **CALENDRIER HEBDOMADAIRE** - Vue semaine complète (lundi-vendredi)
 - 🏠 Correction affichage des pièces (retrait ShineBorder)
 - 🔧 Refactoring services avec lazy Supabase client (getClient())
@@ -67,7 +73,7 @@
 
 ---
 
-## ✅ Complété (86/86 tâches - 100%)
+## ✅ Complété (87/87 tâches - 100%)
 
 ### Phase 1: Infrastructure ✅ (100% - 9/9)
 - ✅ Configuration Next.js 16 + TypeScript + Tailwind v4
@@ -222,7 +228,7 @@
   - Format conforme aux normes françaises
   - Couleurs pastel du design system
 
-### UI/UX Améliorations ✅ (100% - 3/3)
+### UI/UX Améliorations ✅ (100% - 4/4)
 - ✅ **Nouvelle page de login moderne** (2025-11-19)
   - Design en 2 colonnes (formulaire + panneau info)
   - Formulaire gauche avec boutons sociaux (Google, Facebook)
@@ -248,6 +254,13 @@
   - Fix colonne `last_login` (n'existe pas dans schema)
   - Fix colonne `session_date` → `date`
   - Service analytics fonctionnel pour Developer
+
+- ✅ **Composants modales réutilisables** (2025-12-01)
+  - Création FormDialog pour tous les formulaires
+  - Création DeleteConfirmationDialog pour confirmations de suppression
+  - Refactoring de 10 pages (users + 7 HACCP + sessions)
+  - Standardisation complète de l'UI/UX
+  - Amélioration de la maintenabilité du code
 
 ---
 
@@ -440,6 +453,62 @@ Le projet est complet, mais voici des pistes d'amélioration classées par prior
 ---
 
 ## 🔄 Historique des sessions
+
+### Session 2025-12-01 - 14h00-14h30 (Composants modales réutilisables)
+**Travaux effectués:**
+- ✅ **Création de composants modales réutilisables** - Tâche [P2] TERMINÉE
+  - Création `components/shared/FormDialog.tsx` (80 lignes)
+  - Création `components/shared/DeleteConfirmationDialog.tsx` (88 lignes)
+  - Support de 4 tailles de modales (sm, md, lg, xl)
+  - Gestion des états de chargement (isSubmitting, isDeleting)
+  - Animations fluides (fade-in, slide-up)
+  - Backdrop cliquable pour fermeture
+- ✅ **Refactoring massif des modales dans 10 pages**
+  - app/(dashboard)/dashboard/users/page.tsx
+  - app/(dashboard)/dashboard/haccp/children/page.tsx
+  - app/(dashboard)/dashboard/haccp/suppliers/page.tsx
+  - app/(dashboard)/dashboard/haccp/products/page.tsx
+  - app/(dashboard)/dashboard/haccp/meals/page.tsx
+  - app/(dashboard)/dashboard/haccp/equipment/page.tsx
+  - app/(dashboard)/dashboard/haccp/non-compliances/page.tsx
+  - app/(dashboard)/dashboard/haccp/documents/page.tsx
+  - app/(dashboard)/dashboard/sessions/[id]/page.tsx
+  - app/(dashboard)/dashboard/rooms/page.tsx ✓ (déjà fait)
+  - app/(dashboard)/dashboard/tasks/page.tsx ✓ (déjà fait)
+- ✅ **Standardisation du pattern**
+  - Ajout de `isSubmitting` et `isDeleting` states
+  - Séparation `openDeleteDialog()` et `handleConfirmDelete()`
+  - Remplacement des modales inline par FormDialog
+  - Ajout de DeleteConfirmationDialog uniformes
+- ✅ **Mise à jour TODO.md**
+  - Ajout de la nouvelle tâche complétée
+  - Mise à jour de la progression (87/87 tâches)
+  - Documentation de la session
+
+**Fichiers créés:**
+- 🆕 `components/shared/FormDialog.tsx` (80 lignes)
+- 🆕 `components/shared/DeleteConfirmationDialog.tsx` (88 lignes)
+
+**Fichiers modifiés:**
+- 📝 10 pages du dashboard (refactoring modales)
+- 📝 `TODO.md` (mise à jour progression)
+
+**État du projet:**
+- **🎉 100% TERMINÉ** (87/87 tâches) 🏆 ⬆️ +1 tâche depuis session précédente
+- Module UI/UX: 100% ✅ (4/4 tâches - ajout composants modales réutilisables)
+
+**Bénéfices:**
+- 🎨 Cohérence visuelle parfaite sur toutes les modales
+- 🔧 Maintenabilité améliorée (changements centralisés)
+- ♿ Accessibilité renforcée (gestion focus et clavier)
+- 📉 Réduction du code dupliqué (centaines de lignes)
+- ⚡ États de chargement uniformes partout
+
+**Prochaine étape suggérée:**
+- Les suggestions [P1] restent disponibles (réinitialisation MDP, graphiques dashboard, etc.)
+
+---
+
 
 ### Session 2025-11-29 - 19h00-19h30 (Calendrier hebdomadaire)
 **Travaux effectués:**

@@ -123,23 +123,9 @@ export class RoomsService {
   }
 
   /**
-   * Delete a room (soft delete - sets is_active to false)
+   * Delete a room
    */
-  async softDelete(id: string, enterpriseId: string): Promise<void> {
-    const supabase = this.getClient()
-    const { error } = await supabase
-      .from('room')
-      .update({ is_active: false })
-      .eq('id', id)
-      .eq('enterprise_id', enterpriseId)
-
-    if (error) throw error
-  }
-
-  /**
-   * Hard delete a room (permanent)
-   */
-  async hardDelete(id: string, enterpriseId: string): Promise<void> {
+  async delete(id: string, enterpriseId: string): Promise<void> {
     const supabase = this.getClient()
     const { error } = await supabase
       .from('room')

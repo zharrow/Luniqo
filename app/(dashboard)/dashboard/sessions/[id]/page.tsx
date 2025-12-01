@@ -18,6 +18,7 @@ import {
   PhotoIcon
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
+import { FormDialog } from '@/components/shared/FormDialog'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -73,6 +74,7 @@ export default function SessionDetailPage({ params }: PageProps) {
   const [editingLog, setEditingLog] = useState<SessionLog | null>(null)
   const [availableTasks, setAvailableTasks] = useState<any[]>([])
   const [availableUsers, setAvailableUsers] = useState<any[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const [formData, setFormData] = useState<CreateLogInput>({
     assigned_task_id: '',
@@ -142,6 +144,7 @@ export default function SessionDetailPage({ params }: PageProps) {
     if (!authSession?.enterprise?.id) return
 
     try {
+      setIsSubmitting(true)
       await sessionsService.createLog(id, {
         ...formData,
         performed_by_id: formData.performed_by_id || undefined,
@@ -154,6 +157,8 @@ export default function SessionDetailPage({ params }: PageProps) {
     } catch (error) {
       console.error('Error creating log:', error)
       alert('Erreur lors de la création du log')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -162,6 +167,7 @@ export default function SessionDetailPage({ params }: PageProps) {
     if (!editingLog) return
 
     try {
+      setIsSubmitting(true)
       await sessionsService.updateLog(editingLog.id, {
         status: formData.status,
         note: formData.note || undefined
@@ -174,6 +180,8 @@ export default function SessionDetailPage({ params }: PageProps) {
     } catch (error) {
       console.error('Error updating log:', error)
       alert('Erreur lors de la mise à jour du log')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -517,14 +525,15 @@ export default function SessionDetailPage({ params }: PageProps) {
         </div>
 
         {/* Add Log Modal */}
-        {showAddModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="card w-full max-w-2xl p-6">
-              <h2 className="text-2xl font-bold mb-6">
-                Ajouter un log
-              </h2>
-
-              <form onSubmit={handleAddLog} className="space-y-4">
+        <FormDialog
+          isOpen={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          onSubmit={handleAddLog}
+          title="Ajouter un log"
+          submitLabel="Ajouter"
+          isSubmitting={isSubmitting}
+          maxWidth="lg"
+        >
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     Tâche *
@@ -591,40 +600,28 @@ export default function SessionDetailPage({ params }: PageProps) {
                     className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none bg-background"
                   />
                 </div>
-
-                <div className="flex items-center justify-end gap-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowAddModal(false)}
-                    className="btn btn-secondary"
-                  >
-                    Annuler
-                  </button>
-                  <button type="submit" className="btn btn-primary">
-                    Ajouter
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+        </FormDialog>
 
         {/* Edit Log Modal */}
-        {showEditModal && editingLog && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="card w-full max-w-2xl p-6">
-              <h2 className="text-2xl font-bold mb-6">
-                Modifier le log
-              </h2>
-
-              <form onSubmit={handleUpdateLog} className="space-y-4">
+        <FormDialog
+          isOpen={showEditModal && !!editingLog}
+          onClose={() => {
+            setShowEditModal(false)
+            setEditingLog(null)
+          }}
+          onSubmit={handleUpdateLog}
+          title="Modifier le log"
+          submitLabel="Enregistrer"
+          isSubmitting={isSubmitting}
+          maxWidth="lg"
+        >
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     Tâche
                   </label>
                   <input
                     type="text"
-                    value={`${editingLog.assigned_task.room.name} - ${editingLog.assigned_task.task_template.name}`}
+                    value={editingLog ? `${editingLog.assigned_task.room.name} - ${editingLog.assigned_task.task_template.name}` : ''}
                     disabled
                     className="w-full px-4 py-2 border border-border rounded-lg bg-muted text-muted-foreground"
                   />
@@ -659,26 +656,7 @@ export default function SessionDetailPage({ params }: PageProps) {
                     className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none bg-background"
                   />
                 </div>
-
-                <div className="flex items-center justify-end gap-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowEditModal(false)
-                      setEditingLog(null)
-                    }}
-                    className="btn btn-secondary"
-                  >
-                    Annuler
-                  </button>
-                  <button type="submit" className="btn btn-primary">
-                    Enregistrer
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+        </FormDialog>
       </div>
     </DashboardLayout>
   )

@@ -158,22 +158,9 @@ export class TasksService {
   }
 
   /**
-   * Soft delete a task
+   * Delete a task
    */
-  async softDelete(id: string, enterpriseId: string): Promise<void> {
-    const { error } = await this.supabase
-      .from('task_template')
-      .update({ is_active: false })
-      .eq('id', id)
-      .eq('enterprise_id', enterpriseId)
-
-    if (error) throw error
-  }
-
-  /**
-   * Hard delete a task
-   */
-  async hardDelete(id: string, enterpriseId: string): Promise<void> {
+  async delete(id: string, enterpriseId: string): Promise<void> {
     const { error } = await this.supabase
       .from('task_template')
       .delete()

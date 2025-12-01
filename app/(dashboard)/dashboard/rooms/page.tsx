@@ -24,6 +24,8 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu'
+import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
+import { FormDialog } from '@/components/shared/FormDialog'
 
 export default function RoomsPage() {
   const router = useRouter()
@@ -32,6 +34,9 @@ export default function RoomsPage() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingRoom, setEditingRoom] = useState<Room | null>(null)
+  const [roomToDelete, setRoomToDelete] = useState<Room | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState<CreateRoomInput>({
     name: '',
     description: ''
@@ -79,6 +84,7 @@ export default function RoomsPage() {
     if (!session?.enterprise?.id) return
 
     try {
+      setIsSubmitting(true)
       if (editingRoom) {
         await roomsService.update(editingRoom.id, session.enterprise.id, formData)
       } else {
@@ -90,19 +96,28 @@ export default function RoomsPage() {
     } catch (error) {
       console.error('Error saving room:', error)
       alert('Erreur lors de la sauvegarde')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
-  async function handleDelete(room: Room) {
-    if (!session?.enterprise?.id) return
-    if (!confirm(`Êtes-vous sûr de vouloir désactiver "${room.name}" ?`)) return
+  function openDeleteDialog(room: Room) {
+    setRoomToDelete(room)
+  }
+
+  async function handleConfirmDelete() {
+    if (!session?.enterprise?.id || !roomToDelete) return
 
     try {
-      await roomsService.softDelete(room.id, session.enterprise.id)
+      setIsDeleting(true)
+      await roomsService.delete(roomToDelete.id, session.enterprise.id)
       loadRooms()
     } catch (error) {
       console.error('Error deleting room:', error)
       alert('Erreur lors de la suppression')
+    } finally {
+      setIsDeleting(false)
+      setRoomToDelete(null)
     }
   }
 
@@ -188,10 +203,10 @@ export default function RoomsPage() {
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             variant="destructive"
-                            onClick={() => handleDelete(room)}
+                            onClick={() => openDeleteDialog(room)}
                           >
                             <TrashIcon className="w-4 h-4" />
-                            Désactiver
+                            Supprimer
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -215,63 +230,50 @@ export default function RoomsPage() {
           </div>
         )}
 
-        {/* Modal */}
-        {showModal && (
-          <>
-            <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setShowModal(false)}></div>
-            <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-              <Card className="w-full max-w-md animate-slide-up">
-                <CardContent className="p-6">
-                  <h2 className="text-xl font-bold mb-4">
-                    {editingRoom ? 'Modifier la pièce' : 'Nouvelle pièce'}
-                  </h2>
+        {/* Form Dialog */}
+        <FormDialog
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          onSubmit={handleSubmit}
+          title={editingRoom ? 'Modifier la pièce' : 'Nouvelle pièce'}
+          submitLabel={editingRoom ? 'Modifier' : 'Créer'}
+          isSubmitting={isSubmitting}
+        >
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Nom de la pièce *
+            </label>
+            <Input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="ex: Salle de jeu"
+              required
+            />
+          </div>
 
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Nom de la pièce *
-                      </label>
-                      <Input
-                        type="text"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="ex: Salle de jeu"
-                        required
-                      />
-                    </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Description
+            </label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              placeholder="Description optionnelle"
+              rows={3}
+            />
+          </div>
+        </FormDialog>
 
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Description
-                      </label>
-                      <textarea
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                        placeholder="Description optionnelle"
-                        rows={3}
-                      />
-                    </div>
-
-                    <div className="flex gap-3 pt-4">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setShowModal(false)}
-                        className="flex-1"
-                      >
-                        Annuler
-                      </Button>
-                      <Button type="submit" className="flex-1">
-                        {editingRoom ? 'Modifier' : 'Créer'}
-                      </Button>
-                    </div>
-                  </form>
-                </CardContent>
-              </Card>
-            </div>
-          </>
-        )}
+        {/* Delete Confirmation Dialog */}
+        <DeleteConfirmationDialog
+          isOpen={!!roomToDelete}
+          onClose={() => setRoomToDelete(null)}
+          onConfirm={handleConfirmDelete}
+          itemName={roomToDelete?.name}
+          isDeleting={isDeleting}
+        />
       </div>
     </DashboardLayout>
   )

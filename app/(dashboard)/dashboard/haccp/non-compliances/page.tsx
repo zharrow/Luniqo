@@ -15,6 +15,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
+import { FormDialog } from '@/components/shared/FormDialog'
 
 export default function NonCompliancesPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Admin'])
@@ -24,6 +25,7 @@ export default function NonCompliancesPage() {
   const [showModal, setShowModal] = useState(false)
   const [editingNC, setEditingNC] = useState<NonCompliance | null>(null)
   const [filterStatus, setFilterStatus] = useState<ComplianceStatus | 'ALL'>('ALL')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState<CreateNonComplianceInput | any>({
     type: 'Other',
     description: '',
@@ -85,6 +87,7 @@ export default function NonCompliancesPage() {
     if (!session?.enterprise?.id) return
 
     try {
+      setIsSubmitting(true)
       if (editingNC) {
         const updateData: any = {
           type: formData.type,
@@ -105,6 +108,8 @@ export default function NonCompliancesPage() {
     } catch (error) {
       console.error('Error saving non-compliance:', error)
       alert('Erreur lors de la sauvegarde')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -290,17 +295,16 @@ export default function NonCompliancesPage() {
           </div>
         )}
 
-        {/* Modal */}
-        {showModal && (
-          <>
-            <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setShowModal(false)}></div>
-            <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-              <div className="card w-full max-w-md p-6 animate-slide-up max-h-[90vh] overflow-y-auto">
-                <h2 className="text-xl font-bold mb-4">
-                  {editingNC ? 'Modifier la non-conformité' : 'Déclarer une non-conformité'}
-                </h2>
-
-                <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Form Dialog */}
+        <FormDialog
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          onSubmit={handleSubmit}
+          title={editingNC ? 'Modifier la non-conformité' : 'Déclarer une non-conformité'}
+          submitLabel={editingNC ? 'Modifier' : 'Déclarer'}
+          isSubmitting={isSubmitting}
+          maxWidth="md"
+        >
                   <div>
                     <label className="block text-sm font-medium mb-1">
                       Type *
@@ -398,27 +402,7 @@ export default function NonCompliancesPage() {
                       </select>
                     </div>
                   )}
-
-                  <div className="flex gap-3 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => setShowModal(false)}
-                      className="flex-1 px-4 py-2 rounded-lg border border-border hover:bg-muted"
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      type="submit"
-                      className="flex-1 btn btn-primary"
-                    >
-                      {editingNC ? 'Modifier' : 'Déclarer'}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </>
-        )}
+        </FormDialog>
       </div>
     </DashboardLayout>
   )

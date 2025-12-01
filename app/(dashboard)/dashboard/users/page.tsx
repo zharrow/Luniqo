@@ -26,6 +26,8 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu'
+import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
+import { FormDialog } from '@/components/shared/FormDialog'
 
 export default function UsersPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Admin'])
@@ -34,6 +36,9 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingUser, setEditingUser] = useState<UserWithRooms | null>(null)
+  const [userToDelete, setUserToDelete] = useState<UserWithRooms | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState<CreateUserInput>({
     first_name: '',
     last_name: '',
@@ -101,6 +106,7 @@ export default function UsersPage() {
     }
 
     try {
+      setIsSubmitting(true)
       if (editingUser) {
         // Update user
         const updateData: any = {
@@ -132,19 +138,28 @@ export default function UsersPage() {
     } catch (error) {
       console.error('Error saving user:', error)
       alert('Erreur lors de la sauvegarde')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
-  async function handleDelete(user: UserWithRooms) {
-    if (!session?.enterprise?.id) return
-    if (!confirm(`Êtes-vous sûr de vouloir désactiver ${user.first_name} ${user.last_name} ?`)) return
+  function openDeleteDialog(user: UserWithRooms) {
+    setUserToDelete(user)
+  }
+
+  async function handleConfirmDelete() {
+    if (!session?.enterprise?.id || !userToDelete) return
 
     try {
-      await usersService.softDelete(user.id, session.enterprise.id)
+      setIsDeleting(true)
+      await usersService.softDelete(userToDelete.id, session.enterprise.id)
       loadData()
     } catch (error) {
       console.error('Error deleting user:', error)
       alert('Erreur lors de la suppression')
+    } finally {
+      setIsDeleting(false)
+      setUserToDelete(null)
     }
   }
 
@@ -248,7 +263,7 @@ export default function UsersPage() {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           variant="destructive"
-                          onClick={() => handleDelete(user)}
+                          onClick={() => openDeleteDialog(user)}
                         >
                           <TrashIcon className="w-4 h-4" />
                           Désactiver
@@ -300,116 +315,105 @@ export default function UsersPage() {
           </div>
         )}
 
-        {/* Modal */}
-        {showModal && (
-          <>
-            <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setShowModal(false)}></div>
-            <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-              <div className="card w-full max-w-2xl p-6 animate-slide-up max-h-[90vh] overflow-y-auto">
-                <h2 className="text-xl font-bold mb-4">
-                  {editingUser ? 'Modifier l\'employé' : 'Nouvel employé'}
-                </h2>
-
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Prénom *
-                      </label>
-                      <Input
-                        type="text"
-                        value={formData.first_name}
-                        onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Nom *
-                      </label>
-                      <Input
-                        type="text"
-                        value={formData.last_name}
-                        onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Email
-                    </label>
-                    <Input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="optionnel"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Code PIN {!editingUser && '*'} (4-6 chiffres)
-                    </label>
-                    <Input
-                      type="text"
-                      value={formData.pin}
-                      onChange={(e) => setFormData({ ...formData, pin: e.target.value.replace(/\D/g, '').slice(0, 6) })}
-                      placeholder={editingUser ? 'Laisser vide pour ne pas modifier' : '1234'}
-                      required={!editingUser}
-                      maxLength={6}
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {editingUser ? 'Laisser vide pour conserver le PIN actuel' : 'Le code PIN sera utilisé pour la connexion sur tablette'}
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Accès aux pièces
-                    </label>
-                    {rooms.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">Aucune pièce disponible</p>
-                    ) : (
-                      <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 border border-border rounded-lg">
-                        {rooms.map((room) => (
-                          <label
-                            key={room.id}
-                            className="flex items-center gap-2 p-2 rounded hover:bg-muted cursor-pointer"
-                          >
-                            <Checkbox
-                              checked={(formData.room_ids || []).includes(room.id)}
-                              onCheckedChange={() => toggleRoom(room.id)}
-                            />
-                            <span className="text-sm">{room.name}</span>
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex gap-3 pt-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setShowModal(false)}
-                      className="flex-1"
-                    >
-                      Annuler
-                    </Button>
-                    <Button
-                      type="submit"
-                      className="flex-1"
-                    >
-                      {editingUser ? 'Modifier' : 'Créer'}
-                    </Button>
-                  </div>
-                </form>
-              </div>
+        {/* Form Dialog */}
+        <FormDialog
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          onSubmit={handleSubmit}
+          title={editingUser ? 'Modifier l\'employé' : 'Nouvel employé'}
+          submitLabel={editingUser ? 'Modifier' : 'Créer'}
+          isSubmitting={isSubmitting}
+          maxWidth="lg"
+        >
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Prénom *
+              </label>
+              <Input
+                type="text"
+                value={formData.first_name}
+                onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                required
+              />
             </div>
-          </>
-        )}
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Nom *
+              </label>
+              <Input
+                type="text"
+                value={formData.last_name}
+                onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Email
+            </label>
+            <Input
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              placeholder="optionnel"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Code PIN {!editingUser && '*'} (4-6 chiffres)
+            </label>
+            <Input
+              type="text"
+              value={formData.pin}
+              onChange={(e) => setFormData({ ...formData, pin: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+              placeholder={editingUser ? 'Laisser vide pour ne pas modifier' : '1234'}
+              required={!editingUser}
+              maxLength={6}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              {editingUser ? 'Laisser vide pour conserver le PIN actuel' : 'Le code PIN sera utilisé pour la connexion sur tablette'}
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Accès aux pièces
+            </label>
+            {rooms.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Aucune pièce disponible</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 border border-border rounded-lg">
+                {rooms.map((room) => (
+                  <label
+                    key={room.id}
+                    className="flex items-center gap-2 p-2 rounded hover:bg-muted cursor-pointer"
+                  >
+                    <Checkbox
+                      checked={(formData.room_ids || []).includes(room.id)}
+                      onCheckedChange={() => toggleRoom(room.id)}
+                    />
+                    <span className="text-sm">{room.name}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+        </FormDialog>
+
+        {/* Delete Confirmation Dialog */}
+        <DeleteConfirmationDialog
+          isOpen={!!userToDelete}
+          onClose={() => setUserToDelete(null)}
+          onConfirm={handleConfirmDelete}
+          title="Confirmer la désactivation"
+          description="Êtes-vous sûr de vouloir désactiver l'employé"
+          itemName={userToDelete ? `${userToDelete.first_name} ${userToDelete.last_name}` : ''}
+          isDeleting={isDeleting}
+        />
       </div>
     </DashboardLayout>
   )

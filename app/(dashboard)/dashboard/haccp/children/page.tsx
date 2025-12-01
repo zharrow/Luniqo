@@ -16,6 +16,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
 import { Badge } from '@/components/ui/badge'
+import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
+import { FormDialog } from '@/components/shared/FormDialog'
 
 export default function ChildrenPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Admin'])
@@ -23,6 +25,9 @@ export default function ChildrenPage() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingChild, setEditingChild] = useState<Child | null>(null)
+  const [childToDelete, setChildToDelete] = useState<Child | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState<CreateChildInput>({
     first_name: '',
     last_name: '',
@@ -83,6 +88,7 @@ export default function ChildrenPage() {
     if (!session?.enterprise?.id) return
 
     try {
+      setIsSubmitting(true)
       if (editingChild) {
         await haccpService.updateChild(editingChild.id, session.enterprise.id, formData)
       } else {
@@ -94,19 +100,28 @@ export default function ChildrenPage() {
     } catch (error) {
       console.error('Error saving child:', error)
       alert('Erreur lors de la sauvegarde')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
-  async function handleDelete(child: Child) {
-    if (!session?.enterprise?.id) return
-    if (!confirm(`Êtes-vous sûr de vouloir désactiver ${child.first_name} ${child.last_name} ?`)) return
+  function openDeleteDialog(child: Child) {
+    setChildToDelete(child)
+  }
+
+  async function handleConfirmDelete() {
+    if (!session?.enterprise?.id || !childToDelete) return
 
     try {
-      await haccpService.deleteChild(child.id, session.enterprise.id)
+      setIsDeleting(true)
+      await haccpService.deleteChild(childToDelete.id, session.enterprise.id)
       loadChildren()
     } catch (error) {
       console.error('Error deleting child:', error)
       alert('Erreur lors de la suppression')
+    } finally {
+      setIsDeleting(false)
+      setChildToDelete(null)
     }
   }
 
@@ -234,7 +249,7 @@ export default function ChildrenPage() {
                       <PencilIcon className="w-4 h-4 text-muted-foreground" />
                     </button>
                     <button
-                      onClick={() => handleDelete(child)}
+                      onClick={() => openDeleteDialog(child)}
                       className="p-2 rounded-lg hover:bg-danger-50 transition-colors"
                       title="Désactiver"
                     >
@@ -281,122 +296,112 @@ export default function ChildrenPage() {
           </div>
         )}
 
-        {/* Modal */}
-        {showModal && (
-          <>
-            <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setShowModal(false)}></div>
-            <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-              <div className="card w-full max-w-md p-6 animate-slide-up max-h-[90vh] overflow-y-auto">
-                <h2 className="text-xl font-bold mb-4">
-                  {editingChild ? 'Modifier l\'enfant' : 'Nouvel enfant'}
-                </h2>
-
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Prénom *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.first_name}
-                        onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                        className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Nom *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.last_name}
-                        onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                        className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Date de naissance *
-                    </label>
-                    <input
-                      type="date"
-                      value={formData.birth_date}
-                      onChange={(e) => setFormData({ ...formData, birth_date: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Section *
-                    </label>
-                    <select
-                      value={formData.section}
-                      onChange={(e) => setFormData({ ...formData, section: e.target.value as Section })}
-                      className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                      required
-                    >
-                      <option value="Babies">Bébés</option>
-                      <option value="Toddlers">Moyens</option>
-                      <option value="Preschoolers">Grands</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Allergies
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.allergies}
-                      onChange={(e) => setFormData({ ...formData, allergies: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                      placeholder="ex: Arachides, Lactose, Oeufs"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Séparez les allergies par des virgules
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Restrictions alimentaires
-                    </label>
-                    <textarea
-                      value={formData.dietary_restrictions}
-                      onChange={(e) => setFormData({ ...formData, dietary_restrictions: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                      placeholder="ex: Végétarien, Sans gluten"
-                      rows={2}
-                    />
-                  </div>
-
-                  <div className="flex gap-3 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => setShowModal(false)}
-                      className="flex-1 px-4 py-2 rounded-lg border border-border hover:bg-muted"
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      type="submit"
-                      className="flex-1 btn btn-primary"
-                    >
-                      {editingChild ? 'Modifier' : 'Créer'}
-                    </button>
-                  </div>
-                </form>
-              </div>
+        {/* Form Dialog */}
+        <FormDialog
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          onSubmit={handleSubmit}
+          title={editingChild ? 'Modifier l\'enfant' : 'Nouvel enfant'}
+          submitLabel={editingChild ? 'Modifier' : 'Créer'}
+          isSubmitting={isSubmitting}
+          maxWidth="md"
+        >
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Prénom *
+              </label>
+              <input
+                type="text"
+                value={formData.first_name}
+                onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                required
+              />
             </div>
-          </>
-        )}
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Nom *
+              </label>
+              <input
+                type="text"
+                value={formData.last_name}
+                onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Date de naissance *
+            </label>
+            <input
+              type="date"
+              value={formData.birth_date}
+              onChange={(e) => setFormData({ ...formData, birth_date: e.target.value })}
+              className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Section *
+            </label>
+            <select
+              value={formData.section}
+              onChange={(e) => setFormData({ ...formData, section: e.target.value as Section })}
+              className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              required
+            >
+              <option value="Babies">Bébés</option>
+              <option value="Toddlers">Moyens</option>
+              <option value="Preschoolers">Grands</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Allergies
+            </label>
+            <input
+              type="text"
+              value={formData.allergies}
+              onChange={(e) => setFormData({ ...formData, allergies: e.target.value })}
+              className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="ex: Arachides, Lactose, Oeufs"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Séparez les allergies par des virgules
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Restrictions alimentaires
+            </label>
+            <textarea
+              value={formData.dietary_restrictions}
+              onChange={(e) => setFormData({ ...formData, dietary_restrictions: e.target.value })}
+              className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="ex: Végétarien, Sans gluten"
+              rows={2}
+            />
+          </div>
+        </FormDialog>
+
+        {/* Delete Confirmation Dialog */}
+        <DeleteConfirmationDialog
+          isOpen={!!childToDelete}
+          onClose={() => setChildToDelete(null)}
+          onConfirm={handleConfirmDelete}
+          title="Confirmer la désactivation"
+          description="Êtes-vous sûr de vouloir désactiver l'enfant"
+          itemName={childToDelete ? `${childToDelete.first_name} ${childToDelete.last_name}` : ''}
+          isDeleting={isDeleting}
+        />
       </div>
     </DashboardLayout>
   )

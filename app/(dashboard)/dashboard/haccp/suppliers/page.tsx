@@ -13,6 +13,8 @@ import {
   EnvelopeIcon,
   MapPinIcon
 } from '@heroicons/react/24/outline'
+import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
+import { FormDialog } from '@/components/shared/FormDialog'
 
 export default function SuppliersPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Admin'])
@@ -20,6 +22,9 @@ export default function SuppliersPage() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null)
+  const [supplierToDelete, setSupplierToDelete] = useState<Supplier | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState<CreateSupplierInput>({
     name: '',
     contact_name: '',
@@ -77,6 +82,7 @@ export default function SuppliersPage() {
     if (!session?.enterprise?.id) return
 
     try {
+      setIsSubmitting(true)
       if (editingSupplier) {
         await haccpService.updateSupplier(editingSupplier.id, session.enterprise.id, formData)
       } else {
@@ -88,19 +94,28 @@ export default function SuppliersPage() {
     } catch (error) {
       console.error('Error saving supplier:', error)
       alert('Erreur lors de la sauvegarde')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
-  async function handleDelete(supplier: Supplier) {
-    if (!session?.enterprise?.id) return
-    if (!confirm(`Êtes-vous sûr de vouloir désactiver "${supplier.name}" ?`)) return
+  function openDeleteDialog(supplier: Supplier) {
+    setSupplierToDelete(supplier)
+  }
+
+  async function handleConfirmDelete() {
+    if (!session?.enterprise?.id || !supplierToDelete) return
 
     try {
-      await haccpService.deleteSupplier(supplier.id, session.enterprise.id)
+      setIsDeleting(true)
+      await haccpService.deleteSupplier(supplierToDelete.id, session.enterprise.id)
       loadSuppliers()
     } catch (error) {
       console.error('Error deleting supplier:', error)
       alert('Erreur lors de la suppression')
+    } finally {
+      setIsDeleting(false)
+      setSupplierToDelete(null)
     }
   }
 
@@ -180,7 +195,7 @@ export default function SuppliersPage() {
                       <PencilIcon className="w-4 h-4 text-muted-foreground" />
                     </button>
                     <button
-                      onClick={() => handleDelete(supplier)}
+                      onClick={() => openDeleteDialog(supplier)}
                       className="p-2 rounded-lg hover:bg-danger-50 transition-colors"
                       title="Désactiver"
                     >
@@ -227,105 +242,95 @@ export default function SuppliersPage() {
           </div>
         )}
 
-        {/* Modal */}
-        {showModal && (
-          <>
-            <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setShowModal(false)}></div>
-            <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-              <div className="card w-full max-w-md p-6 animate-slide-up max-h-[90vh] overflow-y-auto">
-                <h2 className="text-xl font-bold mb-4">
-                  {editingSupplier ? 'Modifier le fournisseur' : 'Nouveau fournisseur'}
-                </h2>
+        {/* Form Dialog */}
+        <FormDialog
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          onSubmit={handleSubmit}
+          title={editingSupplier ? 'Modifier le fournisseur' : 'Nouveau fournisseur'}
+          submitLabel={editingSupplier ? 'Modifier' : 'Créer'}
+          isSubmitting={isSubmitting}
+          maxWidth="md"
+        >
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Nom du fournisseur *
+            </label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary-500 bg-background"
+              placeholder="ex: Bio Fruits & Légumes"
+              required
+            />
+          </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Nom du fournisseur *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary-500 bg-background"
-                      placeholder="ex: Bio Fruits & Légumes"
-                      required
-                    />
-                  </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Nom du contact
+            </label>
+            <input
+              type="text"
+              value={formData.contact_name}
+              onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
+              className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary-500 bg-background"
+              placeholder="ex: Marie Dupont"
+            />
+          </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Nom du contact
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.contact_name}
-                      onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary-500 bg-background"
-                      placeholder="ex: Marie Dupont"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Téléphone
-                      </label>
-                      <input
-                        type="tel"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary-500 bg-background"
-                        placeholder="0123456789"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Email
-                      </label>
-                      <input
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary-500 bg-background"
-                        placeholder="contact@supplier.fr"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Adresse
-                    </label>
-                    <textarea
-                      value={formData.address}
-                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary-500 bg-background"
-                      placeholder="Adresse complète"
-                      rows={2}
-                    />
-                  </div>
-
-                  <div className="flex gap-3 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => setShowModal(false)}
-                      className="flex-1 px-4 py-2 rounded-lg border border-border hover:bg-muted"
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      type="submit"
-                      className="flex-1 btn btn-primary"
-                    >
-                      {editingSupplier ? 'Modifier' : 'Créer'}
-                    </button>
-                  </div>
-                </form>
-              </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Téléphone
+              </label>
+              <input
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary-500 bg-background"
+                placeholder="0123456789"
+              />
             </div>
-          </>
-        )}
+
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Email
+              </label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary-500 bg-background"
+                placeholder="contact@supplier.fr"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Adresse
+            </label>
+            <textarea
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary-500 bg-background"
+              placeholder="Adresse complète"
+              rows={2}
+            />
+          </div>
+        </FormDialog>
+
+        {/* Delete Confirmation Dialog */}
+        <DeleteConfirmationDialog
+          isOpen={!!supplierToDelete}
+          onClose={() => setSupplierToDelete(null)}
+          onConfirm={handleConfirmDelete}
+          title="Confirmer la désactivation"
+          description="Êtes-vous sûr de vouloir désactiver le fournisseur"
+          itemName={supplierToDelete ? supplierToDelete.name : ''}
+          isDeleting={isDeleting}
+        />
       </div>
     </DashboardLayout>
   )

@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/contexts/AuthContext'
 import { haccpService } from '@/lib/services/haccp.service'
 import { storageService } from '@/lib/services/storage.service'
+import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
+import { FormDialog } from '@/components/shared/FormDialog'
 
 interface HaccpDocument {
   id: string
@@ -28,6 +30,8 @@ export default function HaccpDocumentsPage() {
   const [error, setError] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [documentToDelete, setDocumentToDelete] = useState<HaccpDocument | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const [formData, setFormData] = useState({
     title: '',
@@ -127,24 +131,30 @@ export default function HaccpDocumentsPage() {
     }
   }
 
-  async function handleDelete(doc: HaccpDocument) {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce document ?')) return
+  function openDeleteDialog(doc: HaccpDocument) {
+    setDocumentToDelete(doc)
+  }
+
+  async function handleConfirmDelete() {
+    if (!documentToDelete || !session?.enterprise?.id) return
 
     try {
+      setIsDeleting(true)
       // Delete file from storage if exists
-      if (doc.file_key) {
-        const path = `haccp/${session?.enterprise?.id}/${doc.file_key}`
+      if (documentToDelete.file_key) {
+        const path = `haccp/${session.enterprise.id}/${documentToDelete.file_key}`
         await storageService.deleteFile('documents', path)
       }
 
       // Delete from database
-      if (session?.enterprise?.id) {
-        await haccpService.deleteDocument(doc.id, session.enterprise.id)
-      }
+      await haccpService.deleteDocument(documentToDelete.id, session.enterprise.id)
       await loadDocuments()
     } catch (err: any) {
       console.error('Error deleting document:', err)
       setError('Erreur lors de la suppression')
+    } finally {
+      setIsDeleting(false)
+      setDocumentToDelete(null)
     }
   }
 
@@ -268,7 +278,7 @@ export default function HaccpDocumentsPage() {
                     </span>
                   </div>
                   <button
-                    onClick={() => handleDelete(doc)}
+                    onClick={() => openDeleteDialog(doc)}
                     className="text-danger-500 hover:text-danger-700"
                     title="Supprimer"
                   >
@@ -308,15 +318,16 @@ export default function HaccpDocumentsPage() {
         </div>
       )}
 
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-border">
-              <h2 className="text-2xl font-bold">Nouveau document</h2>
-            </div>
-
-            <form onSubmit={handleSubmit} className="p-6">
+      {/* Form Dialog */}
+      <FormDialog
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onSubmit={handleSubmit}
+        title="Nouveau document"
+        submitLabel="Créer"
+        isSubmitting={isUploading}
+        maxWidth="lg"
+      >
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">
@@ -361,28 +372,18 @@ export default function HaccpDocumentsPage() {
                   <p className="text-xs text-muted-foreground mt-1">PDF, Word, ou images (max 10MB)</p>
                 </div>
               </div>
+      </FormDialog>
 
-              <div className="flex gap-3 mt-6">
-                <button
-                  type="submit"
-                  disabled={isUploading}
-                  className="btn btn-primary flex-1 disabled:opacity-50"
-                >
-                  {isUploading ? 'Upload en cours...' : 'Créer'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  disabled={isUploading}
-                  className="btn btn-secondary flex-1"
-                >
-                  Annuler
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmationDialog
+        isOpen={!!documentToDelete}
+        onClose={() => setDocumentToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Confirmer la suppression"
+        description="Êtes-vous sûr de vouloir supprimer le document"
+        itemName={documentToDelete ? documentToDelete.title : ''}
+        isDeleting={isDeleting}
+      />
     </div>
   )
 }

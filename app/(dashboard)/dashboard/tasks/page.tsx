@@ -26,6 +26,8 @@ import {
   DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
+import { FormDialog } from '@/components/shared/FormDialog'
 
 export default function TasksPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Admin'])
@@ -35,6 +37,9 @@ export default function TasksPage() {
   const [showModal, setShowModal] = useState(false)
   const [editingTask, setEditingTask] = useState<TaskTemplate | null>(null)
   const [filterType, setFilterType] = useState<TaskType | 'ALL'>('ALL')
+  const [taskToDelete, setTaskToDelete] = useState<TaskTemplate | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState<CreateTaskInput>({
     name: '',
     description: '',
@@ -103,6 +108,7 @@ export default function TasksPage() {
     if (!session?.enterprise?.id) return
 
     try {
+      setIsSubmitting(true)
       if (editingTask) {
         await tasksService.update(editingTask.id, session.enterprise.id, formData)
       } else {
@@ -114,19 +120,28 @@ export default function TasksPage() {
     } catch (error) {
       console.error('Error saving task:', error)
       alert('Erreur lors de la sauvegarde')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
-  async function handleDelete(task: TaskTemplate) {
-    if (!session?.enterprise?.id) return
-    if (!confirm(`Êtes-vous sûr de vouloir désactiver "${task.name}" ?`)) return
+  function openDeleteDialog(task: TaskTemplate) {
+    setTaskToDelete(task)
+  }
+
+  async function handleConfirmDelete() {
+    if (!session?.enterprise?.id || !taskToDelete) return
 
     try {
-      await tasksService.softDelete(task.id, session.enterprise.id)
+      setIsDeleting(true)
+      await tasksService.delete(taskToDelete.id, session.enterprise.id)
       loadTasks()
     } catch (error) {
       console.error('Error deleting task:', error)
       alert('Erreur lors de la suppression')
+    } finally {
+      setIsDeleting(false)
+      setTaskToDelete(null)
     }
   }
 
@@ -293,10 +308,10 @@ export default function TasksPage() {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           variant="destructive"
-                          onClick={() => handleDelete(task)}
+                          onClick={() => openDeleteDialog(task)}
                         >
                           <TrashIcon className="w-4 h-4" />
-                          Désactiver
+                          Supprimer
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -328,125 +343,109 @@ export default function TasksPage() {
           </div>
         )}
 
-        {/* Modal */}
-        {showModal && (
-          <>
-            <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setShowModal(false)}></div>
-            <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-              <Card className="w-full max-w-md animate-slide-up max-h-[90vh] overflow-y-auto">
-                <CardContent className="p-6">
-                  <h2 className="text-xl font-bold mb-4">
-                    {editingTask ? 'Modifier la tâche' : 'Nouvelle tâche'}
-                  </h2>
+        {/* Form Dialog */}
+        <FormDialog
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          onSubmit={handleSubmit}
+          title={editingTask ? 'Modifier la tâche' : 'Nouvelle tâche'}
+          submitLabel={editingTask ? 'Modifier' : 'Créer'}
+          isSubmitting={isSubmitting}
+        >
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Nom de la tâche *
+            </label>
+            <Input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="ex: Nettoyer les sols"
+              required
+            />
+          </div>
 
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Nom de la tâche *
-                      </label>
-                      <Input
-                        type="text"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="ex: Nettoyer les sols"
-                        required
-                      />
-                    </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Type de tâche *
+            </label>
+            <Select
+              value={formData.type}
+              onValueChange={(value) => setFormData({ ...formData, type: value as TaskType })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="DAILY">Quotidienne</SelectItem>
+                <SelectItem value="WEEKLY">Hebdomadaire</SelectItem>
+                <SelectItem value="MONTHLY">Mensuelle</SelectItem>
+                <SelectItem value="OCCASIONAL">Occasionnelle</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Type de tâche *
-                      </label>
-                      <Select
-                        value={formData.type}
-                        onValueChange={(value) => setFormData({ ...formData, type: value as TaskType })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="DAILY">Quotidienne</SelectItem>
-                          <SelectItem value="WEEKLY">Hebdomadaire</SelectItem>
-                          <SelectItem value="MONTHLY">Mensuelle</SelectItem>
-                          <SelectItem value="OCCASIONAL">Occasionnelle</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Catégorie
+            </label>
+            <Input
+              type="text"
+              value={formData.category}
+              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              placeholder="ex: Sols, Sanitaires, Cuisine"
+            />
+          </div>
 
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Catégorie
-                      </label>
-                      <Input
-                        type="text"
-                        value={formData.category}
-                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                        placeholder="ex: Sols, Sanitaires, Cuisine"
-                      />
-                    </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Description
+            </label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              placeholder="Description détaillée"
+              rows={3}
+            />
+          </div>
 
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Description
-                      </label>
-                      <textarea
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        placeholder="Description détaillée"
-                        rows={3}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">
-                          Durée estimée (min)
-                        </label>
-                        <Input
-                          type="number"
-                          value={formData.estimated_duration || ''}
-                          onChange={(e) => setFormData({ ...formData, estimated_duration: e.target.value ? parseInt(e.target.value) : undefined })}
-                          placeholder="15"
-                          min="1"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">
-                          Durée par défaut (min)
-                        </label>
-                        <Input
-                          type="number"
-                          value={formData.default_duration || ''}
-                          onChange={(e) => setFormData({ ...formData, default_duration: e.target.value ? parseInt(e.target.value) : undefined })}
-                          placeholder="15"
-                          min="1"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3 pt-4">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setShowModal(false)}
-                        className="flex-1"
-                      >
-                        Annuler
-                      </Button>
-                      <Button
-                        type="submit"
-                        className="flex-1"
-                      >
-                        {editingTask ? 'Modifier' : 'Créer'}
-                      </Button>
-                    </div>
-                  </form>
-                </CardContent>
-              </Card>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Durée estimée (min)
+              </label>
+              <Input
+                type="number"
+                value={formData.estimated_duration || ''}
+                onChange={(e) => setFormData({ ...formData, estimated_duration: e.target.value ? parseInt(e.target.value) : undefined })}
+                placeholder="15"
+                min="1"
+              />
             </div>
-          </>
-        )}
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Durée par défaut (min)
+              </label>
+              <Input
+                type="number"
+                value={formData.default_duration || ''}
+                onChange={(e) => setFormData({ ...formData, default_duration: e.target.value ? parseInt(e.target.value) : undefined })}
+                placeholder="15"
+                min="1"
+              />
+            </div>
+          </div>
+        </FormDialog>
+
+        {/* Delete Confirmation Dialog */}
+        <DeleteConfirmationDialog
+          isOpen={!!taskToDelete}
+          onClose={() => setTaskToDelete(null)}
+          onConfirm={handleConfirmDelete}
+          itemName={taskToDelete?.name}
+          isDeleting={isDeleting}
+        />
       </div>
     </DashboardLayout>
   )

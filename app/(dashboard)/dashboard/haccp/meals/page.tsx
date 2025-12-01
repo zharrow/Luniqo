@@ -18,6 +18,8 @@ import {
 } from '@heroicons/react/24/outline'
 import { format, startOfWeek, endOfWeek, addDays, subWeeks, addWeeks } from 'date-fns'
 import { fr } from 'date-fns/locale'
+import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
+import { FormDialog } from '@/components/shared/FormDialog'
 
 export default function MealsPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Admin'])
@@ -26,6 +28,9 @@ export default function MealsPage() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingMeal, setEditingMeal] = useState<Meal | null>(null)
+  const [mealToDelete, setMealToDelete] = useState<Meal | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [weekStart, setWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }))
   const [formData, setFormData] = useState<CreateMealInput>({
@@ -96,6 +101,7 @@ export default function MealsPage() {
     if (!session?.enterprise?.id) return
 
     try {
+      setIsSubmitting(true)
       if (editingMeal) {
         await haccpService.updateMeal(editingMeal.id, session.enterprise.id, formData)
       } else {
@@ -107,19 +113,28 @@ export default function MealsPage() {
     } catch (error) {
       console.error('Error saving meal:', error)
       alert('Erreur lors de la sauvegarde')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
-  async function handleDelete(meal: Meal) {
-    if (!session?.enterprise?.id) return
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer ce repas ?`)) return
+  function openDeleteDialog(meal: Meal) {
+    setMealToDelete(meal)
+  }
+
+  async function handleConfirmDelete() {
+    if (!session?.enterprise?.id || !mealToDelete) return
 
     try {
-      await haccpService.deleteMeal(meal.id, session.enterprise.id)
+      setIsDeleting(true)
+      await haccpService.deleteMeal(mealToDelete.id, session.enterprise.id)
       loadData()
     } catch (error) {
       console.error('Error deleting meal:', error)
       alert('Erreur lors de la suppression')
+    } finally {
+      setIsDeleting(false)
+      setMealToDelete(null)
     }
   }
 
@@ -315,7 +330,7 @@ export default function MealsPage() {
                                   <PencilIcon className="w-3 h-3 text-muted-foreground" />
                                 </button>
                                 <button
-                                  onClick={() => handleDelete(meal)}
+                                  onClick={() => openDeleteDialog(meal)}
                                   className="p-1 rounded hover:bg-danger-50 transition-colors"
                                   title="Supprimer"
                                 >
@@ -341,17 +356,16 @@ export default function MealsPage() {
           </table>
         </div>
 
-        {/* Modal */}
-        {showModal && (
-          <>
-            <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setShowModal(false)}></div>
-            <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-              <div className="card w-full max-w-md p-6 animate-slide-up max-h-[90vh] overflow-y-auto">
-                <h2 className="text-xl font-bold mb-4">
-                  {editingMeal ? 'Modifier le repas' : 'Nouveau repas'}
-                </h2>
-
-                <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Form Dialog */}
+        <FormDialog
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          onSubmit={handleSubmit}
+          title={editingMeal ? 'Modifier le repas' : 'Nouveau repas'}
+          submitLabel={editingMeal ? 'Modifier' : 'Créer'}
+          isSubmitting={isSubmitting}
+          maxWidth="md"
+        >
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium mb-1">
@@ -430,27 +444,18 @@ export default function MealsPage() {
                       ))}
                     </select>
                   </div>
+        </FormDialog>
 
-                  <div className="flex gap-3 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => setShowModal(false)}
-                      className="flex-1 px-4 py-2 rounded-lg border border-border hover:bg-muted"
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      type="submit"
-                      className="flex-1 btn btn-primary"
-                    >
-                      {editingMeal ? 'Modifier' : 'Créer'}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </>
-        )}
+        {/* Delete Confirmation Dialog */}
+        <DeleteConfirmationDialog
+          isOpen={!!mealToDelete}
+          onClose={() => setMealToDelete(null)}
+          onConfirm={handleConfirmDelete}
+          title="Confirmer la suppression"
+          description="Êtes-vous sûr de vouloir supprimer ce repas"
+          itemName={mealToDelete ? `${getMealTypeLabel(mealToDelete.type)} du ${format(new Date(mealToDelete.date), 'd MMMM', { locale: fr })}` : ''}
+          isDeleting={isDeleting}
+        />
       </div>
     </DashboardLayout>
   )

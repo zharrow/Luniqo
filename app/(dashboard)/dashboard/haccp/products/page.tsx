@@ -12,6 +12,8 @@ import {
   ExclamationTriangleIcon,
   FunnelIcon
 } from '@heroicons/react/24/outline'
+import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
+import { FormDialog } from '@/components/shared/FormDialog'
 
 export default function ProductsPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Admin'])
@@ -22,6 +24,9 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState<CreateProductInput>({
     supplier_id: '',
     name: '',
@@ -94,6 +99,7 @@ export default function ProductsPage() {
     if (!session?.enterprise?.id) return
 
     try {
+      setIsSubmitting(true)
       if (editingProduct) {
         await haccpService.updateProduct(editingProduct.id, session.enterprise.id, formData)
       } else {
@@ -105,19 +111,28 @@ export default function ProductsPage() {
     } catch (error) {
       console.error('Error saving product:', error)
       alert('Erreur lors de la sauvegarde')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
-  async function handleDelete(product: Product) {
-    if (!session?.enterprise?.id) return
-    if (!confirm(`Êtes-vous sûr de vouloir désactiver "${product.name}" ?`)) return
+  function openDeleteDialog(product: Product) {
+    setProductToDelete(product)
+  }
+
+  async function handleConfirmDelete() {
+    if (!session?.enterprise?.id || !productToDelete) return
 
     try {
-      await haccpService.deleteProduct(product.id, session.enterprise.id)
+      setIsDeleting(true)
+      await haccpService.deleteProduct(productToDelete.id, session.enterprise.id)
       loadData()
     } catch (error) {
       console.error('Error deleting product:', error)
       alert('Erreur lors de la suppression')
+    } finally {
+      setIsDeleting(false)
+      setProductToDelete(null)
     }
   }
 
@@ -238,7 +253,7 @@ export default function ProductsPage() {
                           <PencilIcon className="w-4 h-4 text-muted-foreground" />
                         </button>
                         <button
-                          onClick={() => handleDelete(product)}
+                          onClick={() => openDeleteDialog(product)}
                           className="p-2 rounded-lg hover:bg-danger-50 transition-colors"
                           title="Désactiver"
                         >
@@ -298,17 +313,16 @@ export default function ProductsPage() {
           </>
         )}
 
-        {/* Modal */}
-        {showModal && (
-          <>
-            <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setShowModal(false)}></div>
-            <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-              <div className="card w-full max-w-md p-6 animate-slide-up max-h-[90vh] overflow-y-auto">
-                <h2 className="text-xl font-bold mb-4">
-                  {editingProduct ? 'Modifier le produit' : 'Nouveau produit'}
-                </h2>
-
-                <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Form Dialog */}
+        <FormDialog
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          onSubmit={handleSubmit}
+          title={editingProduct ? 'Modifier le produit' : 'Nouveau produit'}
+          submitLabel={editingProduct ? 'Modifier' : 'Créer'}
+          isSubmitting={isSubmitting}
+          maxWidth="md"
+        >
                   <div>
                     <label className="block text-sm font-medium mb-1">
                       Nom du produit *
@@ -397,27 +411,18 @@ export default function ProductsPage() {
                       rows={2}
                     />
                   </div>
+        </FormDialog>
 
-                  <div className="flex gap-3 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => setShowModal(false)}
-                      className="flex-1 px-4 py-2 rounded-lg border border-border hover:bg-muted"
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      type="submit"
-                      className="flex-1 btn btn-primary"
-                    >
-                      {editingProduct ? 'Modifier' : 'Créer'}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </>
-        )}
+        {/* Delete Confirmation Dialog */}
+        <DeleteConfirmationDialog
+          isOpen={!!productToDelete}
+          onClose={() => setProductToDelete(null)}
+          onConfirm={handleConfirmDelete}
+          title="Confirmer la désactivation"
+          description="Êtes-vous sûr de vouloir désactiver le produit"
+          itemName={productToDelete ? productToDelete.name : ''}
+          isDeleting={isDeleting}
+        />
       </div>
     </DashboardLayout>
   )

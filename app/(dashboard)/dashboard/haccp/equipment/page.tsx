@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/contexts/AuthContext'
 import { haccpService } from '@/lib/services/haccp.service'
+import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
+import { FormDialog } from '@/components/shared/FormDialog'
 
 interface HaccpEquipment {
   id: string
@@ -24,6 +26,9 @@ export default function HaccpEquipmentPage() {
   const [error, setError] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [editingEquipment, setEditingEquipment] = useState<HaccpEquipment | null>(null)
+  const [equipmentToDelete, setEquipmentToDelete] = useState<HaccpEquipment | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const [formData, setFormData] = useState({
     name: '',
@@ -91,6 +96,7 @@ export default function HaccpEquipmentPage() {
     setError('')
 
     try {
+      setIsSubmitting(true)
       if (!session?.enterprise?.id) return
 
       if (editingEquipment) {
@@ -104,20 +110,29 @@ export default function HaccpEquipmentPage() {
     } catch (err: any) {
       console.error('Error saving equipment:', err)
       setError('Erreur lors de l\'enregistrement')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm('Êtes-vous sûr de vouloir désactiver cet équipement ?')) return
+  function openDeleteDialog(equip: HaccpEquipment) {
+    setEquipmentToDelete(equip)
+  }
+
+  async function handleConfirmDelete() {
+    if (!session?.enterprise?.id || !equipmentToDelete) return
 
     try {
-      if (!session?.enterprise?.id) return
+      setIsDeleting(true)
       // Soft delete - set is_active to false
-      await haccpService.updateEquipment(id, session.enterprise.id, { is_active: false })
+      await haccpService.updateEquipment(equipmentToDelete.id, session.enterprise.id, { is_active: false })
       await loadEquipment()
     } catch (err: any) {
       console.error('Error deleting equipment:', err)
       setError('Erreur lors de la suppression')
+    } finally {
+      setIsDeleting(false)
+      setEquipmentToDelete(null)
     }
   }
 
@@ -244,7 +259,7 @@ export default function HaccpEquipmentPage() {
                       </svg>
                     </button>
                     <button
-                      onClick={() => handleDelete(equip.id)}
+                      onClick={() => openDeleteDialog(equip)}
                       className="text-danger-500 hover:text-danger-700"
                       title="Supprimer"
                     >
@@ -319,17 +334,16 @@ export default function HaccpEquipmentPage() {
         </div>
       )}
 
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-border">
-              <h2 className="text-2xl font-bold">
-                {editingEquipment ? 'Modifier l\'équipement' : 'Nouvel équipement'}
-              </h2>
-            </div>
-
-            <form onSubmit={handleSubmit} className="p-6">
+      {/* Form Dialog */}
+      <FormDialog
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onSubmit={handleSubmit}
+        title={editingEquipment ? 'Modifier l\'équipement' : 'Nouvel équipement'}
+        submitLabel={editingEquipment ? 'Mettre à jour' : 'Créer'}
+        isSubmitting={isSubmitting}
+        maxWidth="lg"
+      >
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">
@@ -412,26 +426,18 @@ export default function HaccpEquipmentPage() {
                   />
                 </div>
               </div>
+      </FormDialog>
 
-              <div className="flex gap-3 mt-6">
-                <button
-                  type="submit"
-                  className="btn btn-primary flex-1"
-                >
-                  {editingEquipment ? 'Mettre à jour' : 'Créer'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="btn btn-secondary flex-1"
-                >
-                  Annuler
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmationDialog
+        isOpen={!!equipmentToDelete}
+        onClose={() => setEquipmentToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Confirmer la désactivation"
+        description="Êtes-vous sûr de vouloir désactiver l'équipement"
+        itemName={equipmentToDelete ? equipmentToDelete.name : ''}
+        isDeleting={isDeleting}
+      />
     </div>
   )
 }
