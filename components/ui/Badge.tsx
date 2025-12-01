@@ -63,3 +63,4 @@ export function CountBadge({ count }: { count: number }) {
 }
 
 export { Badge, badgeVariants }
+export default Badge

@@ -97,11 +97,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // Check localStorage for User (PIN) session
-      const userSession = localStorage.getItem('user_session')
-      if (userSession) {
-        const parsed = JSON.parse(userSession)
-        setSession(parsed)
+      // Check localStorage for User (PIN) session (client-side only)
+      if (typeof window !== 'undefined') {
+        const userSession = localStorage.getItem('user_session')
+        if (userSession) {
+          const parsed = JSON.parse(userSession)
+          setSession(parsed)
+        }
       }
 
       setIsLoading(false)
@@ -138,8 +140,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       setSession(newSession)
 
-      // Store in localStorage for User sessions (no Supabase Auth)
-      localStorage.setItem('user_session', JSON.stringify(newSession))
+      // Store in localStorage for User sessions (no Supabase Auth) - client-side only
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('user_session', JSON.stringify(newSession))
+      }
     }
 
     return response
@@ -147,7 +151,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function handleLogout() {
     await authLogout()
-    localStorage.removeItem('user_session')
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('user_session')
+    }
     setSession(null)
     router.push('/login')
   }
