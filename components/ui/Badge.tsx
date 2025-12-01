@@ -43,9 +43,9 @@ export interface BadgeProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof badgeVariants> {}
 
-function Badge({ className, variant, ...props }: BadgeProps) {
+function Badge({ className, variant, size, ...props }: BadgeProps) {
   return (
-    <div className={cn(badgeVariants({ variant }), className)} {...props} />
+    <div className={cn(badgeVariants({ variant, size }), className)} {...props} />
   )
 }
 
@@ -55,7 +55,7 @@ export function CountBadge({ count }: { count: number }) {
 
   return (
     <span
-      className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-gradient-to-br from-red-500 to-red-600 text-white text-xs font-bold rounded-full shadow-lg"
+      className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-linear-to-br from-red-500 to-red-600 text-white text-xs font-bold rounded-full shadow-lg"
     >
       {count > 99 ? '99+' : count}
     </span>
