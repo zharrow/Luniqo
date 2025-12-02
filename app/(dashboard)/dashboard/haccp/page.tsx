@@ -20,7 +20,6 @@ import {
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
-import { ShineBorder } from '@/components/ui/shine-border'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 interface HaccpStats {
@@ -262,8 +261,8 @@ export default function HaccpDashboardPage() {
         {/* Page header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
-              <BeakerIcon className="w-6 h-6 text-success" />
+            <div className="w-10 h-10 rounded-lg bg-[#81c995]/10 flex items-center justify-center">
+              <BeakerIcon className="w-6 h-6 text-[#4a8f5a]" />
             </div>
             <h1 className="text-3xl font-bold">
               HACCP - Traçabilité Alimentaire
@@ -337,32 +336,26 @@ export default function HaccpDashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {modules.map((module) => {
               const Icon = module.icon
-              const colorClass = colorClasses[module.color as keyof typeof colorClasses]
 
               return (
                 <Link key={module.name} href={module.href}>
-                  <ShineBorder
-                    className="hover:shadow-lg transition-all cursor-pointer group"
-                    color={module.color === 'primary' ? '#a855f7' : module.color === 'success' ? '#10b981' : '#3b82f6'}
-                  >
-                    <Card className="border-0">
-                      <CardContent className="p-6">
-                        <div className="flex items-start gap-4">
-                          <div className={`p-3 rounded-lg ${colorClass} group-hover:scale-110 transition-transform flex-shrink-0`}>
-                            <Icon className="w-6 h-6" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold mb-1 group-hover:text-primary transition-colors">
-                              {module.name}
-                            </h3>
-                            <p className="text-sm text-muted-foreground">
-                              {module.description}
-                            </p>
-                          </div>
+                  <Card className="hover:shadow-lg transition-all cursor-pointer group bg-gradient-to-br from-[#e8f5e9] to-white border-l-4 border-l-[#81c995]">
+                    <CardContent className="p-6">
+                      <div className="flex items-start gap-4">
+                        <div className="p-3 rounded-lg bg-[#81c995]/10 group-hover:bg-[#81c995]/20 transition-all flex-shrink-0">
+                          <Icon className="w-6 h-6 text-[#4a8f5a]" />
                         </div>
-                      </CardContent>
-                    </Card>
-                  </ShineBorder>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold mb-1 group-hover:text-[#4a8f5a] transition-colors">
+                            {module.name}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {module.description}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </Link>
               )
             })}
@@ -370,16 +363,16 @@ export default function HaccpDashboardPage() {
         </div>
 
         {/* Quick actions */}
-        <div className="mt-8 card p-6">
+        <div className="mt-8 card p-6 bg-gradient-to-br from-[#e8f5e9] to-white border-l-4 border-l-[#81c995]">
           <h2 className="text-lg font-semibold mb-4">
             Actions rapides
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Link
               href="/dashboard/haccp/meals"
-              className="flex items-center gap-3 p-4 rounded-lg hover:bg-muted transition-colors border border-border"
+              className="flex items-center gap-3 p-4 rounded-lg hover:bg-[#81c995]/10 transition-colors border border-border"
             >
-              <ClipboardDocumentCheckIcon className="w-8 h-8 text-primary" />
+              <ClipboardDocumentCheckIcon className="w-8 h-8 text-[#4a8f5a]" />
               <div>
                 <p className="font-medium">Nouveau repas</p>
                 <p className="text-sm text-muted-foreground">Planifier un repas</p>
@@ -388,9 +381,9 @@ export default function HaccpDashboardPage() {
 
             <Link
               href="/dashboard/haccp/temperatures"
-              className="flex items-center gap-3 p-4 rounded-lg hover:bg-muted transition-colors border border-border"
+              className="flex items-center gap-3 p-4 rounded-lg hover:bg-[#81c995]/10 transition-colors border border-border"
             >
-              <BeakerIcon className="w-8 h-8 text-secondary-foreground" />
+              <BeakerIcon className="w-8 h-8 text-[#4a8f5a]" />
               <div>
                 <p className="font-medium">Contrôle température</p>
                 <p className="text-sm text-muted-foreground">Enregistrer une température</p>
@@ -399,9 +392,9 @@ export default function HaccpDashboardPage() {
 
             <Link
               href="/dashboard/haccp/non-compliances"
-              className="flex items-center gap-3 p-4 rounded-lg hover:bg-muted transition-colors border border-border"
+              className="flex items-center gap-3 p-4 rounded-lg hover:bg-[#81c995]/10 transition-colors border border-border"
             >
-              <ExclamationTriangleIcon className="w-8 h-8 text-destructive" />
+              <ExclamationTriangleIcon className="w-8 h-8 text-[#4a8f5a]" />
               <div>
                 <p className="font-medium">Déclarer un incident</p>
                 <p className="text-sm text-muted-foreground">Signaler une non-conformité</p>
@@ -410,9 +403,9 @@ export default function HaccpDashboardPage() {
 
             <button
               onClick={handleExportHACCP}
-              className="flex items-center gap-3 p-4 rounded-lg hover:bg-accent transition-colors border border-border bg-accent/50"
+              className="flex items-center gap-3 p-4 rounded-lg hover:bg-[#81c995]/10 transition-colors border border-border bg-[#81c995]/5"
             >
-              <ArrowDownTrayIcon className="w-8 h-8 text-primary" />
+              <ArrowDownTrayIcon className="w-8 h-8 text-[#4a8f5a]" />
               <div className="text-left">
                 <p className="font-medium">Export PDF HACCP</p>
                 <p className="text-sm text-muted-foreground">Rapport des 30 derniers jours</p>

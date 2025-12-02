@@ -97,35 +97,6 @@ export function WeeklyCalendar({ enterpriseId }: WeeklyCalendarProps) {
     }
   }
 
-  function getTypeColor(type: CalendarTask['type']) {
-    switch (type) {
-      case 'DAILY':
-        return 'bg-primary-100 text-primary-700 border-primary-200'
-      case 'WEEKLY':
-        return 'bg-secondary-100 text-secondary-700 border-secondary-200'
-      case 'MONTHLY':
-        return 'bg-accent-100 text-accent-700 border-accent-200'
-      case 'OCCASIONAL':
-        return 'bg-gray-100 text-gray-700 border-gray-200'
-      default:
-        return 'bg-gray-100 text-gray-700 border-gray-200'
-    }
-  }
-
-  function getTypeLabel(type: CalendarTask['type']) {
-    switch (type) {
-      case 'DAILY':
-        return 'Quotidien'
-      case 'WEEKLY':
-        return 'Hebdo'
-      case 'MONTHLY':
-        return 'Mensuel'
-      case 'OCCASIONAL':
-        return 'Occasionnel'
-      default:
-        return type
-    }
-  }
 
   if (loading) {
     return (
@@ -277,22 +248,12 @@ export function WeeklyCalendar({ enterpriseId }: WeeklyCalendarProps) {
                       )}
 
                       {/* Task metadata */}
-                      <div className="flex flex-wrap items-center gap-2 mb-2">
-                        <span
-                          className={`text-xs px-2 py-0.5 rounded-full border ${getTypeColor(
-                            task.type
-                          )}`}
-                        >
-                          {getTypeLabel(task.type)}
-                        </span>
-
-                        {task.suggestedTime && (
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <ClockIcon className="w-3 h-3" />
-                            {task.suggestedTime}
-                          </span>
-                        )}
-                      </div>
+                      {task.suggestedTime && (
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
+                          <ClockIcon className="w-3 h-3" />
+                          {task.suggestedTime}
+                        </div>
+                      )}
 
                       {/* Status badge */}
                       <Badge

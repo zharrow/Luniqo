@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 export const metadata: Metadata = {
-  title: "cLean - Gestion de crèche intelligente",
+  title: "Gestion de crèches",
   description: "Application de gestion de crèche avec traçabilité HACCP",
 };
 

@@ -107,7 +107,7 @@ export default function NotificationsPage() {
         case 'temperature':
           router.push('/dashboard/haccp/temperatures')
           break
-        case 'non_compliance':
+        case 'haccp_incident':
           router.push('/dashboard/haccp/non-compliances')
           break
         default:

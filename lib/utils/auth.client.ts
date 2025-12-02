@@ -19,16 +19,16 @@ export async function verifyPin(pin: string, hash: string): Promise<boolean> {
 }
 
 /**
- * Login with PIN (for User/Employee)
+ * Login with PIN (for Employee)
  * Uses Supabase database directly (no Supabase Auth)
  */
 export async function loginWithPin(credentials: PinCredentials): Promise<AuthResponse> {
   try {
     const supabase = createClient()
 
-    // Find user by enterprise and active status
-    const { data: users, error } = await supabase
-      .from('user')
+    // Find employee by enterprise and active status
+    const { data: employees, error } = await supabase
+      .from('employee')
       .select('*, enterprise:enterprise_id(*)')
       .eq('enterprise_id', credentials.enterprise_id)
       .eq('is_active', true)
@@ -37,36 +37,36 @@ export async function loginWithPin(credentials: PinCredentials): Promise<AuthRes
       return { success: false, error: 'Database error' }
     }
 
-    if (!users || users.length === 0) {
+    if (!employees || employees.length === 0) {
       return { success: false, error: 'Invalid credentials' }
     }
 
-    // Find user with matching PIN
-    let authenticatedUser: any = null
-    for (const user of users as any[]) {
-      const isValid = await verifyPin(credentials.pin, user.pin_code)
+    // Find employee with matching PIN
+    let authenticatedEmployee: any = null
+    for (const employee of employees as any[]) {
+      const isValid = await verifyPin(credentials.pin, employee.pin_code)
       if (isValid) {
-        authenticatedUser = user
+        authenticatedEmployee = employee
         break
       }
     }
 
-    if (!authenticatedUser) {
+    if (!authenticatedEmployee) {
       return { success: false, error: 'Invalid PIN' }
     }
 
-    // Get accessible rooms for this user
-    const { data: userRooms } = await supabase
-      .from('user_rooms')
+    // Get accessible rooms for this employee
+    const { data: employeeRoomAccess } = await supabase
+      .from('employee_room_access')
       .select('room_id')
-      .eq('user_id', authenticatedUser.id)
+      .eq('employee_id', authenticatedEmployee.id)
 
-    const accessibleRooms = (userRooms as any[])?.map(ur => ur.room_id) || []
+    const accessibleRooms = (employeeRoomAccess as any[])?.map(era => era.room_id) || []
 
     return {
       success: true,
-      data: authenticatedUser,
-      enterprise: authenticatedUser.enterprise,
+      data: authenticatedEmployee,
+      enterprise: authenticatedEmployee.enterprise,
       role: 'User',
       accessibleRooms
     }
@@ -77,7 +77,7 @@ export async function loginWithPin(credentials: PinCredentials): Promise<AuthRes
 }
 
 /**
- * Login with email/password (for Developer/Admin)
+ * Login with email/password (for Super Admin/Admin)
  * Uses Supabase Auth
  */
 export async function loginWithEmail(email: string, password: string): Promise<AuthResponse> {
@@ -105,19 +105,19 @@ export async function loginWithEmail(email: string, password: string): Promise<A
       return { success: false, error: 'Email not found' }
     }
 
-    // Check if Developer
-    console.log('🔍 Checking for Developer role...')
-    const { data: developer, error: devError } = await supabase
-      .from('developer')
+    // Check if Super Admin
+    console.log('🔍 Checking for Super Admin role...')
+    const { data: superAdmin, error: superAdminError } = await supabase
+      .from('super_admin')
       .select('*')
       .eq('email', userEmail)
       .single()
 
-    if (developer && !devError) {
-      console.log('✅ Developer found')
+    if (superAdmin && !superAdminError) {
+      console.log('✅ Super Admin found')
       return {
         success: true,
-        data: developer as any,
+        data: superAdmin as any,
         role: 'Developer'
       }
     }
@@ -154,7 +154,7 @@ export async function loginWithEmail(email: string, password: string): Promise<A
       }
     }
 
-    console.error('❌ No Developer or Admin found for email:', userEmail)
+    console.error('❌ No Super Admin or Admin found for email:', userEmail)
     return { success: false, error: 'User not found' }
   } catch (error) {
     console.error('❌ Login error:', error)
@@ -172,44 +172,44 @@ export async function logout() {
 
 /**
  * Login employee with PIN (new flow: admin login -> select employee -> enter PIN)
- * @param userId - The specific user ID to authenticate
+ * @param employeeId - The specific employee ID to authenticate
  * @param pin - The 4-digit PIN code
  */
-export async function loginEmployeeWithPin(userId: string, pin: string): Promise<AuthResponse> {
+export async function loginEmployeeWithPin(employeeId: string, pin: string): Promise<AuthResponse> {
   try {
     const supabase = createClient()
 
-    // Get the specific user
-    const { data: user, error: userError } = await supabase
-      .from('user')
+    // Get the specific employee
+    const { data: employee, error: employeeError } = await supabase
+      .from('employee')
       .select('*, enterprise:enterprise_id(*)')
-      .eq('id', userId)
+      .eq('id', employeeId)
       .eq('is_active', true)
       .single()
 
-    if (userError || !user) {
+    if (employeeError || !employee) {
       return { success: false, error: 'Employé non trouvé' }
     }
 
     // Verify PIN
-    const isValidPin = await verifyPin(pin, (user as any).pin_code)
+    const isValidPin = await verifyPin(pin, (employee as any).pin_code)
 
     if (!isValidPin) {
       return { success: false, error: 'Code PIN incorrect' }
     }
 
     // Get accessible rooms
-    const { data: userRooms } = await supabase
-      .from('user_rooms')
+    const { data: employeeRoomAccess } = await supabase
+      .from('employee_room_access')
       .select('room_id')
-      .eq('user_id', userId)
+      .eq('employee_id', employeeId)
 
-    const accessibleRooms = (userRooms as any[])?.map(ur => ur.room_id) || []
+    const accessibleRooms = (employeeRoomAccess as any[])?.map(era => era.room_id) || []
 
     return {
       success: true,
-      data: user as any,
-      enterprise: (user as any).enterprise,
+      data: employee as any,
+      enterprise: (employee as any).enterprise,
       role: 'User',
       accessibleRooms
     }
@@ -232,7 +232,7 @@ export async function getEnterpriseEmployees(enterpriseId: string): Promise<Arra
     const supabase = createClient()
 
     const { data: employees, error } = await supabase
-      .from('user')
+      .from('employee')
       .select('id, first_name, last_name, email')
       .eq('enterprise_id', enterpriseId)
       .eq('is_active', true)

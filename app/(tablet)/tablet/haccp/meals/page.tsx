@@ -95,7 +95,7 @@ export default function TabletHaccpMealsPage() {
     setError('')
 
     try {
-      // Prepare meal_children records
+      // Prepare child_meal_record records
       const records = Object.values(servings).map(serving => ({
         meal_id: selectedMeal,
         child_id: serving.child_id,

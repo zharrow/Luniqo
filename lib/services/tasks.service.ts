@@ -1,7 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
 
-export type TaskType = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'OCCASIONAL'
-
 export interface TaskTemplate {
   id: string
   enterprise_id: string
@@ -9,7 +7,6 @@ export interface TaskTemplate {
   description: string | null
   default_duration: number | null
   estimated_duration: number | null
-  type: TaskType
   category: string | null
   is_active: boolean
   created_at: string
@@ -21,7 +18,6 @@ export interface CreateTaskInput {
   description?: string
   default_duration?: number
   estimated_duration?: number
-  type: TaskType
   category?: string
 }
 
@@ -30,7 +26,6 @@ export interface UpdateTaskInput {
   description?: string
   default_duration?: number
   estimated_duration?: number
-  type?: TaskType
   category?: string
   is_active?: boolean
 }
@@ -60,22 +55,6 @@ export class TasksService {
       .from('task_template')
       .select('*')
       .eq('enterprise_id', enterpriseId)
-      .eq('is_active', true)
-      .order('name', { ascending: true })
-
-    if (error) throw error
-    return (data as any[]) || []
-  }
-
-  /**
-   * Get tasks by type
-   */
-  async getByType(enterpriseId: string, type: TaskType): Promise<TaskTemplate[]> {
-    const { data, error } = await this.supabase
-      .from('task_template')
-      .select('*')
-      .eq('enterprise_id', enterpriseId)
-      .eq('type', type)
       .eq('is_active', true)
       .order('name', { ascending: true })
 
@@ -130,7 +109,6 @@ export class TasksService {
         description: input.description || null,
         default_duration: input.default_duration || null,
         estimated_duration: input.estimated_duration || null,
-        type: input.type,
         category: input.category || null,
         is_active: true
       })
@@ -186,7 +164,7 @@ export class TasksService {
 
     // Count how many times this task has been completed
     const { count: completedCount } = await this.supabase
-      .from('cleaning_log')
+      .from('task_completion')
       .select('assigned_task!inner(*)', { count: 'exact', head: true })
       .eq('assigned_task.task_template_id', taskId)
       .eq('status', 'FAIT')

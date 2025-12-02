@@ -170,7 +170,7 @@ export class RoomsService {
     // Get today's session
     const today = new Date().toISOString().split('T')[0]
     const { data: session } = await supabase
-      .from('cleaning_session')
+      .from('daily_cleaning_session')
       .select('id')
       .eq('enterprise_id', enterpriseId)
       .eq('date', today)
@@ -179,7 +179,7 @@ export class RoomsService {
     let completedToday = 0
     if (session) {
       const { count } = await supabase
-        .from('cleaning_log')
+        .from('task_completion')
         .select('assigned_task!inner(*)', { count: 'exact', head: true })
         .eq('session_id', (session as any).id)
         .eq('status', 'FAIT')

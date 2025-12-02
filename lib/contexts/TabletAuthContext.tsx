@@ -29,7 +29,36 @@ export function TabletAuthProvider({ children }: { children: React.ReactNode }) 
 
   // Load session from localStorage on mount
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') {
+      setIsLoading(false)
+      return
+    }
+
     loadSession()
+
+    // Track last visibility change time
+    let lastHiddenTime = 0
+
+    // Handle visibility change (when user returns to tab)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        // Store the time when tab was hidden
+        lastHiddenTime = Date.now()
+      } else if (document.visibilityState === 'visible') {
+        // Only refresh if tab was hidden for more than 5 minutes
+        const timeHidden = Date.now() - lastHiddenTime
+        if (timeHidden > 5 * 60 * 1000) {
+          loadSession()
+        }
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [])
 
   function loadSession() {

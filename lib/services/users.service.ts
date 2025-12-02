@@ -42,7 +42,7 @@ export class UsersService {
    */
   async getAll(enterpriseId: string): Promise<UserWithRooms[]> {
     const { data: users, error } = await this.supabase
-      .from('user')
+      .from('employee')
       .select('*')
       .eq('enterprise_id', enterpriseId)
       .order('last_name', { ascending: true })
@@ -53,9 +53,9 @@ export class UsersService {
     const usersWithRooms = await Promise.all(
       (users as any[] || []).map(async (user) => {
         const { data: rooms } = await this.supabase
-          .from('user_rooms')
+          .from('employee_room_access')
           .select('room_id')
-          .eq('user_id', user.id)
+          .eq('employee_id', user.id)
 
         return {
           ...user,
@@ -80,7 +80,7 @@ export class UsersService {
    */
   async getById(id: string, enterpriseId: string): Promise<UserWithRooms | null> {
     const { data: user, error } = await this.supabase
-      .from('user')
+      .from('employee')
       .select('*')
       .eq('id', id)
       .eq('enterprise_id', enterpriseId)
@@ -93,9 +93,9 @@ export class UsersService {
 
     // Get room assignments
     const { data: rooms } = await this.supabase
-      .from('user_rooms')
+      .from('employee_room_access')
       .select('room_id')
-      .eq('user_id', id)
+      .eq('employee_id', id)
 
     return {
       ...(user as any),
@@ -112,7 +112,7 @@ export class UsersService {
 
     // Create user
     const { data: user, error: userError } = await this.supabase
-      .from('user')
+      .from('employee')
       .insert({
         enterprise_id: enterpriseId,
         created_by_id: createdById,
@@ -130,12 +130,12 @@ export class UsersService {
     // Assign rooms if provided
     if (input.room_ids && input.room_ids.length > 0) {
       const roomAssignments = input.room_ids.map(room_id => ({
-        user_id: (user as any).id,
+        employee_id: (user as any).id,
         room_id
       }))
 
       const { error: roomsError } = await this.supabase
-        .from('user_rooms')
+        .from('employee_room_access')
         .insert(roomAssignments)
 
       if (roomsError) throw roomsError
@@ -157,7 +157,7 @@ export class UsersService {
     }
 
     const { data, error } = await this.supabase
-      .from('user')
+      .from('employee')
       .update(updateData)
       .eq('id', id)
       .eq('enterprise_id', enterpriseId)
@@ -174,19 +174,19 @@ export class UsersService {
   async updateRoomAccess(userId: string, roomIds: string[]): Promise<void> {
     // Delete existing assignments
     await this.supabase
-      .from('user_rooms')
+      .from('employee_room_access')
       .delete()
-      .eq('user_id', userId)
+      .eq('employee_id', userId)
 
     // Insert new assignments
     if (roomIds.length > 0) {
       const assignments = roomIds.map(room_id => ({
-        user_id: userId,
+        employee_id: userId,
         room_id
       }))
 
       const { error } = await this.supabase
-        .from('user_rooms')
+        .from('employee_room_access')
         .insert(assignments)
 
       if (error) throw error
@@ -198,7 +198,7 @@ export class UsersService {
    */
   async softDelete(id: string, enterpriseId: string): Promise<void> {
     const { error } = await this.supabase
-      .from('user')
+      .from('employee')
       .update({ is_active: false })
       .eq('id', id)
       .eq('enterprise_id', enterpriseId)
@@ -212,13 +212,13 @@ export class UsersService {
   async hardDelete(id: string, enterpriseId: string): Promise<void> {
     // First delete room assignments
     await this.supabase
-      .from('user_rooms')
+      .from('employee_room_access')
       .delete()
-      .eq('user_id', id)
+      .eq('employee_id', id)
 
     // Then delete user
     const { error } = await this.supabase
-      .from('user')
+      .from('employee')
       .delete()
       .eq('id', id)
       .eq('enterprise_id', enterpriseId)
@@ -233,7 +233,7 @@ export class UsersService {
     const hashedPin = await hashPin(pin)
 
     let query = this.supabase
-      .from('user')
+      .from('employee')
       .select('id')
       .eq('enterprise_id', enterpriseId)
       .eq('pin_code', hashedPin)
@@ -257,16 +257,16 @@ export class UsersService {
   }> {
     // Count completed tasks
     const { count: tasksCount } = await this.supabase
-      .from('cleaning_log')
+      .from('task_completion')
       .select('*', { count: 'exact', head: true })
       .eq('performed_by_id', userId)
       .eq('status', 'FAIT')
 
     // Count accessible rooms
     const { count: roomsCount } = await this.supabase
-      .from('user_rooms')
+      .from('employee_room_access')
       .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
+      .eq('employee_id', userId)
 
     return {
       tasksCompleted: tasksCount || 0,

@@ -12,7 +12,7 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
-      developer: {
+      super_admin: {
         Row: {
           id: string
           email: string
@@ -108,7 +108,7 @@ export interface Database {
           updated_at?: string
         }
       }
-      user: {
+      employee: {
         Row: {
           id: string
           email: string | null
@@ -156,7 +156,6 @@ export interface Database {
       [_ in never]: never
     }
     Enums: {
-      task_type: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'OCCASIONAL'
       session_status: 'EN_COURS' | 'COMPLETEE' | 'INCOMPLETE'
       log_status: 'FAIT' | 'PARTIEL' | 'REPORTE' | 'IMPOSSIBLE'
       meal_type: 'Breakfast' | 'Lunch' | 'Snack'
@@ -164,7 +163,7 @@ export interface Database {
       section_type: 'Babies' | 'Toddlers' | 'Preschoolers'
       compliance_type: 'Product' | 'Temperature' | 'Hygiene' | 'Other'
       compliance_status: 'Open' | 'Corrected' | 'Closed'
-      user_type: 'Developer' | 'Admin' | 'User'
+      user_type: 'Developer' | 'Admin' | 'User' // Note: kept for backward compatibility, maps to super_admin/admin/employee
       message_status: 'Sent' | 'Delivered' | 'Read'
       notification_priority: 'Info' | 'Warning' | 'Critical'
       notification_status: 'Unread' | 'Read' | 'Archived'

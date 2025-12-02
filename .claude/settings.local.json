@@ -10,7 +10,10 @@
       "Bash(git add:*)",
       "Bash(kill:*)",
       "Bash(lsof:*)",
-      "Bash(xargs kill:*)"
+      "Bash(xargs kill:*)",
+      "Bash(tree:*)",
+      "Bash(npm outdated:*)",
+      "Bash(npm run lint:*)"
     ],
     "deny": [],
     "ask": []

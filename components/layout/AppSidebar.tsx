@@ -35,25 +35,26 @@ interface NavItem {
   href: string
   icon: any
   roles?: ('Developer' | 'Admin')[]
+  moduleColor?: string // Couleur du module pour l'indicateur visuel
 }
 
 
 const mainNavigation: NavItem[] = [
-  { name: 'Tableau de bord', href: '/dashboard', icon: HomeIcon, roles: ['Admin'] },
-  { name: 'Pièces', href: '/dashboard/rooms', icon: BuildingOfficeIcon, roles: ['Admin'] },
-  { name: 'Tâches', href: '/dashboard/tasks', icon: ClipboardDocumentListIcon, roles: ['Admin'] },
-  { name: 'Employés', href: '/dashboard/users', icon: UserGroupIcon, roles: ['Admin'] },
+  { name: 'Tableau de bord', href: '/dashboard', icon: HomeIcon, roles: ['Admin'], moduleColor: '#5a9dc9' },
+  { name: 'Pièces', href: '/dashboard/rooms', icon: BuildingOfficeIcon, roles: ['Admin'], moduleColor: '#5a9dc9' }, // Clean
+  { name: 'Tâches', href: '/dashboard/tasks', icon: ClipboardDocumentListIcon, roles: ['Admin'], moduleColor: '#aed581' }, // Tasks
+  { name: 'Employés', href: '/dashboard/users', icon: UserGroupIcon, roles: ['Admin'], moduleColor: '#f4a5a5' }, // Users
 ]
 
 const operationsNavigation: NavItem[] = [
-  { name: 'Sessions', href: '/dashboard/sessions', icon: CalendarIcon, roles: ['Admin'] },
-  { name: 'Historique', href: '/dashboard/history', icon: ClockIcon, roles: ['Admin'] },
-  { name: 'HACCP', href: '/dashboard/haccp', icon: BeakerIcon, roles: ['Admin'] },
+  { name: 'Sessions', href: '/dashboard/sessions', icon: CalendarIcon, roles: ['Admin'], moduleColor: '#5a9dc9' }, // Clean
+  { name: 'Historique', href: '/dashboard/history', icon: ClockIcon, roles: ['Admin'], moduleColor: '#5a9dc9' }, // Clean
+  { name: 'HACCP', href: '/dashboard/haccp', icon: BeakerIcon, roles: ['Admin'], moduleColor: '#81c995' }, // HACCP
 ]
 
 const communicationNavigation: NavItem[] = [
-  { name: 'Messages', href: '/dashboard/messages', icon: ChatBubbleLeftRightIcon, roles: ['Admin', 'Developer'] },
-  { name: 'Analytics', href: '/analytics', icon: ChartBarIcon, roles: ['Developer'] },
+  { name: 'Messages', href: '/dashboard/messages', icon: ChatBubbleLeftRightIcon, roles: ['Admin', 'Developer'], moduleColor: '#64b5d1' }, // Communication
+  { name: 'Analytics', href: '/analytics', icon: ChartBarIcon, roles: ['Developer'], moduleColor: '#9fa8da' }, // Analytics
 ]
 
 export function AppSidebar() {
@@ -113,7 +114,14 @@ export function AppSidebar() {
                         tooltip={item.name}
                         className={isActive ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white hover:from-primary-600 hover:to-primary-700' : ''}
                       >
-                        <Link href={item.href}>
+                        <Link href={item.href} className="flex items-center relative">
+                          {/* Indicateur de couleur module (visible quand actif) */}
+                          {isActive && item.moduleColor && (
+                            <div
+                              className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full"
+                              style={{ backgroundColor: item.moduleColor }}
+                            />
+                          )}
                           <Icon className="w-5 h-5" />
                           <span>{item.name}</span>
                         </Link>
@@ -149,7 +157,14 @@ export function AppSidebar() {
                           tooltip={item.name}
                           className={isActive ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white hover:from-primary-600 hover:to-primary-700' : ''}
                         >
-                          <Link href={item.href}>
+                          <Link href={item.href} className="flex items-center relative">
+                            {/* Indicateur de couleur module (visible quand actif) */}
+                            {isActive && item.moduleColor && (
+                              <div
+                                className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full"
+                                style={{ backgroundColor: item.moduleColor }}
+                              />
+                            )}
                             <Icon className="w-5 h-5" />
                             <span>{item.name}</span>
                           </Link>
@@ -186,7 +201,14 @@ export function AppSidebar() {
                           tooltip={item.name}
                           className={isActive ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white hover:from-primary-600 hover:to-primary-700' : ''}
                         >
-                          <Link href={item.href}>
+                          <Link href={item.href} className="flex items-center relative">
+                            {/* Indicateur de couleur module (visible quand actif) */}
+                            {isActive && item.moduleColor && (
+                              <div
+                                className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full"
+                                style={{ backgroundColor: item.moduleColor }}
+                              />
+                            )}
                             <Icon className="w-5 h-5" />
                             <span>{item.name}</span>
                           </Link>

@@ -16,7 +16,6 @@ export interface AssignedTask {
   task_template?: {
     id: string
     name: string
-    type: string
     category: string | null
     estimated_duration: number | null
   }
@@ -66,7 +65,6 @@ export class AssignedTasksService {
         task_template:task_template_id (
           id,
           name,
-          type,
           category,
           estimated_duration
         )
@@ -89,7 +87,6 @@ export class AssignedTasksService {
         task_template:task_template_id (
           id,
           name,
-          type,
           category,
           estimated_duration
         )
@@ -113,7 +110,6 @@ export class AssignedTasksService {
         task_template:task_template_id (
           id,
           name,
-          type,
           category,
           estimated_duration
         ),
@@ -141,7 +137,6 @@ export class AssignedTasksService {
         task_template:task_template_id (
           id,
           name,
-          type,
           category,
           estimated_duration
         ),
@@ -187,7 +182,6 @@ export class AssignedTasksService {
         task_template:task_template_id (
           id,
           name,
-          type,
           category,
           estimated_duration
         )
@@ -217,7 +211,6 @@ export class AssignedTasksService {
         task_template:task_template_id (
           id,
           name,
-          type,
           category,
           estimated_duration
         )
@@ -240,7 +233,6 @@ export class AssignedTasksService {
         task_template:task_template_id (
           id,
           name,
-          type,
           category,
           estimated_duration
         )

@@ -20,15 +20,15 @@ export async function getCurrentSession() {
     return null
   }
 
-  // Check Developer
-  const { data: developer, error: devError } = await supabase
-    .from('developer')
+  // Check Super Admin
+  const { data: superAdmin, error: superAdminError } = await supabase
+    .from('super_admin')
     .select('*')
     .eq('email', email)
     .single()
 
-  if (developer && !devError) {
-    return { user: developer as any, role: 'Developer' as UserRole }
+  if (superAdmin && !superAdminError) {
+    return { user: superAdmin as any, role: 'Developer' as UserRole }
   }
 
   // Check Admin

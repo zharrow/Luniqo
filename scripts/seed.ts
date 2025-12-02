@@ -47,29 +47,29 @@ async function clearDatabase() {
   const tables = [
     'notification',
     'message',
-    'conversation',
-    'meal_children',
+    'support_conversation',
+    'child_meal_record',
     'document',
-    'non_compliance',
-    'cleaning_haccp',
+    'haccp_incident',
+    'food_area_cleaning',
     'equipment',
     'batch',
-    'temperature',
+    'temperature_check',
     'meal',
     'product',
     'supplier',
     'child',
-    'export',
-    'cleaning_log',
-    'cleaning_session',
+    'session_export',
+    'task_completion',
+    'daily_cleaning_session',
     'assigned_task',
     'task_template',
-    'user_rooms',
-    'user',
+    'employee_room_access',
+    'employee',
     'room',
     'enterprise',
     'admin',
-    'developer'
+    'super_admin'
   ]
 
   for (const table of tables) {
@@ -82,10 +82,10 @@ async function clearDatabase() {
   console.log('✅ Database cleared')
 }
 
-async function seedDevelopers() {
-  console.log('👨‍💻 Creating developers...')
+async function seedSuperAdmins() {
+  console.log('👨‍💻 Creating super admins...')
 
-  const developers = [
+  const superAdmins = [
     {
       email: 'dev@clean-app.com',
       password_hash: hashPin('admin123'), // In real app, use proper bcrypt
@@ -94,12 +94,12 @@ async function seedDevelopers() {
   ]
 
   const { data, error } = await supabase
-    .from('developer')
-    .insert(developers)
+    .from('super_admin')
+    .insert(superAdmins)
     .select()
 
   if (error) throw error
-  console.log(`✅ Created ${data.length} developer(s)`)
+  console.log(`✅ Created ${data.length} super admin(s)`)
   return data
 }
 
@@ -189,16 +189,16 @@ async function seedTasks(enterpriseId: string) {
   console.log('📋 Creating task templates...')
 
   const tasks = [
-    { name: 'Aspirer les sols', type: 'DAILY', category: 'Sols', estimated_duration: 15 },
-    { name: 'Laver les sols', type: 'DAILY', category: 'Sols', estimated_duration: 20 },
-    { name: 'Désinfecter les surfaces', type: 'DAILY', category: 'Hygiène', estimated_duration: 10 },
-    { name: 'Nettoyer les sanitaires', type: 'DAILY', category: 'Sanitaires', estimated_duration: 15 },
-    { name: 'Vider les poubelles', type: 'DAILY', category: 'Entretien', estimated_duration: 5 },
-    { name: 'Nettoyer les vitres', type: 'WEEKLY', category: 'Vitres', estimated_duration: 30 },
-    { name: 'Désinfecter les jouets', type: 'WEEKLY', category: 'Hygiène', estimated_duration: 45 },
-    { name: 'Nettoyer les climatiseurs', type: 'MONTHLY', category: 'Entretien', estimated_duration: 60 },
-    { name: 'Shampouiner la moquette', type: 'MONTHLY', category: 'Sols', estimated_duration: 90 },
-    { name: 'Inventaire produits', type: 'OCCASIONAL', category: 'Gestion', estimated_duration: 120 }
+    { name: 'Aspirer les sols', category: 'Sols', estimated_duration: 15 },
+    { name: 'Laver les sols', category: 'Sols', estimated_duration: 20 },
+    { name: 'Désinfecter les surfaces', category: 'Hygiène', estimated_duration: 10 },
+    { name: 'Nettoyer les sanitaires', category: 'Sanitaires', estimated_duration: 15 },
+    { name: 'Vider les poubelles', category: 'Entretien', estimated_duration: 5 },
+    { name: 'Nettoyer les vitres', category: 'Vitres', estimated_duration: 30 },
+    { name: 'Désinfecter les jouets', category: 'Hygiène', estimated_duration: 45 },
+    { name: 'Nettoyer les climatiseurs', category: 'Entretien', estimated_duration: 60 },
+    { name: 'Shampouiner la moquette', category: 'Sols', estimated_duration: 90 },
+    { name: 'Inventaire produits', category: 'Gestion', estimated_duration: 120 }
   ].map(t => ({
     ...t,
     enterprise_id: enterpriseId,
@@ -217,57 +217,57 @@ async function seedTasks(enterpriseId: string) {
   return data
 }
 
-async function seedUsers(enterpriseId: string, adminId: string, roomIds: string[]) {
-  console.log('👥 Creating users (employees)...')
+async function seedEmployees(enterpriseId: string, adminId: string, roomIds: string[]) {
+  console.log('👥 Creating employees...')
 
-  const users = [
+  const employees = [
     { first_name: 'Sophie', last_name: 'Bernard', email: 'sophie@example.com', pin: '1234' },
     { first_name: 'Lucas', last_name: 'Petit', email: 'lucas@example.com', pin: '2345' },
     { first_name: 'Emma', last_name: 'Moreau', email: 'emma@example.com', pin: '3456' },
     { first_name: 'Léa', last_name: 'Roux', email: 'lea@example.com', pin: '4567' },
     { first_name: 'Thomas', last_name: 'Leroy', email: 'thomas@example.com', pin: '5678' }
-  ].map(u => ({
-    ...u,
+  ].map(e => ({
+    ...e,
     enterprise_id: enterpriseId,
     created_by_id: adminId,
-    pin_code: hashPin(u.pin),
+    pin_code: hashPin(e.pin),
     is_active: true
   }))
 
   const { data, error } = await supabase
-    .from('user')
-    .insert(users.map(({ pin, ...u }) => u))
+    .from('employee')
+    .insert(employees.map(({ pin, ...e }) => e))
     .select()
 
   if (error) throw error
-  console.log(`✅ Created ${data.length} user(s)`)
+  console.log(`✅ Created ${data.length} employee(s)`)
 
-  // Assign rooms to users
-  const userRooms = data.flatMap(user =>
+  // Assign rooms to employees
+  const employeeRoomAccess = data.flatMap(employee =>
     roomIds.slice(0, Math.floor(Math.random() * 3) + 2).map(roomId => ({
-      user_id: user.id,
+      employee_id: employee.id,
       room_id: roomId
     }))
   )
 
   const { error: roomError } = await supabase
-    .from('user_rooms')
-    .insert(userRooms)
+    .from('employee_room_access')
+    .insert(employeeRoomAccess)
 
   if (roomError) throw roomError
-  console.log(`✅ Created ${userRooms.length} user-room assignment(s)`)
+  console.log(`✅ Created ${employeeRoomAccess.length} employee-room access assignment(s)`)
 
   return data
 }
 
-async function seedAssignedTasks(enterpriseId: string, roomIds: string[], taskIds: string[], userIds: string[]) {
+async function seedAssignedTasks(enterpriseId: string, roomIds: string[], taskIds: string[], employeeIds: string[]) {
   console.log('🔗 Assigning tasks to rooms...')
 
   const assignedTasks = roomIds.flatMap(roomId =>
     taskIds.slice(0, 5).map(taskId => ({
       room_id: roomId,
       task_template_id: taskId,
-      default_performer_id: userIds[Math.floor(Math.random() * userIds.length)],
+      default_performer_id: employeeIds[Math.floor(Math.random() * employeeIds.length)],
       is_active: true
     }))
   )
@@ -282,8 +282,8 @@ async function seedAssignedTasks(enterpriseId: string, roomIds: string[], taskId
   return data
 }
 
-async function seedCleaningSessions(enterpriseId: string) {
-  console.log('📅 Creating cleaning sessions...')
+async function seedDailyCleaningSessions(enterpriseId: string) {
+  console.log('📅 Creating daily cleaning sessions...')
 
   const sessions = []
   const today = new Date()
@@ -301,12 +301,12 @@ async function seedCleaningSessions(enterpriseId: string) {
   }
 
   const { data, error } = await supabase
-    .from('cleaning_session')
+    .from('daily_cleaning_session')
     .insert(sessions)
     .select()
 
   if (error) throw error
-  console.log(`✅ Created ${data.length} cleaning session(s)`)
+  console.log(`✅ Created ${data.length} daily cleaning session(s)`)
   return data
 }
 
@@ -397,7 +397,7 @@ async function main() {
     await clearDatabase()
 
     // Seed base data
-    const developers = await seedDevelopers()
+    const superAdmins = await seedSuperAdmins()
     const { admins, enterprises } = await seedAdminsAndEnterprises()
 
     // Seed for first enterprise
@@ -406,16 +406,16 @@ async function main() {
 
     const rooms = await seedRooms(enterprise1.id)
     const tasks = await seedTasks(enterprise1.id)
-    const users = await seedUsers(enterprise1.id, admin1.id, rooms.map(r => r.id))
+    const employees = await seedEmployees(enterprise1.id, admin1.id, rooms.map(r => r.id))
 
     await seedAssignedTasks(
       enterprise1.id,
       rooms.map(r => r.id),
       tasks.map(t => t.id),
-      users.map(u => u.id)
+      employees.map(e => e.id)
     )
 
-    const sessions = await seedCleaningSessions(enterprise1.id)
+    const sessions = await seedDailyCleaningSessions(enterprise1.id)
 
     // HACCP data
     const children = await seedChildren(enterprise1.id)
@@ -424,19 +424,19 @@ async function main() {
 
     console.log('\n✨ Database seeding completed successfully!\n')
     console.log('📊 Summary:')
-    console.log(`   • ${developers.length} developer(s)`)
+    console.log(`   • ${superAdmins.length} super admin(s)`)
     console.log(`   • ${admins.length} admin(s)`)
     console.log(`   • ${enterprises.length} enterprise(s)`)
     console.log(`   • ${rooms.length} room(s)`)
     console.log(`   • ${tasks.length} task template(s)`)
-    console.log(`   • ${users.length} user(s)`)
-    console.log(`   • ${sessions.length} cleaning session(s)`)
+    console.log(`   • ${employees.length} employee(s)`)
+    console.log(`   • ${sessions.length} daily cleaning session(s)`)
     console.log(`   • ${children.length} child(ren)`)
     console.log(`   • ${suppliers.length} supplier(s)`)
     console.log(`   • ${products.length} product(s)`)
     console.log('\n🔑 Test Credentials:')
     console.log('   Admin: admin@petitspas.fr / admin123')
-    console.log('   User PIN: 1234, 2345, 3456, 4567, 5678')
+    console.log('   Employee PIN: 1234, 2345, 3456, 4567, 5678')
 
   } catch (error) {
     console.error('\n❌ Error seeding database:', error)

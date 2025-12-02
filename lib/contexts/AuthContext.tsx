@@ -23,10 +23,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [supabase] = useState(() => createClient())
 
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') {
+      setIsLoading(false)
+      return
+    }
+
     // Check initial session
     checkSession()
 
-    // Listen for auth changes (for Developer/Admin)
+    // Listen for auth changes (for Super Admin/Admin)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, supabaseSession) => {
       if (event === 'SIGNED_IN' && supabaseSession) {
         await checkSession()
@@ -35,72 +41,108 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     })
 
+    // Track last visibility change time
+    let lastHiddenTime = 0
+
+    // Handle visibility change (when user returns to tab)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        // Store the time when tab was hidden
+        lastHiddenTime = Date.now()
+      } else if (document.visibilityState === 'visible') {
+        // Only refresh if tab was hidden for more than 5 minutes
+        const timeHidden = Date.now() - lastHiddenTime
+        if (timeHidden > 5 * 60 * 1000) {
+          checkSession()
+        }
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
     return () => {
       subscription.unsubscribe()
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [])
 
   async function checkSession() {
+    // Store current session before check
+    const previousSession = session
+
     try {
       setIsLoading(true)
 
-      // Check Supabase Auth session (Developer/Admin)
-      const { data: { session: supabaseSession } } = await supabase.auth.getSession()
+      // Add timeout to prevent infinite loading (30 seconds)
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Session check timeout')), 30000)
+      )
 
-      if (supabaseSession) {
-        const userEmail = supabaseSession.user.email
+      const sessionCheckPromise = (async () => {
+        // Check Supabase Auth session (Super Admin/Admin)
+        const { data: { session: supabaseSession } } = await supabase.auth.getSession()
 
-        if (!userEmail) {
-          setIsLoading(false)
-          return
-        }
+        if (supabaseSession) {
+          const userEmail = supabaseSession.user.email
 
-        // Check if Developer
-        const { data: developer, error: devError } = await supabase
-          .from('developer')
-          .select('*')
-          .eq('email', userEmail)
-          .single()
+          if (!userEmail) {
+            return null
+          }
 
-        if (developer && !devError) {
-          setSession({
-            user: developer as any,
-            role: 'Developer'
-          })
-          setIsLoading(false)
-          return
-        }
-
-        // Check if Admin
-        const { data: admin, error: adminError } = await supabase
-          .from('admin')
-          .select('*')
-          .eq('email', userEmail)
-          .eq('is_active', true)
-          .single()
-
-        if (admin && !adminError) {
-          // Fetch enterprise linked to this admin (enterprise.admin_id = admin.id)
-          const { data: enterprise } = await supabase
-            .from('enterprise')
+          // Check if Super Admin
+          const { data: superAdmin, error: superAdminError } = await supabase
+            .from('super_admin')
             .select('*')
-            .eq('admin_id', (admin as any).id)
+            .eq('email', userEmail)
             .single()
 
-          setSession({
-            user: admin as any,
-            role: 'Admin',
-            enterprise: (enterprise as any) || undefined
-          })
-          setIsLoading(false)
-          return
-        }
-      }
+          if (superAdmin && !superAdminError) {
+            return {
+              user: superAdmin as any,
+              role: 'Developer' as const
+            }
+          }
 
-      // No Supabase Auth session found
-      setIsLoading(false)
+          // Check if Admin
+          const { data: admin, error: adminError } = await supabase
+            .from('admin')
+            .select('*')
+            .eq('email', userEmail)
+            .eq('is_active', true)
+            .single()
+
+          if (admin && !adminError) {
+            // Fetch enterprise linked to this admin (enterprise.admin_id = admin.id)
+            const { data: enterprise } = await supabase
+              .from('enterprise')
+              .select('*')
+              .eq('admin_id', (admin as any).id)
+              .single()
+
+            return {
+              user: admin as any,
+              role: 'Admin' as const,
+              enterprise: (enterprise as any) || undefined
+            }
+          }
+        }
+
+        return null
+      })()
+
+      const result = await Promise.race([sessionCheckPromise, timeoutPromise])
+      setSession(result as AuthSession | null)
     } catch (error) {
       console.error('Session check error:', error)
+      // On timeout/error, keep the previous session instead of logging out
+      // Only clear session if we're on initial load (no previous session)
+      if (!previousSession) {
+        setSession(null)
+      } else {
+        console.warn('Keeping previous session due to check failure')
+        setSession(previousSession)
+      }
+    } finally {
       setIsLoading(false)
     }
   }

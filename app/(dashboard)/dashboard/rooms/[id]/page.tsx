@@ -200,25 +200,6 @@ export default function RoomTasksPage() {
     task => !assignedTaskIds.includes(task.id)
   )
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'DAILY': return 'primary'
-      case 'WEEKLY': return 'neutral'
-      case 'MONTHLY': return 'warning'
-      case 'OCCASIONAL': return 'success'
-      default: return 'neutral'
-    }
-  }
-
-  const getTypeLabel = (type: string) => {
-    switch (type) {
-      case 'DAILY': return 'Quotidienne'
-      case 'WEEKLY': return 'Hebdomadaire'
-      case 'MONTHLY': return 'Mensuelle'
-      case 'OCCASIONAL': return 'Occasionnelle'
-      default: return type
-    }
-  }
 
   return (
     <DashboardLayout>
@@ -458,14 +439,6 @@ export default function RoomTasksPage() {
                               )}
                             </div>
                           </div>
-                          {assignedTask.task_template?.type && (
-                            <Badge
-                              variant={getTypeColor(assignedTask.task_template.type) as any}
-                              size="sm"
-                            >
-                              {getTypeLabel(assignedTask.task_template.type)}
-                            </Badge>
-                          )}
                         </div>
                         <div className="flex items-center gap-1">
                           <Button

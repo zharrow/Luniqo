@@ -229,13 +229,13 @@ export default function UsersPage() {
             {users.map((user) => (
               <Card
                 key={user.id}
-                className={`${!user.is_active && 'opacity-50'} hover:shadow-lg transition-shadow`}
+                className={`${!user.is_active && 'opacity-50'} hover:shadow-lg transition-shadow bg-gradient-to-br from-[#fce4ec] to-white border-l-4 border-l-[#f4a5a5]`}
               >
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-12 w-12">
-                        <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                        <AvatarFallback className="bg-[#f4a5a5]/10 text-[#c66b6b] font-semibold">
                           {user.first_name[0]}{user.last_name[0]}
                         </AvatarFallback>
                       </Avatar>
@@ -294,7 +294,7 @@ export default function UsersPage() {
                           return room ? (
                             <Badge
                               key={roomId}
-                              variant="primary"
+                              variant="users"
                               size="sm"
                             >
                               {room.name}

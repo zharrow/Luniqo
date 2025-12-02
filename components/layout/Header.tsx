@@ -117,7 +117,7 @@ export default function Header() {
 
       // Count users
       const { count: usersCount } = await supabase
-        .from('user')
+        .from('employee')
         .select('*', { count: 'exact', head: true })
         .eq('enterprise_id', enterpriseId)
         .eq('is_active', true)
@@ -125,7 +125,7 @@ export default function Header() {
       // Get today's session completion
       const today = new Date().toISOString().split('T')[0]
       const { data: todaySession, error: sessionError } = await supabase
-        .from('cleaning_session')
+        .from('daily_cleaning_session')
         .select('status')
         .eq('enterprise_id', enterpriseId)
         .eq('session_date', today)

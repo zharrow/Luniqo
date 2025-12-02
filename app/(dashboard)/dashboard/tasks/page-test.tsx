@@ -37,7 +37,6 @@ export default function TasksPage() {
   const [formData, setFormData] = useState<CreateTaskInput>({
     name: '',
     description: '',
-    type: 'DAILY',
     category: '',
     default_duration: undefined,
     estimated_duration: undefined
@@ -68,7 +67,6 @@ export default function TasksPage() {
     setFormData({
       name: '',
       description: '',
-      type: 'DAILY',
       category: '',
       default_duration: undefined,
       estimated_duration: undefined
@@ -81,7 +79,6 @@ export default function TasksPage() {
     setFormData({
       name: task.name,
       description: task.description || '',
-      type: task.type,
       category: task.category || '',
       default_duration: task.default_duration || undefined,
       estimated_duration: task.estimated_duration || undefined

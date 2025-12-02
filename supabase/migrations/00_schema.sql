@@ -10,7 +10,6 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- ENUMS
 -- ============================================================================
 
-CREATE TYPE task_type AS ENUM ('DAILY', 'WEEKLY', 'MONTHLY', 'OCCASIONAL');
 CREATE TYPE session_status AS ENUM ('EN_COURS', 'COMPLETEE', 'INCOMPLETE');
 CREATE TYPE log_status AS ENUM ('FAIT', 'PARTIEL', 'REPORTE', 'IMPOSSIBLE');
 CREATE TYPE meal_type AS ENUM ('Breakfast', 'Lunch', 'Snack');
@@ -29,8 +28,8 @@ CREATE TYPE document_category AS ENUM ('Temperatures', 'Cleaning', 'Training', '
 -- USER SYSTEM TABLES
 -- ============================================================================
 
--- Developer table (Super admin)
-CREATE TABLE developer (
+-- Super Admin table (Platform administrator)
+CREATE TABLE super_admin (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
@@ -48,7 +47,7 @@ CREATE TABLE admin (
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
-    created_by_id UUID REFERENCES developer(id) ON DELETE SET NULL,
+    created_by_id UUID REFERENCES super_admin(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -65,8 +64,8 @@ CREATE TABLE enterprise (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- User table (Employee/staff)
-CREATE TABLE "user" (
+-- Employee table (Childcare staff)
+CREATE TABLE employee (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(255),
     first_name VARCHAR(100) NOT NULL,
@@ -96,13 +95,13 @@ CREATE TABLE room (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- User-Room access (Many-to-Many)
-CREATE TABLE user_rooms (
+-- Employee-Room access (Many-to-Many)
+CREATE TABLE employee_room_access (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+    employee_id UUID NOT NULL REFERENCES employee(id) ON DELETE CASCADE,
     room_id UUID NOT NULL REFERENCES room(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    UNIQUE(user_id, room_id)
+    UNIQUE(employee_id, room_id)
 );
 
 -- Task template
@@ -113,7 +112,6 @@ CREATE TABLE task_template (
     description TEXT,
     default_duration INT,
     estimated_duration INT,
-    type task_type NOT NULL,
     category VARCHAR(100),
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -125,7 +123,7 @@ CREATE TABLE assigned_task (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     room_id UUID REFERENCES room(id) ON DELETE SET NULL,
     task_template_id UUID REFERENCES task_template(id) ON DELETE SET NULL,
-    default_performer_id UUID REFERENCES "user"(id) ON DELETE SET NULL,
+    default_performer_id UUID REFERENCES employee(id) ON DELETE SET NULL,
     frequency JSONB,
     suggested_time TIME,
     expected_duration INT,
@@ -135,8 +133,8 @@ CREATE TABLE assigned_task (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Cleaning session
-CREATE TABLE cleaning_session (
+-- Daily cleaning session
+CREATE TABLE daily_cleaning_session (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     enterprise_id UUID NOT NULL REFERENCES enterprise(id) ON DELETE CASCADE,
     date DATE NOT NULL,
@@ -147,13 +145,13 @@ CREATE TABLE cleaning_session (
     UNIQUE(enterprise_id, date)
 );
 
--- Cleaning log
-CREATE TABLE cleaning_log (
+-- Task completion log
+CREATE TABLE task_completion (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    session_id UUID REFERENCES cleaning_session(id) ON DELETE CASCADE,
+    session_id UUID REFERENCES daily_cleaning_session(id) ON DELETE CASCADE,
     assigned_task_id UUID REFERENCES assigned_task(id) ON DELETE SET NULL,
-    performed_by_id UUID REFERENCES "user"(id) ON DELETE SET NULL,
-    recorded_by_id UUID REFERENCES "user"(id) ON DELETE SET NULL,
+    performed_by_id UUID REFERENCES employee(id) ON DELETE SET NULL,
+    recorded_by_id UUID REFERENCES employee(id) ON DELETE SET NULL,
     status log_status NOT NULL,
     note TEXT,
     photo_urls JSONB,
@@ -161,10 +159,10 @@ CREATE TABLE cleaning_log (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Export
-CREATE TABLE export (
+-- Session export
+CREATE TABLE session_export (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    session_id UUID REFERENCES cleaning_session(id) ON DELETE SET NULL,
+    session_id UUID REFERENCES daily_cleaning_session(id) ON DELETE SET NULL,
     pdf_url VARCHAR(500),
     zip_url VARCHAR(500),
     exported_at TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -242,13 +240,13 @@ CREATE TABLE meal (
     description TEXT,
     supplier_id UUID REFERENCES supplier(id) ON DELETE SET NULL,
     batch_id UUID REFERENCES batch(id) ON DELETE SET NULL,
-    responsible_id UUID REFERENCES "user"(id) ON DELETE SET NULL,
+    responsible_id UUID REFERENCES employee(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Temperature table
-CREATE TABLE temperature (
+-- Temperature check table
+CREATE TABLE temperature_check (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     meal_id UUID NOT NULL REFERENCES meal(id) ON DELETE CASCADE,
     checkpoint checkpoint_type NOT NULL,
@@ -256,12 +254,12 @@ CREATE TABLE temperature (
     is_compliant BOOLEAN DEFAULT TRUE,
     observations TEXT,
     control_date TIMESTAMP WITH TIME ZONE NOT NULL,
-    responsible_id UUID REFERENCES "user"(id) ON DELETE SET NULL,
+    responsible_id UUID REFERENCES employee(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Meal-Children associative table
-CREATE TABLE meal_children (
+-- Child meal record table
+CREATE TABLE child_meal_record (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     meal_id UUID NOT NULL REFERENCES meal(id) ON DELETE CASCADE,
     child_id UUID NOT NULL REFERENCES child(id) ON DELETE CASCADE,
@@ -285,21 +283,21 @@ CREATE TABLE equipment (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Cleaning HACCP table
-CREATE TABLE cleaning_haccp (
+-- Food area cleaning table
+CREATE TABLE food_area_cleaning (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     enterprise_id UUID NOT NULL REFERENCES enterprise(id) ON DELETE CASCADE,
     zone VARCHAR(100) NOT NULL,
     product_used VARCHAR(100),
     frequency cleaning_frequency NOT NULL,
     cleaning_date TIMESTAMP WITH TIME ZONE NOT NULL,
-    responsible_id UUID REFERENCES "user"(id) ON DELETE SET NULL,
+    responsible_id UUID REFERENCES employee(id) ON DELETE SET NULL,
     observations TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Non-compliance table
-CREATE TABLE non_compliance (
+-- HACCP incident table
+CREATE TABLE haccp_incident (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     enterprise_id UUID NOT NULL REFERENCES enterprise(id) ON DELETE CASCADE,
     type compliance_type NOT NULL,
@@ -307,7 +305,7 @@ CREATE TABLE non_compliance (
     report_date TIMESTAMP WITH TIME ZONE NOT NULL,
     corrective_action TEXT,
     status compliance_status DEFAULT 'Open',
-    responsible_id UUID REFERENCES "user"(id) ON DELETE SET NULL,
+    responsible_id UUID REFERENCES employee(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -321,7 +319,7 @@ CREATE TABLE document (
     file_path VARCHAR(255) NOT NULL,
     creation_date DATE NOT NULL,
     retention_period VARCHAR(50),
-    responsible_id UUID REFERENCES "user"(id) ON DELETE SET NULL,
+    responsible_id UUID REFERENCES employee(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -329,21 +327,21 @@ CREATE TABLE document (
 -- COMMUNICATION MODULE TABLES
 -- ============================================================================
 
--- Conversation table
-CREATE TABLE conversation (
+-- Support conversation table
+CREATE TABLE support_conversation (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     admin_id UUID NOT NULL REFERENCES admin(id) ON DELETE CASCADE,
-    developer_id UUID NOT NULL REFERENCES developer(id) ON DELETE CASCADE,
+    super_admin_id UUID NOT NULL REFERENCES super_admin(id) ON DELETE CASCADE,
     last_message_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    UNIQUE(admin_id, developer_id)
+    UNIQUE(admin_id, super_admin_id)
 );
 
 -- Message table
 CREATE TABLE message (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    conversation_id UUID NOT NULL REFERENCES conversation(id) ON DELETE CASCADE,
+    conversation_id UUID NOT NULL REFERENCES support_conversation(id) ON DELETE CASCADE,
     sender_type user_type NOT NULL,
     sender_id UUID NOT NULL,
     recipient_type user_type NOT NULL,
@@ -377,34 +375,34 @@ CREATE TABLE notification (
 
 -- User system indexes
 CREATE INDEX idx_admin_firebase_uid ON admin(firebase_uid);
-CREATE INDEX idx_developer_firebase_uid ON developer(firebase_uid);
+CREATE INDEX idx_super_admin_firebase_uid ON super_admin(firebase_uid);
 CREATE INDEX idx_enterprise_admin_id ON enterprise(admin_id);
-CREATE INDEX idx_user_enterprise_id ON "user"(enterprise_id);
-CREATE INDEX idx_user_rooms_user_id ON user_rooms(user_id);
-CREATE INDEX idx_user_rooms_room_id ON user_rooms(room_id);
+CREATE INDEX idx_employee_enterprise_id ON employee(enterprise_id);
+CREATE INDEX idx_employee_room_access_employee_id ON employee_room_access(employee_id);
+CREATE INDEX idx_employee_room_access_room_id ON employee_room_access(room_id);
 
 -- cLean module indexes
 CREATE INDEX idx_room_enterprise_id ON room(enterprise_id);
 CREATE INDEX idx_task_template_enterprise_id ON task_template(enterprise_id);
 CREATE INDEX idx_assigned_task_room_id ON assigned_task(room_id);
-CREATE INDEX idx_cleaning_session_enterprise_date ON cleaning_session(enterprise_id, date);
-CREATE INDEX idx_cleaning_log_session_id ON cleaning_log(session_id);
-CREATE INDEX idx_cleaning_log_performed_by ON cleaning_log(performed_by_id);
+CREATE INDEX idx_daily_cleaning_session_enterprise_date ON daily_cleaning_session(enterprise_id, date);
+CREATE INDEX idx_task_completion_session_id ON task_completion(session_id);
+CREATE INDEX idx_task_completion_performed_by ON task_completion(performed_by_id);
 
 -- HACCP module indexes
 CREATE INDEX idx_child_enterprise_id ON child(enterprise_id);
 CREATE INDEX idx_supplier_enterprise_id ON supplier(enterprise_id);
 CREATE INDEX idx_product_enterprise_id ON product(enterprise_id);
 CREATE INDEX idx_meal_enterprise_date ON meal(enterprise_id, date);
-CREATE INDEX idx_temperature_meal_id ON temperature(meal_id);
+CREATE INDEX idx_temperature_check_meal_id ON temperature_check(meal_id);
 CREATE INDEX idx_equipment_enterprise_id ON equipment(enterprise_id);
-CREATE INDEX idx_cleaning_haccp_enterprise_id ON cleaning_haccp(enterprise_id);
-CREATE INDEX idx_non_compliance_enterprise_id ON non_compliance(enterprise_id);
+CREATE INDEX idx_food_area_cleaning_enterprise_id ON food_area_cleaning(enterprise_id);
+CREATE INDEX idx_haccp_incident_enterprise_id ON haccp_incident(enterprise_id);
 CREATE INDEX idx_document_enterprise_id ON document(enterprise_id);
 
 -- Communication module indexes
-CREATE INDEX idx_conversation_admin_id ON conversation(admin_id);
-CREATE INDEX idx_conversation_developer_id ON conversation(developer_id);
+CREATE INDEX idx_support_conversation_admin_id ON support_conversation(admin_id);
+CREATE INDEX idx_support_conversation_super_admin_id ON support_conversation(super_admin_id);
 CREATE INDEX idx_message_conversation_id ON message(conversation_id);
 CREATE INDEX idx_notification_recipient ON notification(recipient_type, recipient_id);
 CREATE INDEX idx_notification_enterprise_id ON notification(enterprise_id);
@@ -414,29 +412,29 @@ CREATE INDEX idx_notification_enterprise_id ON notification(enterprise_id);
 -- ============================================================================
 
 -- Enable RLS on all tables
-ALTER TABLE developer ENABLE ROW LEVEL SECURITY;
+ALTER TABLE super_admin ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admin ENABLE ROW LEVEL SECURITY;
 ALTER TABLE enterprise ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "user" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE employee ENABLE ROW LEVEL SECURITY;
 ALTER TABLE room ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_rooms ENABLE ROW LEVEL SECURITY;
+ALTER TABLE employee_room_access ENABLE ROW LEVEL SECURITY;
 ALTER TABLE task_template ENABLE ROW LEVEL SECURITY;
 ALTER TABLE assigned_task ENABLE ROW LEVEL SECURITY;
-ALTER TABLE cleaning_session ENABLE ROW LEVEL SECURITY;
-ALTER TABLE cleaning_log ENABLE ROW LEVEL SECURITY;
-ALTER TABLE export ENABLE ROW LEVEL SECURITY;
+ALTER TABLE daily_cleaning_session ENABLE ROW LEVEL SECURITY;
+ALTER TABLE task_completion ENABLE ROW LEVEL SECURITY;
+ALTER TABLE session_export ENABLE ROW LEVEL SECURITY;
 ALTER TABLE child ENABLE ROW LEVEL SECURITY;
 ALTER TABLE supplier ENABLE ROW LEVEL SECURITY;
 ALTER TABLE product ENABLE ROW LEVEL SECURITY;
 ALTER TABLE batch ENABLE ROW LEVEL SECURITY;
 ALTER TABLE meal ENABLE ROW LEVEL SECURITY;
-ALTER TABLE temperature ENABLE ROW LEVEL SECURITY;
-ALTER TABLE meal_children ENABLE ROW LEVEL SECURITY;
+ALTER TABLE temperature_check ENABLE ROW LEVEL SECURITY;
+ALTER TABLE child_meal_record ENABLE ROW LEVEL SECURITY;
 ALTER TABLE equipment ENABLE ROW LEVEL SECURITY;
-ALTER TABLE cleaning_haccp ENABLE ROW LEVEL SECURITY;
-ALTER TABLE non_compliance ENABLE ROW LEVEL SECURITY;
+ALTER TABLE food_area_cleaning ENABLE ROW LEVEL SECURITY;
+ALTER TABLE haccp_incident ENABLE ROW LEVEL SECURITY;
 ALTER TABLE document ENABLE ROW LEVEL SECURITY;
-ALTER TABLE conversation ENABLE ROW LEVEL SECURITY;
+ALTER TABLE support_conversation ENABLE ROW LEVEL SECURITY;
 ALTER TABLE message ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notification ENABLE ROW LEVEL SECURITY;
 
@@ -456,34 +454,38 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Apply trigger to all tables with updated_at
-CREATE TRIGGER update_developer_updated_at BEFORE UPDATE ON developer FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_super_admin_updated_at BEFORE UPDATE ON super_admin FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_admin_updated_at BEFORE UPDATE ON admin FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_enterprise_updated_at BEFORE UPDATE ON enterprise FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_user_updated_at BEFORE UPDATE ON "user" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_employee_updated_at BEFORE UPDATE ON employee FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_room_updated_at BEFORE UPDATE ON room FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_task_template_updated_at BEFORE UPDATE ON task_template FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_assigned_task_updated_at BEFORE UPDATE ON assigned_task FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_cleaning_session_updated_at BEFORE UPDATE ON cleaning_session FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_daily_cleaning_session_updated_at BEFORE UPDATE ON daily_cleaning_session FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_child_updated_at BEFORE UPDATE ON child FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_supplier_updated_at BEFORE UPDATE ON supplier FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_product_updated_at BEFORE UPDATE ON product FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_meal_updated_at BEFORE UPDATE ON meal FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_equipment_updated_at BEFORE UPDATE ON equipment FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_non_compliance_updated_at BEFORE UPDATE ON non_compliance FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_conversation_updated_at BEFORE UPDATE ON conversation FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_haccp_incident_updated_at BEFORE UPDATE ON haccp_incident FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_support_conversation_updated_at BEFORE UPDATE ON support_conversation FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================================================
 -- COMMENTS FOR DOCUMENTATION
 -- ============================================================================
 
-COMMENT ON TABLE developer IS 'Super admin with analytics view only (Firebase Auth)';
-COMMENT ON TABLE admin IS 'Daycare manager with full back-office access (Firebase Auth)';
+COMMENT ON TABLE super_admin IS 'Platform super admin with analytics view only (Supabase Auth)';
+COMMENT ON TABLE admin IS 'Daycare manager with full back-office access (Supabase Auth)';
 COMMENT ON TABLE enterprise IS 'Daycare/micro-daycare entity (1:1 with admin)';
-COMMENT ON TABLE "user" IS 'Employee/staff with tablet access (PIN authentication)';
-COMMENT ON TABLE user_rooms IS 'Many-to-many: users can access multiple rooms';
-COMMENT ON TABLE cleaning_session IS 'Daily cleaning session (1 per enterprise per day)';
-COMMENT ON TABLE cleaning_log IS 'Permanent record of completed tasks';
+COMMENT ON TABLE employee IS 'Childcare employee/staff with tablet access (PIN authentication)';
+COMMENT ON TABLE employee_room_access IS 'Many-to-many: employees can access multiple rooms';
+COMMENT ON TABLE daily_cleaning_session IS 'Daily cleaning session (1 per enterprise per day)';
+COMMENT ON TABLE task_completion IS 'Permanent record of completed tasks';
+COMMENT ON TABLE session_export IS 'Export records for cleaning sessions (PDF/ZIP)';
+COMMENT ON TABLE food_area_cleaning IS 'HACCP-compliant cleaning records for food preparation areas';
+COMMENT ON TABLE haccp_incident IS 'HACCP non-compliance incidents and corrective actions';
 COMMENT ON TABLE meal IS 'Daily meals with traceability';
-COMMENT ON TABLE temperature IS 'Temperature checkpoints for meals';
-COMMENT ON TABLE conversation IS 'Admin ↔ Developer messaging threads';
+COMMENT ON TABLE temperature_check IS 'Temperature checkpoints for meal safety';
+COMMENT ON TABLE child_meal_record IS 'Records of children attendance at meals';
+COMMENT ON TABLE support_conversation IS 'Admin ↔ Super Admin support messaging threads';
 COMMENT ON TABLE notification IS 'Multi-tier notification system';

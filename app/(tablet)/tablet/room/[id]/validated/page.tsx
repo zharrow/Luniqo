@@ -75,7 +75,7 @@ export default function ValidatedTasksPage() {
       // Get today's session
       const today = new Date().toISOString().split('T')[0]
       const { data: sessionData } = await supabase
-        .from('cleaning_session')
+        .from('daily_cleaning_session')
         .select('id')
         .eq('enterprise_id', session.enterprise.id)
         .eq('date', today)
@@ -89,7 +89,7 @@ export default function ValidatedTasksPage() {
 
       // Load validated tasks (cleaning logs) for this session and room
       const { data: logsData, error: logsError } = await supabase
-        .from('cleaning_log')
+        .from('task_completion')
         .select(`
           id,
           assigned_task_id,
@@ -138,7 +138,7 @@ export default function ValidatedTasksPage() {
 
     try {
       const { error: deleteError } = await supabase
-        .from('cleaning_log')
+        .from('task_completion')
         .delete()
         .eq('id', logId)
 

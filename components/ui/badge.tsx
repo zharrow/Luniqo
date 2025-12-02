@@ -25,6 +25,23 @@ const badgeVariants = cva(
         neutral:
           "border-transparent bg-gray-100 text-gray-700 hover:bg-gray-200",
         outline: "text-foreground",
+        // Module colors
+        clean:
+          "border-[#5a9dc9] bg-[#e3f2fd] text-[#2c5f7f] hover:bg-[#5a9dc9]/20",
+        haccp:
+          "border-[#81c995] bg-[#e8f5e9] text-[#4a8f5a] hover:bg-[#81c995]/20",
+        communication:
+          "border-[#64b5d1] bg-[#e0f7fa] text-[#3a7a8f] hover:bg-[#64b5d1]/20",
+        users:
+          "border-[#f4a5a5] bg-[#fce4ec] text-[#c66b6b] hover:bg-[#f4a5a5]/20",
+        settings:
+          "border-[#b39ddb] bg-[#f3e5f5] text-[#7e57a3] hover:bg-[#b39ddb]/20",
+        calendar:
+          "border-[#ffab91] bg-[#fff3e0] text-[#d97557] hover:bg-[#ffab91]/20",
+        tasks:
+          "border-[#aed581] bg-[#f1f8e9] text-[#7da453] hover:bg-[#aed581]/20",
+        analytics:
+          "border-[#9fa8da] bg-[#e8eaf6] text-[#6870a0] hover:bg-[#9fa8da]/20",
       },
       size: {
         sm: "text-xs px-2 py-0.5",

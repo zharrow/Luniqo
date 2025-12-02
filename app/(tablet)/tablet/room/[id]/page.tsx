@@ -18,7 +18,6 @@ interface TaskTemplate {
   id: string
   name: string
   description: string | null
-  type: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'OCCASIONAL'
   suggested_time?: string | null
   expected_duration?: number | null
 }
@@ -72,9 +71,9 @@ export default function TabletRoomPage() {
 
       // Check if user has access to this room
       const { data: access } = await supabase
-        .from('user_rooms')
+        .from('employee_room_access')
         .select('room_id')
-        .eq('user_id', session.user.id)
+        .eq('employee_id', session.user.id)
         .eq('room_id', roomId)
         .single()
 
@@ -108,8 +107,7 @@ export default function TabletRoomPage() {
           task_template:task_template_id (
             id,
             name,
-            description,
-            type
+            description
           )
         `)
         .eq('room_id', roomId)
@@ -123,7 +121,7 @@ export default function TabletRoomPage() {
       // Load already validated tasks from today's session
       const today = new Date().toISOString().split('T')[0]
       const { data: sessionData } = await supabase
-        .from('cleaning_session')
+        .from('daily_cleaning_session')
         .select('id')
         .eq('enterprise_id', session.enterprise.id)
         .eq('date', today)
@@ -135,7 +133,7 @@ export default function TabletRoomPage() {
 
         // Load cleaning logs for this session and room
         const { data: logsData } = await supabase
-          .from('cleaning_log')
+          .from('task_completion')
           .select('assigned_task_id, note, photo_urls')
           .eq('session_id', (sessionData as any).id)
           .eq('performed_by_id', session.user.id)
@@ -177,7 +175,7 @@ export default function TabletRoomPage() {
       const today = new Date().toISOString().split('T')[0]
 
       let { data: existingSession } = await supabase
-        .from('cleaning_session')
+        .from('daily_cleaning_session')
         .select('id')
         .eq('enterprise_id', session.enterprise.id)
         .eq('date', today)
@@ -188,7 +186,7 @@ export default function TabletRoomPage() {
       if (!existingSession) {
         // Create new session
         const { data: newSession, error: createError } = await supabase
-          .from('cleaning_session')
+          .from('daily_cleaning_session')
           .insert({
             enterprise_id: session.enterprise.id,
             date: today,
@@ -205,7 +203,7 @@ export default function TabletRoomPage() {
 
       // Save task as cleaning log
       const { error: logError } = await supabase
-        .from('cleaning_log')
+        .from('task_completion')
         .insert({
           session_id: sessionId,
           assigned_task_id: selectedTask.id,

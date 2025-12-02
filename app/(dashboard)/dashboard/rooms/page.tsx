@@ -181,8 +181,8 @@ export default function RoomsPage() {
                   key={room.id}
                   className={cn(
                     'group relative col-span-1 flex flex-col justify-between overflow-hidden rounded-xl',
-                    'bg-gradient-to-br from-background to-muted/20',
-                    'border border-border',
+                    'bg-gradient-to-br from-[#e3f2fd] to-white',
+                    'border border-border border-l-4 border-l-[#5a9dc9]',
                     'hover:shadow-lg transition-all duration-300',
                     'hover:scale-[1.02]',
                     !room.is_active && 'opacity-50 hover:opacity-75',
@@ -190,21 +190,21 @@ export default function RoomsPage() {
                   )}
                 >
                   {/* Background decoration */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#5a9dc9]/5 via-transparent to-[#5a9dc9]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                   {/* Sparkle effect on hover */}
-                  <SparklesIcon className="absolute top-4 right-4 w-6 h-6 text-primary/20 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:rotate-12" />
+                  <SparklesIcon className="absolute top-4 right-4 w-6 h-6 text-[#5a9dc9]/20 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:rotate-12" />
 
                   {/* Content */}
                   <div className="relative z-10 p-6 flex-1 flex flex-col">
                     {/* Header with icon and actions */}
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3 flex-1">
-                        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors duration-300 group-hover:scale-110 transform">
-                          <BuildingOfficeIcon className="w-6 h-6 text-primary" />
+                        <div className="w-12 h-12 rounded-xl bg-[#5a9dc9]/10 flex items-center justify-center group-hover:bg-[#5a9dc9]/20 transition-colors duration-300 group-hover:scale-110 transform">
+                          <BuildingOfficeIcon className="w-6 h-6 text-[#2c5f7f]" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-lg truncate group-hover:text-primary transition-colors">
+                          <h3 className="font-semibold text-lg truncate group-hover:text-[#2c5f7f] transition-colors">
                             {room.name}
                           </h3>
                           {!room.is_active && (
@@ -263,7 +263,7 @@ export default function RoomsPage() {
                       <Button
                         variant="link"
                         size="sm"
-                        className="p-0 h-auto font-medium text-primary hover:text-primary/80"
+                        className="p-0 h-auto font-medium text-[#2c5f7f] hover:text-[#5a9dc9]"
                         onClick={() => router.push(`/dashboard/rooms/${room.id}`)}
                       >
                         Gérer les tâches
@@ -273,7 +273,7 @@ export default function RoomsPage() {
                   </div>
 
                   {/* Hover effect overlay */}
-                  <div className="absolute inset-0 pointer-events-none border-2 border-primary/0 group-hover:border-primary/20 rounded-xl transition-all duration-300" />
+                  <div className="absolute inset-0 pointer-events-none border-2 border-[#5a9dc9]/0 group-hover:border-[#5a9dc9]/20 rounded-xl transition-all duration-300" />
                 </div>
               )
             })}

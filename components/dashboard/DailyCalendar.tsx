@@ -98,35 +98,6 @@ export function DailyCalendar({ enterpriseId }: DailyCalendarProps) {
     }
   }
 
-  function getTypeColor(type: CalendarTask['type']) {
-    switch (type) {
-      case 'DAILY':
-        return 'bg-primary-100 text-primary-700 border-primary-200'
-      case 'WEEKLY':
-        return 'bg-secondary-100 text-secondary-700 border-secondary-200'
-      case 'MONTHLY':
-        return 'bg-accent-100 text-accent-700 border-accent-200'
-      case 'OCCASIONAL':
-        return 'bg-gray-100 text-gray-700 border-gray-200'
-      default:
-        return 'bg-gray-100 text-gray-700 border-gray-200'
-    }
-  }
-
-  function getTypeLabel(type: CalendarTask['type']) {
-    switch (type) {
-      case 'DAILY':
-        return 'Quotidien'
-      case 'WEEKLY':
-        return 'Hebdo'
-      case 'MONTHLY':
-        return 'Mensuel'
-      case 'OCCASIONAL':
-        return 'Occasionnel'
-      default:
-        return type
-    }
-  }
 
   // Generate timeline hours (6 AM to 10 PM)
   const timelineHours = Array.from({ length: 17 }, (_, i) => i + 6) // 6 to 22
@@ -305,15 +276,6 @@ export function DailyCalendar({ enterpriseId }: DailyCalendarProps) {
                                       ({task.expectedDuration} min)
                                     </span>
                                   )}
-                                </div>
-
-                                {/* Task metadata */}
-                                <div className="flex flex-wrap items-center gap-2 mb-3">
-                                  <span
-                                    className={`text-xs px-2 py-0.5 rounded-full border ${getTypeColor(task.type)}`}
-                                  >
-                                    {getTypeLabel(task.type)}
-                                  </span>
                                 </div>
 
                                 {/* Status badge */}

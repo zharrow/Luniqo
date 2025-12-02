@@ -40,9 +40,9 @@ export default function TabletHomePage() {
 
       // Get rooms accessible by this user
       const { data: userRooms, error: urError } = await supabase
-        .from('user_rooms')
+        .from('employee_room_access')
         .select('room_id')
-        .eq('user_id', session.user.id)
+        .eq('employee_id', session.user.id)
 
       if (urError) throw urError
 

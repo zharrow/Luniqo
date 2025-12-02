@@ -58,10 +58,10 @@ class MessagingService {
 
   async getConversations(userId: string, userType: 'Developer' | 'Admin'): Promise<Conversation[]> {
     const field = userType === 'Developer' ? 'developer_id' : 'admin_id'
-    const otherField = userType === 'Developer' ? 'admin' : 'developer'
+    const otherField = userType === 'Developer' ? 'admin' : 'super_admin'
 
     const { data, error } = await supabase
-      .from('conversation')
+      .from('support_conversation')
       .select(`
         *,
         ${otherField}!${field === 'developer_id' ? 'developer_id' : 'admin_id'}(id, email, first_name, last_name)
@@ -97,7 +97,7 @@ class MessagingService {
   async getOrCreateConversation(adminId: string, developerId: string): Promise<Conversation> {
     // Try to find existing conversation
     const { data: existing, error: findError } = await supabase
-      .from('conversation')
+      .from('support_conversation')
       .select('*')
       .eq('admin_id', adminId)
       .eq('developer_id', developerId)
@@ -109,7 +109,7 @@ class MessagingService {
 
     // Create new conversation
     const { data, error } = await supabase
-      .from('conversation')
+      .from('support_conversation')
       .insert({
         admin_id: adminId,
         developer_id: developerId
@@ -127,11 +127,11 @@ class MessagingService {
 
   async getConversationById(conversationId: string): Promise<Conversation | null> {
     const { data, error } = await supabase
-      .from('conversation')
+      .from('support_conversation')
       .select(`
         *,
         admin!admin_id(id, email, first_name, last_name),
-        developer!developer_id(id, email)
+        super_admin!developer_id(id, email)
       `)
       .eq('id', conversationId)
       .single()
@@ -192,7 +192,7 @@ class MessagingService {
 
     // Update conversation last_message_at
     await supabase
-      .from('conversation')
+      .from('support_conversation')
       .update({ last_message_at: new Date().toISOString() })
       .eq('id', message.conversation_id)
 

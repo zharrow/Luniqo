@@ -64,6 +64,34 @@
   --font-serif: Source Serif 4, serif;
   --font-mono: IBM Plex Mono, monospace;
 
+  /* =========================================================================
+     MODULE COLORS - Utiliser avec Tailwind: className="bg-[#hex]"
+     ========================================================================= */
+
+  /* Module Clean (Nettoyage) - Bleu */
+  /* --clean-primary: #5a9dc9; --clean-light: #e3f2fd; --clean-dark: #2c5f7f; */
+
+  /* Module HACCP (Traçabilité) - Vert */
+  /* --haccp-primary: #81c995; --haccp-light: #e8f5e9; --haccp-dark: #4a8f5a; */
+
+  /* Module Communication (Messages) - Turquoise */
+  /* --communication-primary: #64b5d1; --communication-light: #e0f7fa; --communication-dark: #3a7a8f; */
+
+  /* Module Users (Employés) - Rose */
+  /* --users-primary: #f4a5a5; --users-light: #fce4ec; --users-dark: #c66b6b; */
+
+  /* Module Settings (Paramètres) - Violet */
+  /* --settings-primary: #b39ddb; --settings-light: #f3e5f5; --settings-dark: #7e57a3; */
+
+  /* Module Calendar (Planning) - Pêche */
+  /* --calendar-primary: #ffab91; --calendar-light: #fff3e0; --calendar-dark: #d97557; */
+
+  /* Module Tasks (Tâches) - Lime */
+  /* --tasks-primary: #aed581; --tasks-light: #f1f8e9; --tasks-dark: #7da453; */
+
+  /* Module Analytics (Stats) - Indigo */
+  /* --analytics-primary: #9fa8da; --analytics-light: #e8eaf6; --analytics-dark: #6870a0; */
+
   /* Border Radius */
   --radius: 1rem;
 

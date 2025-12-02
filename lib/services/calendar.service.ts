@@ -4,7 +4,6 @@ import { AssignedTask, assignedTasksService } from './assigned-tasks.service'
 export interface CalendarTask {
   id: string
   name: string
-  type: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'OCCASIONAL'
   category: string | null
   room: {
     id: string
@@ -58,53 +57,17 @@ export class CalendarService {
   }
 
   /**
-   * Check if a task should appear on a specific day based on its type and frequency
+   * Check if a task should appear on a specific day based on its frequency
    */
   private shouldShowTaskOnDay(
     task: AssignedTask,
     date: Date,
     weekStart: Date
   ): boolean {
-    const taskType = task.task_template?.type
-
-    if (!taskType) return false
-
-    // DAILY tasks appear every day
-    if (taskType === 'DAILY') return true
-
-    // OCCASIONAL tasks don't appear on calendar by default
-    if (taskType === 'OCCASIONAL') return false
-
-    // WEEKLY tasks appear once per week
-    if (taskType === 'WEEKLY') {
-      // If frequency is set with a specific day, use it
-      if (task.frequency && typeof task.frequency === 'object') {
-        const freq = task.frequency as Record<string, any>
-        if (freq.dayOfWeek !== undefined) {
-          const dayOfWeek = date.getDay() // 0 = Sunday, 1 = Monday, etc.
-          return dayOfWeek === freq.dayOfWeek
-        }
-      }
-      // Default: show on Monday (first day of week)
-      return date.getTime() === weekStart.getTime()
-    }
-
-    // MONTHLY tasks appear once per month
-    if (taskType === 'MONTHLY') {
-      // If frequency is set with a specific day of month, use it
-      if (task.frequency && typeof task.frequency === 'object') {
-        const freq = task.frequency as Record<string, any>
-        if (freq.dayOfMonth !== undefined) {
-          return date.getDate() === freq.dayOfMonth
-        }
-      }
-      // Default: show on first day of the week if it's the first week of the month
-      const isFirstWeekOfMonth = date.getDate() <= 7
-      const isFirstDayOfWeek = date.getTime() === weekStart.getTime()
-      return isFirstWeekOfMonth && isFirstDayOfWeek
-    }
-
-    return false
+    // All assigned tasks appear every day by default
+    // You can extend this logic later if you want to use the frequency field
+    // for custom scheduling
+    return true
   }
 
   /**
@@ -120,7 +83,7 @@ export class CalendarService {
 
     // Get today's session
     const { data: session } = await this.supabase
-      .from('cleaning_session')
+      .from('daily_cleaning_session')
       .select('id, status')
       .eq('enterprise_id', enterpriseId)
       .eq('date', dateStr)
@@ -134,7 +97,7 @@ export class CalendarService {
 
     // Get cleaning logs for this session
     const { data: logs } = await this.supabase
-      .from('cleaning_log')
+      .from('task_completion')
       .select('assigned_task_id, status')
       .eq('session_id', (session as any).id)
       .in('assigned_task_id', assignedTaskIds)
@@ -212,7 +175,6 @@ export class CalendarService {
             dayTasks.push({
               id: assignedTask.task_template.id,
               name: assignedTask.task_template.name,
-              type: assignedTask.task_template.type as any,
               category: assignedTask.task_template.category,
               room: {
                 id: assignedTask.room.id,
@@ -300,7 +262,6 @@ export class CalendarService {
           dayTasks.push({
             id: assignedTask.task_template.id,
             name: assignedTask.task_template.name,
-            type: assignedTask.task_template.type as any,
             category: assignedTask.task_template.category,
             room: {
               id: assignedTask.room.id,

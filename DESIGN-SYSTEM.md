@@ -2,7 +2,7 @@
 
 Guide complet du design system de **cLean** - Application de gestion de crèches avec traçabilité HACCP.
 
-**Dernière mise à jour**: 2025-11-19
+**Dernière mise à jour**: 2025-12-02
 
 ---
 
@@ -21,12 +21,14 @@ Guide complet du design system de **cLean** - Application de gestion de crèches
 
 ## Palette de couleurs
 
-### Couleurs principales (Tailwind v4)
+### 🎨 Système de couleurs par MODULE
 
-Le design system utilise une palette **pastel douce** inspirée de l'univers de la petite enfance.
+Le design system utilise une palette **pastel douce** étendue avec **codes couleurs par module** pour une meilleure reconnaissance visuelle et navigation intuitive.
+
+#### Couleurs système (base)
 
 ```css
-/* Palette définie dans app/globals.css */
+/* Palette système définie dans app/globals.css */
 
 --primary: #5a9dc9;        /* Bleu pastel - Propreté, sérénité */
 --secondary: #f4c2c2;      /* Rose pastel - Chaleur, petite enfance */
@@ -37,34 +39,144 @@ Le design system utilise une palette **pastel douce** inspirée de l'univers de 
 --neutral: #9ca3af;        /* Gris neutre */
 ```
 
+#### 🧩 Couleurs par module (nouvelle palette)
+
+Chaque module de l'application a sa propre identité visuelle pour faciliter la navigation :
+
+```css
+/* ===== MODULE CLEAN (Nettoyage) ===== */
+--clean-primary: #5a9dc9;      /* Bleu clair */
+--clean-light: #e3f2fd;        /* Bleu très pâle */
+--clean-dark: #2c5f7f;         /* Bleu foncé */
+
+/* ===== MODULE HACCP (Traçabilité alimentaire) ===== */
+--haccp-primary: #81c995;      /* Vert menthe */
+--haccp-light: #e8f5e9;        /* Vert très pâle */
+--haccp-dark: #4a8f5a;         /* Vert foncé */
+
+/* ===== MODULE COMMUNICATION (Messages) ===== */
+--communication-primary: #64b5d1; /* Turquoise doux */
+--communication-light: #e0f7fa;   /* Turquoise pâle */
+--communication-dark: #3a7a8f;    /* Turquoise foncé */
+
+/* ===== MODULE USERS (Employés/RH) ===== */
+--users-primary: #f4a5a5;      /* Rose pastel */
+--users-light: #fce4ec;        /* Rose très pâle */
+--users-dark: #c66b6b;         /* Rose foncé */
+
+/* ===== MODULE SETTINGS (Paramètres) ===== */
+--settings-primary: #b39ddb;   /* Violet lavande */
+--settings-light: #f3e5f5;     /* Violet très pâle */
+--settings-dark: #7e57a3;      /* Violet foncé */
+
+/* ===== MODULE CALENDAR (Calendrier/Planning) ===== */
+--calendar-primary: #ffab91;   /* Pêche pastel */
+--calendar-light: #fff3e0;     /* Pêche très pâle */
+--calendar-dark: #d97557;      /* Pêche foncé */
+
+/* ===== MODULE TASKS (Tâches/Checklist) ===== */
+--tasks-primary: #aed581;      /* Lime pastel */
+--tasks-light: #f1f8e9;        /* Lime très pâle */
+--tasks-dark: #7da453;         /* Lime foncé */
+
+/* ===== MODULE ANALYTICS (Statistiques) ===== */
+--analytics-primary: #9fa8da;  /* Indigo pastel */
+--analytics-light: #e8eaf6;    /* Indigo très pâle */
+--analytics-dark: #6870a0;     /* Indigo foncé */
+```
+
 ### Classes Tailwind correspondantes
 
 ```tsx
-// Backgrounds
+// === Couleurs système ===
 bg-primary-100    // Très clair
 bg-primary-500    // Normal
 bg-primary-700    // Foncé
 
-// Text
-text-primary-500
-text-secondary-700
-text-success-600
+// === Couleurs par module (utilisez directement les hex) ===
+// Module Clean
+className="bg-[#e3f2fd] text-[#2c5f7f] border-[#5a9dc9]"
 
-// Borders
-border-primary-200
+// Module HACCP
+className="bg-[#e8f5e9] text-[#4a8f5a] border-[#81c995]"
+
+// Module Communication
+className="bg-[#e0f7fa] text-[#3a7a8f] border-[#64b5d1]"
+
+// Module Users
+className="bg-[#fce4ec] text-[#c66b6b] border-[#f4a5a5]"
+
+// Module Settings
+className="bg-[#f3e5f5] text-[#7e57a3] border-[#b39ddb]"
+
+// Module Calendar
+className="bg-[#fff3e0] text-[#d97557] border-[#ffab91]"
+
+// Module Tasks
+className="bg-[#f1f8e9] text-[#7da453] border-[#aed581]"
+
+// Module Analytics
+className="bg-[#e8eaf6] text-[#6870a0] border-[#9fa8da]"
+```
+
+### 🎯 Guide d'utilisation des couleurs
+
+**Quand utiliser quelle couleur ?**
+
+| Module | Couleur | Usage |
+|--------|---------|-------|
+| **Clean** | Bleu | Pages nettoyage, sessions, pièces |
+| **HACCP** | Vert | Traçabilité, repas, températures |
+| **Communication** | Turquoise | Messages, notifications |
+| **Users** | Rose | Employés, gestion RH |
+| **Settings** | Violet | Paramètres, profil admin |
+| **Calendar** | Pêche | Calendrier, planning |
+| **Tasks** | Lime | Tâches, checklist |
+| **Analytics** | Indigo | Stats, dashboard developer |
+
+### Exemples visuels
+
+```tsx
+// Card avec bordure colorée (module Clean)
+<Card className="border-l-4 border-l-[#5a9dc9] bg-gradient-to-br from-[#e3f2fd] to-white">
+  <CardHeader>
+    <BuildingOfficeIcon className="w-6 h-6 text-[#2c5f7f]" />
+    <CardTitle>Nettoyage</CardTitle>
+  </CardHeader>
+</Card>
+
+// Card avec bordure colorée (module HACCP)
+<Card className="border-l-4 border-l-[#81c995] bg-gradient-to-br from-[#e8f5e9] to-white">
+  <CardHeader>
+    <BeakerIcon className="w-6 h-6 text-[#4a8f5a]" />
+    <CardTitle>HACCP</CardTitle>
+  </CardHeader>
+</Card>
+
+// Badge avec couleur module
+<Badge className="bg-[#e3f2fd] text-[#2c5f7f] border border-[#5a9dc9]">
+  Clean
+</Badge>
+
+<Badge className="bg-[#e8f5e9] text-[#4a8f5a] border border-[#81c995]">
+  HACCP
+</Badge>
 ```
 
 ### Gradients signature cLean
 
 ```tsx
-// Gradient principal (bleu)
-className="bg-gradient-to-r from-primary-500 to-primary-600"
+// Gradient principal (bleu - module Clean)
+className="bg-gradient-to-r from-[#5a9dc9] to-[#2c5f7f]"
+
+// Gradient HACCP (vert)
+className="bg-gradient-to-r from-[#81c995] to-[#4a8f5a]"
 
 // Gradient texte
-className="bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent"
+className="bg-gradient-to-r from-[#5a9dc9] to-[#2c5f7f] bg-clip-text text-transparent"
 
-// Gradient card hover
-className="hover:bg-gradient-to-br from-primary-50 to-secondary-50"
+// Gradient card hover avec couleur module
+className="hover:bg-gradient-to-br from-[#e3f2fd] to-white"
 ```
 
 ---

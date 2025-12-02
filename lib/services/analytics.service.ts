@@ -31,7 +31,7 @@ export class AnalyticsService {
 
       // Get total employees across all enterprises
       const { count: employeesCount, error: employeesError } = await this.supabase
-        .from('user')
+        .from('employee')
         .select('*', { count: 'exact', head: true })
         .eq('is_active', true);
 
@@ -43,7 +43,7 @@ export class AnalyticsService {
       const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
       const { count: sessionsCount, error: sessionsError } = await this.supabase
-        .from('cleaning_session')
+        .from('daily_cleaning_session')
         .select('*', { count: 'exact', head: true })
         .gte('date', firstDayOfMonth.toISOString())
         .lte('date', lastDayOfMonth.toISOString());
@@ -94,7 +94,7 @@ export class AnalyticsService {
         enterprises.map(async (enterprise: any) => {
           // Get employee count
           const { count: employeeCount, error: employeeError } = await this.supabase
-            .from('user')
+            .from('employee')
             .select('*', { count: 'exact', head: true })
             .eq('enterprise_id', enterprise.id)
             .eq('is_active', true);
@@ -103,7 +103,7 @@ export class AnalyticsService {
 
           // Get sessions this month for this enterprise
           const { count: sessionsCount, error: sessionsError } = await this.supabase
-            .from('cleaning_session')
+            .from('daily_cleaning_session')
             .select('*', { count: 'exact', head: true })
             .eq('enterprise_id', enterprise.id)
             .gte('date', firstDayOfMonth.toISOString())

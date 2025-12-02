@@ -549,7 +549,7 @@ export class HaccpService {
     recorded_by_id: string
   }>): Promise<void> {
     const { error } = await this.supabase
-      .from('meal_children')
+      .from('child_meal_record')
       .insert(servings)
 
     if (error) throw error
@@ -575,7 +575,7 @@ export class HaccpService {
     }))
 
     const { error } = await this.supabase
-      .from('temperature')
+      .from('temperature_check')
       .insert(records)
 
     if (error) throw error
@@ -654,7 +654,7 @@ export class HaccpService {
 
   async getTemperatures(enterpriseId: string, startDate?: string, endDate?: string): Promise<Temperature[]> {
     let query = this.supabase
-      .from('temperature')
+      .from('temperature_check')
       .select('*')
       .eq('enterprise_id', enterpriseId)
 
@@ -669,7 +669,7 @@ export class HaccpService {
 
   async createTemperature(enterpriseId: string, input: CreateTemperatureInput): Promise<Temperature> {
     const { data, error } = await this.supabase
-      .from('temperature')
+      .from('temperature_check')
       .insert({
         enterprise_id: enterpriseId,
         ...input
@@ -687,7 +687,7 @@ export class HaccpService {
 
   async getNonCompliances(enterpriseId: string): Promise<NonCompliance[]> {
     const { data, error } = await this.supabase
-      .from('non_compliance')
+      .from('haccp_incident')
       .select('*')
       .eq('enterprise_id', enterpriseId)
       .order('discovered_at', { ascending: false })
@@ -698,7 +698,7 @@ export class HaccpService {
 
   async createNonCompliance(enterpriseId: string, input: CreateNonComplianceInput): Promise<NonCompliance> {
     const { data, error } = await this.supabase
-      .from('non_compliance')
+      .from('haccp_incident')
       .insert({
         enterprise_id: enterpriseId,
         ...input,
@@ -713,7 +713,7 @@ export class HaccpService {
 
   async updateNonCompliance(id: string, enterpriseId: string, input: UpdateNonComplianceInput): Promise<NonCompliance> {
     const { data, error } = await this.supabase
-      .from('non_compliance')
+      .from('haccp_incident')
       .update(input)
       .eq('id', id)
       .eq('enterprise_id', enterpriseId)
@@ -832,7 +832,7 @@ export class HaccpService {
       this.supabase.from('child').select('*', { count: 'exact', head: true }).eq('enterprise_id', enterpriseId).eq('is_active', true),
       this.supabase.from('product').select('*', { count: 'exact', head: true }).eq('enterprise_id', enterpriseId).eq('is_active', true),
       this.supabase.from('supplier').select('*', { count: 'exact', head: true }).eq('enterprise_id', enterpriseId).eq('is_active', true),
-      this.supabase.from('non_compliance').select('*', { count: 'exact', head: true }).eq('enterprise_id', enterpriseId).eq('status', 'Open'),
+      this.supabase.from('haccp_incident').select('*', { count: 'exact', head: true }).eq('enterprise_id', enterpriseId).eq('status', 'Open'),
       this.supabase.from('meal').select('*', { count: 'exact', head: true }).eq('enterprise_id', enterpriseId).eq('date', today)
     ])
 

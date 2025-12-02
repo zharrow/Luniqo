@@ -73,7 +73,7 @@ export class SessionsService {
    */
   async getAll(enterpriseId: string, limit?: number): Promise<SessionWithStats[]> {
     let query = this.supabase
-      .from('cleaning_session')
+      .from('daily_cleaning_session')
       .select('*')
       .eq('enterprise_id', enterpriseId)
       .order('date', { ascending: false })
@@ -107,7 +107,7 @@ export class SessionsService {
     const today = new Date().toISOString().split('T')[0]
 
     const { data: session, error } = await this.supabase
-      .from('cleaning_session')
+      .from('daily_cleaning_session')
       .select('*')
       .eq('enterprise_id', enterpriseId)
       .eq('date', today)
@@ -131,7 +131,7 @@ export class SessionsService {
    */
   async getById(id: string, enterpriseId: string): Promise<SessionWithStats | null> {
     const { data: session, error } = await this.supabase
-      .from('cleaning_session')
+      .from('daily_cleaning_session')
       .select('*')
       .eq('id', id)
       .eq('enterprise_id', enterpriseId)
@@ -155,7 +155,7 @@ export class SessionsService {
    */
   async getByDate(enterpriseId: string, date: string): Promise<SessionWithStats | null> {
     const { data: session, error } = await this.supabase
-      .from('cleaning_session')
+      .from('daily_cleaning_session')
       .select('*')
       .eq('enterprise_id', enterpriseId)
       .eq('date', date)
@@ -179,7 +179,7 @@ export class SessionsService {
    */
   async create(enterpriseId: string, input: CreateSessionInput): Promise<CleaningSession> {
     const { data, error } = await this.supabase
-      .from('cleaning_session')
+      .from('daily_cleaning_session')
       .insert({
         enterprise_id: enterpriseId,
         date: input.date,
@@ -198,7 +198,7 @@ export class SessionsService {
    */
   async update(id: string, enterpriseId: string, input: UpdateSessionInput): Promise<CleaningSession> {
     const { data, error } = await this.supabase
-      .from('cleaning_session')
+      .from('daily_cleaning_session')
       .update(input)
       .eq('id', id)
       .eq('enterprise_id', enterpriseId)
@@ -214,7 +214,7 @@ export class SessionsService {
    */
   async delete(id: string, enterpriseId: string): Promise<void> {
     const { error } = await this.supabase
-      .from('cleaning_session')
+      .from('daily_cleaning_session')
       .delete()
       .eq('id', id)
       .eq('enterprise_id', enterpriseId)
@@ -232,13 +232,13 @@ export class SessionsService {
   }> {
     // Count total logs for this session
     const { count: totalCount } = await this.supabase
-      .from('cleaning_log')
+      .from('task_completion')
       .select('*', { count: 'exact', head: true })
       .eq('session_id', sessionId)
 
     // Count completed logs (status = FAIT)
     const { count: completedCount } = await this.supabase
-      .from('cleaning_log')
+      .from('task_completion')
       .select('*', { count: 'exact', head: true })
       .eq('session_id', sessionId)
       .eq('status', 'FAIT')
@@ -259,7 +259,7 @@ export class SessionsService {
    */
   async getSessionLogs(sessionId: string): Promise<any[]> {
     const { data, error } = await this.supabase
-      .from('cleaning_log')
+      .from('task_completion')
       .select(`
         *,
         assigned_task:assigned_task_id (
@@ -282,7 +282,7 @@ export class SessionsService {
    */
   async createLog(sessionId: string, input: CreateLogInput): Promise<CleaningLog> {
     const { data, error } = await this.supabase
-      .from('cleaning_log')
+      .from('task_completion')
       .insert({
         session_id: sessionId,
         assigned_task_id: input.assigned_task_id,
@@ -305,7 +305,7 @@ export class SessionsService {
    */
   async updateLog(logId: string, input: Partial<CreateLogInput>): Promise<CleaningLog> {
     const { data, error } = await this.supabase
-      .from('cleaning_log')
+      .from('task_completion')
       .update(input)
       .eq('id', logId)
       .select()
