@@ -97,15 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // Check localStorage for User (PIN) session (client-side only)
-      if (typeof window !== 'undefined') {
-        const userSession = localStorage.getItem('user_session')
-        if (userSession) {
-          const parsed = JSON.parse(userSession)
-          setSession(parsed)
-        }
-      }
-
+      // No Supabase Auth session found
       setIsLoading(false)
     } catch (error) {
       console.error('Session check error:', error)
@@ -114,46 +106,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function handleLoginWithEmail(credentials: EmailPasswordCredentials): Promise<AuthResponse> {
+    console.log('🎯 AuthContext: handleLoginWithEmail called')
     const response = await loginWithEmail(credentials.email, credentials.password)
+    console.log('🎯 AuthContext: loginWithEmail response:', response)
 
     if (response.success && response.data) {
+      console.log('🎯 AuthContext: Creating new session...')
       const newSession: AuthSession = {
         user: response.data,
         role: response.role!,
         enterprise: response.enterprise
       }
       setSession(newSession)
+      console.log('🎯 AuthContext: Session set successfully')
     }
 
-    return response
-  }
-
-  async function handleLoginWithPin(credentials: PinCredentials): Promise<AuthResponse> {
-    const response = await loginWithPin(credentials)
-
-    if (response.success && response.data) {
-      const newSession: AuthSession = {
-        user: response.data,
-        role: 'User',
-        enterprise: response.enterprise,
-        accessibleRooms: response.accessibleRooms
-      }
-      setSession(newSession)
-
-      // Store in localStorage for User sessions (no Supabase Auth) - client-side only
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('user_session', JSON.stringify(newSession))
-      }
-    }
-
+    console.log('🎯 AuthContext: Returning response')
     return response
   }
 
   async function handleLogout() {
     await authLogout()
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('user_session')
-    }
     setSession(null)
     router.push('/login')
   }
@@ -168,7 +141,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     role: session?.role || null,
     enterprise: session?.enterprise || null,
     loginWithEmail: handleLoginWithEmail,
-    loginWithPin: handleLoginWithPin,
     logout: handleLogout,
     refreshSession
   }

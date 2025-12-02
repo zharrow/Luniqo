@@ -2,22 +2,17 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/lib/contexts/AuthContext'
+import { useRequireTabletAuth } from '@/lib/contexts/TabletAuthContext'
 
 type HaccpSection = 'meals' | 'temperatures'
 
 export default function TabletHaccpPage() {
   const [selectedSection, setSelectedSection] = useState<HaccpSection | null>(null)
-  const { session } = useAuth()
+  const { session, isLoading } = useRequireTabletAuth()
   const router = useRouter()
 
-  useEffect(() => {
-    if (!session || session.role !== 'User') {
-      router.push('/tablet/login')
-    }
-  }, [session])
-
-  if (!session) return null
+  // useRequireTabletAuth handles redirect if no session
+  if (isLoading || !session) return null
 
   // If section selected, show it
   if (selectedSection === 'meals') {

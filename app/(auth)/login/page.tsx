@@ -23,21 +23,32 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
+      console.log('🔐 Starting login...', { email })
       const response = await loginWithEmail({ email, password })
+      console.log('📥 Login response:', response)
 
       if (response.success) {
+        console.log('✅ Login successful, role:', response.role)
+        // Small delay to allow session to be set before redirect
+        await new Promise(resolve => setTimeout(resolve, 500))
+
         // Redirect based on role
         if (response.role === 'Developer') {
+          console.log('🚀 Redirecting to /analytics')
           router.push('/analytics')
         } else if (response.role === 'Admin') {
+          console.log('🚀 Redirecting to /dashboard')
           router.push('/dashboard')
         }
+        // Note: Don't set isLoading(false) here - let the redirect happen while loading
       } else {
+        console.error('❌ Login failed:', response.error)
         setError(response.error || 'Échec de la connexion')
+        setIsLoading(false)
       }
     } catch (err) {
+      console.error('❌ Login error:', err)
       setError('Une erreur est survenue')
-    } finally {
       setIsLoading(false)
     }
   }

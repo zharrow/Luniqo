@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/lib/contexts/AuthContext'
-import { createClient } from '@/lib/supabase/client'
+import { useTabletAuth } from '@/lib/contexts/TabletAuthContext'
 import { loginWithEmail, getEnterpriseEmployees, loginEmployeeWithPin } from '@/lib/utils/auth.client'
 
 type Step = 'admin-login' | 'employee-selection' | 'pin-entry'
@@ -27,7 +26,7 @@ export default function TabletLoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const { loginWithPin: contextLoginWithPin } = useAuth()
+  const { setSession } = useTabletAuth()
   const router = useRouter()
 
   // Step 1: Admin Login
@@ -37,25 +36,32 @@ export default function TabletLoginPage() {
     setIsLoading(true)
 
     try {
+      console.log('🔐 Attempting admin login...', { email: adminEmail })
       const response = await loginWithEmail(adminEmail, adminPassword)
+      console.log('📥 Login response:', { success: response.success, role: response.role, hasEnterprise: !!response.enterprise })
 
       if (response.success && response.role === 'Admin' && response.enterprise) {
         setEnterpriseId(response.enterprise.id)
         setEnterpriseName(response.enterprise.name)
 
+        console.log('🏢 Loading employees for enterprise:', response.enterprise.id)
         // Load employees for this enterprise
         const employeeList = await getEnterpriseEmployees(response.enterprise.id)
+        console.log('👥 Employees loaded:', employeeList.length)
 
         if (employeeList.length === 0) {
           setError('Aucun employé actif trouvé pour cette entreprise')
         } else {
           setEmployees(employeeList)
           setStep('employee-selection')
+          console.log('✅ Employee list loaded, ready for selection')
         }
       } else {
+        console.error('❌ Login failed:', response.error || 'Invalid role or missing enterprise')
         setError('Connexion échouée. Seuls les administrateurs peuvent se connecter ici.')
       }
     } catch (err) {
+      console.error('❌ Login error:', err)
       setError('Une erreur est survenue lors de la connexion')
     } finally {
       setIsLoading(false)
@@ -96,27 +102,30 @@ export default function TabletLoginPage() {
     setIsLoading(true)
 
     try {
+      console.log('🔢 Verifying PIN for employee:', selectedEmployee.id)
       const response = await loginEmployeeWithPin(selectedEmployee.id, pin)
+      console.log('✅ PIN verification response:', { success: response.success, role: response.role })
 
-      if (response.success) {
-        // Store session in localStorage
-        const session = {
-          user: response.data,
-          role: response.role,
+      if (response.success && response.data && response.enterprise) {
+        console.log('💾 Setting tablet session...')
+
+        // Store session using TabletAuthContext
+        setSession({
+          user: response.data as any, // Safe: loginEmployeeWithPin always returns User type
           enterprise: response.enterprise,
-          accessibleRooms: response.accessibleRooms
-        }
+          accessibleRooms: response.accessibleRooms || []
+        })
 
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('user_session', JSON.stringify(session))
-        }
-
+        console.log('✅ Tablet session set successfully')
+        console.log('🚀 Redirecting to /tablet/home')
         router.push('/tablet/home')
       } else {
+        console.error('❌ PIN verification failed:', response.error)
         setError(response.error || 'Code PIN incorrect')
         setPin('')
       }
     } catch (err) {
+      console.error('❌ PIN submit error:', err)
       setError('Une erreur est survenue')
       setPin('')
     } finally {

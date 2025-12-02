@@ -364,15 +364,15 @@ export default function UsersPage() {
 
           <div>
             <label className="block text-sm font-medium mb-1">
-              Code PIN {!editingUser && '*'} (4-6 chiffres)
+              Code PIN {!editingUser && '*'} (4 chiffres)
             </label>
             <Input
               type="text"
               value={formData.pin}
-              onChange={(e) => setFormData({ ...formData, pin: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+              onChange={(e) => setFormData({ ...formData, pin: e.target.value.replace(/\D/g, '').slice(0, 4) })}
               placeholder={editingUser ? 'Laisser vide pour ne pas modifier' : '1234'}
               required={!editingUser}
-              maxLength={6}
+              maxLength={4}
             />
             <p className="text-xs text-muted-foreground mt-1">
               {editingUser ? 'Laisser vide pour conserver le PIN actuel' : 'Le code PIN sera utilisé pour la connexion sur tablette'}

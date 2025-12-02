@@ -52,6 +52,16 @@ export default function RoomTasksPage() {
     }
   }, [session, id])
 
+  // Auto-fill estimated duration from selected task template
+  useEffect(() => {
+    if (selectedTaskId !== 'none') {
+      const selectedTask = availableTasks.find(t => t.id === selectedTaskId)
+      if (selectedTask?.estimated_duration) {
+        setExpectedDuration(selectedTask.estimated_duration.toString())
+      }
+    }
+  }, [selectedTaskId, availableTasks])
+
   async function loadData() {
     if (!session?.enterprise?.id || !id) return
 
@@ -268,7 +278,7 @@ export default function RoomTasksPage() {
                         <SelectItem value="none">Sélectionnez une tâche</SelectItem>
                         {unassignedTasks.map((task) => (
                           <SelectItem key={task.id} value={task.id}>
-                            {task.name} - {getTypeLabel(task.type)}
+                            {task.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -296,7 +306,7 @@ export default function RoomTasksPage() {
                   </div>
                   <div>
                     <Label htmlFor="expected-duration">
-                      Durée estimée (optionnel)
+                      Durée estimée (modifiable)
                     </Label>
                     <div className="flex items-center gap-2">
                       <Input
@@ -313,7 +323,7 @@ export default function RoomTasksPage() {
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Temps nécessaire pour terminer la tâche
+                      Durée pré-remplie depuis la tâche, modifiable selon la pièce
                     </p>
                   </div>
                 </div>

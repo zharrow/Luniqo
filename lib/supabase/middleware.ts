@@ -42,11 +42,16 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/auth')
   const isSetupRoute = request.nextUrl.pathname === '/setup'
 
+  // Allow tablet routes to proceed without Supabase Auth
+  // (employees use PIN stored in localStorage)
+  if (isTabletRoute) {
+    return supabaseResponse
+  }
+
   // Only redirect to login if:
   // - No Supabase Auth user
-  // - Not a tablet route (PIN auth)
   // - Not already on a public route
-  if (!user && !isTabletRoute && !isPublicRoute) {
+  if (!user && !isPublicRoute) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone()
     url.pathname = '/login'

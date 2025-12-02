@@ -1,3 +1,5 @@
+import { TabletAuthProvider } from '@/lib/contexts/TabletAuthContext'
+
 export const dynamic = 'force-dynamic'
 
 export default function TabletGroupLayout({
@@ -5,5 +7,5 @@ export default function TabletGroupLayout({
 }: {
   children: React.ReactNode
 }) {
-  return children
+  return <TabletAuthProvider>{children}</TabletAuthProvider>
 }

@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
 import { FormDialog } from '@/components/shared/FormDialog'
-import { Card } from '@/components/ui/card'
+import { CompactList, CompactListItem, CompactListEmpty } from '@/components/ui/compact-list'
 
 export default function TasksPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Admin'])
@@ -131,19 +131,6 @@ export default function TasksPage() {
     }
   }
 
-  // Grouper les tâches par catégorie pour la vue Kanban
-  const categories = Array.from(new Set(tasks.map(t => t.category).filter(Boolean)))
-  const tasksByCategory = categories.reduce((acc, category) => {
-    acc[category!] = tasks.filter(t => t.category === category)
-    return acc
-  }, {} as Record<string, TaskTemplate[]>)
-
-  // Ajouter une catégorie "Sans catégorie" pour les tâches sans catégorie
-  const uncategorizedTasks = tasks.filter(t => !t.category)
-  if (uncategorizedTasks.length > 0) {
-    tasksByCategory['Sans catégorie'] = uncategorizedTasks
-  }
-
   if (authLoading || loading) {
     return (
       <DashboardLayout>
@@ -173,71 +160,76 @@ export default function TasksPage() {
           </Button>
         </div>
 
-        {/* Empty state */}
+        {/* Tasks list */}
         {tasks.length === 0 ? (
-          <Card className="p-12 text-center">
-            <ClipboardDocumentListIcon className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">
-              Aucune tâche
-            </h3>
-            <p className="text-muted-foreground mb-4">
-              Commencez par créer votre première tâche
-            </p>
-            <Button onClick={openCreateModal}>
-              Créer une tâche
-            </Button>
-          </Card>
+          <CompactListEmpty
+            icon={<ClipboardDocumentListIcon className="w-full h-full" />}
+            title="Aucune tâche"
+            description="Commencez par créer votre première tâche"
+            action={
+              <Button onClick={openCreateModal}>
+                Créer une tâche
+              </Button>
+            }
+          />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {Object.entries(tasksByCategory).map(([category, categoryTasks]) => (
-              <div key={category}>
-                <div className="mb-3 flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-primary" />
-                  <h3 className="font-semibold text-sm">{category}</h3>
-                  <span className="text-xs text-muted-foreground ml-auto">{categoryTasks.length}</span>
-                </div>
-                <div className="space-y-2">
-                  {categoryTasks.map((task) => (
-                    <Card key={task.id} className="p-4 hover:shadow-md transition-all duration-200">
-                      <div className="flex items-start justify-between mb-2">
-                        <h4 className="font-medium text-sm flex-1 pr-2">{task.name}</h4>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-6 w-6 -mt-1 flex-shrink-0">
-                              <EllipsisVerticalIcon className="w-3 h-3" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => openEditModal(task)}>
-                              <PencilIcon className="w-4 h-4" />
-                              Modifier
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              variant="destructive"
-                              onClick={() => openDeleteDialog(task)}
-                            >
-                              <TrashIcon className="w-4 h-4" />
-                              Supprimer
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                      {task.description && (
-                        <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{task.description}</p>
-                      )}
-                      <div className="flex items-center justify-between text-xs">
-                        {task.estimated_duration && (
-                          <span className="text-muted-foreground">{task.estimated_duration} min</span>
-                        )}
-                        {!task.is_active && <Badge variant="danger" size="sm">Désactivée</Badge>}
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+          <CompactList>
+            {tasks.map((task) => {
+              const metadata = []
+              if (task.category) {
+                metadata.push({ label: task.category, color: 'primary' as const })
+              }
+              if (task.estimated_duration) {
+                metadata.push({ label: `${task.estimated_duration} min`, color: 'accent' as const })
+              }
+
+              return (
+                <CompactListItem
+                  key={task.id}
+                  icon={<ClipboardDocumentListIcon className="w-5 h-5 text-primary" />}
+                  title={task.name}
+                  description={task.description || undefined}
+                  metadata={metadata}
+                  badge={
+                    !task.is_active ? (
+                      <Badge variant="danger" size="sm">
+                        Désactivée
+                      </Badge>
+                    ) : undefined
+                  }
+                  actions={
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          title="Actions"
+                        >
+                          <EllipsisVerticalIcon className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openEditModal(task)}>
+                          <PencilIcon className="w-4 h-4" />
+                          Modifier
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => openDeleteDialog(task)}
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                          Supprimer
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  }
+                  inactive={!task.is_active}
+                />
+              )
+            })}
+          </CompactList>
         )}
 
         {/* Form Dialog */}

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/lib/contexts/AuthContext'
+import { useRequireTabletAuth } from '@/lib/contexts/TabletAuthContext'
 import { haccpService } from '@/lib/services/haccp.service'
 
 type CheckpointType = 'Reception' | 'Holding' | 'Service' | 'Storage'
@@ -28,16 +28,14 @@ export default function TabletHaccpTemperaturesPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
 
-  const { session } = useAuth()
+  const { session } = useRequireTabletAuth()
   const router = useRouter()
 
   useEffect(() => {
-    if (!session || session.role !== 'User' || !session.enterprise?.id) {
-      router.push('/tablet/login')
-      return
+    // useRequireTabletAuth handles redirect if no session
+    if (session && session.enterprise?.id) {
+      loadMeals()
     }
-
-    loadMeals()
   }, [session])
 
   async function loadMeals() {

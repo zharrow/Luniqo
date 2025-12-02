@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/lib/contexts/AuthContext'
+import { useRequireTabletAuth } from '@/lib/contexts/TabletAuthContext'
 import { createClient } from '@/lib/supabase/client'
 
 interface Room {
@@ -18,18 +18,21 @@ export default function TabletHomePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const { session, logout } = useAuth()
+  const { session, isLoading: authLoading, logout } = useRequireTabletAuth()
   const router = useRouter()
   const supabase = createClient()
 
   useEffect(() => {
-    if (!session || session.role !== 'User') {
-      router.push('/tablet/login')
+    // Wait for auth to finish loading
+    if (authLoading) {
       return
     }
 
-    loadAccessibleRooms()
-  }, [session])
+    // useRequireTabletAuth handles redirect if no session
+    if (session) {
+      loadAccessibleRooms()
+    }
+  }, [session, authLoading])
 
   async function loadAccessibleRooms() {
     try {
@@ -70,9 +73,8 @@ export default function TabletHomePage() {
     }
   }
 
-  async function handleLogout() {
-    await logout()
-    router.push('/tablet/login')
+  function handleLogout() {
+    logout() // Already redirects to /tablet/login
   }
 
   function handleRoomSelect(roomId: string) {

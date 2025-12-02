@@ -82,25 +82,31 @@ export async function loginWithPin(credentials: PinCredentials): Promise<AuthRes
  */
 export async function loginWithEmail(email: string, password: string): Promise<AuthResponse> {
   try {
+    console.log('🔑 loginWithEmail called with:', { email })
     const supabase = createClient()
 
     // Sign in with Supabase Auth
+    console.log('📡 Calling Supabase Auth...')
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password
     })
 
     if (authError || !authData.user) {
+      console.error('❌ Supabase Auth failed:', authError)
       return { success: false, error: 'Invalid credentials' }
     }
 
+    console.log('✅ Supabase Auth successful')
     const userEmail = authData.user.email
 
     if (!userEmail) {
+      console.error('❌ No email in auth data')
       return { success: false, error: 'Email not found' }
     }
 
     // Check if Developer
+    console.log('🔍 Checking for Developer role...')
     const { data: developer, error: devError } = await supabase
       .from('developer')
       .select('*')
@@ -108,6 +114,7 @@ export async function loginWithEmail(email: string, password: string): Promise<A
       .single()
 
     if (developer && !devError) {
+      console.log('✅ Developer found')
       return {
         success: true,
         data: developer as any,
@@ -116,6 +123,7 @@ export async function loginWithEmail(email: string, password: string): Promise<A
     }
 
     // Check if Admin
+    console.log('🔍 Checking for Admin role...')
     const { data: admin, error: adminError } = await supabase
       .from('admin')
       .select('*')
@@ -124,12 +132,19 @@ export async function loginWithEmail(email: string, password: string): Promise<A
       .single()
 
     if (admin && !adminError) {
+      console.log('✅ Admin found, fetching enterprise...')
       // Fetch enterprise linked to this admin
-      const { data: enterprise } = await supabase
+      const { data: enterprise, error: enterpriseError } = await supabase
         .from('enterprise')
         .select('*')
         .eq('admin_id', (admin as any).id)
         .single()
+
+      if (enterpriseError) {
+        console.warn('⚠️ No enterprise found for admin:', enterpriseError)
+      } else {
+        console.log('✅ Enterprise found:', (enterprise as any)?.id)
+      }
 
       return {
         success: true,
@@ -139,9 +154,10 @@ export async function loginWithEmail(email: string, password: string): Promise<A
       }
     }
 
+    console.error('❌ No Developer or Admin found for email:', userEmail)
     return { success: false, error: 'User not found' }
   } catch (error) {
-    console.error('Login error:', error)
+    console.error('❌ Login error:', error)
     return { success: false, error: 'Login failed' }
   }
 }

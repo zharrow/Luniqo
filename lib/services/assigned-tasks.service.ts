@@ -18,6 +18,7 @@ export interface AssignedTask {
     name: string
     type: string
     category: string | null
+    estimated_duration: number | null
   }
   room?: {
     id: string
@@ -66,7 +67,8 @@ export class AssignedTasksService {
           id,
           name,
           type,
-          category
+          category,
+          estimated_duration
         )
       `)
       .eq('room_id', roomId)
@@ -88,7 +90,8 @@ export class AssignedTasksService {
           id,
           name,
           type,
-          category
+          category,
+          estimated_duration
         )
       `)
       .eq('room_id', roomId)
@@ -111,7 +114,8 @@ export class AssignedTasksService {
           id,
           name,
           type,
-          category
+          category,
+          estimated_duration
         ),
         room:room_id!inner (
           id,
@@ -138,7 +142,8 @@ export class AssignedTasksService {
           id,
           name,
           type,
-          category
+          category,
+          estimated_duration
         ),
         room:room_id (
           id,
@@ -183,7 +188,8 @@ export class AssignedTasksService {
           id,
           name,
           type,
-          category
+          category,
+          estimated_duration
         )
       `)
       .single()
@@ -212,7 +218,8 @@ export class AssignedTasksService {
           id,
           name,
           type,
-          category
+          category,
+          estimated_duration
         )
       `)
 
@@ -234,7 +241,8 @@ export class AssignedTasksService {
           id,
           name,
           type,
-          category
+          category,
+          estimated_duration
         )
       `)
       .single()

@@ -11,9 +11,9 @@ import {
   TrashIcon,
   BuildingOfficeIcon,
   EllipsisVerticalIcon,
-  ClipboardDocumentListIcon
+  ClipboardDocumentListIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline'
-import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -26,6 +26,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
 import { FormDialog } from '@/components/shared/FormDialog'
+import { BentoGrid } from '@/components/ui/bento-grid'
+import { cn } from '@/lib/utils'
 
 export default function RoomsPage() {
   const router = useRouter()
@@ -150,9 +152,9 @@ export default function RoomsPage() {
           </Button>
         </div>
 
-        {/* Rooms grid */}
+        {/* Rooms Bento Grid */}
         {rooms.length === 0 ? (
-          <div className="card p-12 text-center">
+          <div className="rounded-xl border border-border bg-card p-12 text-center">
             <BuildingOfficeIcon className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
             <h3 className="text-lg font-medium mb-2">
               Aucune pièce
@@ -161,32 +163,66 @@ export default function RoomsPage() {
               Commencez par créer votre première pièce
             </p>
             <Button onClick={openCreateModal}>
+              <PlusIcon className="w-4 h-4 mr-2" />
               Créer une pièce
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {rooms.map((room) => (
-              <Card key={room.id} className={`${!room.is_active && 'opacity-50'}`}>
-                  <CardContent className="p-6">
+          <BentoGrid className="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 auto-rows-[18rem]">
+            {rooms.map((room, index) => {
+              // Patterns de colonnes pour un layout Bento dynamique
+              const colSpanClass =
+                index % 7 === 0 ? 'md:col-span-2' :
+                index % 5 === 0 ? 'md:col-span-2' :
+                'md:col-span-1'
+
+              return (
+                <div
+                  key={room.id}
+                  className={cn(
+                    'group relative col-span-1 flex flex-col justify-between overflow-hidden rounded-xl',
+                    'bg-gradient-to-br from-background to-muted/20',
+                    'border border-border',
+                    'hover:shadow-lg transition-all duration-300',
+                    'hover:scale-[1.02]',
+                    !room.is_active && 'opacity-50 hover:opacity-75',
+                    colSpanClass
+                  )}
+                >
+                  {/* Background decoration */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                  {/* Sparkle effect on hover */}
+                  <SparklesIcon className="absolute top-4 right-4 w-6 h-6 text-primary/20 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:rotate-12" />
+
+                  {/* Content */}
+                  <div className="relative z-10 p-6 flex-1 flex flex-col">
+                    {/* Header with icon and actions */}
                     <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors duration-300 group-hover:scale-110 transform">
                           <BuildingOfficeIcon className="w-6 h-6 text-primary" />
                         </div>
-                        <div>
-                          <h3 className="font-semibold">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-lg truncate group-hover:text-primary transition-colors">
                             {room.name}
                           </h3>
                           {!room.is_active && (
-                            <Badge variant="danger" size="sm">Désactivée</Badge>
+                            <Badge variant="danger" size="sm" className="mt-1">
+                              Désactivée
+                            </Badge>
                           )}
                         </div>
                       </div>
 
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" title="Actions">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="shrink-0 hover:bg-primary/10"
+                            title="Actions"
+                          >
                             <EllipsisVerticalIcon className="w-5 h-5" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -212,22 +248,36 @@ export default function RoomsPage() {
                       </DropdownMenu>
                     </div>
 
+                    {/* Description */}
                     {room.description && (
-                      <p className="text-sm text-muted-foreground mb-4">
+                      <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
                         {room.description}
                       </p>
                     )}
 
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Ordre d'affichage</span>
-                      <Badge variant="neutral" size="sm">
-                        {room.display_order || '-'}
-                      </Badge>
+                    {/* Spacer */}
+                    <div className="flex-1" />
+
+                    {/* Footer CTA */}
+                    <div className="pt-4 border-t border-border/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="p-0 h-auto font-medium text-primary hover:text-primary/80"
+                        onClick={() => router.push(`/dashboard/rooms/${room.id}`)}
+                      >
+                        Gérer les tâches
+                        <ClipboardDocumentListIcon className="w-4 h-4 ml-2" />
+                      </Button>
                     </div>
-                  </CardContent>
-                </Card>
-            ))}
-          </div>
+                  </div>
+
+                  {/* Hover effect overlay */}
+                  <div className="absolute inset-0 pointer-events-none border-2 border-primary/0 group-hover:border-primary/20 rounded-xl transition-all duration-300" />
+                </div>
+              )
+            })}
+          </BentoGrid>
         )}
 
         {/* Form Dialog */}

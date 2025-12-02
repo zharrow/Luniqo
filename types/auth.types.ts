@@ -79,7 +79,7 @@ export interface AuthResponse<T = Developer | Admin | User> {
   error?: string
 }
 
-// Auth context
+// Auth context (Admin/Developer only - Supabase Auth)
 export interface AuthContextType {
   session: AuthSession | null
   isLoading: boolean
@@ -88,7 +88,6 @@ export interface AuthContextType {
 
   // Methods
   loginWithEmail: (credentials: EmailPasswordCredentials) => Promise<AuthResponse>
-  loginWithPin: (credentials: PinCredentials) => Promise<AuthResponse>
   logout: () => Promise<void>
   refreshSession: () => Promise<void>
 }

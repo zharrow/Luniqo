@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { useAuth } from '@/lib/contexts/AuthContext'
+import { useRequireTabletAuth } from '@/lib/contexts/TabletAuthContext'
 import { createClient } from '@/lib/supabase/client'
-import PhotoUpload from '@/components/shared/PhotoUpload'
+import { DailyCalendar } from '@/components/tablet/DailyCalendar'
+import { TaskValidationModal } from '@/components/tablet/TaskValidationModal'
+import type { CalendarTask } from '@/lib/services/calendar.service'
 
 interface Room {
   id: string
@@ -16,7 +18,9 @@ interface TaskTemplate {
   id: string
   name: string
   description: string | null
-  task_type: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'OCCASIONAL'
+  type: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'OCCASIONAL'
+  suggested_time?: string | null
+  expected_duration?: number | null
 }
 
 interface AssignedTask {
@@ -25,11 +29,12 @@ interface AssignedTask {
   task_template_id: string
   task_template: TaskTemplate
   is_active: boolean
+  suggested_time?: string | null
+  expected_duration?: number | null
 }
 
-interface TaskStatus {
-  task_id: string
-  completed: boolean
+interface ValidatedTaskData {
+  assignedTaskId: string
   note: string
   photo_urls: string[]
 }
@@ -40,23 +45,26 @@ export default function TabletRoomPage() {
 
   const [room, setRoom] = useState<Room | null>(null)
   const [tasks, setTasks] = useState<AssignedTask[]>([])
-  const [taskStatuses, setTaskStatuses] = useState<Record<string, TaskStatus>>({})
+  const [validatedTasks, setValidatedTasks] = useState<ValidatedTaskData[]>([])
+  const [selectedTask, setSelectedTask] = useState<AssignedTask | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
-  const [isSaving, setIsSaving] = useState(false)
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
-  const { session } = useAuth()
+  const { session, isLoading: authLoading } = useRequireTabletAuth()
   const router = useRouter()
   const supabase = createClient()
 
   useEffect(() => {
-    if (!session || session.role !== 'User') {
-      router.push('/tablet/login')
+    if (authLoading) {
       return
     }
 
-    loadRoomData()
-  }, [session, roomId])
+    if (session) {
+      loadRoomData()
+    }
+  }, [session, authLoading, roomId])
 
   async function loadRoomData() {
     try {
@@ -95,11 +103,13 @@ export default function TabletRoomPage() {
           room_id,
           task_template_id,
           is_active,
+          suggested_time,
+          expected_duration,
           task_template:task_template_id (
             id,
             name,
             description,
-            task_type
+            type
           )
         `)
         .eq('room_id', roomId)
@@ -110,17 +120,37 @@ export default function TabletRoomPage() {
 
       setTasks(tasksData as any[])
 
-      // Initialize task statuses
-      const initialStatuses: Record<string, TaskStatus> = {}
-      tasksData?.forEach((task: any) => {
-        initialStatuses[task.id] = {
-          task_id: task.id,
-          completed: false,
-          note: '',
-          photo_urls: []
+      // Load already validated tasks from today's session
+      const today = new Date().toISOString().split('T')[0]
+      const { data: sessionData } = await supabase
+        .from('cleaning_session')
+        .select('id')
+        .eq('enterprise_id', session.enterprise.id)
+        .eq('date', today)
+        .single()
+
+      if (sessionData) {
+        // Get task IDs for this room
+        const roomTaskIds = (tasksData as any[]).map(t => t.id)
+
+        // Load cleaning logs for this session and room
+        const { data: logsData } = await supabase
+          .from('cleaning_log')
+          .select('assigned_task_id, note, photo_urls')
+          .eq('session_id', (sessionData as any).id)
+          .eq('performed_by_id', session.user.id)
+          .in('assigned_task_id', roomTaskIds)
+
+        if (logsData && logsData.length > 0) {
+          // Convert to ValidatedTaskData format
+          const validated: ValidatedTaskData[] = (logsData as any[]).map(log => ({
+            assignedTaskId: log.assigned_task_id,
+            note: log.note || '',
+            photo_urls: log.photo_urls || []
+          }))
+          setValidatedTasks(validated)
         }
-      })
-      setTaskStatuses(initialStatuses)
+      }
 
     } catch (err: any) {
       console.error('Error loading room data:', err)
@@ -130,47 +160,23 @@ export default function TabletRoomPage() {
     }
   }
 
-  function toggleTaskCompletion(taskId: string) {
-    setTaskStatuses(prev => ({
-      ...prev,
-      [taskId]: {
-        ...prev[taskId],
-        completed: !prev[taskId].completed
-      }
-    }))
+  function handleTaskClick(calendarTask: CalendarTask) {
+    // Find the assigned task
+    const task = tasks.find(t => t.id === calendarTask.assignedTaskId)
+    if (task) {
+      setSelectedTask(task)
+      setIsModalOpen(true)
+    }
   }
 
-  function updateTaskNote(taskId: string, note: string) {
-    setTaskStatuses(prev => ({
-      ...prev,
-      [taskId]: {
-        ...prev[taskId],
-        note
-      }
-    }))
-  }
-
-  function updateTaskPhotos(taskId: string, photo_urls: string[]) {
-    setTaskStatuses(prev => ({
-      ...prev,
-      [taskId]: {
-        ...prev[taskId],
-        photo_urls
-      }
-    }))
-  }
-
-  async function handleValidate() {
-    if (!session?.user?.id || !session?.enterprise?.id) return
-
-    setIsSaving(true)
-    setError('')
+  async function handleValidateTask(data: { note: string; photo_urls: string[] }) {
+    if (!selectedTask || !session?.user?.id || !session?.enterprise?.id) return
 
     try {
       // Get or create today's session
       const today = new Date().toISOString().split('T')[0]
 
-      let { data: existingSession, error: sessionError } = await supabase
+      let { data: existingSession } = await supabase
         .from('cleaning_session')
         .select('id')
         .eq('enterprise_id', session.enterprise.id)
@@ -197,50 +203,53 @@ export default function TabletRoomPage() {
         sessionId = (existingSession as any).id
       }
 
-      // Save completed tasks as cleaning logs
-      const completedTasks = Object.values(taskStatuses).filter(t => t.completed)
-
-      if (completedTasks.length === 0) {
-        setError('Veuillez compléter au moins une tâche')
-        setIsSaving(false)
-        return
-      }
-
-      const logs = completedTasks.map(status => {
-        const task = tasks.find(t => t.id === status.task_id)
-        return {
+      // Save task as cleaning log
+      const { error: logError } = await supabase
+        .from('cleaning_log')
+        .insert({
           session_id: sessionId,
-          room_id: roomId,
-          task_template_id: task?.task_template_id,
+          assigned_task_id: selectedTask.id,
           performed_by_id: session.user.id,
           recorded_by_id: session.user.id,
-          status: 'FAIT' as const,
-          note: status.note || null,
-          photo_urls: status.photo_urls.length > 0 ? status.photo_urls : null
-        }
-      })
+          status: 'FAIT',
+          note: data.note || null,
+          photo_urls: data.photo_urls.length > 0 ? data.photo_urls : null
+        })
 
-      const { error: logsError } = await supabase
-        .from('cleaning_log')
-        .insert(logs)
+      if (logError) throw logError
 
-      if (logsError) throw logsError
+      // Add to validated tasks
+      setValidatedTasks(prev => [...prev, {
+        assignedTaskId: selectedTask.id,
+        note: data.note,
+        photo_urls: data.photo_urls
+      }])
 
-      // Success - redirect to success page with stats
-      const params = new URLSearchParams({
-        room: room?.name || '',
-        completed: completedCount.toString(),
-        total: totalCount.toString(),
-        progress: progress.toString()
-      })
-      router.push(`/tablet/room/success?${params.toString()}`)
+      // Trigger calendar refresh
+      setRefreshTrigger(prev => prev + 1)
+
+      // Close modal
+      setIsModalOpen(false)
+      setSelectedTask(null)
 
     } catch (err: any) {
-      console.error('Error saving tasks:', err)
+      console.error('Error saving task:', err)
       setError('Erreur lors de l\'enregistrement')
-    } finally {
-      setIsSaving(false)
     }
+  }
+
+  function handleFinishSession() {
+    if (validatedTasks.length === 0) {
+      setError('Veuillez valider au moins une tâche avant de terminer')
+      return
+    }
+
+    const params = new URLSearchParams({
+      room: room?.name || '',
+      completed: validatedTasks.length.toString(),
+      total: tasks.length.toString()
+    })
+    router.push(`/tablet/room/validated?${params.toString()}`)
   }
 
   if (isLoading) {
@@ -254,12 +263,12 @@ export default function TabletRoomPage() {
     )
   }
 
-  const completedCount = Object.values(taskStatuses).filter(t => t.completed).length
-  const totalCount = tasks.length
-  const progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
+  // Filter out validated tasks
+  const remainingTasksCount = tasks.length - validatedTasks.length
+  const progress = tasks.length > 0 ? Math.round((validatedTasks.length / tasks.length) * 100) : 0
 
   return (
-    <div className="tablet-mode min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 p-8">
+    <div className="tablet-mode min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 p-8 pb-32">
       {/* Header */}
       <div className="flex justify-between items-center mb-12">
         <div className="flex items-center gap-6">
@@ -287,7 +296,7 @@ export default function TabletRoomPage() {
             {progress}%
           </div>
           <p className="text-xl text-muted-foreground">
-            {completedCount} / {totalCount} tâches
+            {validatedTasks.length} / {tasks.length} tâches
           </p>
         </div>
       </div>
@@ -309,95 +318,39 @@ export default function TabletRoomPage() {
         </div>
       </div>
 
-      {/* Tasks List */}
-      {tasks.length > 0 ? (
-        <div className="space-y-6 mb-8">
-          {tasks.map((task) => {
-            const status = taskStatuses[task.id]
-            const isCompleted = status?.completed
+      {/* Success message if all tasks are done */}
+      {remainingTasksCount === 0 && tasks.length > 0 && (
+        <div className="card p-8 mb-8 bg-success-50 border-2 border-success-500">
+          <div className="flex items-center gap-4">
+            <svg className="w-12 h-12 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <h3 className="text-3xl font-bold text-success-700 mb-1">Toutes les tâches sont terminées !</h3>
+              <p className="text-xl text-success-600">Vous pouvez maintenant terminer la session</p>
+            </div>
+          </div>
+        </div>
+      )}
 
-            return (
-              <div
-                key={task.id}
-                className={`card p-8 transition-all duration-300 ${
-                  isCompleted
-                    ? 'bg-success-50 border-2 border-success-500'
-                    : 'bg-white hover:shadow-lg'
-                }`}
-              >
-                <div className="flex items-start gap-6">
-                  {/* Checkbox */}
-                  <button
-                    onClick={() => toggleTaskCompletion(task.id)}
-                    className={`flex-shrink-0 w-16 h-16 rounded-2xl border-4 flex items-center justify-center transition-all ${
-                      isCompleted
-                        ? 'bg-success-500 border-success-600 scale-110'
-                        : 'bg-card border-border hover:border-primary-500'
-                    }`}
-                  >
-                    {isCompleted && (
-                      <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
-                  </button>
-
-                  {/* Task Info */}
-                  <div className="flex-1">
-                    <div className="flex items-center gap-4 mb-3">
-                      <h3 className="text-3xl font-bold">
-                        {task.task_template.name}
-                      </h3>
-                      <span className={`px-4 py-2 rounded-full text-sm font-semibold ${
-                        task.task_template.task_type === 'DAILY' ? 'bg-primary-100 text-primary-700' :
-                        task.task_template.task_type === 'WEEKLY' ? 'bg-secondary-100 text-secondary-700' :
-                        task.task_template.task_type === 'MONTHLY' ? 'bg-warning-100 text-warning-700' :
-                        'bg-muted text-muted-foreground'
-                      }`}>
-                        {task.task_template.task_type}
-                      </span>
-                    </div>
-
-                    {task.task_template.description && (
-                      <p className="text-xl text-muted-foreground mb-4">
-                        {task.task_template.description}
-                      </p>
-                    )}
-
-                    {/* Note Input & Photo Upload */}
-                    {isCompleted && (
-                      <div className="mt-4 space-y-6">
-                        <div>
-                          <label className="block text-lg font-medium mb-2">
-                            Note (optionnel)
-                          </label>
-                          <textarea
-                            value={status.note}
-                            onChange={(e) => updateTaskNote(task.id, e.target.value)}
-                            className="w-full px-4 py-3 text-lg rounded-xl border-2 border-border focus:outline-none focus:ring-4 focus:ring-primary-500 focus:border-transparent bg-background"
-                            rows={3}
-                            placeholder="Ajouter une remarque..."
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-lg font-medium mb-3">
-                            Photos (optionnel)
-                          </label>
-                          <PhotoUpload
-                            onPhotosChange={(urls) => updateTaskPhotos(task.id, urls)}
-                            maxPhotos={3}
-                            existingPhotos={status.photo_urls}
-                            tabletMode={true}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )
-          })}
+      {/* Daily Calendar */}
+      {session?.enterprise?.id && remainingTasksCount > 0 ? (
+        <div className="mb-8">
+          <DailyCalendar
+            enterpriseId={session.enterprise.id}
+            roomId={roomId}
+            selectedTaskIds={validatedTasks.map(v => v.assignedTaskId)}
+            onTaskClick={handleTaskClick}
+            refreshTrigger={refreshTrigger}
+          />
+        </div>
+      ) : remainingTasksCount === 0 && tasks.length > 0 ? (
+        <div className="card p-12 text-center bg-white">
+          <svg className="w-24 h-24 text-success-500 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p className="text-3xl font-bold text-gray-900 mb-2">Excellent travail !</p>
+          <p className="text-xl text-muted-foreground">Toutes les tâches de cette pièce ont été validées</p>
         </div>
       ) : (
         <div className="card p-12 text-center">
@@ -408,31 +361,50 @@ export default function TabletRoomPage() {
         </div>
       )}
 
-      {/* Validate Button */}
+      {/* Task Validation Modal */}
+      {selectedTask && (
+        <TaskValidationModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false)
+            setSelectedTask(null)
+          }}
+          onValidate={handleValidateTask}
+          taskName={selectedTask.task_template.name}
+          taskDescription={selectedTask.task_template.description}
+          suggestedTime={selectedTask.suggested_time || selectedTask.task_template.suggested_time}
+          expectedDuration={selectedTask.expected_duration || selectedTask.task_template.expected_duration}
+        />
+      )}
+
+      {/* Bottom Buttons */}
       {tasks.length > 0 && (
         <div className="fixed bottom-8 left-0 right-0 px-8">
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-7xl mx-auto flex gap-4">
+            {/* View Validated Tasks Button */}
+            {validatedTasks.length > 0 && (
+              <button
+                onClick={() => router.push(`/tablet/room/${roomId}/validated`)}
+                className="flex-1 btn btn-secondary h-24 text-2xl font-bold shadow-2xl"
+              >
+                <svg className="w-8 h-8 mr-3 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                Voir les tâches validées ({validatedTasks.length})
+              </button>
+            )}
+
+            {/* Finish Session Button */}
             <button
-              onClick={handleValidate}
-              disabled={isSaving || completedCount === 0}
-              className="btn bg-success-500 text-white hover:bg-success-600 w-full h-24 text-3xl font-bold shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleFinishSession}
+              disabled={validatedTasks.length === 0}
+              className="flex-1 h-24 text-2xl font-bold shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed rounded-2xl !bg-green-600 hover:!bg-green-700 text-white transition-colors"
             >
-              {isSaving ? (
-                <span className="flex items-center justify-center gap-3">
-                  <svg className="animate-spin h-10 w-10" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Enregistrement...
-                </span>
-              ) : (
-                <>
-                  <svg className="w-10 h-10 mr-4 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  Valider les tâches ({completedCount})
-                </>
-              )}
+              <svg className="w-8 h-8 mr-3 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Terminer la session
             </button>
           </div>
         </div>
