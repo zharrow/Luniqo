@@ -13,7 +13,7 @@
 import { createClient } from '@supabase/supabase-js'
 import * as dotenv from 'dotenv'
 import * as path from 'path'
-import * as crypto from 'crypto'
+import * as bcrypt from 'bcryptjs'
 
 // Load environment variables
 dotenv.config({ path: path.join(__dirname, '..', '.env.local') })
@@ -35,9 +35,9 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   }
 })
 
-// Helper to hash PIN codes (simple SHA256 for now)
+// Helper to hash PIN codes with bcrypt (same as the app)
 function hashPin(pin: string): string {
-  return crypto.createHash('sha256').update(pin).digest('hex')
+  return bcrypt.hashSync(pin, 10)
 }
 
 async function clearDatabase() {
