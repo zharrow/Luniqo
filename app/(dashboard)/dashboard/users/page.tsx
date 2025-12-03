@@ -14,11 +14,12 @@ import {
   EllipsisVerticalIcon
 } from '@heroicons/react/24/outline'
 import { Card, CardContent } from '@/components/ui/card'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
+import { AvatarSelector } from '@/components/shared/AvatarSelector'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,6 +45,7 @@ export default function UsersPage() {
     last_name: '',
     email: '',
     pin: '',
+    avatar: '',
     room_ids: []
   })
 
@@ -78,6 +80,7 @@ export default function UsersPage() {
       last_name: '',
       email: '',
       pin: '',
+      avatar: '',
       room_ids: []
     })
     setShowModal(true)
@@ -90,6 +93,7 @@ export default function UsersPage() {
       last_name: user.last_name,
       email: user.email || '',
       pin: '', // Don't pre-fill PIN for security
+      avatar: (user as any).avatar || '',
       room_ids: user.accessible_rooms
     })
     setShowModal(true)
@@ -112,7 +116,8 @@ export default function UsersPage() {
         const updateData: any = {
           first_name: formData.first_name,
           last_name: formData.last_name,
-          email: formData.email || undefined
+          email: formData.email || undefined,
+          avatar: formData.avatar || undefined
         }
 
         // Only update PIN if provided
@@ -235,6 +240,9 @@ export default function UsersPage() {
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-12 w-12">
+                        {(user as any).avatar ? (
+                          <AvatarImage src={`/${(user as any).avatar}`} alt="Avatar" />
+                        ) : null}
                         <AvatarFallback className="bg-[#f4a5a5]/10 text-[#c66b6b] font-semibold">
                           {user.first_name[0]}{user.last_name[0]}
                         </AvatarFallback>
@@ -325,6 +333,12 @@ export default function UsersPage() {
           isSubmitting={isSubmitting}
           maxWidth="lg"
         >
+          {/* Sélecteur d'avatar */}
+          <AvatarSelector
+            selectedAvatar={formData.avatar || null}
+            onSelect={(avatar) => setFormData({ ...formData, avatar })}
+          />
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">

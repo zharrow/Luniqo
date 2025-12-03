@@ -43,7 +43,7 @@ export default function ValidatedTasksPage() {
   const [error, setError] = useState('')
   const [selectedPhotos, setSelectedPhotos] = useState<string[] | null>(null)
 
-  const { session, isLoading: authLoading } = useRequireTabletAuth()
+  const { session, isLoading: authLoading, logout } = useRequireTabletAuth()
   const router = useRouter()
   const supabase = createClient()
 
@@ -170,23 +170,34 @@ export default function ValidatedTasksPage() {
   return (
     <div className="tablet-mode min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 p-8 pb-32">
       {/* Header */}
-      <div className="flex items-center gap-6 mb-12">
+      <div className="flex justify-between items-center mb-12">
+        <div className="flex items-center gap-6">
+          <button
+            onClick={() => router.push(`/tablet/room/${roomId}`)}
+            className="btn btn-secondary px-6 py-4 text-xl"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <div>
+            <h1 className="text-5xl font-bold mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+              Tâches validées
+            </h1>
+            <p className="text-2xl text-muted-foreground">
+              {room?.name} - {validatedTasks.length} tâche{validatedTasks.length > 1 ? 's' : ''}
+            </p>
+          </div>
+        </div>
         <button
-          onClick={() => router.push(`/tablet/room/${roomId}`)}
-          className="btn btn-secondary px-6 py-4 text-xl"
+          onClick={logout}
+          className="px-6 py-4 text-xl rounded-xl font-semibold text-white bg-destructive hover:opacity-90 transition-opacity shadow-lg"
+          title="Déconnexion"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
           </svg>
         </button>
-        <div>
-          <h1 className="text-5xl font-bold mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
-            Tâches validées
-          </h1>
-          <p className="text-2xl text-muted-foreground">
-            {room?.name} - {validatedTasks.length} tâche{validatedTasks.length > 1 ? 's' : ''}
-          </p>
-        </div>
       </div>
 
       {/* Error Message */}
@@ -202,8 +213,11 @@ export default function ValidatedTasksPage() {
           {validatedTasks.map((log) => (
             <div
               key={log.id}
-              className="card p-8 bg-white border-2 border-success-200"
+              className="relative rounded-3xl p-8 bg-white border border-[#81c995]/30 shadow-lg overflow-hidden"
             >
+              {/* Gradient vert pastel en fond */}
+              <div className="absolute inset-0 bg-gradient-to-br from-[#f1f9f3] to-white opacity-40"></div>
+              <div className="relative z-10">
               {/* Task Header */}
               <div className="flex items-start justify-between mb-6">
                 <div className="flex-1">
@@ -252,7 +266,7 @@ export default function ValidatedTasksPage() {
                 {/* Invalidate button */}
                 <button
                   onClick={() => handleInvalidateTask(log.id)}
-                  className="btn bg-danger-500 text-white hover:bg-danger-600 px-6 py-4 text-lg font-semibold"
+                  className="px-6 py-4 text-lg font-semibold rounded-xl text-white bg-destructive hover:opacity-90 transition-opacity shadow-lg"
                 >
                   <svg className="w-6 h-6 mr-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -292,6 +306,7 @@ export default function ValidatedTasksPage() {
                   </div>
                 </div>
               )}
+              </div>
             </div>
           ))}
         </div>

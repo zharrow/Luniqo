@@ -1,6 +1,6 @@
 # INDEX.md
 
-Documentation centrale du projet **cLean** - Application de gestion de crèche avec traçabilité HACCP.
+Documentation centrale du projet **Luniqo** - Application de gestion de crèche avec traçabilité HACCP.
 
 **Dernière mise à jour**: 2025-11-19
 

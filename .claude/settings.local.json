@@ -13,7 +13,10 @@
       "Bash(xargs kill:*)",
       "Bash(tree:*)",
       "Bash(npm outdated:*)",
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "Bash(npm install next-view-transitions)",
+      "Bash(npm install)",
+      "Bash(pgrep:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,4 +1,4 @@
-# cLean - Gestion de Crèche Intelligente
+# Luniqo - Gestion de Crèche Intelligente
 
 Application moderne de gestion de crèche avec traçabilité HACCP, développée avec Next.js et Supabase.
 
@@ -79,7 +79,7 @@ L'application utilise un système d'authentification à 3 niveaux :
 
 ### Modules Fonctionnels
 
-#### Module cLean (Nettoyage)
+#### Module Luniqo (Nettoyage)
 - Gestion des pièces (rooms)
 - Templates de tâches
 - Sessions de nettoyage quotidiennes
@@ -181,7 +181,7 @@ export default function ProtectedPage() {
 **25+ tables** organisées en modules :
 
 - **User System** : `developer`, `admin`, `enterprise`, `user`, `user_rooms`
-- **cLean Module** : `room`, `task_template`, `assigned_task`, `cleaning_session`, `cleaning_log`, `export`
+- **Luniqo Module** : `room`, `task_template`, `assigned_task`, `cleaning_session`, `cleaning_log`, `export`
 - **HACCP Module** : `child`, `meal`, `temperature`, `product`, `supplier`, `batch`, `equipment`, `cleaning_haccp`, `non_compliance`, `document`, `meal_children`
 - **Communication** : `conversation`, `message`, `notification`
 
@@ -223,7 +223,7 @@ npm run lint         # ESLint
 
 1. **Configurer Supabase** (voir [SUPABASE_SETUP.md](SUPABASE_SETUP.md))
 2. **Tester l'authentification**
-3. **Développer les modules cLean et HACCP**
+3. **Développer les modules Luniqo et HACCP**
 4. **Créer les données de seed pour la démo**
 5. **Déployer sur Vercel**
 
@@ -235,4 +235,4 @@ npm run lint         # ESLint
 
 ---
 
-© 2025 cLean - Gestion HACCP pour crèches
+© 2025 Luniqo - Gestion HACCP pour crèches

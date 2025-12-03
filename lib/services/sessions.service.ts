@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/client'
+import { getTodayLocal } from '@/lib/utils/date'
 
-export type SessionStatus = 'EN_COURS' | 'COMPLETEE' | 'INCOMPLETE'
+export type SessionStatus = 'EN_COURS' | 'COMPLETEE'
 export type LogStatus = 'FAIT' | 'PARTIEL' | 'REPORTE' | 'IMPOSSIBLE'
 
 export interface CleaningSession {
@@ -104,7 +105,7 @@ export class SessionsService {
    * Get today's session
    */
   async getToday(enterpriseId: string): Promise<SessionWithStats | null> {
-    const today = new Date().toISOString().split('T')[0]
+    const today = getTodayLocal()
 
     const { data: session, error } = await this.supabase
       .from('daily_cleaning_session')
@@ -230,20 +231,39 @@ export class SessionsService {
     completed_tasks: number
     completion_percentage: number
   }> {
-    // Count total logs for this session
-    const { count: totalCount } = await this.supabase
-      .from('task_completion')
-      .select('*', { count: 'exact', head: true })
-      .eq('session_id', sessionId)
+    // Get session to find enterprise_id and date
+    const { data: session } = await this.supabase
+      .from('daily_cleaning_session')
+      .select('enterprise_id, date')
+      .eq('id', sessionId)
+      .single()
 
-    // Count completed logs (status = FAIT)
+    if (!session) {
+      return {
+        total_tasks: 0,
+        completed_tasks: 0,
+        completion_percentage: 0
+      }
+    }
+
+    // Count total assigned tasks for this enterprise (active tasks)
+    const { data: assignedTasks } = await this.supabase
+      .from('assigned_task')
+      .select('id, room:room_id!inner(enterprise_id)')
+      .eq('room.enterprise_id', (session as any).enterprise_id)
+      .eq('is_active', true)
+
+    const totalTaskIds = (assignedTasks as any[] || []).map((t: any) => t.id)
+    const total = totalTaskIds.length
+
+    // Count completed tasks (status = FAIT) for these assigned tasks in this session
     const { count: completedCount } = await this.supabase
       .from('task_completion')
       .select('*', { count: 'exact', head: true })
       .eq('session_id', sessionId)
       .eq('status', 'FAIT')
+      .in('assigned_task_id', totalTaskIds)
 
-    const total = totalCount || 0
     const completed = completedCount || 0
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 0
 

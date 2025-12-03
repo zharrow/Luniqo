@@ -11,11 +11,8 @@ import {
   UserGroupIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline'
-import { Card, CardContent } from '@/components/ui/card'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
-import { Badge } from '@/components/ui/badge'
 import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
 import { FormDialog } from '@/components/shared/FormDialog'
 
@@ -161,7 +158,7 @@ export default function ChildrenPage() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#81c995]"></div>
         </div>
       </DashboardLayout>
     )
@@ -190,14 +187,20 @@ export default function ChildrenPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold mb-2">
-              Enfants
-            </h1>
-            <p className="text-muted-foreground">
+            <div className="flex items-center gap-3 mb-2">
+              {/* Badge HACCP */}
+              <div className="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-[#81c995]/10 to-[#81c995]/5">
+                <UserGroupIcon className="w-5 h-5 text-[#4a8f5a]" strokeWidth={1.5} />
+              </div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Enfants
+              </h1>
+            </div>
+            <p className="text-gray-600">
               Gestion des enfants inscrits et suivi des allergènes
             </p>
           </div>
-          <Button onClick={openCreateModal} className="flex items-center gap-2">
+          <Button onClick={openCreateModal} className="flex items-center gap-2 bg-gradient-to-r from-[#81c995] to-[#4a8f5a] hover:from-[#4a8f5a] hover:to-[#81c995] text-white">
             <PlusIcon className="w-5 h-5" />
             Nouvel enfant
           </Button>
@@ -205,91 +208,102 @@ export default function ChildrenPage() {
 
         {/* Children grid */}
         {children.length === 0 ? (
-          <div className="card p-12 text-center">
-            <UserGroupIcon className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">
-              Aucun enfant inscrit
-            </h3>
-            <p className="text-muted-foreground mb-4">
-              Commencez par inscrire votre premier enfant
-            </p>
-            <Button onClick={openCreateModal}>
-              Inscrire un enfant
-            </Button>
+          <div className="relative rounded-3xl p-12 text-center bg-white border border-[#81c995]/20 overflow-hidden">
+            {/* Gradient fond HACCP */}
+            <div className="absolute inset-0 bg-gradient-to-br from-[#e8f5e9] to-white opacity-60"></div>
+
+            <div className="relative z-10">
+              <UserGroupIcon className="w-16 h-16 text-[#81c995]/30 mx-auto mb-4" />
+              <h3 className="text-lg font-medium mb-2 text-gray-900">
+                Aucun enfant inscrit
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Commencez par inscrire votre premier enfant
+              </p>
+              <Button onClick={openCreateModal}>
+                Inscrire un enfant
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {children.map((child) => (
               <div
                 key={child.id}
-                className={`card p-6 ${!child.is_active && 'opacity-50'}`}
+                className={`relative rounded-3xl p-6 bg-white hover:-translate-y-1 hover:shadow-[0_16px_48px_-12px_rgba(129,201,149,0.25)] transition-all duration-300 group overflow-hidden border border-[#81c995]/20 ${!child.is_active && 'opacity-50'}`}
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className="w-12 h-12 rounded-full bg-primary-50 flex items-center justify-center flex-shrink-0">
-                      <span className="text-lg font-semibold text-primary-600">
-                        {child.first_name[0]}{child.last_name[0]}
-                      </span>
-                    </div>
-                    <div className="min-w-0">
-                      <h3 className="font-semibold truncate">
-                        {child.first_name} {child.last_name}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {calculateAge(child.birth_date)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 flex-shrink-0">
-                    <button
-                      onClick={() => openEditModal(child)}
-                      className="p-2 rounded-lg hover:bg-muted transition-colors"
-                      title="Modifier"
-                    >
-                      <PencilIcon className="w-4 h-4 text-muted-foreground" />
-                    </button>
-                    <button
-                      onClick={() => openDeleteDialog(child)}
-                      className="p-2 rounded-lg hover:bg-danger-50 transition-colors"
-                      title="Désactiver"
-                    >
-                      <TrashIcon className="w-4 h-4 text-danger-600" />
-                    </button>
-                  </div>
-                </div>
+                {/* Gradient fond HACCP */}
+                <div className="absolute inset-0 bg-gradient-to-br from-[#e8f5e9] to-white opacity-60"></div>
 
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Section</span>
-                    <span className={`px-2 py-1 rounded text-xs font-medium border ${getSectionColor(child.section)}`}>
-                      {getSectionLabel(child.section)}
-                    </span>
-                  </div>
-
-                  {child.allergies && (
-                    <div className="p-3 rounded-lg bg-danger-50 border border-danger-200">
-                      <div className="flex items-start gap-2">
-                        <ExclamationTriangleIcon className="w-5 h-5 text-danger-600 flex-shrink-0 mt-0.5" />
-                        <div>
-                          <p className="text-xs font-medium text-danger-900 mb-1">Allergies</p>
-                          <p className="text-sm text-danger-700">{child.allergies}</p>
-                        </div>
+                <div className="relative z-10">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3 flex-1">
+                      {/* Avatar avec animation */}
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#81c995]/10 to-[#81c995]/5 flex items-center justify-center flex-shrink-0 group-hover:scale-105 group-hover:rotate-2 transition-all duration-300">
+                        <span className="text-lg font-semibold text-[#4a8f5a]">
+                          {child.first_name[0]}{child.last_name[0]}
+                        </span>
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="font-semibold truncate text-gray-900">
+                          {child.first_name} {child.last_name}
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          {calculateAge(child.birth_date)}
+                        </p>
                       </div>
                     </div>
-                  )}
-
-                  {child.dietary_restrictions && (
-                    <div className="p-3 rounded-lg bg-accent-50 border border-accent-200">
-                      <p className="text-xs font-medium text-accent-900 mb-1">Régime alimentaire</p>
-                      <p className="text-sm text-accent-700">{child.dietary_restrictions}</p>
+                    <div className="flex gap-2 flex-shrink-0">
+                      <button
+                        onClick={() => openEditModal(child)}
+                        className="p-2 rounded-xl hover:bg-[#81c995]/10 transition-all duration-300"
+                        title="Modifier"
+                      >
+                        <PencilIcon className="w-4 h-4 text-[#4a8f5a]" />
+                      </button>
+                      <button
+                        onClick={() => openDeleteDialog(child)}
+                        className="p-2 rounded-xl hover:bg-danger-50 transition-all duration-300"
+                        title="Désactiver"
+                      >
+                        <TrashIcon className="w-4 h-4 text-danger-600" />
+                      </button>
                     </div>
-                  )}
+                  </div>
 
-                  {!child.is_active && (
-                    <div className="pt-2 border-t border-border">
-                      <span className="text-xs text-danger-600 font-medium">Désactivé</span>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Section</span>
+                      <span className={`px-2 py-1 rounded text-xs font-medium border ${getSectionColor(child.section)}`}>
+                        {getSectionLabel(child.section)}
+                      </span>
                     </div>
-                  )}
+
+                    {child.allergies && (
+                      <div className="p-3 rounded-lg bg-danger-50 border border-danger-200">
+                        <div className="flex items-start gap-2">
+                          <ExclamationTriangleIcon className="w-5 h-5 text-danger-600 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-xs font-medium text-danger-900 mb-1">Allergies</p>
+                            <p className="text-sm text-danger-700">{child.allergies}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {child.dietary_restrictions && (
+                      <div className="p-3 rounded-lg bg-accent-50 border border-accent-200">
+                        <p className="text-xs font-medium text-accent-900 mb-1">Régime alimentaire</p>
+                        <p className="text-sm text-accent-700">{child.dietary_restrictions}</p>
+                      </div>
+                    )}
+
+                    {!child.is_active && (
+                      <div className="pt-2 border-t border-border">
+                        <span className="text-xs text-danger-600 font-medium">Désactivé</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}

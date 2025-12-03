@@ -10,7 +10,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- ENUMS
 -- ============================================================================
 
-CREATE TYPE session_status AS ENUM ('EN_COURS', 'COMPLETEE', 'INCOMPLETE');
+CREATE TYPE session_status AS ENUM ('EN_COURS', 'COMPLETEE');
 CREATE TYPE log_status AS ENUM ('FAIT', 'PARTIEL', 'REPORTE', 'IMPOSSIBLE');
 CREATE TYPE meal_type AS ENUM ('Breakfast', 'Lunch', 'Snack');
 CREATE TYPE checkpoint_type AS ENUM ('Reception', 'Holding', 'Service', 'Storage');
@@ -110,7 +110,6 @@ CREATE TABLE task_template (
     enterprise_id UUID NOT NULL REFERENCES enterprise(id) ON DELETE CASCADE,
     name VARCHAR(200) NOT NULL,
     description TEXT,
-    default_duration INT,
     estimated_duration INT,
     category VARCHAR(100),
     is_active BOOLEAN DEFAULT TRUE,

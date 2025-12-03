@@ -1,6 +1,6 @@
 # QUICK-START.md
 
-Guides rapides étape par étape pour les tâches courantes dans **cLean**.
+Guides rapides étape par étape pour les tâches courantes dans **Luniqo**.
 
 **Dernière mise à jour**: 2025-11-19
 

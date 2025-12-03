@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { loginWithEmail, loginWithPin, logout as authLogout } from '@/lib/utils/auth.client'
@@ -16,11 +16,15 @@ import type {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+// Cache duration: 30 seconds
+const SESSION_CACHE_TTL = 30 * 1000
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<AuthSession | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
   const [supabase] = useState(() => createClient())
+  const lastCheckTimestamp = useRef<number>(0)
 
   useEffect(() => {
     // Only run on client side
@@ -34,48 +38,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Listen for auth changes (for Super Admin/Admin)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, supabaseSession) => {
+      console.log('🔐 Auth state change:', event)
+
       if (event === 'SIGNED_IN' && supabaseSession) {
         await checkSession()
       } else if (event === 'SIGNED_OUT') {
-        setSession(null)
+        // Only clear session if it was an intentional logout
+        // Ignore SIGNED_OUT events when just switching apps
+        console.warn('⚠️ SIGNED_OUT event detected, keeping session to prevent accidental logout')
+        // Don't clear the session automatically
+        // setSession(null)
+      } else if (event === 'TOKEN_REFRESHED') {
+        console.log('🔄 Token refreshed successfully')
+        await checkSession(true)
       }
     })
 
-    // Track last visibility change time
-    let lastHiddenTime = 0
-
-    // Handle visibility change (when user returns to tab)
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        // Store the time when tab was hidden
-        lastHiddenTime = Date.now()
-      } else if (document.visibilityState === 'visible') {
-        // Only refresh if tab was hidden for more than 5 minutes
-        const timeHidden = Date.now() - lastHiddenTime
-        if (timeHidden > 5 * 60 * 1000) {
-          checkSession()
-        }
-      }
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
     return () => {
       subscription.unsubscribe()
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [])
 
-  async function checkSession() {
+  async function checkSession(force = false) {
+    // Cache: Skip if last check was less than 30 seconds ago (unless forced)
+    const now = Date.now()
+    const timeSinceLastCheck = now - lastCheckTimestamp.current
+
+    if (!force && session && timeSinceLastCheck < SESSION_CACHE_TTL) {
+      console.log(`⚡ Using cached session (checked ${Math.round(timeSinceLastCheck / 1000)}s ago)`)
+      setIsLoading(false)
+      return
+    }
+
     // Store current session before check
     const previousSession = session
 
     try {
       setIsLoading(true)
 
-      // Add timeout to prevent infinite loading (30 seconds)
+      // Reduced timeout to 5 seconds (was 30s)
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Session check timeout')), 30000)
+        setTimeout(() => reject(new Error('Session check timeout')), 5000)
       )
 
       const sessionCheckPromise = (async () => {
@@ -132,6 +135,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const result = await Promise.race([sessionCheckPromise, timeoutPromise])
       setSession(result as AuthSession | null)
+
+      // Update cache timestamp on successful check
+      lastCheckTimestamp.current = Date.now()
     } catch (error) {
       console.error('Session check error:', error)
       // On timeout/error, keep the previous session instead of logging out
@@ -148,33 +154,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function handleLoginWithEmail(credentials: EmailPasswordCredentials): Promise<AuthResponse> {
-    console.log('🎯 AuthContext: handleLoginWithEmail called')
     const response = await loginWithEmail(credentials.email, credentials.password)
-    console.log('🎯 AuthContext: loginWithEmail response:', response)
 
     if (response.success && response.data) {
-      console.log('🎯 AuthContext: Creating new session...')
       const newSession: AuthSession = {
         user: response.data,
         role: response.role!,
         enterprise: response.enterprise
       }
       setSession(newSession)
-      console.log('🎯 AuthContext: Session set successfully')
+
+      // If Admin without enterprise, redirect to setup
+      if (response.role === 'Admin' && !response.enterprise) {
+        setTimeout(() => router.push('/setup'), 100)
+      }
     }
 
-    console.log('🎯 AuthContext: Returning response')
     return response
   }
 
   async function handleLogout() {
-    await authLogout()
+    console.log('🚪 Intentional logout initiated')
+    // Clear session first to prevent race conditions
     setSession(null)
+    // Then clear Supabase auth
+    await authLogout()
+    // Finally redirect
     router.push('/login')
   }
 
   async function refreshSession() {
-    await checkSession()
+    // Force refresh (bypass cache)
+    await checkSession(true)
   }
 
   const value: AuthContextType = {

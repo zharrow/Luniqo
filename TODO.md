@@ -1,7 +1,7 @@
-# TODO - cLean Project
+# TODO - Luniqo Project (anciennement cLean)
 
-**Dernière mise à jour**: 2025-12-02 23:00
-**Progression globale**: 100% (90/90 tâches) - 🎉 PROJET TERMINÉ ! 🎉
+**Dernière mise à jour**: 2025-12-03 10:00
+**Progression globale**: En cours de rebranding
 
 ---
 
@@ -22,7 +22,7 @@
 
 **Modules complétés** (100%):
 - ✅ Infrastructure (Next.js 16 + Supabase + Auth multi-tiers)
-- ✅ Module cLean (Gestion nettoyage complète)
+- ✅ Module Luniqo / Nettoyage (Gestion nettoyage complète - anciennement cLean)
 - ✅ Module HACCP (Traçabilité alimentaire 8 sous-modules)
 - ✅ Communication (Messagerie temps réel + notifications)
 - ✅ Interface Tablette (PIN login + upload photos)
@@ -32,7 +32,20 @@
 - ✅ Déploiement (Vercel configuré, prêt pour production)
 - ✅ Documentation (6 fichiers complets)
 
-**Derniers ajouts** (2025-12-02):
+**⚠️ Phase actuelle** (2025-12-03):
+- 🎨 **REBRANDING EN COURS** - Changement de marque: cLean → Luniqo (50% complété)
+- 🦄 Nouvelle mascotte: Bébé bleu avec lettre "L" - intégrée partout
+- ✅ Pages de login modernisées avec style "Douceur Professionnelle"
+- 📋 2.5/5 tâches complétées (logos ✅, docs ✅, login ✅, métadonnées 🔲, code 🔲)
+
+**Derniers ajouts** (2025-12-03):
+- 🎨 **PAGES DE LOGIN MODERNISÉES** - Style "Douceur Professionnelle" appliqué
+- ✨ Refonte complète login admin et tablette avec couleurs Luniqo
+- ⚡ Micro-animations, gradients pastels, ombres colorées
+- 📧 Email contact mis à jour: contact@luniqo.fr
+- 🌈 Cohérence parfaite avec DESIGN-SYSTEM.md
+
+**Ajouts précédents** (2025-12-02):
 - 🎨 **SYSTÈME DE COULEURS MODULAIRES** - 8 modules avec couleurs dédiées
 - 🔧 Extension du design system avec hiérarchie visuelle
 - ✨ Badges étendus avec 8 nouveaux variants (clean, haccp, users, etc.)
@@ -296,17 +309,81 @@
 
 ## 🚧 En cours
 
-*(Aucune tâche en cours)*
+- 🎨 **REBRANDING LUNIQO** - Changement de marque de cLean à Luniqo
 
 ---
 
-## 📋 À faire (0/83 tâches restantes - 0%)
+## 📋 À faire - Phase REBRANDING (5 tâches)
 
-**🎉 TOUTES LES TÂCHES SONT TERMINÉES ! 🎉**
+### 🎨 Rebranding: cLean → Luniqo
 
-Le projet cLean est fonctionnellement complet et prêt pour la production.
+**Contexte**: L'application change de nom et d'identité visuelle. "cLean" devient "Luniqo" avec une nouvelle mascotte (bébé bleu avec lettre "L").
 
-### Prochaines améliorations suggérées
+#### [P0] PRIORITÉ CRITIQUE (À faire immédiatement)
+
+**1. [P0] [UI] Intégration du logo Luniqo** - ✅ TERMINÉ
+- ✅ Logo ajouté dans `/public/luniqo.png`
+- ✅ Logo intégré dans le Header principal
+- ✅ Logo intégré dans la Sidebar
+- ✅ Logo intégré dans la page de login admin
+- ✅ Logo intégré dans la page de login tablette
+- ✅ Favicon créé (`app/icon.png`)
+- ✅ Métadonnées mises à jour dans `app/layout.tsx`
+- 🔲 Tester l'affichage sur tous les écrans (à faire par l'utilisateur)
+- Impact : Identité visuelle de la marque
+- Fichiers modifiés :
+  - ✅ `components/layout/Header.tsx`
+  - ✅ `components/layout/AppSidebar.tsx`
+  - ✅ `app/(auth)/login/page.tsx`
+  - ✅ `app/(tablet)/tablet/login/page.tsx`
+  - ✅ `app/layout.tsx`
+  - ✅ `app/icon.png` (créé)
+
+**2. [P0] [DOC] Mise à jour de la documentation** - ✅ TERMINÉ
+- ✅ Remplacer "cLean" par "Luniqo" dans CLAUDE.md (déjà fait dans session précédente)
+- ✅ Remplacer "cLean" par "Luniqo" dans DESIGN-SYSTEM.md
+- ✅ Remplacer "cLean" par "Luniqo" dans INDEX.md
+- ✅ Remplacer "cLean" par "Luniqo" dans README.md
+- ✅ Remplacer "cLean" par "Luniqo" dans API-PATTERNS.md
+- ✅ Remplacer "cLean" par "Luniqo" dans QUICK-START.md
+- ✅ Descriptions du projet mises à jour
+- Impact : Documentation à jour avec la nouvelle marque
+- Fichiers concernés : Tous les fichiers .md à la racine
+
+**3. [P0] [REFACTOR] Mise à jour des métadonnées**
+- 🔲 Mettre à jour `package.json` (name, description)
+- 🔲 Mettre à jour metadata Next.js dans layout principal
+- 🔲 Mettre à jour les titres de pages
+- 🔲 Mettre à jour les descriptions SEO
+- Impact : Branding cohérent partout
+- Fichiers concernés :
+  - `package.json`
+  - `app/layout.tsx`
+  - `app/(auth)/layout.tsx`
+  - `app/(dashboard)/layout.tsx`
+  - `app/(tablet)/layout.tsx`
+
+#### [P1] PRIORITÉ HAUTE
+
+**4. [P1] [REFACTOR] Mise à jour du code source**
+- 🔲 Rechercher et remplacer "cLean" dans les commentaires du code
+- 🔲 Rechercher et remplacer "cLean" dans les messages UI
+- 🔲 Mettre à jour les textes d'aide et tooltips
+- 🔲 Vérifier les console.log et messages d'erreur
+- Impact : Cohérence du code avec la nouvelle marque
+- Fichiers concernés : Tous les fichiers .ts, .tsx, .js
+
+**5. [P1] [UI] Mise à jour des exports PDF**
+- 🔲 Remplacer "cLean" par "Luniqo" dans les en-têtes PDF
+- 🔲 Ajouter le logo Luniqo dans les exports PDF
+- 🔲 Mettre à jour les footers des PDF
+- Impact : Documents professionnels avec la nouvelle marque
+- Fichiers concernés :
+  - `lib/services/pdf-export.service.ts`
+
+---
+
+## 📋 Améliorations futures (suggestions post-rebranding)
 
 Le projet est complet, mais voici des pistes d'amélioration classées par priorité :
 
@@ -483,6 +560,300 @@ Le projet est complet, mais voici des pistes d'amélioration classées par prior
 ---
 
 ## 🔄 Historique des sessions
+
+### Session 2025-12-03 - 16h30-18h00 (Timezone Bug Fix + Session Status Simplification)
+**Travaux effectués:**
+- ✅ **Correction critique: Bug timezone sur le calendrier** - [P0] [BUG] RÉSOLU
+  - **Symptôme**: Tâches marquées "FAIT" dans la session détaillée apparaissent "À faire" dans le calendrier dashboard
+  - **Symptôme**: Problème persistait même après rafraîchissement multiple de la page
+  - **Cause racine**: Utilisation de `toISOString().split('T')[0]` qui convertit les dates en UTC
+  - **Exemple du bug**: 3 décembre à 01h00 en France (UTC+1) devient 2 décembre en UTC
+  - **Résultat**: Le calendrier cherche la session du 2 décembre, mais la session a été créée le 3 décembre
+  - **Solution**: Création de `lib/utils/date.ts` avec utilitaires de timezone locale
+    - `formatDateLocal(date)` - Formatte Date en YYYY-MM-DD en timezone locale
+    - `getTodayLocal()` - Retourne la date du jour en timezone locale
+    - `getDateWithOffset(offset)` - Retourne une date avec offset en timezone locale
+  - **Fix appliqué**:
+    - `lib/services/calendar.service.ts` - 3 emplacements mis à jour
+    - `lib/services/sessions.service.ts` - 1 emplacement mis à jour
+  - **Impact**: Les tâches affichent maintenant le bon statut dans tous les vues
+
+- ✅ **Simplification des statuts de session** - [P1] [REFACTOR] TERMINÉ
+  - **Avant**: 3 statuts possibles (EN_COURS, COMPLETEE, INCOMPLETE)
+  - **Après**: 2 statuts seulement (EN_COURS, COMPLETEE)
+  - **Rationale**: Le statut INCOMPLETE était redondant - une session est soit en cours, soit terminée
+  - **Logique auto-completion**: Les sessions passent automatiquement à "COMPLETEE" quand toutes les tâches sont faites
+  - **Migration PostgreSQL**: Création de `06_simplify_session_status.sql`
+    - Gestion correcte de l'altération d'ENUM avec contrainte DEFAULT
+    - Étapes: DROP DEFAULT → RENAME ENUM → CREATE NEW ENUM → ALTER COLUMN → DROP OLD → ADD DEFAULT
+  - **Fix erreur migration**: `default for column "status" cannot be cast automatically to type session_status`
+  - **UI cleanup**: Retrait des boutons de changement de statut manuel
+
+- ✅ **Refonte page session détaillée** - [P1] [UI] TERMINÉ
+  - **Avant**: Affichait uniquement les tâches complétées (logs)
+  - **Après**: Affiche TOUTES les tâches assignées (complétées ET en attente)
+  - **Nouvelles interfaces**:
+    - `AssignedTaskWithLog` - Combine assigned_task avec son log (si existant)
+    - `GroupedTasks` - Regroupe les tâches par pièce
+  - **Logique de chargement**:
+    - Récupération parallèle: session + logs + all assigned tasks
+    - Création d'une Map pour lookup O(1) des logs
+    - Combinaison des assigned_task avec leurs logs
+    - Groupement par pièce
+  - **Design "Douceur Professionnelle" appliqué**:
+    - États visuels dynamiques: vert (fait), jaune (partiel), gris (en attente)
+    - Bordures fines colorées avec opacité (20% → 40% au hover)
+    - Gradients pastels en background
+    - Ombres colorées douces
+    - Bouton "Marquer" apparaît au hover sur tâches en attente
+    - Rounded-3xl pour les cartes
+  - **Auto-completion**: Appel à `checkAndCompleteSession()` après création/modification de log
+
+**Fichiers créés:**
+- 🆕 `lib/utils/date.ts` (27 lignes) - Utilitaires timezone locale
+- 🆕 `supabase/migrations/06_simplify_session_status.sql` (38 lignes) - Migration enum
+
+**Fichiers modifiés:**
+- 📝 `lib/services/calendar.service.ts` (3 emplacements - formatDateLocal)
+- 📝 `lib/services/sessions.service.ts` (2 modifications - getTodayLocal + SessionStatus type)
+- 📝 `app/(dashboard)/dashboard/sessions/[id]/page.tsx` (refonte complète - 650+ lignes)
+- 📝 `supabase/migrations/00_schema.sql` (SessionStatus enum - 2 valeurs au lieu de 3)
+- 📝 `CLAUDE.md` (ajout section Date and Timezone Handling + Recent Updates)
+- 📝 `TODO.md` (ce fichier - documentation de session)
+
+**Erreurs rencontrées et corrigées:**
+- ✅ [BUG] [P0] **Timezone mismatch calendar ↔ session detail** - RÉSOLU
+  - Utilisation de `toISOString()` causait conversion UTC
+  - Fix: Utilitaires `lib/utils/date.ts` avec timezone locale
+- ✅ [BUG] [P2] **Migration enum DEFAULT constraint** - RÉSOLU
+  - Erreur: `default for column "status" cannot be cast automatically`
+  - Fix: DROP DEFAULT avant altération, puis re-ADD après
+
+**État du projet:**
+- **🎉 100% TERMINÉ** (90/90 tâches) 🏆
+- Bug critique timezone: ✅ RÉSOLU
+- Sessions: Simplifiées et auto-completion fonctionnelle
+- Design system: Appliqué sur page session détaillée
+
+**Bénéfices:**
+- ✨ **Cohérence des données**: Les statuts de tâches sont maintenant identiques partout
+- 🐛 **Bug critique résolu**: Plus de confusion entre calendrier et session détaillée
+- 🎯 **Statuts simplifiés**: Interface plus claire avec seulement 2 états
+- 🤖 **Auto-completion**: Les sessions se marquent automatiquement terminées
+- 🎨 **UI moderne**: Design "Douceur Professionnelle" appliqué
+- 📊 **Vue complète**: Affichage de toutes les tâches (pas seulement complétées)
+- 🔧 **Maintenabilité**: Code mieux structuré avec interfaces TypeScript
+
+**Pattern important à suivre:**
+```typescript
+// ❌ NE JAMAIS FAIRE (conversion UTC)
+const dateStr = new Date().toISOString().split('T')[0]
+
+// ✅ TOUJOURS FAIRE (timezone locale)
+import { formatDateLocal, getTodayLocal } from '@/lib/utils/date'
+const dateStr = getTodayLocal()
+const formatted = formatDateLocal(someDate)
+```
+
+**Prochaine étape:**
+- Les suggestions [P0] restent disponibles (rebranding metadata, code source)
+
+---
+
+### Session 2025-12-03 - 15h00-16h00 (Modernisation pages de login - Design System Luniqo)
+**Travaux effectués:**
+- ✅ **Refonte complète page de login admin** - Style "Douceur Professionnelle"
+  - Application des couleurs Luniqo (bleu #5a9dc9, #2c5f7f)
+  - Remplacement du violet par le bleu Luniqo partout
+  - Bordures fines colorées (border-[#5a9dc9]/20, hover 40%)
+  - Rondeurs généreuses (rounded-2xl pour inputs, rounded-3xl pour cartes)
+  - Ombres colorées douces avec la couleur primaire
+  - Gradients pastels (fond: from-[#f8fbfd] to-white)
+  - Bouton principal avec effet de brillance traversant
+  - Email contact mis à jour: contact@luniqo.fr
+  - Textes en français ("Bienvenue", "Se connecter à Luniqo")
+  - Panneau droit avec gradient bleu Luniqo
+  - Cercles animés en arrière-plan (animate-pulse)
+  - Carte info avec SparklesIcon et features Luniqo
+
+- ✅ **Refonte complète page de login tablette** - Style "Douceur Professionnelle"
+  - Titre avec gradient Luniqo et font Plus Jakarta Sans
+  - Logo container avec ombre bleue au hover
+  - Inputs avec bordures bleues Luniqo (20% opacity)
+  - Bouton "Continuer" en vert HACCP (#81c995)
+  - Clavier numérique en gradient bleu (#5a9dc9 to #2c5f7f)
+  - Bouton "Effacer" en jaune accent (#ffe5b4)
+  - Affichage PIN avec gradient bleu et scale-110
+  - Cartes employés avec gradient rose (#f4a5a5) préservé
+  - Avatars avec rotation au hover (rotate-3)
+  - Chevrons animés sur boutons retour
+  - Fond dégradé bleu + rose (from-[#f8fbfd] to-[#fef6f7])
+
+**Fichiers modifiés:**
+- 📝 `app/(auth)/login/page.tsx` (refonte complète - 339 lignes)
+- 📝 `app/(tablet)/tablet/login/page.tsx` (refonte complète - 382 lignes)
+
+**Améliorations appliquées:**
+- 🎨 **Couleurs Luniqo** : Remplacement complet du violet par le bleu Luniqo
+- 🎯 **Bordures fines colorées** : Opacité 20% au repos, 40% au hover
+- ⚡ **Micro-animations** : scale, translate, rotate, brillance
+- 🌈 **Gradients pastels** : Fond de page, boutons, cartes
+- ✨ **Ombres colorées** : shadow-[0_8px_24px_-4px_rgba(90,157,201,0.4)]
+- 📊 **Cohérence visuelle** : Alignement avec DESIGN-SYSTEM.md
+
+**Détails techniques:**
+- Animations fluides (duration-300)
+- Hover effects sur tous les éléments interactifs
+- Transitions smooth pour meilleure UX
+- Responsive design préservé
+- Accessibility maintained (ARIA labels, keyboard navigation)
+
+**État du rebranding:**
+- ✅ **Tâche 1** : Logo Luniqo intégration - TERMINÉE
+- ✅ **Tâche 2** : Documentation principale - TERMINÉE
+- ✅ **Tâche 2.5** : Pages de login modernisées - TERMINÉE (bonus)
+- 🔲 **Tâche 3** : Métadonnées (package.json, layouts) - À faire
+- 🔲 **Tâche 4** : Code source (commentaires, UI messages) - À faire
+- 🔲 **Tâche 5** : Exports PDF - À faire
+
+**Progression rebranding:** 50% (2.5/5 tâches complétées)
+
+**Bénéfices:**
+- ✨ Pages de login 100% alignées avec l'identité Luniqo
+- 🎨 Style "Douceur Professionnelle" appliqué de bout en bout
+- 🔍 Cohérence parfaite entre admin et tablette
+- ⚡ Micro-animations pour feedback utilisateur amélioré
+- 📊 Design moderne et professionnel
+
+**Prochaine étape:**
+- [P0] Mise à jour des métadonnées (package.json, layout.tsx files)
+
+---
+
+### Session 2025-12-03 - 14h00-14h30 (Rebranding Documentation)
+**Travaux effectués:**
+- ✅ **Mise à jour complète de la documentation principale** - Tâche [P0] TERMINÉE
+  - Remplacement de "cLean" par "Luniqo" dans 5 fichiers principaux
+  - DESIGN-SYSTEM.md : 2 occurrences remplacées
+  - INDEX.md : 1 occurrence remplacée
+  - API-PATTERNS.md : 2 occurrences remplacées
+  - QUICK-START.md : 1 occurrence remplacée
+  - README.md : 5 occurrences remplacées (titre, modules, tables, prochaines étapes, copyright)
+- ✅ **Mise à jour TODO.md**
+  - Tâche 2 marquée comme terminée
+  - Prochaines étapes actualisées
+
+**Fichiers modifiés:**
+- 📝 `DESIGN-SYSTEM.md` (2 modifications)
+- 📝 `INDEX.md` (1 modification)
+- 📝 `API-PATTERNS.md` (2 modifications)
+- 📝 `QUICK-START.md` (1 modification)
+- 📝 `README.md` (5 modifications)
+- 📝 `TODO.md` (documentation de session)
+
+**État du rebranding:**
+- ✅ **Tâche 1** : Logo Luniqo intégration - TERMINÉE
+- ✅ **Tâche 2** : Documentation principale - TERMINÉE
+- 🔲 **Tâche 3** : Métadonnées (package.json, layouts) - À faire
+- 🔲 **Tâche 4** : Code source (commentaires, UI messages) - À faire
+- 🔲 **Tâche 5** : Exports PDF - À faire
+
+**Progression rebranding:** 40% (2/5 tâches complétées)
+
+**Bénéfices:**
+- ✨ Documentation 100% cohérente avec la nouvelle marque Luniqo
+- 📚 Tous les fichiers principaux à jour
+- 🎯 Identité de marque unifiée dans toute la doc
+
+**Prochaine étape:**
+- [P0] Mise à jour des métadonnées (package.json, layout.tsx files)
+
+---
+
+### Session 2025-12-03 - 10h00-12h00 (Rebranding Luniqo + Modernisation Sidebar)
+**Travaux effectués:**
+- ✅ **Intégration complète du logo Luniqo**
+  - Ajout du logo `/public/luniqo.png` (nouvelle mascotte bébé bleu avec lettre "L")
+  - Intégration dans Header principal avec texte "Luniqo"
+  - Intégration dans Sidebar avec affichage logo + nom
+  - Intégration dans page login admin `/login`
+  - Intégration dans page login tablette `/tablet/login`
+  - Création favicon `app/icon.png` à partir du logo
+  - Mise à jour métadonnées dans `app/layout.tsx`
+- ✅ **Modernisation complète de la Sidebar selon DESIGN-SYSTEM.md**
+  - **Étape 1: Fix visibilité** - Correction texte "Luniqo" invisible (text-transparent → text-primary-700)
+  - **Étape 2: Gradients modernes** - Ajout bg-gradient-to-br sur header (primary-50 → white) et footer (neutral-50 → white)
+  - **Étape 3: Micro-animations** - Ajout scale-110 sur hover des icônes + rotate-90 sur settings
+  - **Étape 4: Module colors** - Application des couleurs de modules en background (au lieu de borders)
+  - **Étape 5: Nested rounded corners** - Ajout px-2 sur groupes + rounded-md sur liens pour effet hiérarchique
+- ✅ **Mise à jour de la documentation**
+  - Mise à jour CLAUDE.md : "cLean" → "Luniqo" dans Project Overview
+  - Mise à jour CLAUDE.md : Ajout section Recent Updates avec rebranding
+  - Mise à jour CLAUDE.md : Date actualisée (2025-12-03)
+  - Mise à jour TODO.md : Session complète documentée
+
+**Fichiers créés:**
+- 🆕 `public/luniqo.png` (nouveau logo mascotte)
+- 🆕 `app/icon.png` (favicon généré depuis logo)
+
+**Fichiers modifiés:**
+- 📝 `components/layout/Header.tsx` (ajout logo + texte Luniqo)
+- 📝 `components/layout/AppSidebar.tsx` (modernisation complète - 5 étapes)
+- 📝 `app/(auth)/login/page.tsx` (ajout logo dans header)
+- 📝 `app/(tablet)/tablet/login/page.tsx` (remplacement SVG par logo)
+- 📝 `app/layout.tsx` (métadonnées Luniqo)
+- 📝 `CLAUDE.md` (rebranding + Recent Updates)
+- 📝 `TODO.md` (ce fichier - documentation session)
+
+**Détails Sidebar Modernization:**
+| Étape | Changement | Before | After |
+|-------|-----------|--------|-------|
+| 1. Visibilité | Texte "Luniqo" | `text-transparent` (invisible) | `text-primary-700` (bleu visible) |
+| 2. Gradients | Header/Footer | Fond uni blanc | `bg-gradient-to-br from-primary-50 to-white` |
+| 3. Animations | Icônes hover | Statiques | `scale-110` (icons), `rotate-90` (settings) |
+| 4. Backgrounds | Liens actifs | Border-l-4 coloré | Background gradient avec module color |
+| 5. Rounded | Hiérarchie | `rounded-lg` uniforme | `px-2` container + `rounded-md` liens (nested) |
+
+**Système de couleurs appliqué (Sidebar):**
+- **Clean** (#5a9dc9) - Tableau de bord, Pièces, Sessions, Historique
+- **HACCP** (#81c995) - Module HACCP
+- **Tasks** (#aed581) - Tâches
+- **Users** (#f4a5a5) - Employés
+- **Communication** (#64b5d1) - Messages
+- **Analytics** (#9fa8da) - Analytics
+
+**État du projet:**
+- **🎉 100% TERMINÉ** (90/90 tâches) 🏆
+- Rebranding: ✅ Logo intégration terminée
+- Rebranding: 🔄 Documentation en cours (4 tâches restantes)
+- Sidebar: ✅ Modernisation complète selon "Douceur Professionnelle"
+
+**Bénéfices de la modernisation:**
+- ✨ Identité visuelle Luniqo cohérente sur toute l'application
+- 🎨 Sidebar moderne et élégante avec gradients pastel
+- 🔍 Meilleure hiérarchie visuelle avec nested rounded corners
+- 🌈 Navigation intuitive grâce aux couleurs de modules
+- ⚡ Micro-animations pour feedback utilisateur
+- 📊 Design aligné avec DESIGN-SYSTEM.md "Douceur Professionnelle"
+
+**Prochaines étapes du rebranding:**
+1. ✅ ~~**[P0] Mettre à jour la documentation restante**~~ - TERMINÉ
+   - ✅ DESIGN-SYSTEM.md : Remplacer "cLean" par "Luniqo"
+   - ✅ INDEX.md : Remplacer "cLean" par "Luniqo"
+   - ✅ API-PATTERNS.md : Remplacer "cLean" par "Luniqo"
+   - ✅ QUICK-START.md : Remplacer "cLean" par "Luniqo"
+   - ✅ README.md : Remplacer "cLean" par "Luniqo"
+2. **[P0] Mettre à jour les métadonnées**
+   - package.json (name, description)
+   - Tous les layout.tsx
+3. **[P1] Mettre à jour le code source**
+   - Commentaires et messages UI
+   - Console.log et erreurs
+4. **[P1] Mettre à jour les exports PDF**
+   - Headers et footers avec "Luniqo"
+   - Intégration du logo
+
+---
 
 ### Session 2025-12-02 - 21h00-23h00 (Extension design system couleurs + Application modules)
 **Travaux effectués:**

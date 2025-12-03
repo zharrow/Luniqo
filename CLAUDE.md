@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**cLean** is a modern childcare management application with HACCP traceability, built with Next.js 16 and Supabase. It serves French-speaking users (crèches) with a soft pastel design system.
+**Luniqo** (formerly cLean) is a modern childcare management application with HACCP traceability, built with Next.js 15 and Supabase. It serves French-speaking users (crèches) with a soft pastel design system and features a friendly baby mascot with the letter "L".
 
 ## Development Commands
 
@@ -169,7 +169,7 @@ Key files:
 **User System**
 - `developer`, `admin`, `enterprise`, `user`, `user_rooms`
 
-**cLean Module (Cleaning)**
+**Luniqo Module (Cleaning)**
 - `room`, `task_template`, `assigned_task`, `cleaning_session`, `cleaning_log`, `export`
 
 **HACCP Module (Food Safety)**
@@ -248,6 +248,14 @@ NODE_ENV=development
 
 8. **Select Components**: Never use `value=""` in shadcn Select components. Use `value="none"` instead and convert to empty string in handlers. See DESIGN-SYSTEM.md for pattern.
 
+9. **Date and Timezone Handling**: **CRITICAL** - Always use local timezone date utilities from `lib/utils/date.ts` to avoid timezone bugs:
+   - **NEVER** use `toISOString().split('T')[0]` for date formatting - this converts to UTC and causes timezone mismatches
+   - **ALWAYS** use `formatDateLocal(date)` to format Date objects to YYYY-MM-DD in local timezone
+   - **ALWAYS** use `getTodayLocal()` to get today's date as YYYY-MM-DD in local timezone
+   - Use `getDateWithOffset(offset)` for dates with day offsets
+   - **Example of the bug**: December 3rd at 01:00 in France (UTC+1) becomes December 2nd when using `toISOString()` because it converts to UTC
+   - See [lib/utils/date.ts](lib/utils/date.ts:1-27) for the utility functions
+
 ## Database Setup
 
 1. Create Supabase project at [supabase.com](https://supabase.com)
@@ -287,8 +295,54 @@ When creating a new page:
 
 **Refer to DESIGN-SYSTEM.md for detailed patterns and examples.**
 
+## Performance Optimizations
+
+The app has been heavily optimized for fast page transitions and reduced latency:
+
+1. **Next.js 15 (Stable)** - Downgraded from Next.js 16 for stability and better performance
+2. **React 18** - Downgraded from React 19 for ecosystem compatibility
+3. **Removed `force-dynamic`** - Allows Next.js to cache and optimize pages automatically
+4. **Session Caching (30s TTL)** - AuthContext caches session checks to avoid redundant DB queries
+5. **Optimized Middleware** - Removed expensive DB queries from middleware (moved to client-side)
+6. **Reduced Timeout** - Session check timeout reduced from 30s to 5s for faster error detection
+7. **Optimistic Client Cache** - Enabled in Next.js config for instant navigation
+8. **Package Import Optimization** - Tree-shaking for @heroicons/react and recharts
+9. **Loading States** - Added loading.tsx files for instant feedback during navigation
+10. **Removed visibility check** - No more session refresh when switching apps
+
+**Key files modified:**
+- [lib/contexts/AuthContext.tsx](lib/contexts/AuthContext.tsx:20-62) - Added 30s cache + reduced timeout
+- [lib/supabase/middleware.ts](lib/supabase/middleware.ts:61-62) - Removed admin/enterprise checks
+- [app/(dashboard)/layout.tsx](app/(dashboard)/layout.tsx:1-2) - Removed force-dynamic
+- [next.config.ts](next.config.ts:13-32) - Added performance optimizations
+
 ## Recent Updates
 
+- ✅ **Critical Timezone Bug Fix** (2025-12-03) - Fixed task status mismatch between session detail and calendar
+  - **Root cause**: Using `toISOString().split('T')[0]` converted dates to UTC, causing mismatches
+  - **Solution**: Created `lib/utils/date.ts` with local timezone utilities (`formatDateLocal()`, `getTodayLocal()`, `getDateWithOffset()`)
+  - **Files updated**: `lib/services/calendar.service.ts` (3 locations), `lib/services/sessions.service.ts` (1 location)
+  - **Impact**: Tasks now correctly show completion status across all views
+- ✅ **Session Status Simplification** (2025-12-03) - Reduced session statuses from 3 to 2
+  - Removed "INCOMPLETE" status - sessions are now only "EN_COURS" or "COMPLETEE"
+  - Auto-completion logic: sessions automatically update to "COMPLETEE" when all tasks are done
+  - Created migration `06_simplify_session_status.sql` to handle PostgreSQL enum alteration with DEFAULT constraints
+  - Removed manual status change buttons from UI
+- ✅ **Session Detail Page Redesign** (2025-12-03) - Applied "Douceur Professionnelle" design system
+  - Now shows ALL assigned tasks (not just completed ones)
+  - Visual states: green for done, yellow for partial, gray for pending
+  - "Marquer" button appears on hover for pending tasks
+  - Tasks grouped by room with dynamic styling based on completion status
+- ✅ **Performance Overhaul** (2025-12-03) - Massive reduction in page transition times
+  - Downgraded to Next.js 15 & React 18 for stability
+  - Added session caching and removed force-dynamic
+  - Optimized middleware to avoid DB queries on every request
+  - Added loading states for better UX
+- ✅ **Rebranding to Luniqo** (2025-12-03) - Complete brand identity update with new logo
+  - New baby mascot logo with letter "L" integrated across all pages
+  - Sidebar modernized with gradient backgrounds and nested rounded corners
+  - Module color backgrounds applied to navigation links
+  - Metadata and favicons updated with Luniqo branding
 - ✅ First login flow for new admins with enterprise creation
 - ✅ Profile page with modern shadcn/ui components
 - ✅ Badge component migrated to shadcn standard with extended variants
@@ -297,4 +351,4 @@ When creating a new page:
 
 ---
 
-**Last updated**: 2025-11-19
+**Last updated**: 2025-12-03

@@ -71,17 +71,18 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-neutral-200">
-      <SidebarHeader className="border-b border-neutral-200 p-4">
+      <SidebarHeader className="border-b border-neutral-200 p-4 bg-gradient-to-br from-primary-50 to-white">
         <div className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-lg flex-shrink-0">
-            <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-              <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
-            </svg>
+          <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
+            <img
+              src="/luniqo.png"
+              alt="Luniqo"
+              className="w-full h-full object-contain"
+            />
           </div>
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-            <span className="text-xl font-bold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-              cLean
+            <span className="text-xl font-bold text-primary-700" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+              Luniqo
             </span>
             {enterprise && (
               <span className="text-xs text-muted-foreground truncate max-w-[160px]">
@@ -95,7 +96,7 @@ export function AppSidebar() {
       <SidebarContent>
         {/* Main Navigation */}
         {filteredMainNav.length > 0 && (
-          <SidebarGroup>
+          <SidebarGroup className="px-2">
             <SidebarGroupLabel>Principal</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
@@ -112,17 +113,13 @@ export function AppSidebar() {
                         asChild
                         isActive={isActive}
                         tooltip={item.name}
-                        className={isActive ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white hover:from-primary-600 hover:to-primary-700' : ''}
+                        className={isActive ? 'text-white' : ''}
+                        style={isActive && item.moduleColor ? {
+                          background: `linear-gradient(to right, ${item.moduleColor}, ${item.moduleColor}dd)`,
+                        } : {}}
                       >
-                        <Link href={item.href} className="flex items-center relative">
-                          {/* Indicateur de couleur module (visible quand actif) */}
-                          {isActive && item.moduleColor && (
-                            <div
-                              className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full"
-                              style={{ backgroundColor: item.moduleColor }}
-                            />
-                          )}
-                          <Icon className="w-5 h-5" />
+                        <Link href={item.href} className="flex items-center relative group/item">
+                          <Icon className="w-5 h-5 transition-transform duration-300 group-hover/item:scale-110" />
                           <span>{item.name}</span>
                         </Link>
                       </SidebarMenuButton>
@@ -138,7 +135,7 @@ export function AppSidebar() {
         {filteredOperationsNav.length > 0 && (
           <>
             <SidebarSeparator />
-            <SidebarGroup>
+            <SidebarGroup className="px-2">
               <SidebarGroupLabel>Opérations</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
@@ -155,17 +152,13 @@ export function AppSidebar() {
                           asChild
                           isActive={isActive}
                           tooltip={item.name}
-                          className={isActive ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white hover:from-primary-600 hover:to-primary-700' : ''}
+                          className={isActive ? 'text-white rounded-md' : 'rounded-md'}
+                          style={isActive && item.moduleColor ? {
+                            background: `linear-gradient(to right, ${item.moduleColor}, ${item.moduleColor}dd)`,
+                          } : {}}
                         >
-                          <Link href={item.href} className="flex items-center relative">
-                            {/* Indicateur de couleur module (visible quand actif) */}
-                            {isActive && item.moduleColor && (
-                              <div
-                                className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full"
-                                style={{ backgroundColor: item.moduleColor }}
-                              />
-                            )}
-                            <Icon className="w-5 h-5" />
+                          <Link href={item.href} className="flex items-center relative group/item">
+                            <Icon className="w-5 h-5 transition-transform duration-300 group-hover/item:scale-110" />
                             <span>{item.name}</span>
                           </Link>
                         </SidebarMenuButton>
@@ -182,7 +175,7 @@ export function AppSidebar() {
         {filteredCommunicationNav.length > 0 && (
           <>
             <SidebarSeparator />
-            <SidebarGroup>
+            <SidebarGroup className="px-2">
               <SidebarGroupLabel>Communication</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
@@ -199,17 +192,13 @@ export function AppSidebar() {
                           asChild
                           isActive={isActive}
                           tooltip={item.name}
-                          className={isActive ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white hover:from-primary-600 hover:to-primary-700' : ''}
+                          className={isActive ? 'text-white rounded-md' : 'rounded-md'}
+                          style={isActive && item.moduleColor ? {
+                            background: `linear-gradient(to right, ${item.moduleColor}, ${item.moduleColor}dd)`,
+                          } : {}}
                         >
-                          <Link href={item.href} className="flex items-center relative">
-                            {/* Indicateur de couleur module (visible quand actif) */}
-                            {isActive && item.moduleColor && (
-                              <div
-                                className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full"
-                                style={{ backgroundColor: item.moduleColor }}
-                              />
-                            )}
-                            <Icon className="w-5 h-5" />
+                          <Link href={item.href} className="flex items-center relative group/item">
+                            <Icon className="w-5 h-5 transition-transform duration-300 group-hover/item:scale-110" />
                             <span>{item.name}</span>
                           </Link>
                         </SidebarMenuButton>
@@ -223,12 +212,12 @@ export function AppSidebar() {
         )}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-neutral-200">
+      <SidebarFooter className="border-t border-neutral-200 bg-gradient-to-br from-neutral-50 to-white px-2">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Mon Profil">
-              <Link href="/dashboard/profil">
-                <Cog6ToothIcon className="w-5 h-5" />
+            <SidebarMenuButton asChild tooltip="Mon Profil" className="rounded-md">
+              <Link href="/dashboard/profil" className="group/footer">
+                <Cog6ToothIcon className="w-5 h-5 transition-transform duration-300 group-hover/footer:rotate-90" />
                 <span>Mon Profil</span>
               </Link>
             </SidebarMenuButton>
@@ -238,7 +227,7 @@ export function AppSidebar() {
         <div className="px-2 py-2 group-data-[collapsible=icon]:hidden">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <div className="w-2 h-2 rounded-full bg-success-500 animate-pulse"></div>
-            <span>v1.0.0 • SaaS 2025</span>
+            <span>v1.0.0 • Luniqo 2025</span>
           </div>
         </div>
       </SidebarFooter>

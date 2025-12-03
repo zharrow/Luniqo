@@ -1,6 +1,6 @@
 # API-PATTERNS.md
 
-Guide des patterns de requêtes Supabase pour **cLean**. Ce document contient tous les patterns réutilisables pour interagir avec la base de données.
+Guide des patterns de requêtes Supabase pour **Luniqo**. Ce document contient tous les patterns réutilisables pour interagir avec la base de données.
 
 **Dernière mise à jour**: 2025-11-19
 
@@ -782,7 +782,7 @@ const createUser = async (
 }
 ```
 
-### Module cLean (Cleaning)
+### Module Luniqo (Cleaning)
 
 ```typescript
 // ✅ Créer/récupérer la session du jour

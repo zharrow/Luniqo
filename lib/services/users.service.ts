@@ -6,6 +6,7 @@ export interface User {
   email: string | null
   first_name: string
   last_name: string
+  avatar: string | null
   pin_code: string
   enterprise_id: string
   is_active: boolean
@@ -23,6 +24,7 @@ export interface CreateUserInput {
   last_name: string
   email?: string
   pin: string // Plain PIN, will be hashed
+  avatar?: string
   room_ids?: string[] // Rooms to grant access to
 }
 
@@ -31,6 +33,7 @@ export interface UpdateUserInput {
   last_name?: string
   email?: string
   pin?: string // Plain PIN, will be hashed if provided
+  avatar?: string
   is_active?: boolean
 }
 
@@ -119,6 +122,7 @@ export class UsersService {
         first_name: input.first_name,
         last_name: input.last_name,
         email: input.email || null,
+        avatar: input.avatar || null,
         pin_code: hashedPin,
         is_active: true
       })

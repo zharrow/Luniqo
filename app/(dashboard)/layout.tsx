@@ -1,4 +1,5 @@
-export const dynamic = 'force-dynamic'
+// Removed 'force-dynamic' to enable Next.js optimizations (caching, prefetch, etc.)
+// This drastically improves page transition speed
 
 export default function DashboardGroupLayout({
   children,

@@ -189,21 +189,53 @@ async function seedTasks(enterpriseId: string) {
   console.log('📋 Creating task templates...')
 
   const tasks = [
+    // Sols
     { name: 'Aspirer les sols', category: 'Sols', estimated_duration: 15 },
     { name: 'Laver les sols', category: 'Sols', estimated_duration: 20 },
-    { name: 'Désinfecter les surfaces', category: 'Hygiène', estimated_duration: 10 },
-    { name: 'Nettoyer les sanitaires', category: 'Sanitaires', estimated_duration: 15 },
-    { name: 'Vider les poubelles', category: 'Entretien', estimated_duration: 5 },
-    { name: 'Nettoyer les vitres', category: 'Vitres', estimated_duration: 30 },
-    { name: 'Désinfecter les jouets', category: 'Hygiène', estimated_duration: 45 },
-    { name: 'Nettoyer les climatiseurs', category: 'Entretien', estimated_duration: 60 },
     { name: 'Shampouiner la moquette', category: 'Sols', estimated_duration: 90 },
-    { name: 'Inventaire produits', category: 'Gestion', estimated_duration: 120 }
+    { name: 'Décaper les sols', category: 'Sols', estimated_duration: 60 },
+
+    // Hygiène
+    { name: 'Désinfecter les surfaces', category: 'Hygiène', estimated_duration: 10 },
+    { name: 'Désinfecter les jouets', category: 'Hygiène', estimated_duration: 45 },
+    { name: 'Désinfecter les tables à langer', category: 'Hygiène', estimated_duration: 15 },
+    { name: 'Désinfecter les chaises hautes', category: 'Hygiène', estimated_duration: 20 },
+    { name: 'Nettoyer les tapis d\'éveil', category: 'Hygiène', estimated_duration: 30 },
+
+    // Sanitaires
+    { name: 'Nettoyer les sanitaires', category: 'Sanitaires', estimated_duration: 15 },
+    { name: 'Désinfecter les toilettes enfants', category: 'Sanitaires', estimated_duration: 10 },
+    { name: 'Nettoyer les lavabos', category: 'Sanitaires', estimated_duration: 10 },
+    { name: 'Réapprovisionner les sanitaires', category: 'Sanitaires', estimated_duration: 5 },
+
+    // Entretien
+    { name: 'Vider les poubelles', category: 'Entretien', estimated_duration: 5 },
+    { name: 'Nettoyer les climatiseurs', category: 'Entretien', estimated_duration: 60 },
+    { name: 'Dépoussiérer les meubles', category: 'Entretien', estimated_duration: 20 },
+    { name: 'Nettoyer les portes et poignées', category: 'Entretien', estimated_duration: 15 },
+    { name: 'Nettoyer les plinthes', category: 'Entretien', estimated_duration: 25 },
+
+    // Vitres
+    { name: 'Nettoyer les vitres', category: 'Vitres', estimated_duration: 30 },
+    { name: 'Nettoyer les miroirs', category: 'Vitres', estimated_duration: 15 },
+
+    // Cuisine
+    { name: 'Nettoyer le réfrigérateur', category: 'Cuisine', estimated_duration: 45 },
+    { name: 'Nettoyer le four', category: 'Cuisine', estimated_duration: 60 },
+    { name: 'Désinfecter les plans de travail', category: 'Cuisine', estimated_duration: 15 },
+    { name: 'Nettoyer la vaisselle', category: 'Cuisine', estimated_duration: 30 },
+
+    // Extérieur
+    { name: 'Balayer la cour', category: 'Extérieur', estimated_duration: 20 },
+    { name: 'Nettoyer les jeux extérieurs', category: 'Extérieur', estimated_duration: 30 },
+
+    // Gestion
+    { name: 'Inventaire produits', category: 'Gestion', estimated_duration: 120 },
+    { name: 'Vérifier les stocks de nettoyage', category: 'Gestion', estimated_duration: 15 }
   ].map(t => ({
     ...t,
     enterprise_id: enterpriseId,
     description: `Tâche de ${t.category.toLowerCase()}`,
-    default_duration: t.estimated_duration,
     is_active: true
   }))
 
@@ -222,10 +254,7 @@ async function seedEmployees(enterpriseId: string, adminId: string, roomIds: str
 
   const employees = [
     { first_name: 'Sophie', last_name: 'Bernard', email: 'sophie@example.com', pin: '1234' },
-    { first_name: 'Lucas', last_name: 'Petit', email: 'lucas@example.com', pin: '2345' },
-    { first_name: 'Emma', last_name: 'Moreau', email: 'emma@example.com', pin: '3456' },
-    { first_name: 'Léa', last_name: 'Roux', email: 'lea@example.com', pin: '4567' },
-    { first_name: 'Thomas', last_name: 'Leroy', email: 'thomas@example.com', pin: '5678' }
+    { first_name: 'Lucas', last_name: 'Petit', email: 'lucas@example.com', pin: '2345' }
   ].map(e => ({
     ...e,
     enterprise_id: enterpriseId,
@@ -257,56 +286,6 @@ async function seedEmployees(enterpriseId: string, adminId: string, roomIds: str
   if (roomError) throw roomError
   console.log(`✅ Created ${employeeRoomAccess.length} employee-room access assignment(s)`)
 
-  return data
-}
-
-async function seedAssignedTasks(enterpriseId: string, roomIds: string[], taskIds: string[], employeeIds: string[]) {
-  console.log('🔗 Assigning tasks to rooms...')
-
-  const assignedTasks = roomIds.flatMap(roomId =>
-    taskIds.slice(0, 5).map(taskId => ({
-      room_id: roomId,
-      task_template_id: taskId,
-      default_performer_id: employeeIds[Math.floor(Math.random() * employeeIds.length)],
-      is_active: true
-    }))
-  )
-
-  const { data, error } = await supabase
-    .from('assigned_task')
-    .insert(assignedTasks)
-    .select()
-
-  if (error) throw error
-  console.log(`✅ Created ${data.length} assigned task(s)`)
-  return data
-}
-
-async function seedDailyCleaningSessions(enterpriseId: string) {
-  console.log('📅 Creating daily cleaning sessions...')
-
-  const sessions = []
-  const today = new Date()
-
-  // Create sessions for last 7 days
-  for (let i = 0; i < 7; i++) {
-    const date = new Date(today)
-    date.setDate(date.getDate() - i)
-
-    sessions.push({
-      enterprise_id: enterpriseId,
-      date: date.toISOString().split('T')[0],
-      status: i === 0 ? 'EN_COURS' : (i % 3 === 0 ? 'INCOMPLETE' : 'COMPLETEE')
-    })
-  }
-
-  const { data, error } = await supabase
-    .from('daily_cleaning_session')
-    .insert(sessions)
-    .select()
-
-  if (error) throw error
-  console.log(`✅ Created ${data.length} daily cleaning session(s)`)
   return data
 }
 
@@ -408,15 +387,6 @@ async function main() {
     const tasks = await seedTasks(enterprise1.id)
     const employees = await seedEmployees(enterprise1.id, admin1.id, rooms.map(r => r.id))
 
-    await seedAssignedTasks(
-      enterprise1.id,
-      rooms.map(r => r.id),
-      tasks.map(t => t.id),
-      employees.map(e => e.id)
-    )
-
-    const sessions = await seedDailyCleaningSessions(enterprise1.id)
-
     // HACCP data
     const children = await seedChildren(enterprise1.id)
     const suppliers = await seedSuppliers(enterprise1.id)
@@ -430,13 +400,12 @@ async function main() {
     console.log(`   • ${rooms.length} room(s)`)
     console.log(`   • ${tasks.length} task template(s)`)
     console.log(`   • ${employees.length} employee(s)`)
-    console.log(`   • ${sessions.length} daily cleaning session(s)`)
     console.log(`   • ${children.length} child(ren)`)
     console.log(`   • ${suppliers.length} supplier(s)`)
     console.log(`   • ${products.length} product(s)`)
     console.log('\n🔑 Test Credentials:')
     console.log('   Admin: admin@petitspas.fr / admin123')
-    console.log('   Employee PIN: 1234, 2345, 3456, 4567, 5678')
+    console.log('   Employee PIN: 1234, 2345')
 
   } catch (error) {
     console.error('\n❌ Error seeding database:', error)

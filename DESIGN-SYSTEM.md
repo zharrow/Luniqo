@@ -1,21 +1,22 @@
 # DESIGN-SYSTEM.md
 
-Guide complet du design system de **cLean** - Application de gestion de crèches avec traçabilité HACCP.
+Guide complet du design system de **Luniqo** - Application de gestion de crèches avec traçabilité HACCP.
 
-**Dernière mise à jour**: 2025-12-02
+**Dernière mise à jour**: 2025-12-03 - **Ajout du style "Douceur Professionnelle"** ⭐
 
 ---
 
 ## 📋 Table des matières
 
 1. [Palette de couleurs](#palette-de-couleurs)
-2. [Typographie](#typographie)
-3. [Composants shadcn/ui](#composants-shadcnui)
-4. [Composants customs](#composants-customs)
-5. [Layouts](#layouts)
-6. [Patterns d'interface](#patterns-dinterface)
-7. [Responsive Design](#responsive-design)
-8. [Iconographie](#iconographie)
+2. [Style "Douceur Professionnelle"](#style-douceur-professionnelle) ⭐ **NOUVEAU**
+3. [Typographie](#typographie)
+4. [Composants shadcn/ui](#composants-shadcnui)
+5. [Composants customs](#composants-customs)
+6. [Layouts](#layouts)
+7. [Patterns d'interface](#patterns-dinterface)
+8. [Responsive Design](#responsive-design)
+9. [Iconographie](#iconographie)
 
 ---
 
@@ -163,7 +164,7 @@ className="bg-[#e8eaf6] text-[#6870a0] border-[#9fa8da]"
 </Badge>
 ```
 
-### Gradients signature cLean
+### Gradients signature Luniqo
 
 ```tsx
 // Gradient principal (bleu - module Clean)
@@ -178,6 +179,344 @@ className="bg-gradient-to-r from-[#5a9dc9] to-[#2c5f7f] bg-clip-text text-transp
 // Gradient card hover avec couleur module
 className="hover:bg-gradient-to-br from-[#e3f2fd] to-white"
 ```
+
+---
+
+## Style "Douceur Professionnelle"
+
+⭐ **Nouveau design system 2025** - Style minimaliste, moderne et chaleureux adapté à l'univers de la petite enfance.
+
+### 🎨 Philosophie du design
+
+Le style "Douceur Professionnelle" combine :
+- ✨ **Minimalisme élégant** (inspiration Apple, Arc Browser)
+- 🎨 **Chaleur pastel** (univers petite enfance)
+- 💎 **Profondeur subtile** (ombres douces, effet flottant)
+- 🎯 **Micro-interactions ludiques** (rotation, scale, animations)
+
+### 📐 Anatomie d'une carte moderne
+
+```tsx
+<a
+  href="/dashboard/action"
+  className="relative rounded-3xl p-6 bg-white hover:-translate-y-1 hover:shadow-[0_16px_48px_-12px_rgba(90,157,201,0.25)] transition-all duration-300 group overflow-hidden border border-[#5a9dc9]/20"
+>
+  {/* 1. Gradient pastel doux en fond */}
+  <div className="absolute inset-0 bg-gradient-to-br from-[#f8fbfd] to-white opacity-60"></div>
+
+  <div className="relative z-10 flex items-start justify-between">
+    <div className="flex-1">
+      {/* 2. Icône avec badge coloré et animation */}
+      <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-[#5a9dc9]/10 to-[#5a9dc9]/5 mb-4 group-hover:scale-105 group-hover:rotate-2 transition-all duration-300">
+        <IconComponent className="w-6 h-6 text-[#5a9dc9]" strokeWidth={1.5} />
+      </div>
+
+      {/* 3. Contenu textuel */}
+      <div>
+        <h3 className="font-semibold text-lg text-gray-900 mb-1 tracking-tight">
+          Titre action
+        </h3>
+        <p className="text-sm text-gray-600">
+          Description de l'action
+        </p>
+      </div>
+    </div>
+
+    {/* 4. Chevron animé (apparaît au hover) */}
+    <div className="mt-3 w-8 h-8 rounded-full bg-[#5a9dc9]/8 flex items-center justify-center opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
+      <svg className="w-4 h-4 text-[#5a9dc9]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+      </svg>
+    </div>
+  </div>
+
+  {/* 5. Status indicator avec pulse (optionnel) */}
+  <div className="absolute bottom-5 right-5 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+    <div className="relative">
+      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+      <div className="absolute inset-0 rounded-full bg-green-500 animate-ping opacity-75"></div>
+    </div>
+    <span className="text-xs text-gray-500 font-medium">Disponible</span>
+  </div>
+</a>
+```
+
+### 🎯 Les 5 éléments clés
+
+#### 1. **Bordure colorée fine (opacité 20%)**
+
+```tsx
+// Bordure tout autour avec la couleur du module
+border border-[#5a9dc9]/20  // Bleu Clean (20% opacity)
+border border-[#81c995]/20  // Vert HACCP
+border border-[#f4a5a5]/20  // Rose Users
+border border-[#aed581]/20  // Lime Tasks
+```
+
+**Pourquoi ?**
+- Plus élégant qu'une bordure gauche épaisse
+- Identité visuelle subtile sans être invasive
+- S'harmonise avec les gradients pastels
+
+#### 2. **Ombres colorées au hover**
+
+```tsx
+// Ombre douce qui reprend la couleur du module
+hover:shadow-[0_16px_48px_-12px_rgba(90,157,201,0.25)]  // Bleu
+hover:shadow-[0_16px_48px_-12px_rgba(129,201,149,0.25)] // Vert
+hover:shadow-[0_16px_48px_-12px_rgba(244,165,165,0.25)] // Rose
+```
+
+**Décomposition de l'ombre :**
+- `0_16px` : décalage vertical (vers le bas)
+- `48px` : blur radius (flou important = doux)
+- `-12px` : spread (négatif pour concentrer)
+- `rgba(..., 0.25)` : opacité 25% (très subtil)
+
+#### 3. **Animations au hover**
+
+```tsx
+// Carte qui "flotte"
+hover:-translate-y-1        // Lève la carte de 4px
+transition-all duration-300 // Transition douce
+
+// Icône qui tourne et grandit
+group-hover:scale-105 group-hover:rotate-2  // +5% taille, 2° rotation
+transition-all duration-300
+
+// Chevron qui glisse
+opacity-0 -translate-x-2                    // État initial (invisible, décalé)
+group-hover:opacity-100 group-hover:translate-x-0  // Au hover (visible, position normale)
+```
+
+#### 4. **Gradients pastels en fond**
+
+```tsx
+// Gradient très doux en arrière-plan (opacity 60%)
+<div className="absolute inset-0 bg-gradient-to-br from-[#f8fbfd] to-white opacity-60"></div>
+
+// Variations par module
+from-[#f8fbfd] to-white  // Clean (bleu très pâle)
+from-[#f1f9f3] to-white  // HACCP (vert très pâle)
+from-[#fef6f7] to-white  // Users (rose très pâle)
+from-[#f9fcf5] to-white  // Tasks (lime très pâle)
+```
+
+#### 5. **Rondeurs généreuses**
+
+```tsx
+rounded-3xl  // 24px border-radius (vs rounded-xl = 12px)
+```
+
+**Effet :** Plus doux, plus "cocon", moins corporate.
+
+### 📦 Composant Card réutilisable
+
+Créez un composant `ModuleCard` pour standardiser :
+
+```tsx
+// components/shared/ModuleCard.tsx
+import { ReactNode } from 'react'
+
+interface ModuleCardProps {
+  module: 'clean' | 'haccp' | 'users' | 'tasks' | 'calendar' | 'settings' | 'communication' | 'analytics'
+  href: string
+  icon: ReactNode
+  title: string
+  description: string
+  status?: { label: string; active: boolean }
+  chevron?: boolean
+  size?: 'sm' | 'md' | 'lg'
+}
+
+const moduleColors = {
+  clean: { primary: '#5a9dc9', light: '#f8fbfd', dark: '#2c5f7f', shadow: 'rgba(90,157,201,0.25)' },
+  haccp: { primary: '#81c995', light: '#f1f9f3', dark: '#4a8f5a', shadow: 'rgba(129,201,149,0.25)' },
+  users: { primary: '#f4a5a5', light: '#fef6f7', dark: '#c66b6b', shadow: 'rgba(244,165,165,0.25)' },
+  tasks: { primary: '#aed581', light: '#f9fcf5', dark: '#7da453', shadow: 'rgba(174,213,129,0.25)' },
+  calendar: { primary: '#ffab91', light: '#fffaf8', dark: '#d97557', shadow: 'rgba(255,171,145,0.25)' },
+  settings: { primary: '#b39ddb', light: '#faf8fc', dark: '#7e57a3', shadow: 'rgba(179,157,219,0.25)' },
+  communication: { primary: '#64b5d1', light: '#e0f7fa', dark: '#3a7a8f', shadow: 'rgba(100,181,209,0.25)' },
+  analytics: { primary: '#9fa8da', light: '#e8eaf6', dark: '#6870a0', shadow: 'rgba(159,168,218,0.25)' }
+}
+
+export function ModuleCard({
+  module,
+  href,
+  icon,
+  title,
+  description,
+  status,
+  chevron = true,
+  size = 'md'
+}: ModuleCardProps) {
+  const colors = moduleColors[module]
+  const padding = size === 'lg' ? 'p-6' : 'p-5'
+  const iconSize = size === 'lg' ? 'w-12 h-12' : 'w-10 h-10'
+
+  return (
+    <a
+      href={href}
+      className={`relative rounded-3xl ${padding} bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden`}
+      style={{
+        border: `1px solid ${colors.primary}33`, // 33 = 20% opacity en hex
+        boxShadow: `0 0 0 0 ${colors.shadow}` // Initial shadow
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = `0 16px 48px -12px ${colors.shadow}`
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = `0 0 0 0 ${colors.shadow}`
+      }}
+    >
+      {/* Gradient fond */}
+      <div
+        className="absolute inset-0 opacity-60"
+        style={{ background: `linear-gradient(to bottom right, ${colors.light}, white)` }}
+      />
+
+      <div className="relative z-10 flex items-start justify-between">
+        <div className="flex-1">
+          {/* Icône */}
+          <div
+            className={`inline-flex items-center justify-center ${iconSize} rounded-2xl mb-3 group-hover:scale-105 group-hover:rotate-2 transition-all duration-300`}
+            style={{
+              background: `linear-gradient(to bottom right, ${colors.primary}1A, ${colors.primary}0D)`
+            }}
+          >
+            <div style={{ color: colors.dark }}>
+              {icon}
+            </div>
+          </div>
+
+          {/* Texte */}
+          <div>
+            <h3 className={`font-semibold text-gray-900 mb-0.5 tracking-tight ${size === 'lg' ? 'text-lg' : 'text-base'}`}>
+              {title}
+            </h3>
+            <p className="text-xs text-gray-600">{description}</p>
+          </div>
+        </div>
+
+        {/* Chevron optionnel */}
+        {chevron && (
+          <div
+            className="mt-3 w-8 h-8 rounded-full flex items-center justify-center opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300"
+            style={{ backgroundColor: `${colors.primary}14` }}
+          >
+            <svg className="w-4 h-4" style={{ color: colors.primary }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        )}
+      </div>
+
+      {/* Status indicator optionnel */}
+      {status && (
+        <div className="absolute bottom-5 right-5 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="relative">
+            <div className={`w-2 h-2 rounded-full ${status.active ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+            {status.active && (
+              <div className="absolute inset-0 rounded-full bg-green-500 animate-ping opacity-75"></div>
+            )}
+          </div>
+          <span className="text-xs text-gray-500 font-medium">{status.label}</span>
+        </div>
+      )}
+    </a>
+  )
+}
+```
+
+### 🎯 Utilisation du composant
+
+```tsx
+import { ModuleCard } from '@/components/shared/ModuleCard'
+import { ClipboardDocumentCheckIcon, BeakerIcon } from '@heroicons/react/24/outline'
+
+// Dans votre page
+<div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+  {/* Grande carte */}
+  <div className="col-span-2">
+    <ModuleCard
+      module="clean"
+      href="/dashboard/sessions"
+      icon={<ClipboardDocumentCheckIcon className="w-6 h-6" strokeWidth={1.5} />}
+      title="Nouvelle session"
+      description="Démarrer une session de nettoyage"
+      status={{ label: 'Disponible', active: true }}
+      size="lg"
+    />
+  </div>
+
+  {/* Carte normale */}
+  <ModuleCard
+    module="haccp"
+    href="/dashboard/haccp"
+    icon={<BeakerIcon className="w-5 h-5" strokeWidth={1.5} />}
+    title="HACCP"
+    description="Traçabilité"
+  />
+</div>
+```
+
+### 🎨 Variantes de design
+
+#### Carte sans chevron (plus sobre)
+
+```tsx
+<ModuleCard chevron={false} {...props} />
+```
+
+#### Carte avec bordure plus marquée (hover)
+
+```tsx
+// Ajouter une classe custom
+className="hover:border-[#5a9dc9]/40"  // Passe de 20% à 40% au hover
+```
+
+#### Carte avec effet glow (plus moderne)
+
+```tsx
+// Ajouter après le gradient de fond
+<div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+  <div
+    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200px] h-[200px] rounded-full blur-3xl"
+    style={{ backgroundColor: `${colors.primary}33` }}
+  />
+</div>
+```
+
+### ✅ Checklist pour appliquer ce style
+
+Quand vous créez une nouvelle carte/module :
+
+- [ ] **Bordure colorée fine** : `border border-[COULEUR]/20`
+- [ ] **Ombre colorée au hover** : `hover:shadow-[0_16px_48px_-12px_rgba(...,0.25)]`
+- [ ] **Effet flottant** : `hover:-translate-y-1`
+- [ ] **Rondeurs généreuses** : `rounded-3xl`
+- [ ] **Gradient pastel en fond** : `bg-gradient-to-br from-[COULEUR_LIGHT] to-white opacity-60`
+- [ ] **Icône avec badge animé** : `group-hover:scale-105 group-hover:rotate-2`
+- [ ] **Transitions fluides** : `transition-all duration-300`
+- [ ] **Chevron animé (optionnel)** : Apparaît au hover avec `translate-x`
+- [ ] **Status indicator (optionnel)** : Avec animation `ping` pour l'état actif
+
+### 🚫 Erreurs à éviter
+
+❌ **Ne pas faire :**
+- Bordure gauche épaisse (`border-l-4`) - trop "lourd"
+- Bordure grise générique (`border-gray-200`) - perd l'identité du module
+- Ligne colorée en haut uniquement - crée un déséquilibre visuel
+- Ombres noires dures (`shadow-lg`) - trop brutal
+- Animations trop rapides (`duration-100`) - effet saccadé
+- Bordures trop opaques (`/50` ou plus) - trop visible
+
+✅ **À faire :**
+- Bordure fine colorée tout autour (`border-[COULEUR]/20`)
+- Ombres colorées douces au hover
+- Animations à `duration-300` minimum
+- Gradients pastels en fond avec `opacity-60`
+- Micro-rotations subtiles (`rotate-2`)
 
 ---
 
@@ -954,13 +1293,16 @@ import { motion, AnimatePresence } from 'framer-motion'
 ### ✅ À faire
 
 1. **Toujours utiliser les composants shadcn/ui** quand disponibles
-2. **Respecter la palette de couleurs pastel**
-3. **Utiliser des gradients pour les éléments importants** (CTA, titres)
-4. **Ajouter des icônes** pour une meilleure lisibilité
-5. **Prévoir des états vides** (EmptyState)
-6. **Afficher des messages de feedback** (succès/erreur)
-7. **Responsive first** - toujours tester sur mobile
-8. **Utiliser le système de grid** pour les listes
+2. **Appliquer le style "Douceur Professionnelle"** pour toutes les nouvelles cartes/modules (voir section dédiée)
+3. **Respecter la palette de couleurs pastel** avec bordures colorées à 20% d'opacité
+4. **Utiliser des gradients pastels** en fond de carte avec `opacity-60`
+5. **Ajouter des micro-animations** (scale, rotate au hover) pour la ludification
+6. **Ajouter des icônes** pour une meilleure lisibilité
+7. **Prévoir des états vides** (EmptyState)
+8. **Afficher des messages de feedback** (succès/erreur)
+9. **Responsive first** - toujours tester sur mobile
+10. **Utiliser le système de grid** pour les listes
+11. **Ombres colorées au hover** qui reprennent la couleur du module
 
 ### ❌ À éviter
 
@@ -970,6 +1312,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 4. ❌ Ne pas utiliser des couleurs hors palette
 5. ❌ Ne pas oublier les états de chargement
 6. ❌ Ne pas oublier la protection par rôle (`useRequireAuth`)
+7. ❌ **Ne pas utiliser de bordures gauche épaisses** (`border-l-4`) - préférer les bordures fines tout autour
+8. ❌ **Ne pas utiliser d'ombres noires dures** (`shadow-lg`) - préférer les ombres colorées douces
+9. ❌ **Ne pas créer d'animations trop rapides** (`duration-100`) - minimum `duration-300`
+10. ❌ **Ne pas utiliser `rounded-xl`** pour les cartes - préférer `rounded-3xl` (plus doux)
 
 ---
 
@@ -997,16 +1343,30 @@ Voir: `app/(auth)/login/page.tsx`
 
 Quand tu crées une nouvelle page, vérifie :
 
+**🎨 Design & Style**
+- [ ] **Appliquer le style "Douceur Professionnelle"** (voir section dédiée ci-dessus)
+- [ ] Bordures colorées fines (`border-[COULEUR]/20`)
+- [ ] Ombres colorées au hover
+- [ ] Gradients pastels en fond
+- [ ] Micro-animations (scale, rotate)
+- [ ] `rounded-3xl` pour les cartes
+- [ ] Composants shadcn/ui (Card, Button, Badge, etc.)
+- [ ] Icônes Heroicons
+- [ ] Couleurs de la palette pastel
+
+**⚙️ Technique & Sécurité**
 - [ ] Import de `DashboardLayout` ou `DeveloperLayout`
 - [ ] Protection par rôle avec `useAuth()` ou `useRequireAuth()`
 - [ ] Filtre `enterprise_id` dans toutes les requêtes Supabase
 - [ ] État de chargement (`isLoading` + `LoadingSpinner`)
 - [ ] État vide (`EmptyState`)
 - [ ] Messages succès/erreur
+
+**📱 UX & Responsive**
 - [ ] Responsive (grid avec breakpoints md/lg)
-- [ ] Icônes Heroicons
-- [ ] Couleurs de la palette pastel
-- [ ] Composants shadcn/ui (Card, Button, Badge, etc.)
+- [ ] Tests sur mobile/tablette/desktop
+- [ ] Touch targets suffisants (minimum 44x44px)
+- [ ] Navigation claire et intuitive
 
 ---
 
@@ -1014,3 +1374,5 @@ Quand tu crées une nouvelle page, vérifie :
 - Ce design system est évolutif, tu peux ajouter de nouveaux patterns si besoin
 - Toujours privilégier la cohérence avec l'existant
 - Le design doit rester **doux et rassurant** (univers petite enfance)
+- ⭐ **Style "Douceur Professionnelle"** = référence pour toutes les nouvelles cartes/modules
+- Priorité : minimalisme élégant + chaleur pastel + micro-animations ludiques

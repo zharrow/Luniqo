@@ -105,7 +105,7 @@ export default function TabletHomePage() {
         <div className="flex gap-4">
           <button
             onClick={() => router.push('/tablet/haccp')}
-            className="btn bg-success-500 text-white hover:bg-success-600 px-8 py-4 text-xl"
+            className="px-8 py-4 text-xl rounded-xl font-semibold text-white bg-[#81c995] hover:bg-[#4a8f5a] transition-colors shadow-lg"
           >
             <svg className="w-6 h-6 mr-3 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -114,7 +114,7 @@ export default function TabletHomePage() {
           </button>
           <button
             onClick={handleLogout}
-            className="btn bg-danger-500 text-white hover:bg-danger-600 px-8 py-4 text-xl"
+            className="px-8 py-4 text-xl rounded-xl font-semibold text-white bg-destructive hover:opacity-90 transition-opacity shadow-lg"
           >
             <svg className="w-6 h-6 mr-3 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -138,41 +138,50 @@ export default function TabletHomePage() {
             <button
               key={room.id}
               onClick={() => handleRoomSelect(room.id)}
-              className="card p-8 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left group"
+              className="relative rounded-3xl p-8 bg-white hover:-translate-y-1 hover:shadow-[0_16px_48px_-12px_rgba(90,157,201,0.25)] transition-all duration-300 text-left group border border-[#5a9dc9]/20 overflow-hidden"
             >
-              {/* Room Icon */}
-              <div className="w-24 h-24 rounded-2xl bg-primary-100 flex items-center justify-center mb-6 group-hover:bg-primary-500 transition-colors">
-                <svg
-                  className="w-12 h-12 text-primary-500 group-hover:text-white transition-colors"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                  />
-                </svg>
-              </div>
+              {/* Gradient pastel doux en fond */}
+              <div className="absolute inset-0 bg-gradient-to-br from-[#f8fbfd] to-white opacity-60"></div>
 
-              {/* Room Name */}
-              <h2 className="text-3xl font-bold mb-3 group-hover:text-primary-500 transition-colors">
-                {room.name}
-              </h2>
+              <div className="relative z-10">
+                {/* Room Icon avec animation */}
+                <div className="inline-flex items-center justify-center w-24 h-24 rounded-2xl bg-gradient-to-br from-[#5a9dc9]/10 to-[#5a9dc9]/5 mb-6 group-hover:scale-105 group-hover:rotate-2 transition-all duration-300">
+                  <svg
+                    className="w-12 h-12 text-[#5a9dc9]"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                    />
+                  </svg>
+                </div>
 
-              {/* Room Description */}
-              {room.description && (
-                <p className="text-xl text-muted-foreground mb-6">{room.description}</p>
-              )}
+                {/* Room Name */}
+                <h2 className="text-3xl font-bold mb-3 text-gray-900 group-hover:text-[#5a9dc9] transition-colors tracking-tight">
+                  {room.name}
+                </h2>
 
-              {/* Action Arrow */}
-              <div className="flex items-center text-primary-500 text-xl font-semibold group-hover:translate-x-2 transition-transform">
-                Accéder
-                <svg className="w-6 h-6 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
+                {/* Room Description */}
+                {room.description && (
+                  <p className="text-xl text-gray-600 mb-6">{room.description}</p>
+                )}
+
+                {/* Chevron animé */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center text-[#5a9dc9] text-xl font-semibold">
+                    Accéder
+                  </div>
+                  <div className="w-10 h-10 rounded-full bg-[#5a9dc9]/8 flex items-center justify-center opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
+                    <svg className="w-5 h-5 text-[#5a9dc9]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </div>
               </div>
             </button>
           ))}

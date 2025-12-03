@@ -128,7 +128,7 @@ export default function Header() {
         .from('daily_cleaning_session')
         .select('status')
         .eq('enterprise_id', enterpriseId)
-        .eq('session_date', today)
+        .eq('date', today)
         .maybeSingle() as { data: { status: string } | null; error: any }
 
       const completion = todaySession && !sessionError && todaySession.status === 'COMPLETED' ? 100 : 0
@@ -156,9 +156,19 @@ export default function Header() {
 
   return (
     <header className="h-16 bg-white/80 backdrop-blur-xl border-b border-neutral-200 flex items-center justify-between px-6 sticky top-0 z-40">
-      {/* Left section with sidebar trigger */}
+      {/* Left section with sidebar trigger and logo */}
       <div className="flex items-center gap-3">
         <SidebarTrigger className="hover:bg-neutral-100" />
+        <div className="flex items-center gap-2">
+          <img
+            src="/luniqo.png"
+            alt="Luniqo"
+            className="w-8 h-8 object-contain"
+          />
+          <span className="text-lg font-bold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent hidden sm:inline" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+            Luniqo
+          </span>
+        </div>
       </div>
 
       {/* Center section - Stats (Admin only) */}

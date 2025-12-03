@@ -17,10 +17,10 @@ import {
   InformationCircleIcon,
   ArrowDownTrayIcon
 } from '@heroicons/react/24/outline'
-import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { ModuleCard } from '@/components/shared/ModuleCard'
 
 interface HaccpStats {
   totalChildren: number
@@ -42,6 +42,7 @@ export default function HaccpDashboardPage() {
     todayMeals: 0
   })
   const [loading, setLoading] = useState(true)
+  const [exporting, setExporting] = useState(false)
 
   useEffect(() => {
     if (session?.enterprise) {
@@ -67,6 +68,7 @@ export default function HaccpDashboardPage() {
     if (!session?.enterprise) return
 
     try {
+      setExporting(true)
       // Get date range (last 30 days)
       const endDate = new Date()
       const startDate = new Date()
@@ -123,6 +125,8 @@ export default function HaccpDashboardPage() {
     } catch (error) {
       console.error('Error exporting HACCP report:', error)
       alert('Erreur lors de l\'export du rapport HACCP')
+    } finally {
+      setExporting(false)
     }
   }
 
@@ -136,109 +140,54 @@ export default function HaccpDashboardPage() {
     )
   }
 
-  const statCards = [
-    {
-      name: 'Enfants inscrits',
-      value: stats.activeChildren,
-      total: stats.totalChildren,
-      icon: UserGroupIcon,
-      color: 'primary',
-      href: '/dashboard/haccp/children'
-    },
-    {
-      name: 'Produits actifs',
-      value: stats.totalProducts,
-      icon: ShoppingBagIcon,
-      color: 'secondary',
-      href: '/dashboard/haccp/products'
-    },
-    {
-      name: 'Fournisseurs',
-      value: stats.totalSuppliers,
-      icon: TruckIcon,
-      color: 'accent',
-      href: '/dashboard/haccp/suppliers'
-    },
-    {
-      name: 'Non-conformités ouvertes',
-      value: stats.openNonCompliances,
-      icon: ExclamationTriangleIcon,
-      color: stats.openNonCompliances > 0 ? 'danger' : 'success',
-      href: '/dashboard/haccp/non-compliances'
-    },
-    {
-      name: 'Repas du jour',
-      value: stats.todayMeals,
-      icon: ClipboardDocumentCheckIcon,
-      color: 'success',
-      href: '/dashboard/haccp/meals'
-    }
-  ]
-
-  const colorClasses = {
-    primary: 'bg-primary-50 text-primary-600',
-    secondary: 'bg-secondary-50 text-secondary-600',
-    accent: 'bg-accent-50 text-accent-700',
-    success: 'bg-success-50 text-success-600',
-    danger: 'bg-danger-50 text-danger-600'
-  }
-
   const modules = [
     {
       name: 'Enfants',
       description: 'Gestion des enfants inscrits et allergènes',
-      icon: UserGroupIcon,
-      href: '/dashboard/haccp/children',
-      color: 'primary'
+      icon: <UserGroupIcon className="w-5 h-5" strokeWidth={1.5} />,
+      href: '/dashboard/haccp/children'
     },
     {
       name: 'Repas',
       description: 'Planification des repas et traçabilité',
-      icon: ClipboardDocumentCheckIcon,
-      href: '/dashboard/haccp/meals',
-      color: 'secondary'
+      icon: <ClipboardDocumentCheckIcon className="w-5 h-5" strokeWidth={1.5} />,
+      href: '/dashboard/haccp/meals'
     },
     {
       name: 'Produits',
       description: 'Gestion des produits alimentaires',
-      icon: ShoppingBagIcon,
-      href: '/dashboard/haccp/products',
-      color: 'accent'
+      icon: <ShoppingBagIcon className="w-5 h-5" strokeWidth={1.5} />,
+      href: '/dashboard/haccp/products'
     },
     {
       name: 'Fournisseurs',
       description: 'Gestion des fournisseurs',
-      icon: TruckIcon,
-      href: '/dashboard/haccp/suppliers',
-      color: 'success'
+      icon: <TruckIcon className="w-5 h-5" strokeWidth={1.5} />,
+      href: '/dashboard/haccp/suppliers'
     },
     {
       name: 'Températures',
       description: 'Contrôle des températures',
-      icon: BeakerIcon,
-      href: '/dashboard/haccp/temperatures',
-      color: 'primary'
+      icon: <BeakerIcon className="w-5 h-5" strokeWidth={1.5} />,
+      href: '/dashboard/haccp/temperatures'
     },
     {
       name: 'Équipements',
       description: 'Maintenance des équipements',
-      icon: WrenchIcon,
-      href: '/dashboard/haccp/equipment',
-      color: 'accent'
+      icon: <WrenchIcon className="w-5 h-5" strokeWidth={1.5} />,
+      href: '/dashboard/haccp/equipment'
     },
     {
       name: 'Documents',
       description: 'Documents de conformité',
-      icon: DocumentTextIcon,
-      href: '/dashboard/haccp/documents',
-      color: 'secondary'
+      icon: <DocumentTextIcon className="w-5 h-5" strokeWidth={1.5} />,
+      href: '/dashboard/haccp/documents'
     },
     {
       name: 'Non-conformités',
       description: 'Suivi des incidents et actions correctives',
-      icon: ExclamationTriangleIcon,
-      href: '/dashboard/haccp/non-compliances',
-      color: 'danger'
+      icon: <ExclamationTriangleIcon className="w-5 h-5" strokeWidth={1.5} />,
+      href: '/dashboard/haccp/non-compliances'
     }
   ]
 
@@ -295,37 +244,165 @@ export default function HaccpDashboardPage() {
 
         {/* Stats grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-          {statCards.map((stat) => {
-            const Icon = stat.icon
-            const colorClass = colorClasses[stat.color as keyof typeof colorClasses]
-
-            return (
-              <Link
-                key={stat.name}
-                href={stat.href}
-                className="card p-6 hover:shadow-lg transition-all cursor-pointer group"
+          {/* Stat Card 1 - Enfants */}
+          <a
+            href="/dashboard/haccp/children"
+            className="relative rounded-3xl p-5 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden block"
+            style={{
+              border: '1px solid #81c99533',
+              boxShadow: '0 0 0 0 rgba(129,201,149,0.25)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(129,201,149,0.25)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = '0 0 0 0 rgba(129,201,149,0.25)'
+            }}
+          >
+            <div
+              className="absolute inset-0 opacity-60"
+              style={{ background: 'linear-gradient(to bottom right, #f1f9f3, white)' }}
+            />
+            <div className="relative z-10">
+              <div
+                className="inline-flex items-center justify-center w-10 h-10 rounded-2xl mb-3 group-hover:scale-105 transition-all duration-300"
+                style={{ background: 'linear-gradient(to bottom right, #81c9951A, #81c9950D)' }}
               >
-                <div className="flex flex-col">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className={`p-3 rounded-lg ${colorClass} group-hover:scale-110 transition-transform`}>
-                      <Icon className="w-6 h-6" />
-                    </div>
-                  </div>
-                  <p className="text-sm font-medium text-muted-foreground mb-1">
-                    {stat.name}
-                  </p>
-                  <div className="flex items-baseline gap-2">
-                    <p className="text-3xl font-bold">
-                      {stat.value}
-                    </p>
-                    {'total' in stat && stat.total !== stat.value && (
-                      <p className="text-sm text-muted-foreground">/ {stat.total}</p>
-                    )}
-                  </div>
-                </div>
-              </Link>
-            )
-          })}
+                <UserGroupIcon className="w-5 h-5" style={{ color: '#4a8f5a' }} strokeWidth={1.5} />
+              </div>
+              <p className="text-xs text-gray-600 mb-1">Enfants inscrits</p>
+              <div className="flex items-baseline gap-2">
+                <p className="text-2xl font-bold text-gray-900">{stats.activeChildren}</p>
+                <p className="text-sm text-gray-600">/ {stats.totalChildren}</p>
+              </div>
+            </div>
+          </a>
+
+          {/* Stat Card 2 - Produits */}
+          <a
+            href="/dashboard/haccp/products"
+            className="relative rounded-3xl p-5 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden block"
+            style={{
+              border: '1px solid #81c99533',
+              boxShadow: '0 0 0 0 rgba(129,201,149,0.25)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(129,201,149,0.25)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = '0 0 0 0 rgba(129,201,149,0.25)'
+            }}
+          >
+            <div
+              className="absolute inset-0 opacity-60"
+              style={{ background: 'linear-gradient(to bottom right, #f1f9f3, white)' }}
+            />
+            <div className="relative z-10">
+              <div
+                className="inline-flex items-center justify-center w-10 h-10 rounded-2xl mb-3 group-hover:scale-105 transition-all duration-300"
+                style={{ background: 'linear-gradient(to bottom right, #81c9951A, #81c9950D)' }}
+              >
+                <ShoppingBagIcon className="w-5 h-5" style={{ color: '#4a8f5a' }} strokeWidth={1.5} />
+              </div>
+              <p className="text-xs text-gray-600 mb-1">Produits actifs</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.totalProducts}</p>
+            </div>
+          </a>
+
+          {/* Stat Card 3 - Fournisseurs */}
+          <a
+            href="/dashboard/haccp/suppliers"
+            className="relative rounded-3xl p-5 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden block"
+            style={{
+              border: '1px solid #81c99533',
+              boxShadow: '0 0 0 0 rgba(129,201,149,0.25)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(129,201,149,0.25)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = '0 0 0 0 rgba(129,201,149,0.25)'
+            }}
+          >
+            <div
+              className="absolute inset-0 opacity-60"
+              style={{ background: 'linear-gradient(to bottom right, #f1f9f3, white)' }}
+            />
+            <div className="relative z-10">
+              <div
+                className="inline-flex items-center justify-center w-10 h-10 rounded-2xl mb-3 group-hover:scale-105 transition-all duration-300"
+                style={{ background: 'linear-gradient(to bottom right, #81c9951A, #81c9950D)' }}
+              >
+                <TruckIcon className="w-5 h-5" style={{ color: '#4a8f5a' }} strokeWidth={1.5} />
+              </div>
+              <p className="text-xs text-gray-600 mb-1">Fournisseurs</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.totalSuppliers}</p>
+            </div>
+          </a>
+
+          {/* Stat Card 4 - Non-conformités */}
+          <a
+            href="/dashboard/haccp/non-compliances"
+            className="relative rounded-3xl p-5 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden block"
+            style={{
+              border: `1px solid ${stats.openNonCompliances > 0 ? '#f8717133' : '#81c99533'}`,
+              boxShadow: `0 0 0 0 ${stats.openNonCompliances > 0 ? 'rgba(248,113,113,0.25)' : 'rgba(129,201,149,0.25)'}`
+            }}
+            onMouseEnter={(e) => {
+              const shadowColor = stats.openNonCompliances > 0 ? 'rgba(248,113,113,0.25)' : 'rgba(129,201,149,0.25)'
+              e.currentTarget.style.boxShadow = `0 16px 48px -12px ${shadowColor}`
+            }}
+            onMouseLeave={(e) => {
+              const shadowColor = stats.openNonCompliances > 0 ? 'rgba(248,113,113,0.25)' : 'rgba(129,201,149,0.25)'
+              e.currentTarget.style.boxShadow = `0 0 0 0 ${shadowColor}`
+            }}
+          >
+            <div
+              className="absolute inset-0 opacity-60"
+              style={{ background: `linear-gradient(to bottom right, ${stats.openNonCompliances > 0 ? '#fef2f2' : '#f1f9f3'}, white)` }}
+            />
+            <div className="relative z-10">
+              <div
+                className="inline-flex items-center justify-center w-10 h-10 rounded-2xl mb-3 group-hover:scale-105 transition-all duration-300"
+                style={{ background: `linear-gradient(to bottom right, ${stats.openNonCompliances > 0 ? '#f871711A' : '#81c9951A'}, ${stats.openNonCompliances > 0 ? '#f871710D' : '#81c9950D'})` }}
+              >
+                <ExclamationTriangleIcon className="w-5 h-5" style={{ color: stats.openNonCompliances > 0 ? '#dc2626' : '#4a8f5a' }} strokeWidth={1.5} />
+              </div>
+              <p className="text-xs text-gray-600 mb-1">Non-conformités ouvertes</p>
+              <p className={`text-2xl font-bold ${stats.openNonCompliances > 0 ? 'text-red-600' : 'text-gray-900'}`}>{stats.openNonCompliances}</p>
+            </div>
+          </a>
+
+          {/* Stat Card 5 - Repas du jour */}
+          <a
+            href="/dashboard/haccp/meals"
+            className="relative rounded-3xl p-5 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden block"
+            style={{
+              border: '1px solid #81c99533',
+              boxShadow: '0 0 0 0 rgba(129,201,149,0.25)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(129,201,149,0.25)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = '0 0 0 0 rgba(129,201,149,0.25)'
+            }}
+          >
+            <div
+              className="absolute inset-0 opacity-60"
+              style={{ background: 'linear-gradient(to bottom right, #f1f9f3, white)' }}
+            />
+            <div className="relative z-10">
+              <div
+                className="inline-flex items-center justify-center w-10 h-10 rounded-2xl mb-3 group-hover:scale-105 transition-all duration-300"
+                style={{ background: 'linear-gradient(to bottom right, #81c9951A, #81c9950D)' }}
+              >
+                <ClipboardDocumentCheckIcon className="w-5 h-5" style={{ color: '#4a8f5a' }} strokeWidth={1.5} />
+              </div>
+              <p className="text-xs text-gray-600 mb-1">Repas du jour</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.todayMeals}</p>
+            </div>
+          </a>
         </div>
 
         {/* Modules grid */}
@@ -333,82 +410,86 @@ export default function HaccpDashboardPage() {
           <h2 className="text-xl font-semibold mb-4">
             Modules HACCP
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {modules.map((module) => {
-              const Icon = module.icon
-
-              return (
-                <Link key={module.name} href={module.href}>
-                  <Card className="hover:shadow-lg transition-all cursor-pointer group bg-gradient-to-br from-[#e8f5e9] to-white border-l-4 border-l-[#81c995]">
-                    <CardContent className="p-6">
-                      <div className="flex items-start gap-4">
-                        <div className="p-3 rounded-lg bg-[#81c995]/10 group-hover:bg-[#81c995]/20 transition-all flex-shrink-0">
-                          <Icon className="w-6 h-6 text-[#4a8f5a]" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold mb-1 group-hover:text-[#4a8f5a] transition-colors">
-                            {module.name}
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            {module.description}
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              )
-            })}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {modules.map((module) => (
+              <ModuleCard
+                key={module.name}
+                module="haccp"
+                href={module.href}
+                icon={module.icon}
+                title={module.name}
+                description={module.description}
+              />
+            ))}
           </div>
         </div>
 
         {/* Quick actions */}
-        <div className="mt-8 card p-6 bg-gradient-to-br from-[#e8f5e9] to-white border-l-4 border-l-[#81c995]">
-          <h2 className="text-lg font-semibold mb-4">
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold mb-4">
             Actions rapides
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Link
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <ModuleCard
+              module="haccp"
               href="/dashboard/haccp/meals"
-              className="flex items-center gap-3 p-4 rounded-lg hover:bg-[#81c995]/10 transition-colors border border-border"
-            >
-              <ClipboardDocumentCheckIcon className="w-8 h-8 text-[#4a8f5a]" />
-              <div>
-                <p className="font-medium">Nouveau repas</p>
-                <p className="text-sm text-muted-foreground">Planifier un repas</p>
-              </div>
-            </Link>
+              icon={<ClipboardDocumentCheckIcon className="w-5 h-5" strokeWidth={1.5} />}
+              title="Nouveau repas"
+              description="Planifier un repas"
+              chevron={false}
+              size="sm"
+            />
 
-            <Link
+            <ModuleCard
+              module="haccp"
               href="/dashboard/haccp/temperatures"
-              className="flex items-center gap-3 p-4 rounded-lg hover:bg-[#81c995]/10 transition-colors border border-border"
-            >
-              <BeakerIcon className="w-8 h-8 text-[#4a8f5a]" />
-              <div>
-                <p className="font-medium">Contrôle température</p>
-                <p className="text-sm text-muted-foreground">Enregistrer une température</p>
-              </div>
-            </Link>
+              icon={<BeakerIcon className="w-5 h-5" strokeWidth={1.5} />}
+              title="Contrôle température"
+              description="Enregistrer une température"
+              chevron={false}
+              size="sm"
+            />
 
-            <Link
+            <ModuleCard
+              module="haccp"
               href="/dashboard/haccp/non-compliances"
-              className="flex items-center gap-3 p-4 rounded-lg hover:bg-[#81c995]/10 transition-colors border border-border"
-            >
-              <ExclamationTriangleIcon className="w-8 h-8 text-[#4a8f5a]" />
-              <div>
-                <p className="font-medium">Déclarer un incident</p>
-                <p className="text-sm text-muted-foreground">Signaler une non-conformité</p>
-              </div>
-            </Link>
+              icon={<ExclamationTriangleIcon className="w-5 h-5" strokeWidth={1.5} />}
+              title="Déclarer un incident"
+              description="Signaler une non-conformité"
+              chevron={false}
+              size="sm"
+            />
 
             <button
               onClick={handleExportHACCP}
-              className="flex items-center gap-3 p-4 rounded-lg hover:bg-[#81c995]/10 transition-colors border border-border bg-[#81c995]/5"
+              disabled={exporting}
+              className="relative rounded-3xl p-4 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden text-left disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{
+                border: '1px solid #81c99533',
+                boxShadow: '0 0 0 0 rgba(129,201,149,0.25)'
+              }}
+              onMouseEnter={(e) => {
+                if (!exporting) e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(129,201,149,0.25)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow = '0 0 0 0 rgba(129,201,149,0.25)'
+              }}
             >
-              <ArrowDownTrayIcon className="w-8 h-8 text-[#4a8f5a]" />
-              <div className="text-left">
-                <p className="font-medium">Export PDF HACCP</p>
-                <p className="text-sm text-muted-foreground">Rapport des 30 derniers jours</p>
+              <div
+                className="absolute inset-0 opacity-60"
+                style={{ background: 'linear-gradient(to bottom right, #f1f9f3, white)' }}
+              />
+              <div className="relative z-10">
+                <div
+                  className="inline-flex items-center justify-center w-8 h-8 rounded-2xl mb-3 group-hover:scale-105 transition-all duration-300"
+                  style={{ background: 'linear-gradient(to bottom right, #81c9951A, #81c9950D)' }}
+                >
+                  <ArrowDownTrayIcon className="w-4 h-4" style={{ color: '#4a8f5a' }} strokeWidth={1.5} />
+                </div>
+                <h3 className="font-semibold text-gray-900 mb-0.5 tracking-tight text-sm">
+                  {exporting ? 'Export en cours...' : 'Export PDF HACCP'}
+                </h3>
+                <p className="text-xs text-gray-600">Rapport des 30 derniers jours</p>
               </div>
             </button>
           </div>

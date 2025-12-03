@@ -6,6 +6,13 @@ import { useRequireAuth } from '@/lib/contexts/AuthContext'
 import { sessionsService, type SessionWithStats } from '@/lib/services/sessions.service'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import Link from 'next/link'
+import {
+  ClipboardDocumentListIcon,
+  CheckCircleIcon,
+  ArrowPathIcon,
+  ExclamationTriangleIcon,
+  ChartBarIcon
+} from '@heroicons/react/24/outline'
 
 export default function HistoryPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Admin'])
@@ -87,7 +94,6 @@ export default function HistoryPage() {
     total: filteredSessions.length,
     completed: filteredSessions.filter(s => s.status === 'COMPLETEE').length,
     inProgress: filteredSessions.filter(s => s.status === 'EN_COURS').length,
-    incomplete: filteredSessions.filter(s => s.status === 'INCOMPLETE').length,
     avgCompletion: filteredSessions.length > 0
       ? Math.round(filteredSessions.reduce((sum, s) => sum + s.completion_percentage, 0) / filteredSessions.length)
       : 0
@@ -106,117 +112,198 @@ export default function HistoryPage() {
 
         {/* Error Message */}
         {error && (
-          <div className="card p-4 mb-6 bg-danger-50 border border-danger-200">
-            <p className="text-danger-700">{error}</p>
+          <div
+            className="relative rounded-3xl p-4 mb-6 overflow-hidden"
+            style={{
+              border: '1px solid #f8717133',
+              background: 'linear-gradient(to bottom right, #fef2f2, white)'
+            }}
+          >
+            <div className="relative z-10">
+              <p className="text-red-700">{error}</p>
+            </div>
           </div>
         )}
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-        <div className="card p-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-primary-100 flex items-center justify-center text-2xl">
-              📋
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Stat Card 1 - Total */}
+          <a
+            href="#"
+            className="relative rounded-3xl p-5 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden block"
+            style={{
+              border: '1px solid #5a9dc933',
+              boxShadow: '0 0 0 0 rgba(90,157,201,0.25)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(90,157,201,0.25)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = '0 0 0 0 rgba(90,157,201,0.25)'
+            }}
+          >
+            <div
+              className="absolute inset-0 opacity-60"
+              style={{ background: 'linear-gradient(to bottom right, #f8fbfd, white)' }}
+            />
+            <div className="relative z-10">
+              <div
+                className="inline-flex items-center justify-center w-12 h-12 rounded-2xl mb-3 group-hover:scale-105 transition-all duration-300"
+                style={{ background: 'linear-gradient(to bottom right, #5a9dc91A, #5a9dc90D)' }}
+              >
+                <ClipboardDocumentListIcon className="w-6 h-6" style={{ color: '#2c5f7f' }} strokeWidth={1.5} />
+              </div>
+              <p className="text-xs text-gray-600 mb-1">Total sessions</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Total sessions</p>
-              <p className="text-2xl font-bold">{stats.total}</p>
-            </div>
-          </div>
-        </div>
+          </a>
 
-        <div className="card p-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-success-100 flex items-center justify-center text-2xl">
-              ✅
+          {/* Stat Card 2 - Complétées */}
+          <a
+            href="#"
+            className="relative rounded-3xl p-5 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden block"
+            style={{
+              border: '1px solid #b5ead733',
+              boxShadow: '0 0 0 0 rgba(181,234,215,0.25)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(181,234,215,0.25)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = '0 0 0 0 rgba(181,234,215,0.25)'
+            }}
+          >
+            <div
+              className="absolute inset-0 opacity-60"
+              style={{ background: 'linear-gradient(to bottom right, #f0fdf4, white)' }}
+            />
+            <div className="relative z-10">
+              <div
+                className="inline-flex items-center justify-center w-12 h-12 rounded-2xl mb-3 group-hover:scale-105 transition-all duration-300"
+                style={{ background: 'linear-gradient(to bottom right, #b5ead71A, #b5ead70D)' }}
+              >
+                <CheckCircleIcon className="w-6 h-6" style={{ color: '#4a8f5a' }} strokeWidth={1.5} />
+              </div>
+              <p className="text-xs text-gray-600 mb-1">Complétées</p>
+              <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Complétées</p>
-              <p className="text-2xl font-bold text-success-600">{stats.completed}</p>
-            </div>
-          </div>
-        </div>
+          </a>
 
-        <div className="card p-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-primary-100 flex items-center justify-center text-2xl">
-              🔄
+          {/* Stat Card 3 - En cours */}
+          <a
+            href="#"
+            className="relative rounded-3xl p-5 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden block"
+            style={{
+              border: '1px solid #5a9dc933',
+              boxShadow: '0 0 0 0 rgba(90,157,201,0.25)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(90,157,201,0.25)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = '0 0 0 0 rgba(90,157,201,0.25)'
+            }}
+          >
+            <div
+              className="absolute inset-0 opacity-60"
+              style={{ background: 'linear-gradient(to bottom right, #f8fbfd, white)' }}
+            />
+            <div className="relative z-10">
+              <div
+                className="inline-flex items-center justify-center w-12 h-12 rounded-2xl mb-3 group-hover:scale-105 group-hover:rotate-90 transition-all duration-300"
+                style={{ background: 'linear-gradient(to bottom right, #5a9dc91A, #5a9dc90D)' }}
+              >
+                <ArrowPathIcon className="w-6 h-6" style={{ color: '#2c5f7f' }} strokeWidth={1.5} />
+              </div>
+              <p className="text-xs text-gray-600 mb-1">En cours</p>
+              <p className="text-2xl font-bold text-[#5a9dc9]">{stats.inProgress}</p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">En cours</p>
-              <p className="text-2xl font-bold text-primary-600">{stats.inProgress}</p>
-            </div>
-          </div>
-        </div>
+          </a>
 
-        <div className="card p-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-warning-100 flex items-center justify-center text-2xl">
-              ⚠️
+          {/* Stat Card 4 - Taux moyen */}
+          <a
+            href="#"
+            className="relative rounded-3xl p-5 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden block"
+            style={{
+              border: '1px solid #9fa8da33',
+              boxShadow: '0 0 0 0 rgba(159,168,218,0.25)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(159,168,218,0.25)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = '0 0 0 0 rgba(159,168,218,0.25)'
+            }}
+          >
+            <div
+              className="absolute inset-0 opacity-60"
+              style={{ background: 'linear-gradient(to bottom right, #e8eaf6, white)' }}
+            />
+            <div className="relative z-10">
+              <div
+                className="inline-flex items-center justify-center w-12 h-12 rounded-2xl mb-3 group-hover:scale-105 transition-all duration-300"
+                style={{ background: 'linear-gradient(to bottom right, #9fa8da1A, #9fa8da0D)' }}
+              >
+                <ChartBarIcon className="w-6 h-6" style={{ color: '#6870a0' }} strokeWidth={1.5} />
+              </div>
+              <p className="text-xs text-gray-600 mb-1">Taux moyen</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.avgCompletion}%</p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Incomplètes</p>
-              <p className="text-2xl font-bold text-warning-600">{stats.incomplete}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="card p-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-info-100 flex items-center justify-center text-2xl">
-              📊
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Taux moyen</p>
-              <p className="text-2xl font-bold">{stats.avgCompletion}%</p>
-            </div>
-          </div>
-        </div>
+          </a>
         </div>
 
         {/* Filters */}
-        <div className="card p-6 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Statut
-            </label>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="all">Tous les statuts</option>
-              <option value="COMPLETEE">Complétée</option>
-              <option value="EN_COURS">En cours</option>
-              <option value="INCOMPLETE">Incomplète</option>
-            </select>
-          </div>
+        <div
+          className="relative rounded-3xl p-6 mb-6 bg-white overflow-hidden"
+          style={{
+            border: '1px solid #5a9dc933'
+          }}
+        >
+          <div
+            className="absolute inset-0 opacity-60"
+            style={{ background: 'linear-gradient(to bottom right, #f8fbfd, white)' }}
+          />
+          <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Statut
+              </label>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="all">Tous les statuts</option>
+                <option value="COMPLETEE">Complétée</option>
+                <option value="EN_COURS">En cours</option>
+                <option value="INCOMPLETE">Incomplète</option>
+              </select>
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Date début
-            </label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Date début
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Date fin
-            </label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-            />
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Date fin
+              </label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
           </div>
-        </div>
         </div>
 
         {/* Sessions List */}
@@ -226,59 +313,94 @@ export default function HistoryPage() {
             <Link
               key={session.id}
               href={`/dashboard/sessions/${session.id}`}
-              className="card p-6 hover:shadow-lg transition-shadow block"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-lg font-bold">
-                      {new Date(session.date).toLocaleDateString('fr-FR', {
-                        weekday: 'long',
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric'
-                      })}
-                    </h3>
-                    <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                      session.status === 'COMPLETEE' ? 'bg-success-100 text-success-700' :
-                      session.status === 'EN_COURS' ? 'bg-primary-100 text-primary-700' :
-                      'bg-warning-100 text-warning-700'
-                    }`}>
-                      {session.status === 'COMPLETEE' ? 'Complétée' :
-                       session.status === 'EN_COURS' ? 'En cours' :
-                       'Incomplète'}
-                    </span>
+              <div
+                className="relative rounded-3xl p-6 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden cursor-pointer"
+                style={{
+                  border: '1px solid #5a9dc933',
+                  boxShadow: '0 0 0 0 rgba(90,157,201,0.25)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(90,157,201,0.25)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = '0 0 0 0 rgba(90,157,201,0.25)'
+                }}
+              >
+                {/* Gradient fond */}
+                <div
+                  className="absolute inset-0 opacity-60"
+                  style={{ background: 'linear-gradient(to bottom right, #f8fbfd, white)' }}
+                />
+
+                <div className="relative z-10 flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-lg font-bold">
+                        {new Date(session.date).toLocaleDateString('fr-FR', {
+                          weekday: 'long',
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric'
+                        })}
+                      </h3>
+                      <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                        session.status === 'COMPLETEE' ? 'bg-success-100 text-success-700' :
+                        session.status === 'EN_COURS' ? 'bg-primary-100 text-primary-700' :
+                        'bg-warning-100 text-warning-700'
+                      }`}>
+                        {session.status === 'COMPLETEE' ? 'Complétée' :
+                         session.status === 'EN_COURS' ? 'En cours' :
+                         'Incomplète'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-6 text-sm text-muted-foreground mb-3">
+                      <span>{session.completed_tasks} / {session.total_tasks} tâches</span>
+                      <span>{session.completion_percentage}% complété</span>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full transition-all"
+                        style={{
+                          width: `${session.completion_percentage}%`,
+                          background: 'linear-gradient(to right, #5a9dc9, #2c5f7f)'
+                        }}
+                      />
+                    </div>
                   </div>
 
-                  <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                    <span>{session.completed_tasks} / {session.total_tasks} tâches</span>
-                    <span>{session.completion_percentage}% complété</span>
+                  {/* Chevron */}
+                  <div
+                    className="ml-6 w-8 h-8 rounded-full flex items-center justify-center opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300"
+                    style={{ backgroundColor: '#5a9dc914' }}
+                  >
+                    <svg className="w-4 h-4" style={{ color: '#5a9dc9' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
                   </div>
-
-                  {/* Progress Bar */}
-                  <div className="mt-3 w-full h-2 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-primary-500 to-success-500 transition-all"
-                      style={{ width: `${session.completion_percentage}%` }}
-                    />
-                  </div>
-                </div>
-
-                <div className="ml-6">
-                  <svg className="w-6 h-6 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
                 </div>
               </div>
             </Link>
           ))}
           </div>
         ) : (
-          <div className="card p-12 text-center">
-            <svg className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-            <p className="text-muted-foreground">Aucune session trouvée pour ces critères</p>
+          <div
+            className="relative rounded-3xl p-12 bg-white overflow-hidden text-center"
+            style={{
+              border: '1px solid #5a9dc933'
+            }}
+          >
+            <div
+              className="absolute inset-0 opacity-60"
+              style={{ background: 'linear-gradient(to bottom right, #f8fbfd, white)' }}
+            />
+            <div className="relative z-10">
+              <ClipboardDocumentListIcon className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+              <p className="text-muted-foreground">Aucune session trouvée pour ces critères</p>
+            </div>
           </div>
         )}
       </div>

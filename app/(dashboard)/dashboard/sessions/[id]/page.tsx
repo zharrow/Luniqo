@@ -1,28 +1,23 @@
 'use client'
 
-import { use, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import { sessionsService, type SessionWithStats, type CreateLogInput, type LogStatus } from '@/lib/services/sessions.service'
-import { roomsService } from '@/lib/services/rooms.service'
 import { usersService } from '@/lib/services/users.service'
 import { pdfExportService } from '@/lib/services/pdf-export.service'
 import {
-  CalendarIcon,
   ClockIcon,
   CheckCircleIcon,
-  XCircleIcon,
   PencilIcon,
   PlusIcon,
   ChevronLeftIcon,
-  PhotoIcon
+  PhotoIcon,
+  DocumentArrowDownIcon
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { FormDialog } from '@/components/shared/FormDialog'
-
-interface PageProps {
-  params: Promise<{ id: string }>
-}
 
 interface SessionLog {
   id: string
@@ -55,19 +50,36 @@ interface SessionLog {
   } | null
 }
 
-interface GroupedLogs {
+interface AssignedTaskWithLog {
+  id: string
+  room_id: string
+  task_template_id: string
+  room: {
+    id: string
+    name: string
+  }
+  task_template: {
+    id: string
+    name: string
+    description: string | null
+  }
+  log: SessionLog | null
+}
+
+interface GroupedTasks {
   [roomId: string]: {
     room: { id: string; name: string }
-    logs: SessionLog[]
+    tasks: AssignedTaskWithLog[]
   }
 }
 
-export default function SessionDetailPage({ params }: PageProps) {
-  const { id } = use(params)
+export default function SessionDetailPage() {
+  const params = useParams()
+  const id = params.id as string
   const { session: authSession, isLoading: authLoading } = useRequireAuth(['Admin'])
   const [session, setSession] = useState<SessionWithStats | null>(null)
   const [logs, setLogs] = useState<SessionLog[]>([])
-  const [groupedLogs, setGroupedLogs] = useState<GroupedLogs>({})
+  const [groupedTasks, setGroupedTasks] = useState<GroupedTasks>({})
   const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
@@ -95,27 +107,42 @@ export default function SessionDetailPage({ params }: PageProps) {
 
     try {
       setLoading(true)
-      const [sessionData, logsData] = await Promise.all([
+      const [sessionData, logsData, allTasks] = await Promise.all([
         sessionsService.getById(id, authSession.enterprise.id),
-        sessionsService.getSessionLogs(id)
+        sessionsService.getSessionLogs(id),
+        sessionsService.getAssignedTasks(authSession.enterprise.id)
       ])
 
       setSession(sessionData)
       setLogs(logsData)
 
-      // Group logs by room
-      const grouped: GroupedLogs = {}
+      // Create a map of assigned_task_id -> log
+      const logsMap = new Map<string, SessionLog>()
       logsData.forEach((log: SessionLog) => {
-        const roomId = log.assigned_task.room_id
+        logsMap.set(log.assigned_task_id, log)
+      })
+
+      // Combine all assigned tasks with their logs (if any)
+      const grouped: GroupedTasks = {}
+      allTasks.forEach((task: any) => {
+        const roomId = task.room_id
         if (!grouped[roomId]) {
           grouped[roomId] = {
-            room: log.assigned_task.room,
-            logs: []
+            room: task.room,
+            tasks: []
           }
         }
-        grouped[roomId].logs.push(log)
+        grouped[roomId].tasks.push({
+          id: task.id,
+          room_id: task.room_id,
+          task_template_id: task.task_template_id,
+          room: task.room,
+          task_template: task.task_template,
+          log: logsMap.get(task.id) || null
+        })
       })
-      setGroupedLogs(grouped)
+
+      setGroupedTasks(grouped)
     } catch (error) {
       console.error('Error loading session:', error)
     } finally {
@@ -151,6 +178,9 @@ export default function SessionDetailPage({ params }: PageProps) {
         note: formData.note || undefined
       })
 
+      // Auto-complete session if all tasks are done
+      await sessionsService.checkAndCompleteSession(id, authSession.enterprise.id)
+
       setShowAddModal(false)
       resetForm()
       loadSessionData()
@@ -164,7 +194,7 @@ export default function SessionDetailPage({ params }: PageProps) {
 
   async function handleUpdateLog(e: React.FormEvent) {
     e.preventDefault()
-    if (!editingLog) return
+    if (!editingLog || !authSession?.enterprise?.id) return
 
     try {
       setIsSubmitting(true)
@@ -172,6 +202,9 @@ export default function SessionDetailPage({ params }: PageProps) {
         status: formData.status,
         note: formData.note || undefined
       })
+
+      // Auto-complete session if all tasks are done
+      await sessionsService.checkAndCompleteSession(id, authSession.enterprise.id)
 
       setShowEditModal(false)
       setEditingLog(null)
@@ -185,17 +218,6 @@ export default function SessionDetailPage({ params }: PageProps) {
     }
   }
 
-  async function handleUpdateSessionStatus(newStatus: 'EN_COURS' | 'COMPLETEE' | 'INCOMPLETE') {
-    if (!authSession?.enterprise?.id || !session) return
-
-    try {
-      await sessionsService.update(id, authSession.enterprise.id, { status: newStatus })
-      loadSessionData()
-    } catch (error) {
-      console.error('Error updating session status:', error)
-      alert('Erreur lors de la mise à jour du statut')
-    }
-  }
 
   function openAddModal() {
     resetForm()
@@ -281,11 +303,9 @@ export default function SessionDetailPage({ params }: PageProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'COMPLETEE':
-        return 'bg-success-50 text-success-700 border-success-200'
+        return 'bg-[#e8f5e9] text-[#4a8f5a] border-[#81c995]'
       case 'EN_COURS':
-        return 'bg-primary-50 text-primary-700 border-primary-200'
-      case 'INCOMPLETE':
-        return 'bg-warning-50 text-warning-700 border-warning-200'
+        return 'bg-[#e3f2fd] text-[#2c5f7f] border-[#5a9dc9]'
       default:
         return 'bg-muted text-muted-foreground border-border'
     }
@@ -293,9 +313,8 @@ export default function SessionDetailPage({ params }: PageProps) {
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'COMPLETEE': return 'Complétée'
+      case 'COMPLETEE': return 'Terminée'
       case 'EN_COURS': return 'En cours'
-      case 'INCOMPLETE': return 'Incomplète'
       default: return status
     }
   }
@@ -344,41 +363,45 @@ export default function SessionDetailPage({ params }: PageProps) {
 
   return (
     <DashboardLayout>
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="mb-6">
+        <div>
           <Link
             href="/dashboard/sessions"
-            className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 mb-4"
+            className="inline-flex items-center gap-2 text-[#5a9dc9] hover:text-[#4a8ab5] mb-4 font-medium transition-colors"
           >
-            <ChevronLeftIcon className="w-5 h-5" />
+            <ChevronLeftIcon className="w-5 h-5" strokeWidth={2} />
             Retour aux sessions
           </Link>
 
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+              <h1 className="text-3xl font-bold text-gray-900 mb-3 tracking-tight">
                 Session du {formatDate(session.date)}
               </h1>
               <div className="flex items-center gap-3">
-                <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(session.status)}`}>
+                <span className={`px-4 py-1.5 rounded-full text-sm font-medium border ${getStatusColor(session.status)}`}>
                   {getStatusLabel(session.status)}
                 </span>
-                <span className="text-muted-foreground">
+                <span className="text-gray-600 font-medium">
                   {session.completed_tasks} / {session.total_tasks} tâches complétées
                 </span>
               </div>
             </div>
 
             <div className="flex gap-3">
-              <button onClick={handleExportPDF} className="btn btn-secondary inline-flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
+              <button
+                onClick={handleExportPDF}
+                className="px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 hover:border-[#5a9dc9]/30 hover:bg-[#f8fbfd] transition-all duration-200 inline-flex items-center gap-2 font-medium"
+              >
+                <DocumentArrowDownIcon className="w-5 h-5" strokeWidth={1.5} />
                 Export PDF
               </button>
-              <button onClick={openAddModal} className="btn btn-primary inline-flex items-center gap-2">
-                <PlusIcon className="w-5 h-5" />
+              <button
+                onClick={openAddModal}
+                className="px-4 py-2 rounded-xl bg-[#5a9dc9] text-white hover:bg-[#4a8ab5] transition-all duration-200 inline-flex items-center gap-2 font-medium shadow-sm hover:shadow-md"
+              >
+                <PlusIcon className="w-5 h-5" strokeWidth={2} />
                 Ajouter un log
               </button>
             </div>
@@ -386,138 +409,226 @@ export default function SessionDetailPage({ params }: PageProps) {
         </div>
 
         {/* Progress Card */}
-        <div className="card p-6 mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Progression</h2>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => handleUpdateSessionStatus('EN_COURS')}
-                className="btn btn-secondary text-sm"
-                disabled={session.status === 'EN_COURS'}
-              >
-                En cours
-              </button>
-              <button
-                onClick={() => handleUpdateSessionStatus('COMPLETEE')}
-                className="btn btn-primary text-sm"
-                disabled={session.status === 'COMPLETEE'}
-              >
-                Marquer complétée
-              </button>
-              <button
-                onClick={() => handleUpdateSessionStatus('INCOMPLETE')}
-                className="btn btn-secondary text-sm"
-                disabled={session.status === 'INCOMPLETE'}
-              >
-                Marquer incomplète
-              </button>
+        <div
+          className={`relative rounded-3xl p-6 bg-white overflow-hidden transition-all duration-500 ${
+            session.completion_percentage === 100
+              ? 'border-2 border-[#81c995] shadow-[0_8px_32px_-8px_rgba(129,201,149,0.3)]'
+              : 'border border-[#5a9dc9]/20'
+          }`}
+        >
+          {/* Gradient fond */}
+          <div
+            className="absolute inset-0 opacity-60 transition-all duration-500"
+            style={{
+              background: session.completion_percentage === 100
+                ? 'linear-gradient(to bottom right, #f1f9f3, white)'
+                : 'linear-gradient(to bottom right, #f8fbfd, white)'
+            }}
+          ></div>
+
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900 tracking-tight">Progression</h2>
+              {session.completion_percentage === 100 && (
+                <div className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-[#81c995]/10 border border-[#81c995]/30">
+                  <CheckCircleIcon className="w-5 h-5 text-[#4a8f5a]" strokeWidth={2} />
+                  <span className="text-sm font-semibold text-[#4a8f5a]">Session terminée</span>
+                </div>
+              )}
             </div>
-          </div>
 
-          <div className="relative w-full h-4 bg-muted rounded-full overflow-hidden">
-            <div
-              className="absolute top-0 left-0 h-full bg-gradient-to-r from-primary-500 to-primary-600 transition-all duration-300"
-              style={{ width: `${session.completion_percentage}%` }}
-            ></div>
-          </div>
-
-          <div className="flex items-center justify-between mt-2">
-            <span className="text-sm text-muted-foreground">
-              {session.completion_percentage}% complété
-            </span>
-            {session.completion_percentage === 100 && (
-              <div className="flex items-center gap-1 text-success-600">
-                <CheckCircleIcon className="w-5 h-5" />
-                <span className="text-sm font-medium">Session terminée</span>
+            {/* Barre de progression */}
+            <div className="relative w-full h-3 bg-gray-100 rounded-full overflow-hidden shadow-inner">
+              <div
+                className={`absolute top-0 left-0 h-full transition-all duration-500 ease-out ${
+                  session.completion_percentage === 100
+                    ? 'bg-gradient-to-r from-[#81c995] to-[#4a8f5a]'
+                    : 'bg-gradient-to-r from-[#5a9dc9] to-[#81c995]'
+                }`}
+                style={{ width: `${session.completion_percentage}%` }}
+              >
+                {session.completion_percentage < 100 && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 animate-pulse"></div>
+                )}
               </div>
-            )}
+            </div>
+
+            <div className="mt-3">
+              <span className="text-sm text-gray-600 font-medium">
+                {session.completed_tasks} / {session.total_tasks} tâches complétées ({session.completion_percentage}%)
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Logs by Room */}
+        {/* Tasks by Room */}
         <div className="space-y-6">
-          {Object.keys(groupedLogs).length === 0 ? (
-            <div className="card p-8 text-center">
-              <ClockIcon className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">
-                Aucun log pour cette session
-              </h3>
-              <p className="text-muted-foreground mb-4">
-                Ajoutez des logs de nettoyage pour suivre la progression
-              </p>
-              <button onClick={openAddModal} className="btn btn-primary inline-flex items-center gap-2">
-                <PlusIcon className="w-5 h-5" />
-                Ajouter un log
-              </button>
+          {Object.keys(groupedTasks).length === 0 ? (
+            <div className="relative rounded-3xl p-8 bg-white text-center overflow-hidden border border-[#5a9dc9]/20">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#f8fbfd] to-white opacity-60"></div>
+              <div className="relative z-10">
+                <ClockIcon className="w-16 h-16 text-[#5a9dc9]/30 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">
+                  Aucune tâche assignée
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Assignez des tâches aux pièces pour suivre la progression
+                </p>
+                <button onClick={openAddModal} className="btn btn-primary inline-flex items-center gap-2">
+                  <PlusIcon className="w-5 h-5" />
+                  Ajouter un log
+                </button>
+              </div>
             </div>
           ) : (
-            Object.entries(groupedLogs).map(([roomId, { room, logs }]) => (
-              <div key={roomId} className="card p-6">
-                <h3 className="text-xl font-semibold mb-4">
-                  {room.name}
-                </h3>
+            Object.entries(groupedTasks).map(([roomId, { room, tasks }]) => (
+              <div
+                key={roomId}
+                className="relative rounded-3xl p-6 bg-white overflow-hidden border border-[#5a9dc9]/20 hover:shadow-[0_8px_32px_-8px_rgba(90,157,201,0.2)] transition-all duration-300"
+              >
+                {/* Gradient fond */}
+                <div className="absolute inset-0 bg-gradient-to-br from-[#f8fbfd] to-white opacity-60"></div>
 
-                <div className="space-y-3">
-                  {logs.map((log) => (
-                    <div
-                      key={log.id}
-                      className="flex items-start justify-between p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-start gap-3 mb-2">
-                          <div>
-                            <h4 className="font-medium">
-                              {log.assigned_task.task_template.name}
-                            </h4>
-                            {log.assigned_task.task_template.description && (
-                              <p className="text-sm text-muted-foreground">
-                                {log.assigned_task.task_template.description}
-                              </p>
+                <div className="relative z-10">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-4 tracking-tight">
+                    {room.name}
+                  </h3>
+
+                  <div className="space-y-3">
+                    {tasks.map((task) => {
+                      const log = task.log
+                      const isDone = log?.status === 'FAIT'
+                      const isPartial = log?.status === 'PARTIEL'
+                      const isPending = !log
+
+                      return (
+                        <div
+                          key={task.id}
+                          className="relative rounded-2xl p-4 bg-white border transition-all duration-300 group hover:-translate-y-0.5 overflow-hidden"
+                          style={{
+                            borderColor: isDone ? 'rgba(129,201,149,0.3)' : isPending ? 'rgba(156,163,175,0.2)' : 'rgba(251,191,36,0.3)'
+                          }}
+                        >
+                          {/* Gradient de fond basé sur le statut */}
+                          <div
+                            className="absolute inset-0 opacity-40"
+                            style={{
+                              background: isDone
+                                ? 'linear-gradient(to bottom right, #f1f9f3, white)'
+                                : isPartial
+                                ? 'linear-gradient(to bottom right, #fffbeb, white)'
+                                : 'linear-gradient(to bottom right, #f9fafb, white)'
+                            }}
+                          ></div>
+
+                          <div className="relative z-10 flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-start gap-3 mb-2">
+                                {/* Icône de statut */}
+                                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mt-0.5 ${
+                                  isDone
+                                    ? 'bg-[#81c995]/10'
+                                    : isPending
+                                    ? 'bg-gray-100'
+                                    : 'bg-[#fbbf24]/10'
+                                }`}>
+                                  {isDone ? (
+                                    <CheckCircleIcon className="w-5 h-5 text-[#4a8f5a]" strokeWidth={2} />
+                                  ) : isPending ? (
+                                    <ClockIcon className="w-5 h-5 text-gray-400" strokeWidth={2} />
+                                  ) : (
+                                    <ClockIcon className="w-5 h-5 text-[#d97557]" strokeWidth={2} />
+                                  )}
+                                </div>
+
+                                <div className="flex-1">
+                                  <h4 className="font-semibold text-gray-900 text-base tracking-tight">
+                                    {task.task_template.name}
+                                  </h4>
+                                  {task.task_template.description && (
+                                    <p className="text-sm text-gray-600 mt-0.5">
+                                      {task.task_template.description}
+                                    </p>
+                                  )}
+                                </div>
+
+                                {/* Badge de statut */}
+                                <span
+                                  className={`px-3 py-1 rounded-full text-xs font-medium border whitespace-nowrap ${
+                                    log ? getLogStatusColor(log.status) : 'bg-gray-50 text-gray-600 border-gray-200'
+                                  }`}
+                                >
+                                  {log ? getLogStatusLabel(log.status) : 'En attente'}
+                                </span>
+                              </div>
+
+                              {/* Infos de complétion */}
+                              {log && (
+                                <>
+                                  <div className="flex items-center gap-4 text-sm text-gray-600 mt-2">
+                                    {log.performed_by && (
+                                      <span className="flex items-center gap-1.5">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-[#5a9dc9]"></div>
+                                        {log.performed_by.first_name} {log.performed_by.last_name}
+                                      </span>
+                                    )}
+                                    {log.performed_at && (
+                                      <span className="flex items-center gap-1.5">
+                                        <ClockIcon className="w-4 h-4" />
+                                        {formatTime(log.performed_at)}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {log.note && (
+                                    <div className="mt-3 p-3 rounded-xl bg-gray-50/80 border border-gray-100">
+                                      <p className="text-sm text-gray-700 italic">
+                                        {log.note}
+                                      </p>
+                                    </div>
+                                  )}
+
+                                  {log.photo_urls && log.photo_urls.length > 0 && (
+                                    <div className="flex items-center gap-2 mt-2">
+                                      <PhotoIcon className="w-4 h-4 text-gray-500" />
+                                      <span className="text-sm text-gray-600">
+                                        {log.photo_urls.length} photo{log.photo_urls.length > 1 ? 's' : ''}
+                                      </span>
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                            </div>
+
+                            {/* Bouton d'action */}
+                            {log ? (
+                              <button
+                                onClick={() => openEditModal(log)}
+                                className="ml-3 p-2 rounded-lg text-gray-400 hover:text-[#5a9dc9] hover:bg-[#5a9dc9]/10 transition-all duration-200"
+                              >
+                                <PencilIcon className="w-5 h-5" strokeWidth={1.5} />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setFormData({
+                                    assigned_task_id: task.id,
+                                    performed_by_id: '',
+                                    status: 'FAIT',
+                                    note: ''
+                                  })
+                                  setShowAddModal(true)
+                                }}
+                                className="ml-3 px-4 py-2 rounded-lg bg-[#5a9dc9] text-white text-sm font-medium hover:bg-[#4a8ab5] transition-all duration-200 opacity-0 group-hover:opacity-100"
+                              >
+                                Marquer
+                              </button>
                             )}
                           </div>
-                          <span className={`px-2 py-1 rounded text-xs font-medium border whitespace-nowrap ${getLogStatusColor(log.status)}`}>
-                            {getLogStatusLabel(log.status)}
-                          </span>
                         </div>
-
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          {log.performed_by && (
-                            <span>
-                              Par {log.performed_by.first_name} {log.performed_by.last_name}
-                            </span>
-                          )}
-                          {log.performed_at && (
-                            <span className="flex items-center gap-1">
-                              <ClockIcon className="w-4 h-4" />
-                              {formatTime(log.performed_at)}
-                            </span>
-                          )}
-                        </div>
-
-                        {log.note && (
-                          <p className="mt-2 text-sm text-muted-foreground italic">
-                            {log.note}
-                          </p>
-                        )}
-
-                        {log.photo_urls && log.photo_urls.length > 0 && (
-                          <div className="flex items-center gap-2 mt-2">
-                            <PhotoIcon className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-sm text-muted-foreground">
-                              {log.photo_urls.length} photo{log.photo_urls.length > 1 ? 's' : ''}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-
-                      <button
-                        onClick={() => openEditModal(log)}
-                        className="p-2 text-muted-foreground hover:text-primary-600 transition-colors"
-                      >
-                        <PencilIcon className="w-5 h-5" />
-                      </button>
-                    </div>
-                  ))}
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
             ))

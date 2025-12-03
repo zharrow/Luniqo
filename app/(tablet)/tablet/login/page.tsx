@@ -156,29 +156,21 @@ export default function TabletLoginPage() {
   }
 
   return (
-    <div className="tablet-mode min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-secondary-50 p-8">
+    <div className="tablet-mode min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f8fbfd] via-white to-[#fef6f7] p-8">
       <div className="w-full max-w-4xl">
         {/* Logo & Title */}
         <div className="text-center mb-12 animate-fade-in">
-          <div className="inline-block p-6 bg-white rounded-3xl shadow-xl mb-6">
-            <svg
-              className="w-20 h-20 text-primary-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-              />
-            </svg>
+          <div className="inline-block p-6 bg-white rounded-3xl shadow-[0_8px_24px_-4px_rgba(90,157,201,0.15)] mb-6 hover:shadow-[0_12px_32px_-4px_rgba(90,157,201,0.25)] transition-all duration-300 hover:-translate-y-1">
+            <img
+              src="/luniqo.png"
+              alt="Luniqo"
+              className="w-24 h-24 object-contain"
+            />
           </div>
-          <h1 className="text-5xl font-bold mb-3" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+          <h1 className="text-5xl font-bold mb-3 bg-gradient-to-r from-[#5a9dc9] to-[#2c5f7f] bg-clip-text text-transparent tracking-tight" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
             Connexion Employé
           </h1>
-          <p className="text-2xl text-muted-foreground">
+          <p className="text-2xl text-gray-600">
             {step === 'admin-login' && 'Connexion administrateur'}
             {step === 'employee-selection' && `${enterpriseName} - Sélectionnez votre nom`}
             {step === 'pin-entry' && `Bonjour ${selectedEmployee?.first_name}`}
@@ -187,17 +179,17 @@ export default function TabletLoginPage() {
 
         {/* Step 1: Admin Login */}
         {step === 'admin-login' && (
-          <div className="bg-white rounded-3xl shadow-xl p-8 animate-slide-up">
+          <div className="bg-white rounded-3xl shadow-[0_16px_48px_-12px_rgba(90,157,201,0.15)] p-8 animate-slide-up border border-[#5a9dc9]/10">
             <form onSubmit={handleAdminLogin} className="space-y-6">
               <div>
-                <label className="block text-xl font-medium mb-3">
+                <label className="block text-xl font-medium mb-3 text-gray-700">
                   Email administrateur
                 </label>
                 <input
                   type="email"
                   value={adminEmail}
                   onChange={(e) => setAdminEmail(e.target.value)}
-                  className="w-full px-6 py-4 text-xl rounded-xl border-2 border-border focus:outline-none focus:ring-4 focus:ring-primary-500 focus:border-transparent bg-background"
+                  className="w-full px-6 py-4 text-xl rounded-2xl border border-[#5a9dc9]/20 focus:outline-none focus:ring-2 focus:ring-[#5a9dc9]/20 focus:border-[#5a9dc9] bg-white transition-all duration-300 hover:border-[#5a9dc9]/40"
                   placeholder="admin@example.com"
                   required
                   disabled={isLoading}
@@ -206,14 +198,14 @@ export default function TabletLoginPage() {
               </div>
 
               <div>
-                <label className="block text-xl font-medium mb-3">
+                <label className="block text-xl font-medium mb-3 text-gray-700">
                   Mot de passe
                 </label>
                 <input
                   type="password"
                   value={adminPassword}
                   onChange={(e) => setAdminPassword(e.target.value)}
-                  className="w-full px-6 py-4 text-xl rounded-xl border-2 border-border focus:outline-none focus:ring-4 focus:ring-primary-500 focus:border-transparent bg-background"
+                  className="w-full px-6 py-4 text-xl rounded-2xl border border-[#5a9dc9]/20 focus:outline-none focus:ring-2 focus:ring-[#5a9dc9]/20 focus:border-[#5a9dc9] bg-white transition-all duration-300 hover:border-[#5a9dc9]/40"
                   placeholder="••••••••"
                   required
                   disabled={isLoading}
@@ -222,7 +214,7 @@ export default function TabletLoginPage() {
               </div>
 
               {error && (
-                <div className="p-4 rounded-xl bg-danger-50 border-2 border-danger-200 text-danger-700 text-xl text-center">
+                <div className="p-4 rounded-2xl bg-red-50 border border-red-200/50 text-red-700 text-xl text-center">
                   {error}
                 </div>
               )}
@@ -230,10 +222,11 @@ export default function TabletLoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="bg-green-500 text-white w-full h-16 text-2xl font-semibold rounded-xl hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="bg-gradient-to-r from-[#81c995] to-[#4a8f5a] text-white w-full h-16 text-2xl font-semibold rounded-2xl hover:shadow-[0_8px_24px_-4px_rgba(129,201,149,0.4)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:-translate-y-1 relative overflow-hidden group"
               >
+                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
                 {isLoading ? (
-                  <span className="flex items-center justify-center gap-3">
+                  <span className="flex items-center justify-center gap-3 relative">
                     <svg className="animate-spin h-8 w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -241,7 +234,7 @@ export default function TabletLoginPage() {
                     Connexion...
                   </span>
                 ) : (
-                  'Continuer'
+                  <span className="relative">Continuer</span>
                 )}
               </button>
             </form>
@@ -249,9 +242,12 @@ export default function TabletLoginPage() {
             <div className="text-center mt-6">
               <a
                 href="/login"
-                className="text-xl text-neutral-600 hover:text-primary-500 transition-colors"
+                className="text-xl text-gray-600 hover:text-[#5a9dc9] transition-colors inline-flex items-center gap-2 group"
               >
-                ← Retour à la connexion standard
+                <svg className="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                Retour à la connexion standard
               </a>
             </div>
           </div>
@@ -265,44 +261,52 @@ export default function TabletLoginPage() {
                 <button
                   key={employee.id}
                   onClick={() => handleEmployeeSelect(employee)}
-                  className="bg-white rounded-3xl shadow-lg p-8 hover:shadow-2xl hover:scale-105 transition-all duration-200 active:scale-95 text-center"
+                  className="relative bg-white rounded-3xl p-8 hover:-translate-y-1 hover:shadow-[0_16px_48px_-12px_rgba(244,165,165,0.25)] transition-all duration-300 text-center border border-[#f4a5a5]/20 overflow-hidden group"
                 >
-                  <div className="w-24 h-24 mx-auto mb-4 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center">
-                    <span className="text-4xl font-bold text-white">
-                      {employee.first_name.charAt(0)}{employee.last_name.charAt(0)}
-                    </span>
+                  {/* Gradient rose pastel en fond */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#fef6f7] to-white opacity-60"></div>
+
+                  <div className="relative z-10">
+                    <div className="w-24 h-24 mx-auto mb-4 bg-gradient-to-br from-[#f4a5a5] to-[#c66b6b] rounded-full flex items-center justify-center shadow-lg group-hover:scale-105 group-hover:rotate-3 transition-all duration-300">
+                      <span className="text-4xl font-bold text-white">
+                        {employee.first_name.charAt(0)}{employee.last_name.charAt(0)}
+                      </span>
+                    </div>
+                    <h3 className="text-2xl font-semibold mb-1 text-gray-900 tracking-tight">
+                      {employee.first_name} {employee.last_name}
+                    </h3>
+                    {employee.email && (
+                      <p className="text-lg text-gray-600">{employee.email}</p>
+                    )}
                   </div>
-                  <h3 className="text-2xl font-semibold mb-1">
-                    {employee.first_name} {employee.last_name}
-                  </h3>
-                  {employee.email && (
-                    <p className="text-lg text-muted-foreground">{employee.email}</p>
-                  )}
                 </button>
               ))}
             </div>
 
             <button
               onClick={handleBack}
-              className="bg-gray-200 text-gray-800 w-full h-16 text-xl rounded-xl hover:bg-gray-300 transition-all font-semibold"
+              className="bg-gray-100 hover:bg-gray-200 text-gray-800 w-full h-16 text-xl rounded-2xl transition-all font-semibold border border-gray-200 hover:border-gray-300 hover:-translate-y-0.5 inline-flex items-center justify-center gap-2 group"
             >
-              ← Retour
+              <svg className="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Retour
             </button>
           </div>
         )}
 
         {/* Step 3: PIN Entry */}
         {step === 'pin-entry' && selectedEmployee && (
-          <div className="bg-white rounded-3xl shadow-xl p-8 animate-slide-up">
+          <div className="bg-white rounded-3xl shadow-[0_16px_48px_-12px_rgba(90,157,201,0.15)] p-8 animate-slide-up border border-[#5a9dc9]/10">
             {/* PIN Display */}
             <div className="flex justify-center items-center gap-6 mb-8">
               {[0, 1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className={`w-20 h-20 rounded-2xl flex items-center justify-center text-4xl font-bold border-4 transition-all ${
+                  className={`w-20 h-20 rounded-2xl flex items-center justify-center text-4xl font-bold transition-all duration-300 ${
                     i < pin.length
-                      ? 'bg-primary-500 border-primary-600 text-white scale-110'
-                      : 'bg-muted border-border text-muted-foreground/60'
+                      ? 'bg-gradient-to-br from-[#5a9dc9] to-[#2c5f7f] border-2 border-[#5a9dc9] text-white scale-110 shadow-lg'
+                      : 'bg-gray-50 border-2 border-gray-200 text-gray-300'
                   }`}
                 >
                   {i < pin.length ? '•' : ''}
@@ -312,7 +316,7 @@ export default function TabletLoginPage() {
 
             {/* Error Message */}
             {error && (
-              <div className="p-4 rounded-xl bg-danger-50 border-2 border-danger-200 text-danger-700 text-xl text-center mb-6">
+              <div className="p-4 rounded-2xl bg-red-50 border border-red-200/50 text-red-700 text-xl text-center mb-6">
                 {error}
               </div>
             )}
@@ -324,7 +328,7 @@ export default function TabletLoginPage() {
                   key={digit}
                   onClick={() => handlePinInput(digit.toString())}
                   disabled={isLoading || pin.length >= 4}
-                  className="bg-purple-500 text-white h-24 text-3xl font-bold rounded-xl hover:bg-purple-600 hover:scale-105 active:scale-95 disabled:opacity-50 transition-all"
+                  className="bg-gradient-to-br from-[#5a9dc9] to-[#2c5f7f] text-white h-24 text-3xl font-bold rounded-2xl hover:shadow-[0_8px_24px_-4px_rgba(90,157,201,0.4)] hover:scale-105 active:scale-95 disabled:opacity-50 transition-all duration-200"
                 >
                   {digit}
                 </button>
@@ -334,7 +338,7 @@ export default function TabletLoginPage() {
               <button
                 onClick={handleClear}
                 disabled={isLoading}
-                className="bg-orange-500 text-white h-24 text-xl rounded-xl hover:bg-orange-600 hover:scale-105 active:scale-95 transition-all font-semibold"
+                className="bg-gradient-to-br from-[#ffe5b4] to-[#ffd580] text-gray-800 h-24 text-xl rounded-2xl hover:shadow-[0_8px_24px_-4px_rgba(255,229,180,0.4)] hover:scale-105 active:scale-95 transition-all duration-200 font-semibold"
               >
                 Effacer
               </button>
@@ -343,7 +347,7 @@ export default function TabletLoginPage() {
               <button
                 onClick={() => handlePinInput('0')}
                 disabled={isLoading || pin.length >= 4}
-                className="bg-purple-500 text-white h-24 text-3xl font-bold rounded-xl hover:bg-purple-600 hover:scale-105 active:scale-95 disabled:opacity-50 transition-all"
+                className="bg-gradient-to-br from-[#5a9dc9] to-[#2c5f7f] text-white h-24 text-3xl font-bold rounded-2xl hover:shadow-[0_8px_24px_-4px_rgba(90,157,201,0.4)] hover:scale-105 active:scale-95 disabled:opacity-50 transition-all duration-200"
               >
                 0
               </button>
@@ -352,7 +356,7 @@ export default function TabletLoginPage() {
               <button
                 onClick={handleBackspace}
                 disabled={isLoading || pin.length === 0}
-                className="bg-gray-200 text-gray-800 h-24 text-2xl rounded-xl hover:bg-gray-300 hover:scale-105 active:scale-95 disabled:opacity-50 transition-all font-semibold"
+                className="bg-gray-100 hover:bg-gray-200 text-gray-800 h-24 text-2xl rounded-2xl hover:scale-105 active:scale-95 disabled:opacity-50 transition-all duration-200 font-semibold border border-gray-200"
               >
                 ←
               </button>
@@ -362,9 +366,12 @@ export default function TabletLoginPage() {
             <button
               onClick={handleBack}
               disabled={isLoading}
-              className="bg-gray-200 text-gray-800 w-full h-16 text-xl rounded-xl hover:bg-gray-300 transition-all font-semibold"
+              className="bg-gray-100 hover:bg-gray-200 text-gray-800 w-full h-16 text-xl rounded-2xl transition-all font-semibold border border-gray-200 hover:border-gray-300 hover:-translate-y-0.5 inline-flex items-center justify-center gap-2 group"
             >
-              ← Changer d'employé
+              <svg className="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Changer d'employé
             </button>
           </div>
         )}

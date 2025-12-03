@@ -11,7 +11,8 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { AvatarSelector } from '@/components/shared/AvatarSelector'
 import {
   UserCircleIcon,
   BuildingOfficeIcon,
@@ -34,6 +35,7 @@ interface AdminData {
   email: string
   first_name: string
   last_name: string
+  avatar: string | null
 }
 
 export default function ProfilPage() {
@@ -48,6 +50,7 @@ export default function ProfilPage() {
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
+    avatar: '',
     enterprise_name: '',
     legal_form: '',
     siret: ''
@@ -81,7 +84,8 @@ export default function ProfilPage() {
       setFormData(prev => ({
         ...prev,
         first_name: (admin as any).first_name || '',
-        last_name: (admin as any).last_name || ''
+        last_name: (admin as any).last_name || '',
+        avatar: (admin as any).avatar || ''
       }))
     }
 
@@ -116,7 +120,8 @@ export default function ProfilPage() {
         .from('admin')
         .update({
           first_name: formData.first_name,
-          last_name: formData.last_name
+          last_name: formData.last_name,
+          avatar: formData.avatar || null
         })
         .eq('id', session!.user.id)
 
@@ -159,7 +164,8 @@ export default function ProfilPage() {
       setFormData(prev => ({
         ...prev,
         first_name: adminData.first_name || '',
-        last_name: adminData.last_name || ''
+        last_name: adminData.last_name || '',
+        avatar: adminData.avatar || ''
       }))
     }
     if (enterpriseData) {
@@ -198,6 +204,9 @@ export default function ProfilPage() {
         {/* En-tête avec avatar */}
         <div className="flex items-center gap-6">
           <Avatar className="h-24 w-24 border-4 border-primary-100">
+            {adminData?.avatar ? (
+              <AvatarImage src={`/${adminData.avatar}`} alt="Avatar" />
+            ) : null}
             <AvatarFallback className="bg-gradient-to-br from-primary-400 to-primary-600 text-white text-2xl font-bold">
               {getInitials(adminData?.first_name, adminData?.last_name)}
             </AvatarFallback>
@@ -271,6 +280,17 @@ export default function ProfilPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Sélecteur d'avatar en mode édition */}
+            {isEditing && (
+              <>
+                <AvatarSelector
+                  selectedAvatar={formData.avatar}
+                  onSelect={(avatar) => setFormData({ ...formData, avatar })}
+                />
+                <Separator />
+              </>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label htmlFor="first_name" className="text-sm font-medium">

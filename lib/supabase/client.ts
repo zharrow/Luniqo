@@ -15,6 +15,18 @@ export function createClient() {
 
   return createBrowserClient<Database>(
     supabaseUrl,
-    supabaseAnonKey
+    supabaseAnonKey,
+    {
+      auth: {
+        // Keep session alive even when app is not focused
+        persistSession: true,
+        // Disable auto-refresh when tab is hidden (prevents disconnects)
+        autoRefreshToken: true,
+        // Detect session in URL for OAuth flows
+        detectSessionInUrl: true,
+        // Store session in localStorage (more persistent than sessionStorage)
+        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+      },
+    }
   )
 }

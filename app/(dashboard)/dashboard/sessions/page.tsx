@@ -110,16 +110,14 @@ export default function SessionsPage() {
     switch (status) {
       case 'COMPLETEE': return 'success'
       case 'EN_COURS': return 'primary'
-      case 'INCOMPLETE': return 'warning'
       default: return 'neutral'
     }
   }
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'COMPLETEE': return 'Complétée'
+      case 'COMPLETEE': return 'Terminée'
       case 'EN_COURS': return 'En cours'
-      case 'INCOMPLETE': return 'Incomplète'
       default: return status
     }
   }
@@ -187,29 +185,59 @@ export default function SessionsPage() {
           </h2>
 
           {!todaySession ? (
-            <Card className="p-8 text-center">
-              <CalendarIcon className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">
-                Aucune session pour aujourd'hui
-              </h3>
-              <p className="text-muted-foreground mb-6">
-                Créez la session de nettoyage du {formatDate(new Date().toISOString())}
-              </p>
-              <Button
-                onClick={createTodaySession}
-                disabled={creating}
-                className="inline-flex items-center gap-2"
-              >
-                <PlusIcon className="w-5 h-5" />
-                {creating ? 'Création...' : 'Créer la session du jour'}
-              </Button>
-            </Card>
+            <div
+              className="relative rounded-3xl p-8 bg-white transition-all duration-300 overflow-hidden text-center"
+              style={{
+                border: '1px solid #5a9dc933',
+                boxShadow: '0 0 0 0 rgba(90,157,201,0.15)'
+              }}
+            >
+              <div
+                className="absolute inset-0 opacity-60"
+                style={{ background: 'linear-gradient(to bottom right, #f8fbfd, white)' }}
+              />
+              <div className="relative z-10">
+                <CalendarIcon className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">
+                  Aucune session pour aujourd'hui
+                </h3>
+                <p className="text-muted-foreground mb-6">
+                  Créez la session de nettoyage du {formatDate(new Date().toISOString())}
+                </p>
+                <Button
+                  onClick={createTodaySession}
+                  disabled={creating}
+                  className="inline-flex items-center gap-2 bg-[#5a9dc9] hover:bg-[#2c5f7f]"
+                >
+                  <PlusIcon className="w-5 h-5" />
+                  {creating ? 'Création...' : 'Créer la session du jour'}
+                </Button>
+              </div>
+            </div>
           ) : (
             <Link href={`/dashboard/sessions/${todaySession.id}`}>
-              <Card className="hover:shadow-lg transition-all cursor-pointer">
-                <CardContent className="p-6">
+              <div
+                className="relative rounded-3xl p-6 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden cursor-pointer"
+                style={{
+                  border: '1px solid #5a9dc933',
+                  boxShadow: '0 0 0 0 rgba(90,157,201,0.25)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(90,157,201,0.25)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = '0 0 0 0 rgba(90,157,201,0.25)'
+                }}
+              >
+                {/* Gradient fond */}
+                <div
+                  className="absolute inset-0 opacity-60"
+                  style={{ background: 'linear-gradient(to bottom right, #f8fbfd, white)' }}
+                />
+
+                <div className="relative z-10">
                   <div className="flex items-start justify-between mb-4">
-                    <div>
+                    <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="text-lg font-semibold">
                           {formatDate(todaySession.date)}
@@ -221,6 +249,16 @@ export default function SessionsPage() {
                       {todaySession.notes && (
                         <p className="text-sm text-muted-foreground">{todaySession.notes}</p>
                       )}
+                    </div>
+
+                    {/* Chevron */}
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300"
+                      style={{ backgroundColor: '#5a9dc914' }}
+                    >
+                      <svg className="w-4 h-4" style={{ color: '#5a9dc9' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
                     </div>
                   </div>
 
@@ -235,8 +273,11 @@ export default function SessionsPage() {
 
                     <div className="relative w-full h-3 bg-muted rounded-full overflow-hidden">
                       <div
-                        className="absolute top-0 left-0 h-full bg-linear-to-r from-primary to-primary/80 transition-all duration-300"
-                        style={{ width: `${todaySession.completion_percentage}%` }}
+                        className="absolute top-0 left-0 h-full transition-all duration-300"
+                        style={{
+                          width: `${todaySession.completion_percentage}%`,
+                          background: 'linear-gradient(to right, #5a9dc9, #2c5f7f)'
+                        }}
                       ></div>
                     </div>
 
@@ -247,13 +288,13 @@ export default function SessionsPage() {
                           {todaySession.completion_percentage}% complété
                         </span>
                       </div>
-                      <span className="text-sm text-primary font-medium">
+                      <span className="text-sm text-[#5a9dc9] font-medium">
                         Voir les détails →
                       </span>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </Link>
           )}
         </div>
@@ -265,24 +306,59 @@ export default function SessionsPage() {
           </h2>
 
           {recentSessions.length === 0 ? (
-            <Card className="p-8 text-center">
-              <ClockIcon className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">
-                Aucune session
-              </h3>
-              <p className="text-muted-foreground">
-                Les sessions passées apparaîtront ici
-              </p>
-            </Card>
+            <div
+              className="relative rounded-3xl p-8 bg-white transition-all duration-300 overflow-hidden text-center"
+              style={{
+                border: '1px solid #5a9dc933',
+                boxShadow: '0 0 0 0 rgba(90,157,201,0.15)'
+              }}
+            >
+              <div
+                className="absolute inset-0 opacity-60"
+                style={{ background: 'linear-gradient(to bottom right, #f8fbfd, white)' }}
+              />
+              <div className="relative z-10">
+                <ClockIcon className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">
+                  Aucune session
+                </h3>
+                <p className="text-muted-foreground">
+                  Les sessions passées apparaîtront ici
+                </p>
+              </div>
+            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {recentSessions.map((session) => (
                 <Link key={session.id} href={`/dashboard/sessions/${session.id}`}>
-                  <Card className="hover:shadow-lg transition-all cursor-pointer h-full">
-                    <CardContent className="p-6">
+                  <div
+                    className="relative rounded-3xl p-6 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden cursor-pointer h-full"
+                    style={{
+                      border: '1px solid #5a9dc933',
+                      boxShadow: '0 0 0 0 rgba(90,157,201,0.25)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(90,157,201,0.25)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.boxShadow = '0 0 0 0 rgba(90,157,201,0.25)'
+                    }}
+                  >
+                    {/* Gradient fond */}
+                    <div
+                      className="absolute inset-0 opacity-60"
+                      style={{ background: 'linear-gradient(to bottom right, #f8fbfd, white)' }}
+                    />
+
+                    <div className="relative z-10">
                       <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <CalendarIcon className="w-5 h-5 text-muted-foreground" />
+                        <div className="flex items-center gap-2 flex-1">
+                          <div
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-2xl group-hover:scale-105 transition-all duration-300"
+                            style={{ background: 'linear-gradient(to bottom right, #5a9dc91A, #5a9dc90D)' }}
+                          >
+                            <CalendarIcon className="w-4 h-4" style={{ color: '#2c5f7f' }} strokeWidth={1.5} />
+                          </div>
                           <h3 className="font-semibold">
                             {formatDateShort(session.date)}
                           </h3>
@@ -302,12 +378,13 @@ export default function SessionsPage() {
 
                         <div className="relative w-full h-2 bg-muted rounded-full overflow-hidden">
                           <div
-                            className={`absolute top-0 left-0 h-full transition-all ${
-                              session.completion_percentage === 100
-                                ? 'bg-success-500'
-                                : 'bg-primary'
-                            }`}
-                            style={{ width: `${session.completion_percentage}%` }}
+                            className="absolute top-0 left-0 h-full transition-all"
+                            style={{
+                              width: `${session.completion_percentage}%`,
+                              background: session.completion_percentage === 100
+                                ? 'linear-gradient(to right, #b5ead7, #4a8f5a)'
+                                : 'linear-gradient(to right, #5a9dc9, #2c5f7f)'
+                            }}
                           ></div>
                         </div>
 
@@ -321,8 +398,8 @@ export default function SessionsPage() {
                           )}
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 </Link>
               ))}
             </div>

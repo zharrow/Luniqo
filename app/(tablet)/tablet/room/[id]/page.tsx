@@ -51,7 +51,7 @@ export default function TabletRoomPage() {
   const [error, setError] = useState('')
   const [refreshTrigger, setRefreshTrigger] = useState(0)
 
-  const { session, isLoading: authLoading } = useRequireTabletAuth()
+  const { session, isLoading: authLoading, logout } = useRequireTabletAuth()
   const router = useRouter()
   const supabase = createClient()
 
@@ -288,14 +288,25 @@ export default function TabletRoomPage() {
           </div>
         </div>
 
-        {/* Progress */}
-        <div className="text-right">
-          <div className="text-5xl font-bold text-primary-500 mb-2">
-            {progress}%
+        {/* Progress and Logout */}
+        <div className="flex items-center gap-6">
+          <div className="text-right">
+            <div className="text-5xl font-bold text-primary-500 mb-2">
+              {progress}%
+            </div>
+            <p className="text-xl text-muted-foreground">
+              {validatedTasks.length} / {tasks.length} tâches
+            </p>
           </div>
-          <p className="text-xl text-muted-foreground">
-            {validatedTasks.length} / {tasks.length} tâches
-          </p>
+          <button
+            onClick={logout}
+            className="px-6 py-4 text-xl rounded-xl font-semibold text-white bg-destructive hover:opacity-90 transition-opacity shadow-lg"
+            title="Déconnexion"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+          </button>
         </div>
       </div>
 

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/client'
 import { AssignedTask, assignedTasksService } from './assigned-tasks.service'
+import { formatDateLocal } from '@/lib/utils/date'
 
 export interface CalendarTask {
   id: string
@@ -78,7 +79,7 @@ export class CalendarService {
     date: Date,
     enterpriseId: string
   ): Promise<Map<string, 'todo' | 'in_progress' | 'done'>> {
-    const dateStr = date.toISOString().split('T')[0]
+    const dateStr = formatDateLocal(date)
     const statusMap = new Map<string, 'todo' | 'in_progress' | 'done'>()
 
     // Get today's session
@@ -111,7 +112,7 @@ export class CalendarService {
     logs.forEach((log: any) => {
       if (log.status === 'FAIT') {
         statusMap.set(log.assigned_task_id, 'done')
-      } else if (log.status === 'EN_COURS') {
+      } else if (log.status === 'PARTIEL') {
         statusMap.set(log.assigned_task_id, 'in_progress')
       } else {
         statusMap.set(log.assigned_task_id, 'todo')
@@ -158,10 +159,10 @@ export class CalendarService {
 
     // Build calendar structure
     const days: DayTasks[] = []
-    const todayStr = today.toISOString().split('T')[0]
+    const todayStr = formatDateLocal(today)
 
     for (const date of weekDays) {
-      const dateStr = date.toISOString().split('T')[0]
+      const dateStr = formatDateLocal(date)
       const isToday = dateStr === todayStr
 
       // Get tasks for this day
@@ -297,8 +298,8 @@ export class CalendarService {
       return a.name.localeCompare(b.name)
     })
 
-    const todayStr = today.toISOString().split('T')[0]
-    const dateStr = targetDate.toISOString().split('T')[0]
+    const todayStr = formatDateLocal(today)
+    const dateStr = formatDateLocal(targetDate)
     const isToday = dateStr === todayStr
 
     return {

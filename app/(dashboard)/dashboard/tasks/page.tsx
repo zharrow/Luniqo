@@ -38,7 +38,6 @@ export default function TasksPage() {
     name: '',
     description: '',
     category: '',
-    default_duration: undefined,
     estimated_duration: undefined
   })
 
@@ -68,7 +67,6 @@ export default function TasksPage() {
       name: '',
       description: '',
       category: '',
-      default_duration: undefined,
       estimated_duration: undefined
     })
     setShowModal(true)
@@ -80,7 +78,6 @@ export default function TasksPage() {
       name: task.name,
       description: task.description || '',
       category: task.category || '',
-      default_duration: task.default_duration || undefined,
       estimated_duration: task.estimated_duration || undefined
     })
     setShowModal(true)
@@ -284,31 +281,20 @@ export default function TasksPage() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Durée estimée (min)
-              </label>
-              <Input
-                type="number"
-                value={formData.estimated_duration || ''}
-                onChange={(e) => setFormData({ ...formData, estimated_duration: e.target.value ? parseInt(e.target.value) : undefined })}
-                placeholder="15"
-                min="1"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Durée par défaut (min)
-              </label>
-              <Input
-                type="number"
-                value={formData.default_duration || ''}
-                onChange={(e) => setFormData({ ...formData, default_duration: e.target.value ? parseInt(e.target.value) : undefined })}
-                placeholder="15"
-                min="1"
-              />
-            </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Durée estimée (min)
+            </label>
+            <Input
+              type="number"
+              value={formData.estimated_duration || ''}
+              onChange={(e) => setFormData({ ...formData, estimated_duration: e.target.value ? parseInt(e.target.value) : undefined })}
+              placeholder="15"
+              min="1"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Cette durée sera utilisée par défaut lors de l'assignation à une salle
+            </p>
           </div>
         </FormDialog>
 

@@ -5,7 +5,6 @@ export interface TaskTemplate {
   enterprise_id: string
   name: string
   description: string | null
-  default_duration: number | null
   estimated_duration: number | null
   category: string | null
   is_active: boolean
@@ -16,7 +15,6 @@ export interface TaskTemplate {
 export interface CreateTaskInput {
   name: string
   description?: string
-  default_duration?: number
   estimated_duration?: number
   category?: string
 }
@@ -24,7 +22,6 @@ export interface CreateTaskInput {
 export interface UpdateTaskInput {
   name?: string
   description?: string
-  default_duration?: number
   estimated_duration?: number
   category?: string
   is_active?: boolean
@@ -107,7 +104,6 @@ export class TasksService {
         enterprise_id: enterpriseId,
         name: input.name,
         description: input.description || null,
-        default_duration: input.default_duration || null,
         estimated_duration: input.estimated_duration || null,
         category: input.category || null,
         is_active: true

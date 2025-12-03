@@ -46,6 +46,7 @@ export interface Database {
           firebase_uid: string | null
           first_name: string
           last_name: string
+          avatar: string | null
           is_active: boolean
           created_by_id: string | null
           created_at: string
@@ -58,6 +59,7 @@ export interface Database {
           firebase_uid?: string | null
           first_name: string
           last_name: string
+          avatar?: string | null
           is_active?: boolean
           created_by_id?: string | null
           created_at?: string
@@ -70,6 +72,7 @@ export interface Database {
           firebase_uid?: string | null
           first_name?: string
           last_name?: string
+          avatar?: string | null
           is_active?: boolean
           created_by_id?: string | null
           created_at?: string
@@ -114,6 +117,7 @@ export interface Database {
           email: string | null
           first_name: string
           last_name: string
+          avatar: string | null
           pin_code: string
           enterprise_id: string
           is_active: boolean
@@ -126,6 +130,7 @@ export interface Database {
           email?: string | null
           first_name: string
           last_name: string
+          avatar?: string | null
           pin_code: string
           enterprise_id: string
           is_active?: boolean
@@ -138,6 +143,7 @@ export interface Database {
           email?: string | null
           first_name?: string
           last_name?: string
+          avatar?: string | null
           pin_code?: string
           enterprise_id?: string
           is_active?: boolean

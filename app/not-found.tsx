@@ -1,5 +1,4 @@
-export const dynamic = 'force-dynamic'
-
+// Removed force-dynamic for performance
 export default function NotFound() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-muted to-background">

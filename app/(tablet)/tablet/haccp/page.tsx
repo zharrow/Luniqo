@@ -51,83 +51,97 @@ export default function TabletHaccpPage() {
         {/* Meals Section */}
         <button
           onClick={() => setSelectedSection('meals')}
-          className="card p-12 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left group"
+          className="relative rounded-3xl p-12 bg-white hover:-translate-y-1 hover:shadow-[0_16px_48px_-12px_rgba(129,201,149,0.25)] transition-all duration-300 text-left group border border-[#81c995]/20 overflow-hidden"
         >
-          {/* Icon */}
-          <div className="w-32 h-32 rounded-3xl bg-success-100 flex items-center justify-center mb-8 mx-auto group-hover:bg-success-500 transition-colors">
-            <svg
-              className="w-20 h-20 text-success-500 group-hover:text-white transition-colors"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-              />
-              <circle cx="12" cy="12" r="10" strokeWidth={2} />
-            </svg>
-          </div>
+          {/* Gradient pastel vert en fond */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#f1f9f3] to-white opacity-60"></div>
 
-          {/* Title */}
-          <h2 className="text-4xl font-bold mb-4 text-center group-hover:text-success-500 transition-colors">
-            Repas
-          </h2>
+          <div className="relative z-10">
+            {/* Icon avec animation */}
+            <div className="inline-flex items-center justify-center w-32 h-32 rounded-3xl bg-gradient-to-br from-[#81c995]/10 to-[#81c995]/5 mb-8 mx-auto group-hover:scale-105 group-hover:rotate-2 transition-all duration-300">
+              <svg
+                className="w-20 h-20 text-[#4a8f5a]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                />
+                <circle cx="12" cy="12" r="10" />
+              </svg>
+            </div>
 
-          {/* Description */}
-          <p className="text-xl text-muted-foreground text-center mb-6">
-            Enregistrer les repas servis aux enfants
-          </p>
+            {/* Title */}
+            <h2 className="text-4xl font-bold mb-4 text-center text-gray-900 group-hover:text-[#4a8f5a] transition-colors tracking-tight">
+              Repas
+            </h2>
 
-          {/* Action */}
-          <div className="flex items-center justify-center text-success-500 text-xl font-semibold group-hover:translate-x-2 transition-transform">
-            Accéder
-            <svg className="w-6 h-6 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
+            {/* Description */}
+            <p className="text-xl text-gray-600 text-center mb-6">
+              Enregistrer les repas servis aux enfants
+            </p>
+
+            {/* Chevron animé */}
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-[#81c995] text-xl font-semibold">Accéder</span>
+              <div className="w-10 h-10 rounded-full bg-[#81c995]/8 flex items-center justify-center opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
+                <svg className="w-5 h-5 text-[#81c995]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
           </div>
         </button>
 
         {/* Temperatures Section */}
         <button
           onClick={() => setSelectedSection('temperatures')}
-          className="card p-12 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left group"
+          className="relative rounded-3xl p-12 bg-white hover:-translate-y-1 hover:shadow-[0_16px_48px_-12px_rgba(255,171,145,0.25)] transition-all duration-300 text-left group border border-[#ffab91]/20 overflow-hidden"
         >
-          {/* Icon */}
-          <div className="w-32 h-32 rounded-3xl bg-danger-100 flex items-center justify-center mb-8 mx-auto group-hover:bg-danger-500 transition-colors">
-            <svg
-              className="w-20 h-20 text-danger-500 group-hover:text-white transition-colors"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-              />
-            </svg>
-          </div>
+          {/* Gradient pastel pêche en fond */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#fffaf8] to-white opacity-60"></div>
 
-          {/* Title */}
-          <h2 className="text-4xl font-bold mb-4 text-center group-hover:text-danger-500 transition-colors">
-            Températures
-          </h2>
+          <div className="relative z-10">
+            {/* Icon avec animation */}
+            <div className="inline-flex items-center justify-center w-32 h-32 rounded-3xl bg-gradient-to-br from-[#ffab91]/10 to-[#ffab91]/5 mb-8 mx-auto group-hover:scale-105 group-hover:rotate-2 transition-all duration-300">
+              <svg
+                className="w-20 h-20 text-[#d97557]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                />
+              </svg>
+            </div>
 
-          {/* Description */}
-          <p className="text-xl text-muted-foreground text-center mb-6">
-            Contrôler les températures des repas
-          </p>
+            {/* Title */}
+            <h2 className="text-4xl font-bold mb-4 text-center text-gray-900 group-hover:text-[#d97557] transition-colors tracking-tight">
+              Températures
+            </h2>
 
-          {/* Action */}
-          <div className="flex items-center justify-center text-danger-500 text-xl font-semibold group-hover:translate-x-2 transition-transform">
-            Accéder
-            <svg className="w-6 h-6 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
+            {/* Description */}
+            <p className="text-xl text-gray-600 text-center mb-6">
+              Contrôler les températures des repas
+            </p>
+
+            {/* Chevron animé */}
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-[#ffab91] text-xl font-semibold">Accéder</span>
+              <div className="w-10 h-10 rounded-full bg-[#ffab91]/8 flex items-center justify-center opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
+                <svg className="w-5 h-5 text-[#ffab91]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
           </div>
         </button>
       </div>

@@ -183,21 +183,25 @@ export default function TabletHaccpMealsPage() {
       )}
 
       {/* Meal Selection */}
-      <div className="card p-8 mb-8">
-        <label className="block text-2xl font-bold mb-4">
-          Sélectionnez le repas
-        </label>
+      <div className="relative rounded-3xl p-8 mb-8 bg-white border border-[#81c995]/20 shadow-lg overflow-hidden">
+        {/* Gradient vert pastel en fond */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#f1f9f3] to-white opacity-60"></div>
 
-        {todayMeals.length > 0 ? (
-          <div className="grid grid-cols-3 gap-4">
-            {todayMeals.map((meal: any) => (
-              <button
-                key={meal.id}
-                onClick={() => setSelectedMeal(meal.id)}
-                className={`p-6 rounded-2xl border-4 text-xl font-semibold transition-all ${
-                  selectedMeal === meal.id
-                    ? 'bg-primary-500 border-primary-600 text-white scale-105'
-                    : 'bg-card border-border hover:border-primary-500'
+        <div className="relative z-10">
+          <label className="block text-2xl font-bold mb-4 text-gray-900">
+            Sélectionnez le repas
+          </label>
+
+          {todayMeals.length > 0 ? (
+            <div className="grid grid-cols-3 gap-4">
+              {todayMeals.map((meal: any) => (
+                <button
+                  key={meal.id}
+                  onClick={() => setSelectedMeal(meal.id)}
+                  className={`p-6 rounded-2xl border-2 text-xl font-semibold transition-all shadow-md ${
+                    selectedMeal === meal.id
+                      ? 'bg-[#81c995] border-[#4a8f5a] text-white scale-105'
+                    : 'bg-white border-[#81c995]/20 hover:border-[#81c995] hover:shadow-lg'
                 }`}
               >
                 {meal.meal_type === 'Breakfast' && '🥐 Petit-déjeuner'}
@@ -207,20 +211,25 @@ export default function TabletHaccpMealsPage() {
             ))}
           </div>
         ) : (
-          <p className="text-xl text-muted-foreground">Aucun repas validé pour aujourd'hui</p>
+          <p className="text-xl text-gray-600">Aucun repas validé pour aujourd'hui</p>
         )}
+        </div>
       </div>
 
       {/* Children List (if meal selected) */}
       {selectedMeal && Object.keys(groupedChildren).length > 0 && (
         <div className="space-y-8 mb-32">
           {Object.entries(groupedChildren).map(([section, sectionChildren]) => (
-            <div key={section} className="card p-8">
-              <h3 className="text-3xl font-bold mb-6">
-                {section === 'Babies' && '👶 Bébés'}
-                {section === 'Toddlers' && '🧒 Moyens'}
-                {section === 'Preschoolers' && '👦 Grands'}
-              </h3>
+            <div key={section} className="relative rounded-3xl p-8 bg-white border border-[#81c995]/20 shadow-lg overflow-hidden">
+              {/* Gradient vert pastel en fond */}
+              <div className="absolute inset-0 bg-gradient-to-br from-[#f1f9f3] to-white opacity-60"></div>
+
+              <div className="relative z-10">
+                <h3 className="text-3xl font-bold mb-6 text-gray-900">
+                  {section === 'Babies' && '👶 Bébés'}
+                  {section === 'Toddlers' && '🧒 Moyens'}
+                  {section === 'Preschoolers' && '👦 Grands'}
+                </h3>
 
               <div className="space-y-4">
                 {sectionChildren.map((child) => (
@@ -259,6 +268,7 @@ export default function TabletHaccpMealsPage() {
                   </div>
                 ))}
               </div>
+              </div>
             </div>
           ))}
         </div>
@@ -271,7 +281,7 @@ export default function TabletHaccpMealsPage() {
             <button
               onClick={handleSubmit}
               disabled={isSaving}
-              className="btn bg-success-500 text-white hover:bg-success-600 w-full h-24 text-3xl font-bold shadow-2xl disabled:opacity-50"
+              className="rounded-2xl bg-[#81c995] text-white hover:bg-[#4a8f5a] w-full h-24 text-3xl font-bold shadow-2xl disabled:opacity-50 transition-colors"
             >
               {isSaving ? (
                 <span className="flex items-center justify-center gap-3">
