@@ -31,7 +31,7 @@ import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmation
 import { FormDialog } from '@/components/shared/FormDialog'
 
 export default function UsersPage() {
-  const { session, isLoading: authLoading } = useRequireAuth(['Admin'])
+  const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
   const [users, setUsers] = useState<UserWithRooms[]>([])
   const [rooms, setRooms] = useState<Room[]>([])
   const [loading, setLoading] = useState(true)

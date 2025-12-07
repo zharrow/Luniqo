@@ -32,7 +32,7 @@ interface HaccpStats {
 }
 
 export default function HaccpDashboardPage() {
-  const { session, isLoading: authLoading } = useRequireAuth(['Admin'])
+  const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
   const [stats, setStats] = useState<HaccpStats>({
     totalChildren: 0,
     activeChildren: 0,

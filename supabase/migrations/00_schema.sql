@@ -1,6 +1,7 @@
 -- ============================================================================
--- cLean + HACCP Database Schema for Supabase
--- Complete migration from PostgreSQL (FastAPI) to Supabase
+-- Luniqo Database Schema for Supabase
+-- Unified Architecture with profiles table
+-- Version: 2.0 (2025-12-07)
 -- ============================================================================
 
 -- Enable UUID extension
@@ -10,6 +11,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- ENUMS
 -- ============================================================================
 
+CREATE TYPE user_role AS ENUM ('Developer', 'Owner', 'Employee');
 CREATE TYPE session_status AS ENUM ('EN_COURS', 'COMPLETEE');
 CREATE TYPE log_status AS ENUM ('FAIT', 'PARTIEL', 'REPORTE', 'IMPOSSIBLE');
 CREATE TYPE meal_type AS ENUM ('Breakfast', 'Lunch', 'Snack');
@@ -17,7 +19,6 @@ CREATE TYPE checkpoint_type AS ENUM ('Reception', 'Holding', 'Service', 'Storage
 CREATE TYPE section_type AS ENUM ('Babies', 'Toddlers', 'Preschoolers');
 CREATE TYPE compliance_type AS ENUM ('Product', 'Temperature', 'Hygiene', 'Other');
 CREATE TYPE compliance_status AS ENUM ('Open', 'Corrected', 'Closed');
-CREATE TYPE user_type AS ENUM ('Developer', 'Admin', 'User');
 CREATE TYPE message_status AS ENUM ('Sent', 'Delivered', 'Read');
 CREATE TYPE notification_priority AS ENUM ('Info', 'Warning', 'Critical');
 CREATE TYPE notification_status AS ENUM ('Unread', 'Read', 'Archived');
@@ -25,37 +26,13 @@ CREATE TYPE cleaning_frequency AS ENUM ('Daily', 'Weekly', 'Monthly');
 CREATE TYPE document_category AS ENUM ('Temperatures', 'Cleaning', 'Training', 'Compliance', 'Other');
 
 -- ============================================================================
--- USER SYSTEM TABLES
+-- USER SYSTEM - UNIFIED ARCHITECTURE
 -- ============================================================================
 
--- Super Admin table (Platform administrator)
-CREATE TABLE super_admin (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    firebase_uid VARCHAR(255) UNIQUE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Admin table (Daycare manager)
-CREATE TABLE admin (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    firebase_uid VARCHAR(255) UNIQUE,
-    first_name VARCHAR(100) NOT NULL,
-    last_name VARCHAR(100) NOT NULL,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_by_id UUID REFERENCES super_admin(id) ON DELETE SET NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Enterprise table (Daycare/micro-daycare)
+-- Enterprise table (must be created first for circular reference with profiles)
+-- Note: owner_id will be added after profiles table is created
 CREATE TABLE enterprise (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    admin_id UUID UNIQUE NOT NULL REFERENCES admin(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     logo_url TEXT,
     legal_form VARCHAR(100),
@@ -64,22 +41,34 @@ CREATE TABLE enterprise (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Employee table (Childcare staff)
-CREATE TABLE employee (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    email VARCHAR(255),
-    first_name VARCHAR(100) NOT NULL,
-    last_name VARCHAR(100) NOT NULL,
-    pin_code VARCHAR(255) NOT NULL, -- Hashed PIN
-    enterprise_id UUID NOT NULL REFERENCES enterprise(id) ON DELETE CASCADE,
+-- Unified profiles table (replaces super_admin, admin, employee)
+-- 1:1 relationship with auth.users
+CREATE TABLE profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    role user_role NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+
+    -- Employee-specific fields (null for Developer/Owner)
+    username VARCHAR(100) UNIQUE,  -- Auto-generated (e.g., "Marie D") for tablet login
+    pin_hash VARCHAR(255),          -- bcrypt hashed PIN for tablet login
+
+    -- Relationships
+    enterprise_id UUID REFERENCES enterprise(id) ON DELETE CASCADE,  -- For Employees
+    created_by_id UUID REFERENCES profiles(id) ON DELETE SET NULL,   -- Who created this user
+
     is_active BOOLEAN DEFAULT TRUE,
-    created_by_id UUID REFERENCES admin(id) ON DELETE SET NULL,
+    avatar_url TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Add owner_id to enterprise (circular reference resolved)
+ALTER TABLE enterprise ADD COLUMN owner_id UUID UNIQUE REFERENCES profiles(id) ON DELETE CASCADE;
+
 -- ============================================================================
--- CLEAN MODULE TABLES
+-- LUNIQO MODULE TABLES (Cleaning)
 -- ============================================================================
 
 -- Room table
@@ -95,10 +84,10 @@ CREATE TABLE room (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Employee-Room access (Many-to-Many)
+-- Employee-Room access (Many-to-Many) - references profiles where role='Employee'
 CREATE TABLE employee_room_access (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    employee_id UUID NOT NULL REFERENCES employee(id) ON DELETE CASCADE,
+    employee_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
     room_id UUID NOT NULL REFERENCES room(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     UNIQUE(employee_id, room_id)
@@ -122,7 +111,7 @@ CREATE TABLE assigned_task (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     room_id UUID REFERENCES room(id) ON DELETE SET NULL,
     task_template_id UUID REFERENCES task_template(id) ON DELETE SET NULL,
-    default_performer_id UUID REFERENCES employee(id) ON DELETE SET NULL,
+    default_performer_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
     frequency JSONB,
     suggested_time TIME,
     expected_duration INT,
@@ -149,8 +138,8 @@ CREATE TABLE task_completion (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     session_id UUID REFERENCES daily_cleaning_session(id) ON DELETE CASCADE,
     assigned_task_id UUID REFERENCES assigned_task(id) ON DELETE SET NULL,
-    performed_by_id UUID REFERENCES employee(id) ON DELETE SET NULL,
-    recorded_by_id UUID REFERENCES employee(id) ON DELETE SET NULL,
+    performed_by_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
+    recorded_by_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
     status log_status NOT NULL,
     note TEXT,
     photo_urls JSONB,
@@ -239,7 +228,7 @@ CREATE TABLE meal (
     description TEXT,
     supplier_id UUID REFERENCES supplier(id) ON DELETE SET NULL,
     batch_id UUID REFERENCES batch(id) ON DELETE SET NULL,
-    responsible_id UUID REFERENCES employee(id) ON DELETE SET NULL,
+    responsible_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -253,7 +242,7 @@ CREATE TABLE temperature_check (
     is_compliant BOOLEAN DEFAULT TRUE,
     observations TEXT,
     control_date TIMESTAMP WITH TIME ZONE NOT NULL,
-    responsible_id UUID REFERENCES employee(id) ON DELETE SET NULL,
+    responsible_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -290,7 +279,7 @@ CREATE TABLE food_area_cleaning (
     product_used VARCHAR(100),
     frequency cleaning_frequency NOT NULL,
     cleaning_date TIMESTAMP WITH TIME ZONE NOT NULL,
-    responsible_id UUID REFERENCES employee(id) ON DELETE SET NULL,
+    responsible_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
     observations TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -304,7 +293,7 @@ CREATE TABLE haccp_incident (
     report_date TIMESTAMP WITH TIME ZONE NOT NULL,
     corrective_action TEXT,
     status compliance_status DEFAULT 'Open',
-    responsible_id UUID REFERENCES employee(id) ON DELETE SET NULL,
+    responsible_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -318,7 +307,7 @@ CREATE TABLE document (
     file_path VARCHAR(255) NOT NULL,
     creation_date DATE NOT NULL,
     retention_period VARCHAR(50),
-    responsible_id UUID REFERENCES employee(id) ON DELETE SET NULL,
+    responsible_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -326,25 +315,25 @@ CREATE TABLE document (
 -- COMMUNICATION MODULE TABLES
 -- ============================================================================
 
--- Support conversation table
+-- Support conversation table (Owner ↔ Developer)
 CREATE TABLE support_conversation (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    admin_id UUID NOT NULL REFERENCES admin(id) ON DELETE CASCADE,
-    super_admin_id UUID NOT NULL REFERENCES super_admin(id) ON DELETE CASCADE,
+    owner_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    developer_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
     last_message_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    UNIQUE(admin_id, super_admin_id)
+    UNIQUE(owner_id, developer_id)
 );
 
 -- Message table
 CREATE TABLE message (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     conversation_id UUID NOT NULL REFERENCES support_conversation(id) ON DELETE CASCADE,
-    sender_type user_type NOT NULL,
-    sender_id UUID NOT NULL,
-    recipient_type user_type NOT NULL,
-    recipient_id UUID NOT NULL,
+    sender_type user_role NOT NULL,
+    sender_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    recipient_type user_role NOT NULL,
+    recipient_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
     content TEXT NOT NULL,
     status message_status DEFAULT 'Sent',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -355,8 +344,8 @@ CREATE TABLE message (
 CREATE TABLE notification (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     enterprise_id UUID REFERENCES enterprise(id) ON DELETE CASCADE,
-    recipient_type user_type NOT NULL,
-    recipient_id UUID,
+    recipient_type user_role NOT NULL,
+    recipient_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
     title VARCHAR(200) NOT NULL,
     content TEXT NOT NULL,
     type VARCHAR(100),
@@ -372,16 +361,19 @@ CREATE TABLE notification (
 -- INDEXES FOR PERFORMANCE
 -- ============================================================================
 
--- User system indexes
-CREATE INDEX idx_admin_firebase_uid ON admin(firebase_uid);
-CREATE INDEX idx_super_admin_firebase_uid ON super_admin(firebase_uid);
-CREATE INDEX idx_enterprise_admin_id ON enterprise(admin_id);
-CREATE INDEX idx_employee_enterprise_id ON employee(enterprise_id);
+-- Profiles indexes
+CREATE INDEX idx_profiles_role ON profiles(role);
+CREATE INDEX idx_profiles_enterprise_id ON profiles(enterprise_id);
+CREATE INDEX idx_profiles_email ON profiles(email);
+CREATE INDEX idx_profiles_username ON profiles(username);
+
+-- Enterprise indexes
+CREATE INDEX idx_enterprise_owner_id ON enterprise(owner_id);
+
+-- Luniqo module indexes
+CREATE INDEX idx_room_enterprise_id ON room(enterprise_id);
 CREATE INDEX idx_employee_room_access_employee_id ON employee_room_access(employee_id);
 CREATE INDEX idx_employee_room_access_room_id ON employee_room_access(room_id);
-
--- cLean module indexes
-CREATE INDEX idx_room_enterprise_id ON room(enterprise_id);
 CREATE INDEX idx_task_template_enterprise_id ON task_template(enterprise_id);
 CREATE INDEX idx_assigned_task_room_id ON assigned_task(room_id);
 CREATE INDEX idx_daily_cleaning_session_enterprise_date ON daily_cleaning_session(enterprise_id, date);
@@ -400,8 +392,8 @@ CREATE INDEX idx_haccp_incident_enterprise_id ON haccp_incident(enterprise_id);
 CREATE INDEX idx_document_enterprise_id ON document(enterprise_id);
 
 -- Communication module indexes
-CREATE INDEX idx_support_conversation_admin_id ON support_conversation(admin_id);
-CREATE INDEX idx_support_conversation_super_admin_id ON support_conversation(super_admin_id);
+CREATE INDEX idx_support_conversation_owner_id ON support_conversation(owner_id);
+CREATE INDEX idx_support_conversation_developer_id ON support_conversation(developer_id);
 CREATE INDEX idx_message_conversation_id ON message(conversation_id);
 CREATE INDEX idx_notification_recipient ON notification(recipient_type, recipient_id);
 CREATE INDEX idx_notification_enterprise_id ON notification(enterprise_id);
@@ -411,10 +403,8 @@ CREATE INDEX idx_notification_enterprise_id ON notification(enterprise_id);
 -- ============================================================================
 
 -- Enable RLS on all tables
-ALTER TABLE super_admin ENABLE ROW LEVEL SECURITY;
-ALTER TABLE admin ENABLE ROW LEVEL SECURITY;
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE enterprise ENABLE ROW LEVEL SECURITY;
-ALTER TABLE employee ENABLE ROW LEVEL SECURITY;
 ALTER TABLE room ENABLE ROW LEVEL SECURITY;
 ALTER TABLE employee_room_access ENABLE ROW LEVEL SECURITY;
 ALTER TABLE task_template ENABLE ROW LEVEL SECURITY;
@@ -437,8 +427,8 @@ ALTER TABLE support_conversation ENABLE ROW LEVEL SECURITY;
 ALTER TABLE message ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notification ENABLE ROW LEVEL SECURITY;
 
--- Note: RLS policies will be implemented in a separate migration file
--- for better organization and maintainability
+-- Note: RLS policies are disabled in development
+-- They will be implemented in a production migration
 
 -- ============================================================================
 -- TRIGGERS FOR UPDATED_AT
@@ -453,10 +443,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Apply trigger to all tables with updated_at
-CREATE TRIGGER update_super_admin_updated_at BEFORE UPDATE ON super_admin FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_admin_updated_at BEFORE UPDATE ON admin FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON profiles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_enterprise_updated_at BEFORE UPDATE ON enterprise FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_employee_updated_at BEFORE UPDATE ON employee FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_room_updated_at BEFORE UPDATE ON room FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_task_template_updated_at BEFORE UPDATE ON task_template FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_assigned_task_updated_at BEFORE UPDATE ON assigned_task FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -470,14 +458,99 @@ CREATE TRIGGER update_haccp_incident_updated_at BEFORE UPDATE ON haccp_incident 
 CREATE TRIGGER update_support_conversation_updated_at BEFORE UPDATE ON support_conversation FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================================================
+-- AUTO-CREATE PROFILE ON SIGNUP (Trigger for auth.users)
+-- ============================================================================
+
+-- This function creates a profile automatically when a user signs up via Supabase Auth
+-- The role and other fields should be passed via user_metadata during signup
+-- FIXED: Properly handles NULL values for enterprise_id and created_by_id
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_enterprise_id UUID;
+    v_created_by_id UUID;
+BEGIN
+    -- Safely extract UUID fields (handle NULL and empty strings)
+    BEGIN
+        v_enterprise_id := NULLIF(NEW.raw_user_meta_data->>'enterprise_id', '')::UUID;
+    EXCEPTION WHEN OTHERS THEN
+        v_enterprise_id := NULL;
+    END;
+
+    BEGIN
+        v_created_by_id := NULLIF(NEW.raw_user_meta_data->>'created_by_id', '')::UUID;
+    EXCEPTION WHEN OTHERS THEN
+        v_created_by_id := NULL;
+    END;
+
+    -- Insert profile with safe NULL handling
+    INSERT INTO public.profiles (id, role, email, first_name, last_name, enterprise_id, created_by_id)
+    VALUES (
+        NEW.id,
+        COALESCE((NEW.raw_user_meta_data->>'role')::user_type, 'Owner'),
+        NEW.email,
+        COALESCE(NEW.raw_user_meta_data->>'first_name', ''),
+        COALESCE(NEW.raw_user_meta_data->>'last_name', ''),
+        v_enterprise_id,
+        v_created_by_id
+    );
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger on auth.users to auto-create profile
+CREATE OR REPLACE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- ============================================================================
+-- UTILITY FUNCTIONS
+-- ============================================================================
+
+-- Function to generate unique username for employees
+-- Format: "Prénom N" where N is the first letter(s) of last name
+CREATE OR REPLACE FUNCTION generate_unique_username(
+    p_first_name VARCHAR,
+    p_last_name VARCHAR
+) RETURNS VARCHAR AS $$
+DECLARE
+    v_username VARCHAR;
+    v_suffix_length INT := 1;
+    v_exists BOOLEAN;
+BEGIN
+    -- Capitalize first name properly
+    v_username := INITCAP(p_first_name) || ' ' || UPPER(LEFT(p_last_name, v_suffix_length));
+
+    -- Check if username exists
+    SELECT EXISTS(SELECT 1 FROM profiles WHERE username = v_username) INTO v_exists;
+
+    -- If exists, add more letters from last name
+    WHILE v_exists AND v_suffix_length < LENGTH(p_last_name) LOOP
+        v_suffix_length := v_suffix_length + 1;
+        v_username := INITCAP(p_first_name) || ' ' || UPPER(LEFT(p_last_name, v_suffix_length));
+        SELECT EXISTS(SELECT 1 FROM profiles WHERE username = v_username) INTO v_exists;
+    END LOOP;
+
+    -- If still exists (full last name used), add a number
+    IF v_exists THEN
+        v_username := INITCAP(p_first_name) || ' ' || UPPER(LEFT(p_last_name, 1)) || FLOOR(RANDOM() * 100)::INT;
+    END IF;
+
+    RETURN v_username;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ============================================================================
 -- COMMENTS FOR DOCUMENTATION
 -- ============================================================================
 
-COMMENT ON TABLE super_admin IS 'Platform super admin with analytics view only (Supabase Auth)';
-COMMENT ON TABLE admin IS 'Daycare manager with full back-office access (Supabase Auth)';
-COMMENT ON TABLE enterprise IS 'Daycare/micro-daycare entity (1:1 with admin)';
-COMMENT ON TABLE employee IS 'Childcare employee/staff with tablet access (PIN authentication)';
-COMMENT ON TABLE employee_room_access IS 'Many-to-many: employees can access multiple rooms';
+COMMENT ON TABLE profiles IS 'Unified user table for all roles (Developer, Owner, Employee). 1:1 with auth.users.';
+COMMENT ON COLUMN profiles.username IS 'Auto-generated username for Employee tablet login (e.g., "Marie D")';
+COMMENT ON COLUMN profiles.pin_hash IS 'bcrypt hashed 4-digit PIN for Employee tablet login';
+COMMENT ON COLUMN profiles.enterprise_id IS 'For Employees: their enterprise. Owners get enterprise via enterprise.owner_id';
+COMMENT ON TABLE enterprise IS 'Childcare facility. 1:1 with Owner (profiles where role=Owner)';
+COMMENT ON TABLE employee_room_access IS 'Many-to-many: Employees can access multiple rooms';
 COMMENT ON TABLE daily_cleaning_session IS 'Daily cleaning session (1 per enterprise per day)';
 COMMENT ON TABLE task_completion IS 'Permanent record of completed tasks';
 COMMENT ON TABLE session_export IS 'Export records for cleaning sessions (PDF/ZIP)';
@@ -486,5 +559,5 @@ COMMENT ON TABLE haccp_incident IS 'HACCP non-compliance incidents and correctiv
 COMMENT ON TABLE meal IS 'Daily meals with traceability';
 COMMENT ON TABLE temperature_check IS 'Temperature checkpoints for meal safety';
 COMMENT ON TABLE child_meal_record IS 'Records of children attendance at meals';
-COMMENT ON TABLE support_conversation IS 'Admin ↔ Super Admin support messaging threads';
+COMMENT ON TABLE support_conversation IS 'Owner ↔ Developer support messaging threads';
 COMMENT ON TABLE notification IS 'Multi-tier notification system';

@@ -12,7 +12,7 @@ import { CountBadge } from '@/components/ui/badge'
 import { PlusIcon, ChatBubbleLeftRightIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 
 export default function MessagesPage() {
-  const { session, isLoading: authLoading } = useRequireAuth(['Admin', 'Developer'])
+  const { session, isLoading: authLoading } = useRequireAuth(['Owner', 'Developer'])
   const router = useRouter()
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -25,7 +25,7 @@ export default function MessagesPage() {
 
     // Subscribe to new messages for real-time updates
     const channel = messagingService.subscribeToNotifications(
-      session.role as 'Admin' | 'Developer',
+      session.role as 'Owner' | 'Developer',
       session.user.id,
       () => {
         // Reload conversations when new message arrives
@@ -45,7 +45,7 @@ export default function MessagesPage() {
       setIsLoading(true)
       const data = await messagingService.getConversations(
         session.user.id,
-        session.role as 'Developer' | 'Admin'
+        session.role as 'Developer' | 'Owner'
       )
       setConversations(data)
     } catch (err: any) {
@@ -57,7 +57,7 @@ export default function MessagesPage() {
   }
 
   async function handleCreateConversation() {
-    if (!session?.user?.id || session.role !== 'Admin') return
+    if (!session?.user?.id || session.role !== 'Owner') return
 
     try {
       // For demo, use a fixed developer ID
@@ -115,13 +115,13 @@ export default function MessagesPage() {
             Messages
           </h1>
           <p className="text-muted-foreground">
-            {session?.role === 'Admin'
+            {session?.role === 'Owner'
               ? 'Communiquez avec le support'
               : 'Messages des administrateurs'}
           </p>
         </div>
 
-        {session?.role === 'Admin' && (
+        {session?.role === 'Owner' && (
           <Button onClick={handleCreateConversation} className="inline-flex items-center gap-2">
             <PlusIcon className="w-5 h-5" />
             Nouvelle conversation
@@ -142,11 +142,11 @@ export default function MessagesPage() {
           <ChatBubbleLeftRightIcon className="w-24 h-24 mx-auto mb-4 text-muted-foreground/30" />
           <h2 className="text-2xl font-bold mb-2">Aucune conversation</h2>
           <p className="text-muted-foreground mb-6">
-            {session?.role === 'Admin'
+            {session?.role === 'Owner'
               ? 'Commencez une nouvelle conversation avec le support'
               : 'Aucun message pour le moment'}
           </p>
-          {session?.role === 'Admin' && (
+          {session?.role === 'Owner' && (
             <Button onClick={handleCreateConversation}>
               Nouvelle conversation
             </Button>
@@ -156,7 +156,7 @@ export default function MessagesPage() {
         <div className="grid gap-4">
           {conversations.map((conversation) => {
             const otherParty =
-              session?.role === 'Admin' ? conversation.developer : conversation.admin
+              session?.role === 'Owner' ? conversation.developer : conversation.owner
 
             return (
               <Card

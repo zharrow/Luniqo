@@ -1,7 +1,7 @@
 # TODO - Luniqo Project (anciennement cLean)
 
-**Dernière mise à jour**: 2025-12-03 10:00
-**Progression globale**: En cours de rebranding
+**Dernière mise à jour**: 2025-12-07
+**Progression globale**: Migration architecture unifiée (table profiles)
 
 ---
 
@@ -37,6 +37,181 @@
 - 🦄 Nouvelle mascotte: Bébé bleu avec lettre "L" - intégrée partout
 - ✅ Pages de login modernisées avec style "Douceur Professionnelle"
 - 📋 2.5/5 tâches complétées (logos ✅, docs ✅, login ✅, métadonnées 🔲, code 🔲)
+
+---
+
+## 🚨 MIGRATION EN COURS - Architecture Unifiée (2025-12-07)
+
+### **Objectif**: Table `profiles` unifiée pour tous les utilisateurs
+
+**Pourquoi cette migration?**
+- ❌ **Avant**: 3 tables séparées (`developer`, `owner`, `employee`) + architecture complexe
+- ✅ **Après**: 1 table `profiles` unifiée + pattern standard Supabase
+- 🎯 **Bénéfices**: Code plus simple, évolutivité, moins de duplication
+
+### **Changements majeurs**
+
+**1. Architecture Base de Données**
+```sql
+-- AVANT (3 tables)
+developer (id, email, password_hash)
+owner (id, email, password_hash, first_name, last_name)
+employee (id, email, pin_code, first_name, last_name)
+enterprise (owner_id → references owner.id)
+
+-- APRÈS (1 table profiles)
+auth.users (géré par Supabase Auth)
+  ↓ (1:1 relationship)
+profiles (id, role, email, first_name, last_name, username, pin_hash, enterprise_id)
+enterprise (owner_id → references profiles.id)
+```
+
+**2. Authentification Employee - Dual Login**
+
+**Employees ont 2 interfaces:**
+- 📊 **Dashboard Employee** (`/dashboard/employee/*`)
+  - Login: Email + Password (Supabase Auth standard)
+  - Device: Desktop/Mobile
+  - Accès: Profil, historique, calendrier, stats, changement PIN
+
+- 📱 **Tablette** (`/tablet/*`)
+  - Login: Username + PIN (custom auth - rapide)
+  - Device: Tablette
+  - Accès: Tâches du jour uniquement
+
+**3. Système de Username (Employees uniquement)**
+- Auto-généré à l'inscription: `${prénom} ${nom[0]}`
+- Exemples: "Marie D", "Sophie L"
+- Collision handling: "Marie D" existe → "Marie Du" → "Marie Dup"
+- Utilisé UNIQUEMENT pour login tablette
+
+**4. PIN vs Password**
+- **PIN (4 chiffres)**: Login tablette rapide, choisi par l'employee
+- **Password (fort)**: Login dashboard, email/password classique Supabase
+
+### **Plan de migration détaillé**
+
+**Phase 1: Migration Base de Données** ✅ COMPLÉTÉ
+- [x] Supprimer anciennes migrations (07_align_roles_and_tables.sql, etc.)
+- [x] Créer migration unifiée `00_schema.sql`
+  - Table `profiles` avec tous les champs (username, pin_hash)
+  - Foreign keys: `enterprise.owner_id → profiles.id`
+  - Trigger auto-création profile après signup Supabase
+  - Migration données: developer → profiles, owner → profiles, employee → profiles
+  - Génération usernames pour employees existants
+- [x] Créer migration `01_dev_permissions.sql` - RLS désactivé pour développement
+- [x] Mise à jour enum `user_role`: 'Developer' | 'Owner' | 'Employee'
+
+**Phase 2: Types TypeScript** ✅ COMPLÉTÉ
+- [x] `types/database.types.ts` - Interface `Profile` unifiée
+- [x] `types/auth.types.ts` - Types `UserRole`, `AuthSession` mis à jour
+- [x] Aliases pour compatibilité: `Developer`, `Owner`, `Employee`
+
+**Phase 3: Services** ✅ COMPLÉTÉ
+- [x] `lib/services/users.service.ts` - CRUD unifié profiles (réécriture complète)
+- [x] `lib/services/analytics.service.ts` - Requêtes sur profiles
+- [x] `lib/services/messaging.service.ts` - Références profiles (admin → owner)
+- [x] `lib/utils/auth.client.ts` - Dual login (email/password + username/PIN)
+- [x] `lib/utils/auth.server.ts` - Vérifications unifiées
+
+**Phase 4: AuthContext & Middleware** ✅ COMPLÉTÉ
+- [x] `lib/contexts/AuthContext.tsx` - Session basée sur profiles (réécriture complète)
+- [x] `lib/supabase/middleware.ts` - Déjà optimisé, aucun changement nécessaire
+- [x] Support dual login employee (email vs username)
+
+**Phase 5: Script Seed** ✅ COMPLÉTÉ
+- [x] `scripts/seed.ts` - Utilise `auth.admin.createUser()` avec trigger auto-profile
+- [x] Générer usernames pour employees de test
+- [x] Générer PINs de test (bcrypt hash)
+
+**Phase 6: UI - Routes & Composants** 🔄 EN COURS (85% complété)
+- [x] Mise à jour composants layout:
+  - `components/layout/Sidebar.tsx` - 'Admin' → 'Owner'
+  - `components/layout/AppSidebar.tsx` - 'Admin' → 'Owner'
+  - `components/layout/Header.tsx` - Stats query sur profiles, 'Admin'/'User' → 'Owner'/'Employee'
+- [x] Mise à jour composants shared:
+  - `components/shared/NotificationModal.tsx` - Interfaces mises à jour
+- [x] Mise à jour pages clés:
+  - `app/(auth)/login/page.tsx` - Redirect logic pour Owner/Employee
+  - `app/(dashboard)/dashboard/page.tsx` - useRequireAuth(['Owner'])
+  - `app/(dashboard)/dashboard/users/page.tsx` - useRequireAuth(['Owner'])
+  - `app/(dashboard)/dashboard/messages/page.tsx` - 'Admin' → 'Owner', conversation.owner
+  - `app/(dashboard)/setup/page.tsx` - 'Admin' → 'Owner', ownerId
+  - `app/(tablet)/tablet/login/page.tsx` - 'Admin' → 'Owner'
+- [ ] Reste à mettre à jour (~20 pages):
+  - `app/(dashboard)/dashboard/profil/page.tsx` - 'Admin' → 'Owner', queries profiles
+  - `app/(dashboard)/dashboard/rooms/*` - Vérifier références 'Admin'
+  - `app/(dashboard)/dashboard/tasks/*` - Vérifier références 'Admin'
+  - `app/(dashboard)/dashboard/sessions/*` - Vérifier références 'Admin'
+  - `app/(dashboard)/dashboard/haccp/*` - Vérifier références 'Admin'
+  - `app/(dashboard)/dashboard/notifications/*` - Vérifier références
+  - Tous les composants avec 'Admin' ou anciens noms de tables
+- [ ] Créer routes `/dashboard/employee/*` (nouveau!)
+  - `/dashboard/employee/profile` - Profil employee + gestion PIN
+  - `/dashboard/employee/history` - Historique tâches personnelles
+  - `/dashboard/employee/calendar` - Calendrier personnel
+- [ ] Page setup PIN première connexion (`/dashboard/employee/setup`)
+
+**Phase 7: Tests & Documentation** 🔄 EN COURS
+- [ ] Tester login Developer (email/password)
+- [ ] Tester login Owner (email/password + setup enterprise)
+- [ ] Tester login Employee Dashboard (email/password)
+- [ ] Tester login Employee Tablette (username/PIN)
+- [x] Mettre à jour CLAUDE.md avec nouvelle architecture
+- [x] Mettre à jour TODO.md avec statut migration
+- [ ] Mettre à jour DESIGN-SYSTEM.md si nécessaire
+
+### **Fichiers impactés** (estimation: ~45 fichiers)
+
+**SQL:**
+- `supabase/migrations/*.sql` (tous remplacés)
+
+**Types:**
+- `types/database.types.ts`
+- `types/auth.types.ts`
+- `types/analytics.types.ts`
+
+**Services:**
+- `lib/services/users.service.ts`
+- `lib/services/analytics.service.ts`
+- `lib/services/messaging.service.ts`
+- `lib/utils/auth.client.ts`
+- `lib/utils/auth.server.ts`
+
+**Contexts:**
+- `lib/contexts/AuthContext.tsx`
+- `lib/supabase/middleware.ts`
+
+**Pages (33+ fichiers):**
+- Tous les fichiers avec `'Admin'` ou `'User'` (grep trouvé 33 fichiers)
+- `app/(auth)/login/page.tsx`
+- `app/(tablet)/tablet/login/page.tsx`
+- `app/(dashboard)/dashboard/*/page.tsx` (tous)
+- Nouveau: `app/(dashboard)/dashboard/employee/*` (à créer)
+
+**Composants:**
+- `components/layout/Header.tsx`
+- `components/layout/AppSidebar.tsx`
+- `components/shared/NotificationModal.tsx`
+- `components/EnterpriseSetupForm.tsx`
+
+**Autres:**
+- `scripts/seed.ts`
+
+### **Risques & Mitigations**
+
+**Risques:**
+- ⚠️ Migration données complexe (3 tables → 1)
+- ⚠️ Changement breaking pour code existant
+- ⚠️ Collision usernames possibles
+
+**Mitigations:**
+- ✅ Tests complets avant merge
+- ✅ Backup DB avant migration
+- ✅ Script seed pour recréer données de test
+- ✅ Logique collision username robuste
+
+---
 
 **Derniers ajouts** (2025-12-03):
 - 🎨 **PAGES DE LOGIN MODERNISÉES** - Style "Douceur Professionnelle" appliqué
@@ -560,6 +735,83 @@ Le projet est complet, mais voici des pistes d'amélioration classées par prior
 ---
 
 ## 🔄 Historique des sessions
+
+### Session 2025-12-06 - Alignement Rôles et Tables (Developer/Owner/Employee)
+**Travaux effectués:**
+- ✅ **Refactoring complet des rôles et noms de tables** - [P0] [REFACTOR] EN COURS
+  - **Contexte**: Alignement des noms de tables avec les rôles applicatifs
+  - **Avant**: Tables `super_admin`, `admin`, `employee` / Rôles `Developer`, `Admin`, `User`
+  - **Après**: Tables `developer`, `owner`, `employee` / Rôles `Developer`, `Owner`, `Employee`
+  - **Rationale**: Clarté et cohérence - les noms de tables correspondent aux rôles métier
+
+**Migration SQL créée:**
+- 🆕 `supabase/migrations/07_align_roles_and_tables.sql` (120 lignes)
+  - Renommage tables: `super_admin` → `developer`, `admin` → `owner`
+  - Renommage colonnes: `admin_id` → `owner_id`, `created_by_id` → `created_by_owner_id`/`created_by_developer_id`
+  - Mise à jour enum `user_type`: `'Developer' | 'Admin' | 'User'` → `'Developer' | 'Owner' | 'Employee'`
+  - Renommage indexes, triggers, contraintes
+  - Exécutée partiellement (ligne 24 re-run après première exécution)
+
+**Fichiers TypeScript mis à jour (8 fichiers complets):**
+- ✅ `types/database.types.ts` - Tables et interfaces complètes
+- ✅ `types/auth.types.ts` - UserRole, Developer, Owner, Employee interfaces
+- ✅ `types/analytics.types.ts` - GlobalStats, EnterpriseStats (active_owners, owner_name)
+- ✅ `lib/utils/auth.server.ts` - getCurrentSession() avec developer/owner
+- ✅ `lib/utils/auth.client.ts` - loginWithEmail(), loginWithPin() avec Employee role
+- ✅ `lib/services/users.service.ts` - Interfaces Employee, EmployeeWithRooms, CreateEmployeeInput
+- ✅ `lib/services/analytics.service.ts` - Queries developer/owner, owner_name fields
+
+**Fichiers en cours de migration:**
+- 🔄 `lib/services/messaging.service.ts` - Identifié mais pas encore mis à jour
+- ⏸️ `scripts/seed.ts` - Seed script à migrer
+- ⏸️ Tous les fichiers pages/composants utilisant les types Admin/User
+
+**Changements de noms:**
+| Ancien | Nouveau | Type |
+|--------|---------|------|
+| `super_admin` (table) | `developer` | Table |
+| `admin` (table) | `owner` | Table |
+| `Admin` (type) | `Owner` | TypeScript Interface |
+| `User` (type) | `Employee` | TypeScript Interface |
+| `admin_id` (FK) | `owner_id` | Colonne |
+| `created_by_id` (owner) | `created_by_developer_id` | Colonne |
+| `created_by_id` (employee) | `created_by_owner_id` | Colonne |
+| `'Admin'` (enum) | `'Owner'` | user_type enum |
+| `'User'` (enum) | `'Employee'` | user_type enum |
+
+**État du projet:**
+- **🔄 EN COURS** - Migration TypeScript 60% complétée
+- Migration SQL: ✅ Exécutée
+- Types principaux: ✅ Mis à jour (database, auth, analytics)
+- Utilitaires auth: ✅ Mis à jour (client, server)
+- Services: 🔄 3/8+ mis à jour (users, analytics partiellement, messaging identifié)
+- Seed script: ⏸️ En attente
+- Pages/composants: ⏸️ En attente
+
+**Prochaines étapes:**
+1. **[P0] Continuer migration services**
+   - Terminer messaging.service.ts
+   - Mettre à jour autres services si nécessaire
+2. **[P0] Mettre à jour seed script**
+   - scripts/seed.ts avec nouvelles tables/colonnes
+3. **[P0] Mettre à jour pages et composants**
+   - Rechercher imports de User, Admin
+   - Remplacer par Employee, Owner
+4. **[P0] Tester l'application complète**
+   - Connexion Developer, Owner, Employee
+   - CRUD sur toutes les entités
+5. **[P1] Mettre à jour CLAUDE.md**
+   - Section Multi-Tier Authentication System
+   - Database Schema
+   - Code examples
+
+**Bénéfices attendus:**
+- ✨ Noms de rôles et tables cohérents
+- 📚 Code plus lisible et maintenable
+- 🎯 Terminologie métier claire (Owner vs Admin)
+- 🔍 Moins de confusion entre types et tables
+
+---
 
 ### Session 2025-12-03 - 16h30-18h00 (Timezone Bug Fix + Session Status Simplification)
 **Travaux effectués:**

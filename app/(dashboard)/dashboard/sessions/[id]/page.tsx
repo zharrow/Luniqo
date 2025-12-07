@@ -76,7 +76,7 @@ interface GroupedTasks {
 export default function SessionDetailPage() {
   const params = useParams()
   const id = params.id as string
-  const { session: authSession, isLoading: authLoading } = useRequireAuth(['Admin'])
+  const { session: authSession, isLoading: authLoading } = useRequireAuth(['Owner'])
   const [session, setSession] = useState<SessionWithStats | null>(null)
   const [logs, setLogs] = useState<SessionLog[]>([])
   const [groupedTasks, setGroupedTasks] = useState<GroupedTasks>({})

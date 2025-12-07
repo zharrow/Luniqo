@@ -41,19 +41,19 @@ export default function Header() {
   const supabase = createClient()
 
   const userDisplayName = session?.user ? getUserDisplayName(session.user) : 'User'
-  const userRole = session?.role || 'User'
-  const isAdmin = userRole === 'Admin'
+  const userRole = session?.role || 'Employee'
+  const isOwner = userRole === 'Owner'
 
-  const roleLabels = {
+  const roleLabels: Record<string, string> = {
     Developer: 'Développeur',
-    Admin: 'Administrateur',
-    User: 'Employé'
+    Owner: 'Propriétaire',
+    Employee: 'Employé'
   }
 
-  const roleBadgeColors = {
+  const roleBadgeColors: Record<string, string> = {
     Developer: 'bg-accent-100 text-accent-700 border-accent-200',
-    Admin: 'bg-primary-100 text-primary-700 border-primary-200',
-    User: 'bg-success-100 text-success-700 border-success-200'
+    Owner: 'bg-primary-100 text-primary-700 border-primary-200',
+    Employee: 'bg-success-100 text-success-700 border-success-200'
   }
 
   useEffect(() => {
@@ -61,14 +61,14 @@ export default function Header() {
 
     loadUnreadCount()
 
-    // Load stats for Admin users
-    if (isAdmin && session.enterprise) {
+    // Load stats for Owner users
+    if (isOwner && session.enterprise) {
       loadStats()
     }
 
     // Subscribe to real-time notifications
     const channel = messagingService.subscribeToNotifications(
-      session.role as 'Developer' | 'Admin' | 'User',
+      session.role as 'Developer' | 'Owner' | 'Employee',
       session.user.id,
       () => {
         loadUnreadCount()
@@ -78,14 +78,14 @@ export default function Header() {
     return () => {
       messagingService.unsubscribe(channel)
     }
-  }, [session, isAdmin])
+  }, [session, isOwner])
 
   async function loadUnreadCount() {
     if (!session?.user?.id || !session.role) return
 
     try {
       const count = await messagingService.getUnreadNotificationCount(
-        session.role as 'Developer' | 'Admin' | 'User',
+        session.role as 'Developer' | 'Owner' | 'Employee',
         session.user.id,
         session.enterprise?.id
       )
@@ -115,11 +115,12 @@ export default function Header() {
         .eq('enterprise_id', enterpriseId)
         .eq('is_active', true)
 
-      // Count users
+      // Count users (employees)
       const { count: usersCount } = await supabase
-        .from('employee')
+        .from('profiles')
         .select('*', { count: 'exact', head: true })
         .eq('enterprise_id', enterpriseId)
+        .eq('role', 'Employee')
         .eq('is_active', true)
 
       // Get today's session completion
@@ -171,8 +172,8 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Center section - Stats (Admin only) */}
-      {isAdmin && (
+      {/* Center section - Stats (Owner only) */}
+      {isOwner && (
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 px-2 py-1 bg-primary-50 rounded-lg border border-primary-200">
             <BuildingOfficeIcon className="w-4 h-4 text-primary-600" />
@@ -324,7 +325,7 @@ export default function Header() {
           isOpen={showNotificationModal}
           onClose={() => setShowNotificationModal(false)}
           userId={session.user.id}
-          userRole={session.role as 'Admin' | 'Developer' | 'User'}
+          userRole={session.role as 'Owner' | 'Developer' | 'Employee'}
           enterpriseId={session.enterprise?.id}
         />
       )}

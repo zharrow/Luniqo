@@ -1,6 +1,7 @@
 /**
  * Analytics Service
  * Service for Developer dashboard analytics and metrics
+ * Updated for Unified Profiles Architecture (2025-12-07)
  */
 
 import { createClient } from '@/lib/supabase/client';
@@ -21,18 +22,20 @@ export class AnalyticsService {
 
       if (enterprisesError) throw enterprisesError;
 
-      // Get active admins (admins with is_active = true)
-      const { count: adminsCount, error: adminsError } = await this.supabase
-        .from('admin')
+      // Get active owners (profiles where role='Owner' and is_active=true)
+      const { count: ownersCount, error: ownersError } = await this.supabase
+        .from('profiles')
         .select('*', { count: 'exact', head: true })
+        .eq('role', 'Owner')
         .eq('is_active', true);
 
-      if (adminsError) throw adminsError;
+      if (ownersError) throw ownersError;
 
-      // Get total employees across all enterprises
+      // Get total employees (profiles where role='Employee')
       const { count: employeesCount, error: employeesError } = await this.supabase
-        .from('employee')
+        .from('profiles')
         .select('*', { count: 'exact', head: true })
+        .eq('role', 'Employee')
         .eq('is_active', true);
 
       if (employeesError) throw employeesError;
@@ -52,7 +55,7 @@ export class AnalyticsService {
 
       return {
         total_enterprises: enterprisesCount || 0,
-        active_admins: adminsCount || 0,
+        active_owners: ownersCount || 0,
         total_employees: employeesCount || 0,
         sessions_this_month: sessionsCount || 0,
       };
@@ -63,17 +66,17 @@ export class AnalyticsService {
   }
 
   /**
-   * Get enterprise statistics with admin and employee info
+   * Get enterprise statistics with owner and employee info
    */
   async getEnterprises(): Promise<EnterpriseStats[]> {
     try {
-      // Get all enterprises with their admins
-      const { data: enterprises, error: enterprisesError } = await this.supabase
+      // Get all enterprises with their owners (from profiles table)
+      const { data: enterprises, error: enterprisesError} = await this.supabase
         .from('enterprise')
         .select(`
           id,
           name,
-          admin:admin!admin_id (
+          owner:profiles!owner_id (
             id,
             email,
             first_name,
@@ -92,10 +95,11 @@ export class AnalyticsService {
 
       const enterpriseStats = await Promise.all(
         enterprises.map(async (enterprise: any) => {
-          // Get employee count
+          // Get employee count (from profiles where role='Employee')
           const { count: employeeCount, error: employeeError } = await this.supabase
-            .from('employee')
+            .from('profiles')
             .select('*', { count: 'exact', head: true })
+            .eq('role', 'Employee')
             .eq('enterprise_id', enterprise.id)
             .eq('is_active', true);
 
@@ -111,18 +115,18 @@ export class AnalyticsService {
 
           if (sessionsError) console.error('Error fetching sessions:', sessionsError);
 
-          const admin = Array.isArray(enterprise.admin) ? enterprise.admin[0] : enterprise.admin;
+          const owner = Array.isArray(enterprise.owner) ? enterprise.owner[0] : enterprise.owner;
 
           return {
             id: enterprise.id,
             name: enterprise.name,
-            admin_name: admin
-              ? `${admin.first_name || ''} ${admin.last_name || ''}`.trim() || 'N/A'
+            owner_name: owner
+              ? `${owner.first_name || ''} ${owner.last_name || ''}`.trim() || 'N/A'
               : 'N/A',
-            admin_email: admin?.email || 'N/A',
+            owner_email: owner?.email || 'N/A',
             employee_count: employeeCount || 0,
             sessions_this_month: sessionsCount || 0,
-            last_admin_login: null, // Removed last_login field (not in schema)
+            last_owner_login: null, // TODO: Could be tracked via Supabase Auth logs
           };
         })
       );

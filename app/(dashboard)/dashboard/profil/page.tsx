@@ -30,7 +30,7 @@ interface EnterpriseData {
   logo_url: string | null
 }
 
-interface AdminData {
+interface OwnerData {
   id: string
   email: string
   first_name: string
@@ -41,7 +41,7 @@ interface AdminData {
 export default function ProfilPage() {
   const { session, isLoading, role, refreshSession } = useAuth()
   const router = useRouter()
-  const [adminData, setAdminData] = useState<AdminData | null>(null)
+  const [ownerData, setOwnerData] = useState<OwnerData | null>(null)
   const [enterpriseData, setEnterpriseData] = useState<EnterpriseData | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -58,7 +58,7 @@ export default function ProfilPage() {
 
   useEffect(() => {
     if (!isLoading) {
-      if (!session || role !== 'Admin') {
+      if (!session || role !== 'Owner') {
         router.push('/login')
         return
       }
@@ -72,20 +72,21 @@ export default function ProfilPage() {
 
     const supabase = createClient()
 
-    // Charger les données admin
-    const { data: admin, error: adminError } = await supabase
-      .from('admin')
+    // Charger les données du propriétaire (owner)
+    const { data: owner, error: ownerError } = await supabase
+      .from('profiles')
       .select('*')
       .eq('id', session.user.id)
+      .eq('role', 'Owner')
       .single()
 
-    if (admin && !adminError) {
-      setAdminData(admin as unknown as AdminData)
+    if (owner && !ownerError) {
+      setOwnerData(owner as unknown as OwnerData)
       setFormData(prev => ({
         ...prev,
-        first_name: (admin as any).first_name || '',
-        last_name: (admin as any).last_name || '',
-        avatar: (admin as any).avatar || ''
+        first_name: (owner as any).first_name || '',
+        last_name: (owner as any).last_name || '',
+        avatar: (owner as any).avatar || ''
       }))
     }
 
@@ -93,7 +94,7 @@ export default function ProfilPage() {
     const { data: enterprise, error: enterpriseError } = await supabase
       .from('enterprise')
       .select('*')
-      .eq('admin_id', session.user.id)
+      .eq('owner_id', session.user.id)
       .single()
 
     if (enterprise && !enterpriseError) {
@@ -115,9 +116,9 @@ export default function ProfilPage() {
     try {
       const supabase = createClient()
 
-      // Mettre à jour les données admin
-      const { error: adminError } = await supabase
-        .from('admin')
+      // Mettre à jour les données du propriétaire (owner)
+      const { error: ownerError } = await supabase
+        .from('profiles')
         .update({
           first_name: formData.first_name,
           last_name: formData.last_name,
@@ -125,7 +126,7 @@ export default function ProfilPage() {
         })
         .eq('id', session!.user.id)
 
-      if (adminError) {
+      if (ownerError) {
         throw new Error('Erreur lors de la mise à jour du profil')
       }
 
@@ -160,12 +161,12 @@ export default function ProfilPage() {
 
   const handleCancel = () => {
     // Réinitialiser le formulaire avec les données actuelles
-    if (adminData) {
+    if (ownerData) {
       setFormData(prev => ({
         ...prev,
-        first_name: adminData.first_name || '',
-        last_name: adminData.last_name || '',
-        avatar: adminData.avatar || ''
+        first_name: ownerData.first_name || '',
+        last_name: ownerData.last_name || '',
+        avatar: ownerData.avatar || ''
       }))
     }
     if (enterpriseData) {
@@ -182,7 +183,7 @@ export default function ProfilPage() {
   }
 
   const getInitials = (firstName?: string, lastName?: string) => {
-    return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase() || 'AD'
+    return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase() || 'OW'
   }
 
   if (isLoading || !session) {
@@ -204,11 +205,11 @@ export default function ProfilPage() {
         {/* En-tête avec avatar */}
         <div className="flex items-center gap-6">
           <Avatar className="h-24 w-24 border-4 border-primary-100">
-            {adminData?.avatar ? (
-              <AvatarImage src={`/${adminData.avatar}`} alt="Avatar" />
+            {ownerData?.avatar ? (
+              <AvatarImage src={`/${ownerData.avatar}`} alt="Avatar" />
             ) : null}
             <AvatarFallback className="bg-gradient-to-br from-primary-400 to-primary-600 text-white text-2xl font-bold">
-              {getInitials(adminData?.first_name, adminData?.last_name)}
+              {getInitials(ownerData?.first_name, ownerData?.last_name)}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
@@ -221,7 +222,7 @@ export default function ProfilPage() {
             <div className="flex gap-2 mt-3">
               <Badge variant="secondary" className="gap-1">
                 <ShieldCheckIcon className="w-3 h-3" />
-                Administrateur
+                Propriétaire
               </Badge>
               {enterpriseData && (
                 <Badge variant="outline" className="gap-1">
@@ -304,7 +305,7 @@ export default function ProfilPage() {
                     placeholder="Votre prénom"
                   />
                 ) : (
-                  <p className="text-lg">{adminData?.first_name || '-'}</p>
+                  <p className="text-lg">{ownerData?.first_name || '-'}</p>
                 )}
               </div>
 
@@ -320,7 +321,7 @@ export default function ProfilPage() {
                     placeholder="Votre nom"
                   />
                 ) : (
-                  <p className="text-lg">{adminData?.last_name || '-'}</p>
+                  <p className="text-lg">{ownerData?.last_name || '-'}</p>
                 )}
               </div>
             </div>
@@ -330,7 +331,7 @@ export default function ProfilPage() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Email</label>
               <div className="flex items-center gap-2">
-                <p className="text-lg">{adminData?.email || '-'}</p>
+                <p className="text-lg">{ownerData?.email || '-'}</p>
                 <Badge variant="outline" className="text-xs">Non modifiable</Badge>
               </div>
               <p className="text-xs text-muted-foreground">

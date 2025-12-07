@@ -8,10 +8,10 @@ import type {
   AuthContextType,
   AuthSession,
   EmailPasswordCredentials,
-  PinCredentials,
+  UsernameCredentials,
   UserRole,
-  Enterprise,
-  AuthResponse
+  AuthResponse,
+  Profile
 } from '@/types/auth.types'
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Check initial session
     checkSession()
 
-    // Listen for auth changes (for Super Admin/Admin)
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, supabaseSession) => {
       console.log('🔐 Auth state change:', event)
 
@@ -44,10 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await checkSession()
       } else if (event === 'SIGNED_OUT') {
         // Only clear session if it was an intentional logout
-        // Ignore SIGNED_OUT events when just switching apps
         console.warn('⚠️ SIGNED_OUT event detected, keeping session to prevent accidental logout')
-        // Don't clear the session automatically
-        // setSession(null)
       } else if (event === 'TOKEN_REFRESHED') {
         console.log('🔄 Token refreshed successfully')
         await checkSession(true)
@@ -76,58 +73,65 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true)
 
-      // Reduced timeout to 5 seconds (was 30s)
+      // Reduced timeout to 5 seconds
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Session check timeout')), 5000)
       )
 
       const sessionCheckPromise = (async () => {
-        // Check Supabase Auth session (Super Admin/Admin)
+        // Check Supabase Auth session
         const { data: { session: supabaseSession } } = await supabase.auth.getSession()
 
         if (supabaseSession) {
-          const userEmail = supabaseSession.user.email
-
-          if (!userEmail) {
-            return null
-          }
-
-          // Check if Super Admin
-          const { data: superAdmin, error: superAdminError } = await supabase
-            .from('super_admin')
+          // Get profile from unified profiles table
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
             .select('*')
-            .eq('email', userEmail)
-            .single()
-
-          if (superAdmin && !superAdminError) {
-            return {
-              user: superAdmin as any,
-              role: 'Developer' as const
-            }
-          }
-
-          // Check if Admin
-          const { data: admin, error: adminError } = await supabase
-            .from('admin')
-            .select('*')
-            .eq('email', userEmail)
+            .eq('id', supabaseSession.user.id)
             .eq('is_active', true)
             .single()
 
-          if (admin && !adminError) {
-            // Fetch enterprise linked to this admin (enterprise.admin_id = admin.id)
+          if (!profile || profileError) {
+            console.error('Profile not found:', profileError)
+            return null
+          }
+
+          const authSession: AuthSession = {
+            user: profile as Profile,
+            role: profile.role as UserRole
+          }
+
+          // For Owner, fetch their enterprise
+          if (profile.role === 'Owner') {
             const { data: enterprise } = await supabase
               .from('enterprise')
               .select('*')
-              .eq('admin_id', (admin as any).id)
+              .eq('owner_id', profile.id)
               .single()
 
-            return {
-              user: admin as any,
-              role: 'Admin' as const,
-              enterprise: (enterprise as any) || undefined
-            }
+            authSession.enterprise = enterprise || null
           }
+
+          // For Employee, fetch their enterprise and accessible rooms
+          if (profile.role === 'Employee' && profile.enterprise_id) {
+            const { data: enterprise } = await supabase
+              .from('enterprise')
+              .select('*')
+              .eq('id', profile.enterprise_id)
+              .single()
+
+            authSession.enterprise = enterprise || null
+
+            // Get accessible rooms
+            const { data: rooms } = await supabase
+              .from('employee_room_access')
+              .select('room_id')
+              .eq('employee_id', profile.id)
+
+            authSession.accessibleRooms = (rooms || []).map((r: { room_id: string }) => r.room_id)
+          }
+
+          return authSession
         }
 
         return null
@@ -141,7 +145,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Session check error:', error)
       // On timeout/error, keep the previous session instead of logging out
-      // Only clear session if we're on initial load (no previous session)
       if (!previousSession) {
         setSession(null)
       } else {
@@ -160,14 +163,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const newSession: AuthSession = {
         user: response.data,
         role: response.role!,
-        enterprise: response.enterprise
+        enterprise: response.enterprise,
+        accessibleRooms: response.accessibleRooms
       }
       setSession(newSession)
 
-      // If Admin without enterprise, redirect to setup
-      if (response.role === 'Admin' && !response.enterprise) {
+      // If Owner without enterprise, redirect to setup
+      if (response.role === 'Owner' && !response.enterprise) {
         setTimeout(() => router.push('/setup'), 100)
       }
+    }
+
+    return response
+  }
+
+  async function handleLoginWithPin(credentials: UsernameCredentials): Promise<AuthResponse> {
+    const response = await loginWithPin(credentials)
+
+    if (response.success && response.data) {
+      const newSession: AuthSession = {
+        user: response.data,
+        role: 'Employee',
+        enterprise: response.enterprise,
+        accessibleRooms: response.accessibleRooms
+      }
+      setSession(newSession)
     }
 
     return response
@@ -194,6 +214,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     role: session?.role || null,
     enterprise: session?.enterprise || null,
     loginWithEmail: handleLoginWithEmail,
+    loginWithPin: handleLoginWithPin,
     logout: handleLogout,
     refreshSession
   }

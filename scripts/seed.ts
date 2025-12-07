@@ -1,13 +1,15 @@
 /**
- * 🌱 Seed Data Script for cLean App (Next.js + Supabase)
+ * 🌱 Seed Data Script for Luniqo App (Next.js + Supabase)
+ * Updated for Unified Profiles Architecture (2025-12-07)
  *
  * This script populates the database with test data for development.
+ * It creates users via Supabase Auth and lets the trigger create profiles.
  *
  * Run with:
  *   npx ts-node scripts/seed.ts
  *
- * Or add to package.json:
- *   "seed": "ts-node scripts/seed.ts"
+ * Or via npm:
+ *   npm run seed
  */
 
 import { createClient } from '@supabase/supabase-js'
@@ -35,9 +37,14 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   }
 })
 
-// Helper to hash PIN codes with bcrypt (same as the app)
+// Helper to hash PIN codes with bcrypt
 function hashPin(pin: string): string {
   return bcrypt.hashSync(pin, 10)
+}
+
+// Generate username like "Marie D", "Marie Du", etc.
+function generateUsername(firstName: string, lastName: string, suffix = 1): string {
+  return `${firstName} ${lastName.substring(0, suffix).toUpperCase()}`
 }
 
 async function clearDatabase() {
@@ -65,11 +72,9 @@ async function clearDatabase() {
     'assigned_task',
     'task_template',
     'employee_room_access',
-    'employee',
     'room',
     'enterprise',
-    'admin',
-    'super_admin'
+    'profiles'
   ]
 
   for (const table of tables) {
@@ -79,88 +84,97 @@ async function clearDatabase() {
     }
   }
 
+  // Delete auth users
+  console.log('🔐 Clearing auth users...')
+  const { data: authUsers } = await supabase.auth.admin.listUsers()
+  if (authUsers?.users) {
+    for (const user of authUsers.users) {
+      await supabase.auth.admin.deleteUser(user.id)
+    }
+    console.log(`   Deleted ${authUsers.users.length} auth user(s)`)
+  }
+
   console.log('✅ Database cleared')
 }
 
-async function seedSuperAdmins() {
-  console.log('👨‍💻 Creating super admins...')
+async function seedDeveloper() {
+  console.log('👨‍💻 Creating developer...')
 
-  const superAdmins = [
-    {
-      email: 'dev@clean-app.com',
-      password_hash: hashPin('admin123'), // In real app, use proper bcrypt
-      firebase_uid: null
+  // Create auth user with Developer role
+  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    email: 'dev@luniqo.fr',
+    password: 'admin123',
+    email_confirm: true,
+    user_metadata: {
+      role: 'Developer',
+      first_name: 'Admin',
+      last_name: 'Dev'
     }
-  ]
+  })
 
-  const { data, error } = await supabase
-    .from('super_admin')
-    .insert(superAdmins)
-    .select()
+  if (authError) throw authError
 
-  if (error) throw error
-  console.log(`✅ Created ${data.length} super admin(s)`)
-  return data
+  console.log(`✅ Created developer: dev@luniqo.fr`)
+  return authData.user
 }
 
-async function seedAdminsAndEnterprises() {
-  console.log('👔 Creating admins and enterprises...')
+async function seedOwnersAndEnterprises() {
+  console.log('👔 Creating owners and enterprises...')
 
-  // Create admins
-  const admins = [
-    {
-      email: 'admin@petitspas.fr',
-      password_hash: hashPin('admin123'),
-      firebase_uid: null,
-      first_name: 'Marie',
-      last_name: 'Dubois',
-      is_active: true
-    },
-    {
-      email: 'admin@leslucioles.fr',
-      password_hash: hashPin('admin123'),
-      firebase_uid: null,
-      first_name: 'Jean',
-      last_name: 'Martin',
-      is_active: true
-    }
+  const owners = [
+    { email: 'admin@petitspas.fr', first_name: 'Marie', last_name: 'Dubois', enterprise_name: 'Crèche Les Petits Pas' },
+    { email: 'admin@leslucioles.fr', first_name: 'Jean', last_name: 'Martin', enterprise_name: 'Micro-Crèche Les Lucioles' }
   ]
 
-  const { data: adminData, error: adminError } = await supabase
-    .from('admin')
-    .insert(admins)
-    .select()
+  const createdOwners = []
+  const createdEnterprises = []
 
-  if (adminError) throw adminError
-  console.log(`✅ Created ${adminData.length} admin(s)`)
+  for (const owner of owners) {
+    // Create auth user with Owner role
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email: owner.email,
+      password: 'admin123',
+      email_confirm: true,
+      user_metadata: {
+        role: 'Owner',
+        first_name: owner.first_name,
+        last_name: owner.last_name
+      }
+    })
 
-  // Create enterprises
-  const enterprises = [
-    {
-      admin_id: adminData[0].id,
-      name: 'Crèche Les Petits Pas',
-      legal_form: 'SARL',
-      siret: '12345678901234',
-      logo_url: null
-    },
-    {
-      admin_id: adminData[1].id,
-      name: 'Micro-Crèche Les Lucioles',
-      legal_form: 'Entreprise individuelle',
-      siret: '98765432109876',
-      logo_url: null
-    }
-  ]
+    if (authError) throw authError
 
-  const { data: enterpriseData, error: enterpriseError } = await supabase
-    .from('enterprise')
-    .insert(enterprises)
-    .select()
+    // Get the profile created by the trigger
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', authData.user.id)
+      .single()
 
-  if (enterpriseError) throw enterpriseError
-  console.log(`✅ Created ${enterpriseData.length} enterprise(s)`)
+    if (profileError) throw profileError
 
-  return { admins: adminData, enterprises: enterpriseData }
+    createdOwners.push(profile)
+
+    // Create enterprise for this owner
+    const { data: enterprise, error: enterpriseError } = await supabase
+      .from('enterprise')
+      .insert({
+        owner_id: authData.user.id,
+        name: owner.enterprise_name,
+        legal_form: 'SARL',
+        siret: Math.random().toString().slice(2, 16)
+      })
+      .select()
+      .single()
+
+    if (enterpriseError) throw enterpriseError
+
+    createdEnterprises.push(enterprise)
+    console.log(`   ✅ Owner: ${owner.email} -> ${owner.enterprise_name}`)
+  }
+
+  console.log(`✅ Created ${createdOwners.length} owner(s) with enterprises`)
+  return { owners: createdOwners, enterprises: createdEnterprises }
 }
 
 async function seedRooms(enterpriseId: string) {
@@ -249,30 +263,64 @@ async function seedTasks(enterpriseId: string) {
   return data
 }
 
-async function seedEmployees(enterpriseId: string, adminId: string, roomIds: string[]) {
+async function seedEmployees(enterpriseId: string, ownerId: string, roomIds: string[]) {
   console.log('👥 Creating employees...')
 
   const employees = [
     { first_name: 'Sophie', last_name: 'Bernard', email: 'sophie@example.com', pin: '1234' },
     { first_name: 'Lucas', last_name: 'Petit', email: 'lucas@example.com', pin: '2345' }
-  ].map(e => ({
-    ...e,
-    enterprise_id: enterpriseId,
-    created_by_id: adminId,
-    pin_code: hashPin(e.pin),
-    is_active: true
-  }))
+  ]
 
-  const { data, error } = await supabase
-    .from('employee')
-    .insert(employees.map(({ pin, ...e }) => e))
-    .select()
+  const createdEmployees = []
 
-  if (error) throw error
-  console.log(`✅ Created ${data.length} employee(s)`)
+  for (const employee of employees) {
+    // Create auth user with Employee role
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email: employee.email,
+      password: 'password123',
+      email_confirm: true,
+      user_metadata: {
+        role: 'Employee',
+        first_name: employee.first_name,
+        last_name: employee.last_name,
+        enterprise_id: enterpriseId,
+        created_by_id: ownerId
+      }
+    })
+
+    if (authError) throw authError
+
+    // Generate username and set PIN on the profile
+    const username = generateUsername(employee.first_name, employee.last_name)
+    const pinHash = hashPin(employee.pin)
+
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({
+        username: username,
+        pin_hash: pinHash
+      })
+      .eq('id', authData.user.id)
+
+    if (updateError) throw updateError
+
+    // Get the updated profile
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', authData.user.id)
+      .single()
+
+    if (profileError) throw profileError
+
+    createdEmployees.push(profile)
+    console.log(`   ✅ Employee: ${employee.email} (PIN: ${employee.pin}, Username: ${username})`)
+  }
+
+  console.log(`✅ Created ${createdEmployees.length} employee(s)`)
 
   // Assign rooms to employees
-  const employeeRoomAccess = data.flatMap(employee =>
+  const employeeRoomAccess = createdEmployees.flatMap(employee =>
     roomIds.slice(0, Math.floor(Math.random() * 3) + 2).map(roomId => ({
       employee_id: employee.id,
       room_id: roomId
@@ -286,7 +334,7 @@ async function seedEmployees(enterpriseId: string, adminId: string, roomIds: str
   if (roomError) throw roomError
   console.log(`✅ Created ${employeeRoomAccess.length} employee-room access assignment(s)`)
 
-  return data
+  return createdEmployees
 }
 
 async function seedChildren(enterpriseId: string) {
@@ -370,32 +418,33 @@ async function seedProducts(enterpriseId: string, supplierIds: string[]) {
 
 async function main() {
   console.log('🌱 Starting database seeding...\n')
+  console.log('📌 Using Unified Profiles Architecture\n')
 
   try {
     // Clear existing data
     await clearDatabase()
 
     // Seed base data
-    const superAdmins = await seedSuperAdmins()
-    const { admins, enterprises } = await seedAdminsAndEnterprises()
+    const developer = await seedDeveloper()
+    const { owners, enterprises } = await seedOwnersAndEnterprises()
 
     // Seed for first enterprise
     const enterprise1 = enterprises[0]
-    const admin1 = admins[0]
+    const owner1 = owners[0]
 
     const rooms = await seedRooms(enterprise1.id)
     const tasks = await seedTasks(enterprise1.id)
-    const employees = await seedEmployees(enterprise1.id, admin1.id, rooms.map(r => r.id))
+    const employees = await seedEmployees(enterprise1.id, owner1.id, rooms.map((r: any) => r.id))
 
     // HACCP data
     const children = await seedChildren(enterprise1.id)
     const suppliers = await seedSuppliers(enterprise1.id)
-    const products = await seedProducts(enterprise1.id, suppliers.map(s => s.id))
+    const products = await seedProducts(enterprise1.id, suppliers.map((s: any) => s.id))
 
     console.log('\n✨ Database seeding completed successfully!\n')
     console.log('📊 Summary:')
-    console.log(`   • ${superAdmins.length} super admin(s)`)
-    console.log(`   • ${admins.length} admin(s)`)
+    console.log(`   • 1 developer`)
+    console.log(`   • ${owners.length} owner(s)`)
     console.log(`   • ${enterprises.length} enterprise(s)`)
     console.log(`   • ${rooms.length} room(s)`)
     console.log(`   • ${tasks.length} task template(s)`)
@@ -404,8 +453,12 @@ async function main() {
     console.log(`   • ${suppliers.length} supplier(s)`)
     console.log(`   • ${products.length} product(s)`)
     console.log('\n🔑 Test Credentials:')
-    console.log('   Admin: admin@petitspas.fr / admin123')
-    console.log('   Employee PIN: 1234, 2345')
+    console.log('   Developer: dev@luniqo.fr / admin123')
+    console.log('   Owner: admin@petitspas.fr / admin123')
+    console.log('   Owner: admin@leslucioles.fr / admin123')
+    console.log('   Employee (dashboard): sophie@example.com / password123')
+    console.log('   Employee (tablet): Sophie B / 1234')
+    console.log('   Employee (tablet): Lucas P / 2345')
 
   } catch (error) {
     console.error('\n❌ Error seeding database:', error)

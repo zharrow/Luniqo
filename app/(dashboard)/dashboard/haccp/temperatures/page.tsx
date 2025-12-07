@@ -23,7 +23,7 @@ interface Temperature {
 }
 
 export default function HaccpTemperaturesPage() {
-  const { session, isLoading: authLoading } = useRequireAuth(['Admin'])
+  const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
   const router = useRouter()
   const [temperatures, setTemperatures] = useState<Temperature[]>([])
   const [filteredTemperatures, setFilteredTemperatures] = useState<Temperature[]>([])

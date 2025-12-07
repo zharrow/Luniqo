@@ -20,7 +20,7 @@ import { fr } from 'date-fns/locale'
 import { FormDialog } from '@/components/shared/FormDialog'
 
 export default function NonCompliancesPage() {
-  const { session, isLoading: authLoading } = useRequireAuth(['Admin'])
+  const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
   const router = useRouter()
   const [nonCompliances, setNonCompliances] = useState<NonCompliance[]>([])
   const [users, setUsers] = useState<UserWithRooms[]>([])

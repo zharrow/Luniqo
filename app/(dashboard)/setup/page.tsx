@@ -11,8 +11,8 @@ export default function SetupPage() {
 
   useEffect(() => {
     if (!isLoading) {
-      // Rediriger si pas Admin
-      if (!session || role !== 'Admin') {
+      // Rediriger si pas Owner
+      if (!session || role !== 'Owner') {
         router.push('/login')
         return
       }
@@ -35,8 +35,8 @@ export default function SetupPage() {
     )
   }
 
-  // Si pas de session ou pas Admin, ne rien afficher (redirection en cours)
-  if (!session || role !== 'Admin') {
+  // Si pas de session ou pas Owner, ne rien afficher (redirection en cours)
+  if (!session || role !== 'Owner') {
     return null
   }
 
@@ -45,5 +45,5 @@ export default function SetupPage() {
     return null
   }
 
-  return <EnterpriseSetupForm adminId={session.user.id} />
+  return <EnterpriseSetupForm ownerId={session.user.id} />
 }

@@ -21,7 +21,7 @@ import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
 export default function SessionsPage() {
-  const { session: authSession, isLoading: authLoading } = useRequireAuth(['Admin'])
+  const { session: authSession, isLoading: authLoading } = useRequireAuth(['Owner'])
   const [todaySession, setTodaySession] = useState<SessionWithStats | null>(null)
   const [recentSessions, setRecentSessions] = useState<SessionWithStats[]>([])
   const [loading, setLoading] = useState(true)

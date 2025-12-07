@@ -1,93 +1,123 @@
-// Authentication types for multi-tier system
+// Authentication types for Luniqo - Unified Profiles Architecture
+// Updated 2025-12-07
 
-export type UserRole = 'Developer' | 'Admin' | 'User'
+import { Profile, Enterprise, UserRole } from './database.types'
 
-// Developer (Super admin)
-export interface Developer {
-  id: string
-  email: string
-  firebase_uid: string | null
-  created_at: string
-  updated_at: string
-}
+// Re-export UserRole for convenience
+export type { UserRole } from './database.types'
 
-// Admin (Daycare manager)
-export interface Admin {
-  id: string
-  email: string
-  firebase_uid: string | null
-  first_name: string
-  last_name: string
-  is_active: boolean
-  created_by_id: string | null
-  created_at: string
-  updated_at: string
-}
+// ============================================================================
+// PROFILE TYPE ALIASES (for backwards compatibility and convenience)
+// ============================================================================
 
-// Enterprise (Daycare)
-export interface Enterprise {
-  id: string
-  admin_id: string
-  name: string
-  logo_url: string | null
-  legal_form: string | null
-  siret: string | null
-  created_at: string
-  updated_at: string
-}
+// Profile represents any user (Developer, Owner, or Employee)
+export type { Profile } from './database.types'
 
-// User (Employee)
-export interface User {
-  id: string
-  email: string | null
-  first_name: string
-  last_name: string
-  pin_code: string // Hashed
-  enterprise_id: string
-  is_active: boolean
-  created_by_id: string | null
-  created_at: string
-  updated_at: string
-}
+// Role-specific profile types (same structure, just for type clarity)
+export type Developer = Profile & { role: 'Developer' }
+export type Owner = Profile & { role: 'Owner' }
+export type Employee = Profile & { role: 'Employee' }
 
-// Authentication session
+// ============================================================================
+// AUTHENTICATION SESSION
+// ============================================================================
+
+// Full authentication session with profile and enterprise
 export interface AuthSession {
-  user: Developer | Admin | User
+  user: Profile
   role: UserRole
-  enterprise?: Enterprise
-  accessibleRooms?: string[] // For User type (room IDs)
+  enterprise?: Enterprise | null
+  accessibleRooms?: string[]  // Room IDs for Employees
 }
 
-// Login credentials
+// ============================================================================
+// LOGIN CREDENTIALS
+// ============================================================================
+
+// Email/Password login (for all roles: Developer, Owner, Employee dashboard)
 export interface EmailPasswordCredentials {
   email: string
   password: string
 }
 
+// Username/PIN login (for Employee tablet only)
+export interface UsernameCredentials {
+  username: string
+  pin: string
+}
+
+// Legacy PIN credentials (kept for backwards compatibility with tablet flow)
 export interface PinCredentials {
   pin: string
   enterprise_id: string
 }
 
-// Auth responses
-export interface AuthResponse<T = Developer | Admin | User> {
+// ============================================================================
+// AUTH RESPONSES
+// ============================================================================
+
+export interface AuthResponse {
   success: boolean
-  data?: T
-  enterprise?: Enterprise
+  data?: Profile
+  enterprise?: Enterprise | null
   role?: UserRole
   accessibleRooms?: string[]
   error?: string
 }
 
-// Auth context (Admin/Developer only - Supabase Auth)
+// ============================================================================
+// AUTH CONTEXT
+// ============================================================================
+
 export interface AuthContextType {
+  // State
   session: AuthSession | null
   isLoading: boolean
   role: UserRole | null
   enterprise: Enterprise | null
 
-  // Methods
+  // Email/Password methods (Developer, Owner, Employee dashboard)
   loginWithEmail: (credentials: EmailPasswordCredentials) => Promise<AuthResponse>
+
+  // Username/PIN methods (Employee tablet)
+  loginWithPin: (credentials: UsernameCredentials) => Promise<AuthResponse>
+
+  // Common methods
   logout: () => Promise<void>
   refreshSession: () => Promise<void>
+}
+
+// ============================================================================
+// EMPLOYEE SETUP (First login flow)
+// ============================================================================
+
+export interface EmployeeSetupData {
+  pin: string  // 4 digits chosen by employee
+  confirmPin: string
+}
+
+export interface EmployeeFirstLoginResponse {
+  success: boolean
+  username?: string  // Auto-generated username to show
+  error?: string
+}
+
+// ============================================================================
+// USER CREATION (by Developer/Owner)
+// ============================================================================
+
+export interface CreateUserData {
+  email: string
+  password: string
+  first_name: string
+  last_name: string
+  role: UserRole
+  enterprise_id?: string  // Required for Employee, ignored for others
+}
+
+export interface CreateUserResponse {
+  success: boolean
+  user?: Profile
+  username?: string  // For Employees: auto-generated username
+  error?: string
 }

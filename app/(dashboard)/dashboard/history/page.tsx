@@ -15,7 +15,7 @@ import {
 } from '@heroicons/react/24/outline'
 
 export default function HistoryPage() {
-  const { session, isLoading: authLoading } = useRequireAuth(['Admin'])
+  const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
   const [sessions, setSessions] = useState<SessionWithStats[]>([])
   const [filteredSessions, setFilteredSessions] = useState<SessionWithStats[]>([])
   const [filterStatus, setFilterStatus] = useState<string>('all')

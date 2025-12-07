@@ -4,12 +4,12 @@ const supabase = createClient()
 
 export interface Conversation {
   id: string
-  admin_id: string
+  owner_id: string
   developer_id: string
   last_message_at: string | null
   created_at: string
   updated_at: string
-  admin?: {
+  owner?: {
     id: string
     email: string
     first_name: string
@@ -18,6 +18,8 @@ export interface Conversation {
   developer?: {
     id: string
     email: string
+    first_name?: string
+    last_name?: string
   }
   unread_count?: number
 }
@@ -25,9 +27,9 @@ export interface Conversation {
 export interface Message {
   id: string
   conversation_id: string
-  sender_type: 'Developer' | 'Admin' | 'User'
+  sender_type: 'Developer' | 'Owner' | 'Employee'
   sender_id: string
-  recipient_type: 'Developer' | 'Admin' | 'User'
+  recipient_type: 'Developer' | 'Owner' | 'Employee'
   recipient_id: string
   content: string
   status: 'Sent' | 'Delivered' | 'Read'
@@ -38,7 +40,7 @@ export interface Message {
 export interface Notification {
   id: string
   enterprise_id: string | null
-  recipient_type: 'Developer' | 'Admin' | 'User'
+  recipient_type: 'Developer' | 'Owner' | 'Employee'
   recipient_id: string | null
   title: string
   content: string
@@ -56,15 +58,16 @@ class MessagingService {
   // CONVERSATIONS
   // ============================================================================
 
-  async getConversations(userId: string, userType: 'Developer' | 'Admin'): Promise<Conversation[]> {
-    const field = userType === 'Developer' ? 'developer_id' : 'admin_id'
-    const otherField = userType === 'Developer' ? 'admin' : 'super_admin'
+  async getConversations(userId: string, userType: 'Developer' | 'Owner'): Promise<Conversation[]> {
+    const field = userType === 'Developer' ? 'developer_id' : 'owner_id'
 
+    // Use profiles table for joins
     const { data, error } = await supabase
       .from('support_conversation')
       .select(`
         *,
-        ${otherField}!${field === 'developer_id' ? 'developer_id' : 'admin_id'}(id, email, first_name, last_name)
+        owner:profiles!owner_id(id, email, first_name, last_name),
+        developer:profiles!developer_id(id, email, first_name, last_name)
       `)
       .eq(field, userId)
       .order('last_message_at', { ascending: false, nullsFirst: false })
@@ -94,12 +97,12 @@ class MessagingService {
     return conversationsWithUnread
   }
 
-  async getOrCreateConversation(adminId: string, developerId: string): Promise<Conversation> {
+  async getOrCreateConversation(ownerId: string, developerId: string): Promise<Conversation> {
     // Try to find existing conversation
     const { data: existing, error: findError } = await supabase
       .from('support_conversation')
       .select('*')
-      .eq('admin_id', adminId)
+      .eq('owner_id', ownerId)
       .eq('developer_id', developerId)
       .single()
 
@@ -111,7 +114,7 @@ class MessagingService {
     const { data, error } = await supabase
       .from('support_conversation')
       .insert({
-        admin_id: adminId,
+        owner_id: ownerId,
         developer_id: developerId
       })
       .select()
@@ -130,8 +133,8 @@ class MessagingService {
       .from('support_conversation')
       .select(`
         *,
-        admin!admin_id(id, email, first_name, last_name),
-        super_admin!developer_id(id, email)
+        owner:profiles!owner_id(id, email, first_name, last_name),
+        developer:profiles!developer_id(id, email, first_name, last_name)
       `)
       .eq('id', conversationId)
       .single()
@@ -165,9 +168,9 @@ class MessagingService {
 
   async sendMessage(message: {
     conversation_id: string
-    sender_type: 'Developer' | 'Admin'
+    sender_type: 'Developer' | 'Owner'
     sender_id: string
-    recipient_type: 'Developer' | 'Admin'
+    recipient_type: 'Developer' | 'Owner'
     recipient_id: string
     content: string
   }): Promise<Message> {
@@ -236,7 +239,7 @@ class MessagingService {
   // ============================================================================
 
   async getNotifications(
-    recipientType: 'Developer' | 'Admin' | 'User',
+    recipientType: 'Developer' | 'Owner' | 'Employee',
     recipientId: string,
     enterpriseId?: string
   ): Promise<Notification[]> {
@@ -267,7 +270,7 @@ class MessagingService {
 
   async createNotification(notification: {
     enterprise_id?: string
-    recipient_type: 'Developer' | 'Admin' | 'User'
+    recipient_type: 'Developer' | 'Owner' | 'Employee'
     recipient_id?: string
     title: string
     content: string
@@ -317,7 +320,7 @@ class MessagingService {
   }
 
   async markAllNotificationsAsRead(
-    recipientType: 'Developer' | 'Admin' | 'User',
+    recipientType: 'Developer' | 'Owner' | 'Employee',
     recipientId: string
   ): Promise<void> {
     const { error } = await supabase
@@ -349,7 +352,7 @@ class MessagingService {
   }
 
   async getUnreadNotificationCount(
-    recipientType: 'Developer' | 'Admin' | 'User',
+    recipientType: 'Developer' | 'Owner' | 'Employee',
     recipientId: string,
     enterpriseId?: string
   ): Promise<number> {
@@ -401,7 +404,7 @@ class MessagingService {
   }
 
   subscribeToNotifications(
-    recipientType: 'Developer' | 'Admin' | 'User',
+    recipientType: 'Developer' | 'Owner' | 'Employee',
     recipientId: string,
     onNotification: (notification: Notification) => void
   ) {

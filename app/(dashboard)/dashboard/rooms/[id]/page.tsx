@@ -32,7 +32,7 @@ import {
 export default function RoomTasksPage() {
   const { id } = useParams()
   const router = useRouter()
-  const { session, isLoading: authLoading } = useRequireAuth(['Admin'])
+  const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
 
   const [room, setRoom] = useState<Room | null>(null)
   const [availableTasks, setAvailableTasks] = useState<TaskTemplate[]>([])

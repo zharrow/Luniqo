@@ -20,7 +20,7 @@ export default function NotificationsPage() {
 
     // Subscribe to real-time notifications
     const channel = messagingService.subscribeToNotifications(
-      session.role as 'Developer' | 'Admin' | 'User',
+      session.role as 'Developer' | 'Owner' | 'Employee',
       session.user.id,
       (notification) => {
         setNotifications((prev) => [notification, ...prev])
@@ -38,7 +38,7 @@ export default function NotificationsPage() {
     try {
       setIsLoading(true)
       const data = await messagingService.getNotifications(
-        session.role as 'Developer' | 'Admin' | 'User',
+        session.role as 'Developer' | 'Owner' | 'Employee',
         session.user.id,
         session.enterprise?.id
       )
@@ -67,7 +67,7 @@ export default function NotificationsPage() {
 
     try {
       await messagingService.markAllNotificationsAsRead(
-        session.role as 'Developer' | 'Admin' | 'User',
+        session.role as 'Developer' | 'Owner' | 'Employee',
         session.user.id
       )
       setNotifications((prev) => prev.map((n) => ({ ...n, status: 'Read' as const })))

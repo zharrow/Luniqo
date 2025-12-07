@@ -34,26 +34,26 @@ interface NavItem {
   name: string
   href: string
   icon: any
-  roles?: ('Developer' | 'Admin')[]
+  roles?: ('Developer' | 'Owner')[]
   moduleColor?: string // Couleur du module pour l'indicateur visuel
 }
 
 
 const mainNavigation: NavItem[] = [
-  { name: 'Tableau de bord', href: '/dashboard', icon: HomeIcon, roles: ['Admin'], moduleColor: '#5a9dc9' },
-  { name: 'Pièces', href: '/dashboard/rooms', icon: BuildingOfficeIcon, roles: ['Admin'], moduleColor: '#5a9dc9' }, // Clean
-  { name: 'Tâches', href: '/dashboard/tasks', icon: ClipboardDocumentListIcon, roles: ['Admin'], moduleColor: '#aed581' }, // Tasks
-  { name: 'Employés', href: '/dashboard/users', icon: UserGroupIcon, roles: ['Admin'], moduleColor: '#f4a5a5' }, // Users
+  { name: 'Tableau de bord', href: '/dashboard', icon: HomeIcon, roles: ['Owner'], moduleColor: '#5a9dc9' },
+  { name: 'Pièces', href: '/dashboard/rooms', icon: BuildingOfficeIcon, roles: ['Owner'], moduleColor: '#5a9dc9' }, // Clean
+  { name: 'Tâches', href: '/dashboard/tasks', icon: ClipboardDocumentListIcon, roles: ['Owner'], moduleColor: '#aed581' }, // Tasks
+  { name: 'Employés', href: '/dashboard/users', icon: UserGroupIcon, roles: ['Owner'], moduleColor: '#f4a5a5' }, // Users
 ]
 
 const operationsNavigation: NavItem[] = [
-  { name: 'Sessions', href: '/dashboard/sessions', icon: CalendarIcon, roles: ['Admin'], moduleColor: '#5a9dc9' }, // Clean
-  { name: 'Historique', href: '/dashboard/history', icon: ClockIcon, roles: ['Admin'], moduleColor: '#5a9dc9' }, // Clean
-  { name: 'HACCP', href: '/dashboard/haccp', icon: BeakerIcon, roles: ['Admin'], moduleColor: '#81c995' }, // HACCP
+  { name: 'Sessions', href: '/dashboard/sessions', icon: CalendarIcon, roles: ['Owner'], moduleColor: '#5a9dc9' }, // Clean
+  { name: 'Historique', href: '/dashboard/history', icon: ClockIcon, roles: ['Owner'], moduleColor: '#5a9dc9' }, // Clean
+  { name: 'HACCP', href: '/dashboard/haccp', icon: BeakerIcon, roles: ['Owner'], moduleColor: '#81c995' }, // HACCP
 ]
 
 const communicationNavigation: NavItem[] = [
-  { name: 'Messages', href: '/dashboard/messages', icon: ChatBubbleLeftRightIcon, roles: ['Admin', 'Developer'], moduleColor: '#64b5d1' }, // Communication
+  { name: 'Messages', href: '/dashboard/messages', icon: ChatBubbleLeftRightIcon, roles: ['Owner', 'Developer'], moduleColor: '#64b5d1' }, // Communication
   { name: 'Analytics', href: '/analytics', icon: ChartBarIcon, roles: ['Developer'], moduleColor: '#9fa8da' }, // Analytics
 ]
 

@@ -17,7 +17,7 @@ import { WeeklyCalendar } from '@/components/dashboard/WeeklyCalendar'
 import { DailyCalendar } from '@/components/dashboard/DailyCalendar'
 
 export default function DashboardPage() {
-  const { session, isLoading } = useRequireAuth(['Admin'])
+  const { session, isLoading } = useRequireAuth(['Owner'])
   const [calendarView, setCalendarView] = useState<'weekly' | 'daily'>('daily')
 
   if (isLoading) {

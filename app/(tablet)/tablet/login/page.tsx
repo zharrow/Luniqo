@@ -40,7 +40,7 @@ export default function TabletLoginPage() {
       const response = await loginWithEmail(adminEmail, adminPassword)
       console.log('📥 Login response:', { success: response.success, role: response.role, hasEnterprise: !!response.enterprise })
 
-      if (response.success && response.role === 'Admin' && response.enterprise) {
+      if (response.success && response.role === 'Owner' && response.enterprise) {
         setEnterpriseId(response.enterprise.id)
         setEnterpriseName(response.enterprise.name)
 

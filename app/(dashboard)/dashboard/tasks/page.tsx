@@ -26,7 +26,7 @@ import { FormDialog } from '@/components/shared/FormDialog'
 import { Card } from '@/components/ui/card'
 
 export default function TasksPage() {
-  const { session, isLoading: authLoading } = useRequireAuth(['Admin'])
+  const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
   const [tasks, setTasks] = useState<TaskTemplate[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)

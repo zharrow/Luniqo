@@ -5,7 +5,7 @@
 
 export interface GlobalStats {
   total_enterprises: number;
-  active_admins: number;
+  active_owners: number;
   total_employees: number;
   sessions_this_month: number;
 }
@@ -13,11 +13,11 @@ export interface GlobalStats {
 export interface EnterpriseStats {
   id: string;
   name: string;
-  admin_name: string;
-  admin_email: string;
+  owner_name: string;
+  owner_email: string;
   employee_count: number;
   sessions_this_month: number;
-  last_admin_login: string | null;
+  last_owner_login: string | null;
 }
 
 export interface ActivityChartData {

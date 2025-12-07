@@ -74,15 +74,15 @@ export default function ConversationPage({ params }: PageProps) {
     e.preventDefault()
     if (!newMessage.trim() || !session?.user?.id || !conversation) return
 
-    const recipientType = session.role === 'Admin' ? 'Developer' : 'Admin'
+    const recipientType = session.role === 'Owner' ? 'Developer' : 'Owner'
     const recipientId =
-      session.role === 'Admin' ? conversation.developer_id : conversation.admin_id
+      session.role === 'Owner' ? conversation.developer_id : conversation.owner_id
 
     try {
       setIsSending(true)
       await messagingService.sendMessage({
         conversation_id: id,
-        sender_type: session.role as 'Developer' | 'Admin',
+        sender_type: session.role as 'Developer' | 'Owner',
         sender_id: session.user.id,
         recipient_type: recipientType,
         recipient_id: recipientId,
@@ -151,7 +151,7 @@ export default function ConversationPage({ params }: PageProps) {
     )
   }
 
-  const otherParty = session?.role === 'Admin' ? conversation.developer : conversation.admin
+  const otherParty = session?.role === 'Owner' ? conversation.developer : conversation.owner
 
   return (
     <div className="flex flex-col h-screen">
@@ -180,9 +180,9 @@ export default function ConversationPage({ params }: PageProps) {
             <h1 className="text-xl font-bold">
               {(() => {
                 if (otherParty && 'first_name' in otherParty && 'last_name' in otherParty) {
-                  const admin = otherParty as { first_name?: string; last_name?: string; email: string }
-                  if (admin.first_name && admin.last_name) {
-                    return `${admin.first_name} ${admin.last_name}`
+                  const owner = otherParty as { first_name?: string; last_name?: string; email: string }
+                  if (owner.first_name && owner.last_name) {
+                    return `${owner.first_name} ${owner.last_name}`
                   }
                 }
                 return otherParty?.email || 'Utilisateur inconnu'

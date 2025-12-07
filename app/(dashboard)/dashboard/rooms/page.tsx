@@ -31,7 +31,7 @@ import { cn } from '@/lib/utils'
 
 export default function RoomsPage() {
   const router = useRouter()
-  const { session, isLoading: authLoading } = useRequireAuth(['Admin'])
+  const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
   const [rooms, setRooms] = useState<Room[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)

@@ -24,7 +24,7 @@ import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmation
 import { FormDialog } from '@/components/shared/FormDialog'
 
 export default function MealsPage() {
-  const { session, isLoading: authLoading } = useRequireAuth(['Admin'])
+  const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
   const router = useRouter()
   const [meals, setMeals] = useState<Meal[]>([])
   const [users, setUsers] = useState<UserWithRooms[]>([])

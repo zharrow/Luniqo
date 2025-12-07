@@ -36,7 +36,7 @@ export default function LoginPage() {
         if (response.role === 'Developer') {
           console.log('🚀 Redirecting to /analytics')
           router.push('/analytics')
-        } else if (response.role === 'Admin') {
+        } else if (response.role === 'Owner' || response.role === 'Employee') {
           console.log('🚀 Redirecting to /dashboard')
           router.push('/dashboard')
         }

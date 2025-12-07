@@ -16,7 +16,7 @@ import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmation
 import { FormDialog } from '@/components/shared/FormDialog'
 
 export default function ProductsPage() {
-  const { session, isLoading: authLoading } = useRequireAuth(['Admin'])
+  const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
   const [products, setProducts] = useState<Product[]>([])
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([])

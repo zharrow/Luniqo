@@ -43,7 +43,7 @@ export default function HaccpDocumentsPage() {
   const router = useRouter()
 
   useEffect(() => {
-    if (!session || !['Admin', 'Developer'].includes(session.role)) {
+    if (!session || !['Owner', 'Developer'].includes(session.role)) {
       router.push('/login')
       return
     }

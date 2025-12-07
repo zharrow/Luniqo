@@ -25,19 +25,19 @@ interface NavItem {
  name: string
  href: string
  icon: any
- roles?: ('Developer' | 'Admin')[]
+ roles?: ('Developer' | 'Owner')[]
 }
 
 const navigation: NavItem[] = [
- { name: 'Tableau de bord', href: '/dashboard', icon: HomeIcon, roles: ['Admin'] },
- { name: 'Pièces', href: '/dashboard/rooms', icon: BuildingOfficeIcon, roles: ['Admin'] },
- { name: 'Tâches', href: '/dashboard/tasks', icon: ClipboardDocumentListIcon, roles: ['Admin'] },
- { name: 'Employés', href: '/dashboard/users', icon: UserGroupIcon, roles: ['Admin'] },
- { name: 'Sessions', href: '/dashboard/sessions', icon: CalendarIcon, roles: ['Admin'] },
- { name: 'Historique', href: '/dashboard/history', icon: ClockIcon, roles: ['Admin'] },
- { name: 'HACCP', href: '/dashboard/haccp', icon: BeakerIcon, roles: ['Admin'] },
- { name: 'Messages', href: '/dashboard/messages', icon: ChatBubbleLeftRightIcon, roles: ['Admin', 'Developer'] },
- { name: 'Notifications', href: '/dashboard/notifications', icon: BellIcon, roles: ['Admin', 'Developer'] },
+ { name: 'Tableau de bord', href: '/dashboard', icon: HomeIcon, roles: ['Owner'] },
+ { name: 'Pièces', href: '/dashboard/rooms', icon: BuildingOfficeIcon, roles: ['Owner'] },
+ { name: 'Tâches', href: '/dashboard/tasks', icon: ClipboardDocumentListIcon, roles: ['Owner'] },
+ { name: 'Employés', href: '/dashboard/users', icon: UserGroupIcon, roles: ['Owner'] },
+ { name: 'Sessions', href: '/dashboard/sessions', icon: CalendarIcon, roles: ['Owner'] },
+ { name: 'Historique', href: '/dashboard/history', icon: ClockIcon, roles: ['Owner'] },
+ { name: 'HACCP', href: '/dashboard/haccp', icon: BeakerIcon, roles: ['Owner'] },
+ { name: 'Messages', href: '/dashboard/messages', icon: ChatBubbleLeftRightIcon, roles: ['Owner', 'Developer'] },
+ { name: 'Notifications', href: '/dashboard/notifications', icon: BellIcon, roles: ['Owner', 'Developer'] },
  { name: 'Analytics', href: '/analytics', icon: ChartBarIcon, roles: ['Developer'] },
 ]
 
@@ -76,7 +76,7 @@ export default function Sidebar() {
  </svg>
  </div>
  <span className="text-xl font-bold gradient-text" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
- cLean
+ Luniqo
  </span>
  </motion.div>
  )}
