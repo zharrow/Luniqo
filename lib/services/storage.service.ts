@@ -27,7 +27,7 @@ export interface UploadResult {
 }
 
 export class StorageService {
-  private supabase = createClient()
+  private supabase: any = createClient()
 
   /**
    * Upload a file to Supabase Storage

@@ -1,8 +1,6 @@
 import { createClient } from '@/lib/supabase/client'
 import { hashPin } from '@/lib/utils/auth.client'
 import { Profile } from '@/types/database.types'
-import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '@/types/database.types'
 
 // ============================================================================
 // TYPES
@@ -42,7 +40,7 @@ export interface CreateOwnerInput {
 // ============================================================================
 
 export class UsersService {
-  private supabase: SupabaseClient<Database>
+  private supabase: any
 
   constructor() {
     this.supabase = createClient()
@@ -67,7 +65,7 @@ export class UsersService {
 
     // Get room assignments for each employee
     const employeesWithRooms = await Promise.all(
-      (employees || []).map(async (employee) => {
+      (employees || []).map(async (employee: any) => {
         const { data: rooms } = await this.supabase
           .from('employee_room_access')
           .select('room_id')
@@ -75,7 +73,7 @@ export class UsersService {
 
         return {
           ...employee,
-          accessible_rooms: (rooms || []).map(r => r.room_id)
+          accessible_rooms: (rooms || []).map((r: any) => r.room_id)
         } as ProfileWithRooms
       })
     )
@@ -116,7 +114,7 @@ export class UsersService {
 
     return {
       ...employee,
-      accessible_rooms: (rooms || []).map(r => r.room_id)
+      accessible_rooms: (rooms || []).map((r: any) => r.room_id)
     } as ProfileWithRooms
   }
 
@@ -241,7 +239,7 @@ export class UsersService {
       .eq('employee_id', employeeId)
 
     if (error) throw error
-    return (data || []).map(r => r.room_id)
+    return (data || []).map((r: any) => r.room_id)
   }
 
   /**

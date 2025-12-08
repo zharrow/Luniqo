@@ -8,7 +8,7 @@ import type { UserRole, Profile, AuthSession } from '@/types/auth.types'
  * Returns the full AuthSession with profile, role, and enterprise
  */
 export async function getCurrentSession(): Promise<AuthSession | null> {
-  const supabase = await createClient()
+  const supabase: any = await createClient()
 
   const { data: { session } } = await supabase.auth.getSession()
 
@@ -71,7 +71,7 @@ export async function getCurrentSession(): Promise<AuthSession | null> {
  * Get current user profile only (lighter query)
  */
 export async function getCurrentProfile(): Promise<Profile | null> {
-  const supabase = await createClient()
+  const supabase: any = await createClient()
 
   const { data: { session } } = await supabase.auth.getSession()
 

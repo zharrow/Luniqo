@@ -52,7 +52,7 @@ export interface UpdateAssignedTaskInput {
 }
 
 export class AssignedTasksService {
-  private supabase = createClient()
+  private supabase: any = createClient()
 
   /**
    * Get all assigned tasks for a room

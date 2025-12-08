@@ -25,7 +25,7 @@ export async function verifyPin(pin: string, hash: string): Promise<boolean> {
  */
 export async function loginWithPin(credentials: UsernameCredentials): Promise<AuthResponse> {
   try {
-    const supabase = createClient()
+    const supabase: any = createClient()
 
     // Find employee by username
     const { data: employee, error } = await supabase
@@ -78,7 +78,7 @@ export async function loginWithPin(credentials: UsernameCredentials): Promise<Au
 export async function loginWithEmail(email: string, password: string): Promise<AuthResponse> {
   try {
     console.log('🔑 loginWithEmail called with:', { email })
-    const supabase = createClient()
+    const supabase: any = createClient()
 
     // Sign in with Supabase Auth
     console.log('📡 Calling Supabase Auth...')
@@ -156,7 +156,7 @@ export async function loginWithEmail(email: string, password: string): Promise<A
  * Logout
  */
 export async function logout() {
-  const supabase = createClient()
+  const supabase: any = createClient()
   await supabase.auth.signOut()
 }
 
@@ -168,7 +168,7 @@ export async function logout() {
  */
 export async function loginEmployeeWithPin(employeeId: string, pin: string): Promise<AuthResponse> {
   try {
-    const supabase = createClient()
+    const supabase: any = createClient()
 
     // Get the specific employee from profiles table
     const { data: employee, error: employeeError } = await supabase
@@ -226,7 +226,7 @@ export async function getEnterpriseEmployees(enterpriseId: string): Promise<Arra
   avatar_url: string | null
 }>> {
   try {
-    const supabase = createClient()
+    const supabase: any = createClient()
 
     const { data: employees, error } = await supabase
       .from('profiles')
