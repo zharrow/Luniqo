@@ -28,7 +28,7 @@ export interface UpdateTaskInput {
 }
 
 export class TasksService {
-  private supabase = createClient()
+  private supabase: any = createClient()
 
   /**
    * Get all task templates for an enterprise

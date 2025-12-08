@@ -67,7 +67,7 @@ export interface CreateLogInput {
 }
 
 export class SessionsService {
-  private supabase = createClient()
+  private supabase: any = createClient()
 
   /**
    * Get all sessions for an enterprise

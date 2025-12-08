@@ -35,7 +35,7 @@ export interface Child {
   birth_date: string
   section: Section
   allergies: string | null
-  dietary_restrictions: string | null
+  specific_diet: string | null
   is_active: boolean
   created_at: string
   updated_at: string
@@ -47,7 +47,7 @@ export interface CreateChildInput {
   birth_date: string
   section: Section
   allergies?: string
-  dietary_restrictions?: string
+  specific_diet?: string
 }
 
 export interface UpdateChildInput {
@@ -56,7 +56,7 @@ export interface UpdateChildInput {
   birth_date?: string
   section?: Section
   allergies?: string
-  dietary_restrictions?: string
+  specific_diet?: string
   is_active?: boolean
 }
 
@@ -293,7 +293,11 @@ export interface CreateDocumentInput {
 // ============================================================================
 
 export class HaccpService {
-  private supabase = createClient()
+  private supabase: any
+
+  constructor() {
+    this.supabase = createClient()
+  }
 
   // ==========================================================================
   // CHILDREN

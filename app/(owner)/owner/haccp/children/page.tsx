@@ -30,7 +30,7 @@ export default function ChildrenPage() {
     birth_date: '',
     section: 'Babies',
     allergies: '',
-    dietary_restrictions: ''
+    specific_diet: ''
   })
 
   useEffect(() => {
@@ -61,7 +61,7 @@ export default function ChildrenPage() {
       birth_date: '',
       section: 'Babies',
       allergies: '',
-      dietary_restrictions: ''
+      specific_diet: ''
     })
     setShowModal(true)
   }
@@ -74,7 +74,7 @@ export default function ChildrenPage() {
       birth_date: child.birth_date,
       section: child.section,
       allergies: child.allergies || '',
-      dietary_restrictions: child.dietary_restrictions || ''
+      specific_diet: child.specific_diet || ''
     })
     setShowModal(true)
   }
@@ -290,10 +290,10 @@ export default function ChildrenPage() {
                       </div>
                     )}
 
-                    {child.dietary_restrictions && (
+                    {child.specific_diet && (
                       <div className="p-3 rounded-lg bg-accent-50 border border-accent-200">
                         <p className="text-xs font-medium text-accent-900 mb-1">Régime alimentaire</p>
-                        <p className="text-sm text-accent-700">{child.dietary_restrictions}</p>
+                        <p className="text-sm text-accent-700">{child.specific_diet}</p>
                       </div>
                     )}
 
@@ -396,8 +396,8 @@ export default function ChildrenPage() {
               Restrictions alimentaires
             </label>
             <textarea
-              value={formData.dietary_restrictions}
-              onChange={(e) => setFormData({ ...formData, dietary_restrictions: e.target.value })}
+              value={formData.specific_diet}
+              onChange={(e) => setFormData({ ...formData, specific_diet: e.target.value })}
               className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="ex: Végétarien, Sans gluten"
               rows={2}

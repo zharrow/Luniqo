@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client';
 import type { GlobalStats, EnterpriseStats } from '@/types/analytics.types';
 
 export class AnalyticsService {
-  private supabase = createClient();
+  private supabase: any = createClient();
 
   /**
    * Get global statistics for the developer dashboard

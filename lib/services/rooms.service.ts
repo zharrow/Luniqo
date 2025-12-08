@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/client'
 
+const supabase: any = createClient()
+
 export interface Room {
   id: string
   enterprise_id: string
@@ -28,7 +30,7 @@ export interface UpdateRoomInput {
 }
 
 export class RoomsService {
-  private getClient() {
+  private getClient(): any {
     return createClient()
   }
 

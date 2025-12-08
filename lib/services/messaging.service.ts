@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/client'
 
-const supabase = createClient()
+const supabase: any = createClient()
 
 export interface Conversation {
   id: string
@@ -396,7 +396,7 @@ class MessagingService {
           table: 'message',
           filter: `conversation_id=eq.${conversationId}`
         },
-        (payload) => {
+        (payload: any) => {
           onMessage(payload.new as Message)
         }
       )
@@ -418,7 +418,7 @@ class MessagingService {
           table: 'notification',
           filter: `recipient_type=eq.${recipientType}`
         },
-        (payload) => {
+        (payload: any) => {
           const notif = payload.new as Notification
           // Only trigger if global or specific to this user
           if (!notif.recipient_id || notif.recipient_id === recipientId) {

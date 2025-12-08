@@ -31,7 +31,7 @@ export interface WeekData {
 }
 
 export class CalendarService {
-  private supabase = createClient()
+  private supabase: any = createClient()
 
   /**
    * Get the start of the week (Monday) for a given date
