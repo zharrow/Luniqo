@@ -1,7 +1,8 @@
 {
-  "name": "cleanapp-nextjs",
+  "name": "luniqo",
   "version": "0.1.0",
   "private": true,
+  "description": "Luniqo - Application de gestion de crèche avec traçabilité HACCP",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

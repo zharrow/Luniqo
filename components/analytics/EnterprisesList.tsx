@@ -79,15 +79,15 @@ export default function EnterprisesList({ enterprises }: EnterprisesListProps) {
               </th>
               <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort('admin_name')}
+                onClick={() => handleSort('owner_name')}
               >
-                Admin {sortField === 'admin_name' && (sortDirection === 'asc' ? '↑' : '↓')}
+                Propriétaire {sortField === 'owner_name' && (sortDirection === 'asc' ? '↑' : '↓')}
               </th>
               <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort('admin_email')}
+                onClick={() => handleSort('owner_email')}
               >
-                Email {sortField === 'admin_email' && (sortDirection === 'asc' ? '↑' : '↓')}
+                Email {sortField === 'owner_email' && (sortDirection === 'asc' ? '↑' : '↓')}
               </th>
               <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
@@ -105,10 +105,10 @@ export default function EnterprisesList({ enterprises }: EnterprisesListProps) {
               </th>
               <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort('last_admin_login')}
+                onClick={() => handleSort('last_owner_login')}
               >
                 Dernière connexion{' '}
-                {sortField === 'last_admin_login' && (sortDirection === 'asc' ? '↑' : '↓')}
+                {sortField === 'last_owner_login' && (sortDirection === 'asc' ? '↑' : '↓')}
               </th>
             </tr>
           </thead>
@@ -119,10 +119,10 @@ export default function EnterprisesList({ enterprises }: EnterprisesListProps) {
                   <div className="font-medium text-gray-900">{enterprise.name}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-gray-900">{enterprise.admin_name}</div>
+                  <div className="text-gray-900">{enterprise.owner_name}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-gray-600">{enterprise.admin_email}</div>
+                  <div className="text-gray-600">{enterprise.owner_email}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
@@ -135,7 +135,7 @@ export default function EnterprisesList({ enterprises }: EnterprisesListProps) {
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  {formatLastLogin(enterprise.last_admin_login)}
+                  {formatLastLogin(enterprise.last_owner_login)}
                 </td>
               </tr>
             ))}

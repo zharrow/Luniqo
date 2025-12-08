@@ -36,45 +36,86 @@ npm run lint             # Run ESLint
 
 ### Multi-Tier Authentication System
 
-The application has 3 distinct authentication layers:
+The application has 3 distinct user roles with **unified architecture**:
 
-1. **Developer (Super Admin)**
+**ALL users** are stored in:
+- `auth.users` (Supabase Auth - managed automatically)
+- `profiles` table (1:1 with auth.users - application data)
+
+---
+
+1. **Developer (Platform Developer)**
    - Auth: Supabase Auth (email/password)
-   - Table: `developer`
+   - Table: `profiles` (where role = 'Developer')
    - Access: Analytics dashboard (`/analytics`)
-   - Can create admins and view global metrics
+   - Can create owners and view global metrics
+   - Login: `/login` with email/password
 
-2. **Admin (Childcare Manager)**
+2. **Owner (Childcare Owner/Manager)**
    - Auth: Supabase Auth (email/password)
-   - Table: `admin` (linked to `enterprise` via `enterprise.admin_id`)
-   - Access: Full back-office (`/dashboard`)
-   - Manages one childcare facility (1 admin = 1 enterprise)
-   - **First login flow**: Admin without enterprise is redirected to `/setup` to create their enterprise
+   - Table: `profiles` (where role = 'Owner')
+   - Linked to: `enterprise` via `enterprise.owner_id`
+   - Access: Full back-office (route group `(owner)`)
+   - Routes: `/owner/dashboard`, `/owner/profil`, `/owner/haccp`, `/owner/rooms`, `/owner/users`, `/owner/sessions`, etc.
+   - Manages one childcare facility (1 owner = 1 enterprise)
+   - **First login flow**: Owner without enterprise is redirected to `/setup` to create their enterprise
+   - Login: `/login` with email/password → redirects to `/owner/dashboard`
 
-3. **User (Employee)**
-   - Auth: 4-6 digit PIN code (bcrypt hashed)
-   - Table: `user` (linked to `enterprise`)
-   - Access: Tablet interface (`/tablet`)
-   - Performs cleaning tasks and HACCP data entry
-   - **Important**: User authentication does NOT use Supabase Auth - it's stored in localStorage as `user_session`
+3. **Employee (Childcare Staff)**
+   - Auth: **Dual authentication system**
+   - Table: `profiles` (where role = 'Employee')
+   - Linked to: `enterprise` via `profiles.enterprise_id`
+
+   **Two login methods:**
+
+   a) **Dashboard Login** (`/login`)
+      - Method: Email + Password (Supabase Auth)
+      - Device: Desktop/Mobile
+      - Access: Route group `(employee)` - `/employee/dashboard`, `/employee/profile`, `/employee/calendar`, `/employee/history`
+      - Features: Profile, history, calendar, stats, PIN management
+
+   b) **Tablet Login** (`/tablet/login`)
+      - Method: Username + PIN (custom auth)
+      - Device: Tablet
+      - Access: Route group `(tablet)` - `/tablet/*`
+      - Features: Daily tasks only (quick access)
+      - **Username**: Auto-generated (e.g., "Marie D")
+      - **PIN**: 4 digits, bcrypt hashed, chosen by employee
+      - **Storage**: Session in localStorage as `user_session`
+
+   **Important**: Employees have BOTH email/password (for dashboard) AND username/PIN (for tablet)
 
 ### Route Structure
 
-The app uses Next.js App Router with route groups:
+The app uses Next.js App Router with **role-based route groups** for clear separation:
 
 - `(auth)/` - Public authentication pages
-  - `/login` - Admin/Developer login (email/password)
+  - `/login` - Universal login (email/password for Developer/Owner/Employee)
 
-- `(dashboard)/` - Protected admin/developer routes
-  - `/analytics` - Developer-only analytics
-  - `/dashboard` - Admin dashboard and all management pages
-  - `/dashboard/profil` - Admin profile with enterprise management
-  - `/dashboard/haccp/*` - HACCP module pages
-  - `/dashboard/rooms`, `/dashboard/users`, etc.
-  - `/setup` - First-time enterprise creation (admins only)
+- `(owner)/` - **Owner routes** (Protected - Owner only)
+  - `/owner/dashboard` - Owner dashboard (home)
+  - `/owner/profil` - Owner profile with enterprise management
+  - `/owner/haccp` - HACCP module main page
+  - `/owner/rooms`, `/owner/rooms/[id]` - Room management
+  - `/owner/users` - Employee management
+  - `/owner/sessions`, `/owner/sessions/[id]` - Cleaning sessions
+  - `/owner/tasks` - Task templates
+  - `/owner/history` - Cleaning history
+  - `/owner/messages`, `/owner/messages/[id]` - Support messages
+  - `/owner/notifications` - Notifications center
+  - `/setup` - First-time enterprise creation (owners without enterprise)
 
-- `(tablet)/` - Tablet interface for employees
-  - `/tablet/login` - Employee PIN login
+- `(employee)/` - **Employee routes** (Protected - Employee only)
+  - `/employee/dashboard` - Employee dashboard (home)
+  - `/employee/profile` - Employee profile & PIN management
+  - `/employee/calendar` - Personal task calendar
+  - `/employee/history` - Personal task history
+
+- `(developer)/` - **Developer routes** (Protected - Developer only)
+  - `/analytics` - Platform analytics and metrics
+
+- `(tablet)/` - **Tablet interface** for employees (PIN-based quick access)
+  - `/tablet/login` - Employee username + PIN login
   - `/tablet/room/[id]` - Room cleaning interface
   - `/tablet/haccp/*` - HACCP data entry
 
@@ -103,7 +144,7 @@ Located in `lib/utils/auth.client.ts` and `lib/contexts/AuthContext.tsx`:
 import { useAuth, useRequireAuth } from '@/lib/contexts/AuthContext'
 
 // Protect pages
-const { session, isLoading } = useRequireAuth(['Admin']) // or ['Developer'] or ['User']
+const { session, isLoading } = useRequireAuth(['Owner']) // or ['Developer'] or ['Employee']
 
 // Login methods
 const { loginWithEmail, loginWithPin, logout, refreshSession } = useAuth()
@@ -126,35 +167,105 @@ const { data } = await supabase.from('room').select('*')
 
 The only exception is the Developer role, which can query across enterprises for analytics.
 
-### Admin-Enterprise Relationship
+### Profile-Enterprise Relationship
 
-**IMPORTANT**: The relationship between `admin` and `enterprise` is:
-- `enterprise.admin_id` references `admin.id` (NOT the other way around)
-- One admin can have ZERO or ONE enterprise
-- To fetch an admin's enterprise:
+**IMPORTANT**: The relationships are:
+
+**For Owners:**
+- `enterprise.owner_id` references `profiles.id` (where role = 'Owner')
+- One owner can have ZERO or ONE enterprise
+- To fetch an owner's enterprise:
 
 ```typescript
 // ✅ CORRECT
 const { data: enterprise } = await supabase
   .from('enterprise')
   .select('*')
-  .eq('admin_id', admin.id)
+  .eq('owner_id', profile.id)
   .single()
 
-// ❌ WRONG - admin table has no enterprise_id column
-const { data: admin } = await supabase
-  .from('admin')
+// ❌ WRONG - profiles table doesn't have enterprise_id for Owners
+const { data: profile } = await supabase
+  .from('profiles')
   .select('*, enterprise!enterprise_id(*)')
+  .eq('role', 'Owner')
 ```
 
-### First Login Flow (New Admins)
+**For Employees:**
+- `profiles.enterprise_id` references `enterprise.id` (for role = 'Employee')
+- Many employees can belong to ONE enterprise
+- To fetch employees of an enterprise:
 
-When a developer creates a new admin account:
+```typescript
+// ✅ CORRECT
+const { data: employees } = await supabase
+  .from('profiles')
+  .select('*')
+  .eq('role', 'Employee')
+  .eq('enterprise_id', enterprise.id)
+```
+
+### Username Generation (Employees Only)
+
+Employees get an auto-generated `username` for quick tablet login:
+
+**Algorithm:**
+1. Base format: `${firstName} ${lastName[0].toUpperCase()}`
+2. Examples: "Marie Dupont" → "Marie D", "Sophie Laurent" → "Sophie L"
+3. **Collision handling**: If username exists, append letters from last name
+   - "Marie D" exists → Try "Marie Du"
+   - "Marie Du" exists → Try "Marie Dup"
+   - Until unique or full last name used
+
+**Implementation:**
+```typescript
+// lib/utils/username.ts
+export async function generateUniqueUsername(
+  firstName: string,
+  lastName: string,
+  supabase: SupabaseClient
+): Promise<string> {
+  const base = `${firstName} ${lastName[0].toUpperCase()}`
+  let username = base
+  let suffixLength = 1
+
+  while (true) {
+    const { data } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('username', username)
+      .single()
+
+    if (!data) return username // Username is unique
+
+    // Collision - add more letters
+    suffixLength++
+    if (suffixLength > lastName.length) {
+      // Fallback: add number
+      username = `${base}${Math.floor(Math.random() * 100)}`
+      break
+    }
+    username = `${firstName} ${lastName.substring(0, suffixLength).toUpperCase()}`
+  }
+
+  return username
+}
+```
+
+**Usage:**
+- Generated automatically when Owner creates a new Employee
+- Shown to Employee on first dashboard login
+- Used for tablet login (username + PIN)
+- Cannot be changed (tied to identity)
+
+### First Login Flow (New Owners)
+
+When a developer creates a new owner account:
 
 1. Developer provides credentials to client
 2. Client logs in → `AuthContext` checks for enterprise
 3. **If no enterprise** → Middleware redirects to `/setup`
-4. Admin fills enterprise form → Creates enterprise with `admin_id`
+4. Owner fills enterprise form → Creates enterprise with `owner_id`
 5. Session refreshes → Redirect to `/dashboard`
 
 Key files:
@@ -166,19 +277,62 @@ Key files:
 
 25+ tables organized into modules:
 
-**User System**
-- `developer`, `admin`, `enterprise`, `user`, `user_rooms`
+**User System (Unified Architecture)**
+- `auth.users` - Supabase Auth (managed automatically)
+- `profiles` - Unified user table (Developer, Owner, Employee)
+  - Columns: `id`, `role`, `email`, `first_name`, `last_name`, `username` (Employee only), `pin_hash` (Employee only), `enterprise_id`, `created_by_id`, `is_active`, `created_at`, `updated_at`
+  - 1:1 relationship with `auth.users` via `id`
+  - Foreign key: `enterprise_id` → `enterprise.id` (for Employees)
+- `enterprise` - Childcare facilities
+  - Foreign key: `owner_id` → `profiles.id` (where role = 'Owner')
+- `employee_room_access` - Many-to-many (employees ↔ rooms)
 
 **Luniqo Module (Cleaning)**
-- `room`, `task_template`, `assigned_task`, `cleaning_session`, `cleaning_log`, `export`
+- `room`, `task_template`, `assigned_task`, `daily_cleaning_session`, `task_completion`, `session_export`
 
 **HACCP Module (Food Safety)**
-- `child`, `meal`, `meal_children`, `temperature`, `product`, `supplier`, `batch`, `equipment`, `cleaning_haccp`, `non_compliance`, `document`
+- `child`, `meal`, `child_meal_record`, `temperature_check`, `product`, `supplier`, `batch`, `equipment`, `food_area_cleaning`, `haccp_incident`, `document`
 
 **Communication**
-- `conversation`, `message`, `notification`
+- `support_conversation`, `message`, `notification`
 
-Schema is located in `supabase/migrations/00_schema.sql`.
+**Key Schema Details:**
+
+```sql
+-- Unified profiles table (replaces developer, owner, employee)
+CREATE TABLE profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  role user_type NOT NULL, -- 'Developer' | 'Owner' | 'Employee'
+  email VARCHAR(255) NOT NULL,
+  first_name VARCHAR(100),
+  last_name VARCHAR(100),
+
+  -- Employee-specific fields
+  username VARCHAR(100) UNIQUE, -- Auto-generated (e.g., "Marie D")
+  pin_hash VARCHAR(255),         -- bcrypt hashed PIN for tablet login
+
+  -- Relationships
+  enterprise_id UUID REFERENCES enterprise(id) ON DELETE CASCADE, -- For Employees
+  created_by_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
+
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enterprise still references owner via owner_id
+CREATE TABLE enterprise (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  owner_id UUID UNIQUE NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  name VARCHAR(255) NOT NULL,
+  ...
+);
+```
+
+**Automatic Profile Creation:**
+A database trigger automatically creates a profile when a user signs up via Supabase Auth.
+
+Schema is located in `supabase/migrations/01_unified_profiles.sql`.
 
 ## Key Patterns & Conventions
 
@@ -230,13 +384,17 @@ NODE_ENV=development
 
 ## Important Implementation Notes
 
-1. **User PIN Authentication**: User (employee) sessions are stored in localStorage, NOT in Supabase Auth. Check `lib/utils/auth.client.ts` for `loginWithPin()` and `loginEmployeeWithPin()`.
+1. **Employee Dual Authentication**: Employees have TWO login methods:
+   - **Dashboard**: Email/Password via Supabase Auth (standard)
+   - **Tablet**: Username/PIN via custom auth (localStorage session)
+   - Check `lib/utils/auth.client.ts` for `loginWithEmail()`, `loginWithPin()`, and `loginEmployeeWithPin()`
+   - Username is auto-generated (e.g., "Marie D") and stored in `profiles.username`
 
 2. **Context Providers**: The app uses two context providers wrapped in `components/Providers.tsx`:
    - `ThemeProvider` - Theme management
    - `AuthProvider` - Authentication state (with `refreshSession()` method)
 
-3. **Middleware**: Uses `@supabase/ssr` for session management. Automatically redirects admins without enterprise to `/setup`. See `middleware.ts` and `lib/supabase/middleware.ts`.
+3. **Middleware**: Uses `@supabase/ssr` for session management. Automatically redirects owners without enterprise to `/setup`. See `middleware.ts` and `lib/supabase/middleware.ts`.
 
 4. **TypeScript**: Strict mode enabled. Path alias `@/*` maps to project root. Use `as unknown as Type` or `as any` for complex Supabase types if needed.
 
@@ -270,7 +428,7 @@ Full setup guide: `SUPABASE_SETUP.md`
 When adding features that involve database operations:
 
 1. Verify you're filtering by `enterprise_id`
-2. Test with different role types (Developer, Admin, User)
+2. Test with different role types (Developer, Owner, Employee)
 3. Check the appropriate authentication method is used
 4. Ensure tablet interface uses large touch targets when in tablet context
 5. Use shadcn/ui components (check DESIGN-SYSTEM.md first)
@@ -283,7 +441,7 @@ When adding features that involve database operations:
 When creating a new page:
 
 - [ ] Use `DashboardLayout` or `DeveloperLayout`
-- [ ] Protect with `useRequireAuth(['Admin'])` or appropriate role
+- [ ] Protect with `useRequireAuth(['Owner'])` or appropriate role
 - [ ] Filter all queries by `enterprise_id`
 - [ ] Add loading state (`isLoading` + `LoadingSpinner`)
 - [ ] Add empty state (`EmptyState` component)
@@ -318,6 +476,70 @@ The app has been heavily optimized for fast page transitions and reduced latency
 
 ## Recent Updates
 
+- 🎯 **OWNER ROUTES URL PREFIX** (2025-12-08) - URL prefix `/owner/*` for better scalability ✅ **COMPLETED**
+  - **URLs updated**: All Owner routes now use `/owner/*` prefix for consistency with Employee routes
+  - **Route structure**:
+    - Owner: `/owner/dashboard`, `/owner/rooms`, `/owner/users`, `/owner/haccp`, `/owner/profil`, etc.
+    - Employee: `/employee/dashboard`, `/employee/profile`, `/employee/calendar`, `/employee/history`
+    - Developer: `/analytics`
+    - Tablet: `/tablet/*` (unchanged)
+  - **Benefits**:
+    - Clear URL namespace per role - no route conflicts
+    - Easy to add new roles (e.g., `/manager/*`) without breaking existing routes
+    - Consistent pattern across all user types
+    - Better organization and discoverability
+  - **Files updated**:
+    - ✅ Moved all pages from `(owner)/*` to `(owner)/owner/*`
+    - ✅ Updated `AppSidebar.tsx` navigation links
+    - ✅ Updated `Header.tsx` profile link
+    - ✅ Updated `AuthContext.tsx` redirects
+    - ✅ Updated all internal links in 20+ pages
+  - **Status**: ✅ **100% complete** - All routes use new prefix, cache cleared (2025-12-08)
+
+- 🎯 **ROLE-BASED ROUTE GROUPS** (2025-12-08) - Architectural refactoring for better separation ✅ **COMPLETED**
+  - **Route structure refactored**: `(dashboard)` → 3 separate route groups `(owner)`, `(employee)`, `(developer)`
+  - **Clear role separation**: Each role has its own isolated route group with dedicated layouts
+  - **Updated components**:
+    - ✅ Created dedicated layouts for each route group (`(owner)/layout.tsx`, `(employee)/layout.tsx`, `(developer)/layout.tsx`)
+    - ✅ Created `EmployeeSidebar.tsx` for employee navigation
+    - ✅ Updated `AppSidebar.tsx` with new Owner routes
+    - ✅ Updated `Header.tsx` with role-based profile links
+    - ✅ Updated `AuthContext.tsx` with role-based redirects after login
+  - **Benefits**:
+    - Better code organization and maintainability
+    - Easier to add role-specific features
+    - Clearer separation of concerns
+    - No more conditional logic in shared layouts
+  - **Status**: ✅ **100% complete** - All routes migrated, old `(dashboard)` folder deleted (2025-12-08)
+
+- 🐛 **DUPLICATE HEADER FIX** (2025-12-08) - Fixed Header rendering twice on all Owner pages ✅ **COMPLETED**
+  - **Problem**: `DashboardLayout` component was rendering a Header, but `(owner)/layout.tsx` already rendered one
+  - **Solution**: Removed `DashboardLayout` usage from all 16+ Owner pages, kept only parent layout Header
+  - **Impact**: Header now renders only once, cleaner component hierarchy
+  - **Status**: ✅ **100% complete** - All pages fixed (2025-12-08)
+
+- 🚀 **UNIFIED PROFILES ARCHITECTURE** (2025-12-08) - Major architectural refactoring ✅ **COMPLETED**
+  - **Tables unified**: `developer` + `owner` + `employee` → single `profiles` table
+  - **Supabase Auth for all**: All users (Developer, Owner, Employee) now use `auth.users`
+  - **Employee dual login**: Dashboard (email/password) + Tablet (username/PIN)
+  - **Auto-generated usernames**: "Marie D", "Sophie L" for tablet quick access
+  - **Migrations completed**:
+    - ✅ `00_schema.sql` - Unified profiles table with all 25+ tables
+    - ✅ `01_dev_permissions.sql` - RLS disabled for development
+    - ✅ Deleted old migrations (01-07) after preserving important changes
+  - **Pattern standard Supabase**: 1:1 relationship `auth.users` ↔ `profiles`
+  - **Code migration completed**:
+    - ✅ Types updated (`database.types.ts`, `auth.types.ts`, `analytics.types.ts`)
+    - ✅ Services rewritten (`users`, `analytics`, `messaging`, `auth.client`, `auth.server`)
+    - ✅ Server actions created (`lib/actions/users.actions.ts`) - `createEmployee()`, `createOwner()`
+    - ✅ AuthContext completely rewritten for profiles table
+    - ✅ Seed script updated to use `auth.admin.createUser()`
+    - ✅ All components updated (`Header`, `Sidebar`, `AppSidebar`, `NotificationModal`, `EnterprisesList`)
+    - ✅ All pages updated (15+ files) - `admin` → `owner`, `avatar` → `avatar_url`, TypeScript fixes
+    - ✅ Build compiles successfully with zero TypeScript errors
+  - **Impact**: Simpler codebase, better scalability, unified authentication
+  - **New routes**: `/dashboard/employee/*` for employee dashboard access (profile, history, calendar)
+  - **Status**: ✅ **100% complete** - Migration finished, build passes, ready for testing (2025-12-08)
 - ✅ **Critical Timezone Bug Fix** (2025-12-03) - Fixed task status mismatch between session detail and calendar
   - **Root cause**: Using `toISOString().split('T')[0]` converted dates to UTC, causing mismatches
   - **Solution**: Created `lib/utils/date.ts` with local timezone utilities (`formatDateLocal()`, `getTodayLocal()`, `getDateWithOffset()`)
@@ -343,7 +565,7 @@ The app has been heavily optimized for fast page transitions and reduced latency
   - Sidebar modernized with gradient backgrounds and nested rounded corners
   - Module color backgrounds applied to navigation links
   - Metadata and favicons updated with Luniqo branding
-- ✅ First login flow for new admins with enterprise creation
+- ✅ First login flow for new owners with enterprise creation
 - ✅ Profile page with modern shadcn/ui components
 - ✅ Badge component migrated to shadcn standard with extended variants
 - ✅ Sidebar `isActive` logic fixed for `/dashboard` route
@@ -351,4 +573,4 @@ The app has been heavily optimized for fast page transitions and reduced latency
 
 ---
 
-**Last updated**: 2025-12-03
+**Last updated**: 2025-12-08 (Owner Routes URL Prefix `/owner/*` - 100% Complete)

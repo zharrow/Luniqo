@@ -1,91 +1,105 @@
 import { createClient } from '@/lib/supabase/client'
 import { hashPin } from '@/lib/utils/auth.client'
+import { Profile } from '@/types/database.types'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/database.types'
 
-export interface User {
-  id: string
-  email: string | null
-  first_name: string
-  last_name: string
-  avatar: string | null
-  pin_code: string
-  enterprise_id: string
-  is_active: boolean
-  created_by_id: string | null
-  created_at: string
-  updated_at: string
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export interface ProfileWithRooms extends Profile {
+  accessible_rooms: string[] // room IDs for Employees
 }
 
-export interface UserWithRooms extends User {
-  accessible_rooms: string[] // room IDs
-}
-
-export interface CreateUserInput {
+export interface CreateEmployeeInput {
+  email: string
+  password: string  // For Supabase Auth (dashboard login)
   first_name: string
   last_name: string
-  email?: string
-  pin: string // Plain PIN, will be hashed
-  avatar?: string
+  avatar_url?: string
   room_ids?: string[] // Rooms to grant access to
 }
 
-export interface UpdateUserInput {
+export interface UpdateEmployeeInput {
   first_name?: string
   last_name?: string
   email?: string
-  pin?: string // Plain PIN, will be hashed if provided
-  avatar?: string
+  pin?: string // Plain PIN for tablet, will be hashed if provided
+  avatar_url?: string
   is_active?: boolean
 }
 
+export interface CreateOwnerInput {
+  email: string
+  password: string
+  first_name: string
+  last_name: string
+}
+
+// ============================================================================
+// USERS SERVICE - Unified Profiles Architecture
+// ============================================================================
+
 export class UsersService {
-  private supabase = createClient()
+  private supabase: SupabaseClient<Database>
+
+  constructor() {
+    this.supabase = createClient()
+  }
+
+  // ==========================================================================
+  // EMPLOYEE METHODS (profiles where role='Employee')
+  // ==========================================================================
 
   /**
-   * Get all users for an enterprise
+   * Get all employees for an enterprise
    */
-  async getAll(enterpriseId: string): Promise<UserWithRooms[]> {
-    const { data: users, error } = await this.supabase
-      .from('employee')
+  async getEmployees(enterpriseId: string): Promise<ProfileWithRooms[]> {
+    const { data: employees, error } = await this.supabase
+      .from('profiles')
       .select('*')
+      .eq('role', 'Employee')
       .eq('enterprise_id', enterpriseId)
       .order('last_name', { ascending: true })
 
     if (error) throw error
 
-    // Get room assignments for each user
-    const usersWithRooms = await Promise.all(
-      (users as any[] || []).map(async (user) => {
+    // Get room assignments for each employee
+    const employeesWithRooms = await Promise.all(
+      (employees || []).map(async (employee) => {
         const { data: rooms } = await this.supabase
           .from('employee_room_access')
           .select('room_id')
-          .eq('employee_id', user.id)
+          .eq('employee_id', employee.id)
 
         return {
-          ...user,
-          accessible_rooms: (rooms as any[] || []).map(r => r.room_id)
-        }
+          ...employee,
+          accessible_rooms: (rooms || []).map(r => r.room_id)
+        } as ProfileWithRooms
       })
     )
 
-    return usersWithRooms
+    return employeesWithRooms
   }
 
   /**
-   * Get active users only
+   * Get active employees only
    */
-  async getActive(enterpriseId: string): Promise<UserWithRooms[]> {
-    const allUsers = await this.getAll(enterpriseId)
-    return allUsers.filter(u => u.is_active)
+  async getActiveEmployees(enterpriseId: string): Promise<ProfileWithRooms[]> {
+    const employees = await this.getEmployees(enterpriseId)
+    return employees.filter(e => e.is_active)
   }
 
   /**
-   * Get a single user by ID
+   * Get a single employee by ID
    */
-  async getById(id: string, enterpriseId: string): Promise<UserWithRooms | null> {
-    const { data: user, error } = await this.supabase
-      .from('employee')
+  async getEmployeeById(id: string, enterpriseId: string): Promise<ProfileWithRooms | null> {
+    const { data: employee, error } = await this.supabase
+      .from('profiles')
       .select('*')
       .eq('id', id)
+      .eq('role', 'Employee')
       .eq('enterprise_id', enterpriseId)
       .single()
 
@@ -101,91 +115,111 @@ export class UsersService {
       .eq('employee_id', id)
 
     return {
-      ...(user as any),
-      accessible_rooms: (rooms as any[] || []).map(r => r.room_id)
-    }
+      ...employee,
+      accessible_rooms: (rooms || []).map(r => r.room_id)
+    } as ProfileWithRooms
   }
 
   /**
-   * Create a new user
+   * Get employee by username (for tablet login)
    */
-  async create(enterpriseId: string, createdById: string, input: CreateUserInput): Promise<User> {
-    // Hash the PIN
-    const hashedPin = await hashPin(input.pin)
-
-    // Create user
-    const { data: user, error: userError } = await this.supabase
-      .from('employee')
-      .insert({
-        enterprise_id: enterpriseId,
-        created_by_id: createdById,
-        first_name: input.first_name,
-        last_name: input.last_name,
-        email: input.email || null,
-        avatar: input.avatar || null,
-        pin_code: hashedPin,
-        is_active: true
-      })
-      .select()
+  async getEmployeeByUsername(username: string): Promise<Profile | null> {
+    const { data, error } = await this.supabase
+      .from('profiles')
+      .select('*')
+      .eq('username', username)
+      .eq('role', 'Employee')
+      .eq('is_active', true)
       .single()
 
-    if (userError) throw userError
-
-    // Assign rooms if provided
-    if (input.room_ids && input.room_ids.length > 0) {
-      const roomAssignments = input.room_ids.map(room_id => ({
-        employee_id: (user as any).id,
-        room_id
-      }))
-
-      const { error: roomsError } = await this.supabase
-        .from('employee_room_access')
-        .insert(roomAssignments)
-
-      if (roomsError) throw roomsError
+    if (error) {
+      if (error.code === 'PGRST116') return null
+      throw error
     }
 
-    return user as any
+    return data
   }
 
   /**
-   * Update a user
+   * Update an employee's profile
    */
-  async update(id: string, enterpriseId: string, input: UpdateUserInput): Promise<User> {
-    const updateData: any = { ...input }
+  async updateEmployee(id: string, enterpriseId: string, input: UpdateEmployeeInput): Promise<Profile> {
+    const updateData: Record<string, unknown> = {}
 
-    // Hash PIN if provided
+    if (input.first_name !== undefined) updateData.first_name = input.first_name
+    if (input.last_name !== undefined) updateData.last_name = input.last_name
+    if (input.email !== undefined) updateData.email = input.email
+    if (input.avatar_url !== undefined) updateData.avatar_url = input.avatar_url
+    if (input.is_active !== undefined) updateData.is_active = input.is_active
+
+    // Hash PIN if provided (for tablet login)
     if (input.pin) {
-      updateData.pin_code = await hashPin(input.pin)
-      delete updateData.pin
+      updateData.pin_hash = await hashPin(input.pin)
     }
 
     const { data, error } = await this.supabase
-      .from('employee')
+      .from('profiles')
       .update(updateData)
       .eq('id', id)
+      .eq('role', 'Employee')
       .eq('enterprise_id', enterpriseId)
       .select()
       .single()
 
     if (error) throw error
-    return data as any
+    return data
   }
 
   /**
-   * Update user room assignments
+   * Set employee PIN (for tablet login)
    */
-  async updateRoomAccess(userId: string, roomIds: string[]): Promise<void> {
+  async setEmployeePin(employeeId: string, pin: string): Promise<void> {
+    const hashedPin = await hashPin(pin)
+
+    const { error } = await this.supabase
+      .from('profiles')
+      .update({ pin_hash: hashedPin })
+      .eq('id', employeeId)
+      .eq('role', 'Employee')
+
+    if (error) throw error
+  }
+
+  /**
+   * Create a new employee (requires admin privileges)
+   * This wraps the server action
+   */
+  async createEmployee(
+    enterpriseId: string,
+    createdById: string,
+    input: CreateEmployeeInput
+  ): Promise<Profile> {
+    // Import dynamically to avoid client-side issues
+    const { createEmployee: createEmployeeAction } = await import('@/lib/actions/users.actions')
+
+    const result = await createEmployeeAction(enterpriseId, createdById, input)
+
+    if (!result.success || !result.data) {
+      throw new Error(result.error || 'Failed to create employee')
+    }
+
+    return result.data
+  }
+
+  /**
+   * Update employee room assignments
+   */
+  async updateRoomAccess(employeeId: string, roomIds: string[]): Promise<void> {
     // Delete existing assignments
     await this.supabase
       .from('employee_room_access')
       .delete()
-      .eq('employee_id', userId)
+      .eq('employee_id', employeeId)
 
     // Insert new assignments
     if (roomIds.length > 0) {
       const assignments = roomIds.map(room_id => ({
-        employee_id: userId,
+        employee_id: employeeId,
         room_id
       }))
 
@@ -198,64 +232,43 @@ export class UsersService {
   }
 
   /**
-   * Soft delete a user
+   * Get room IDs accessible by an employee
    */
-  async softDelete(id: string, enterpriseId: string): Promise<void> {
+  async getEmployeeRooms(employeeId: string): Promise<string[]> {
+    const { data, error } = await this.supabase
+      .from('employee_room_access')
+      .select('room_id')
+      .eq('employee_id', employeeId)
+
+    if (error) throw error
+    return (data || []).map(r => r.room_id)
+  }
+
+  /**
+   * Soft delete an employee
+   */
+  async softDeleteEmployee(id: string, enterpriseId: string): Promise<void> {
     const { error } = await this.supabase
-      .from('employee')
+      .from('profiles')
       .update({ is_active: false })
       .eq('id', id)
+      .eq('role', 'Employee')
       .eq('enterprise_id', enterpriseId)
 
     if (error) throw error
   }
 
   /**
-   * Hard delete a user
+   * Alias for softDeleteEmployee (backwards compatibility)
    */
-  async hardDelete(id: string, enterpriseId: string): Promise<void> {
-    // First delete room assignments
-    await this.supabase
-      .from('employee_room_access')
-      .delete()
-      .eq('employee_id', id)
-
-    // Then delete user
-    const { error } = await this.supabase
-      .from('employee')
-      .delete()
-      .eq('id', id)
-      .eq('enterprise_id', enterpriseId)
-
-    if (error) throw error
+  async softDelete(id: string, enterpriseId: string): Promise<void> {
+    return this.softDeleteEmployee(id, enterpriseId)
   }
 
   /**
-   * Check if PIN is unique within enterprise
+   * Get employee statistics
    */
-  async isPinUnique(enterpriseId: string, pin: string, excludeUserId?: string): Promise<boolean> {
-    const hashedPin = await hashPin(pin)
-
-    let query = this.supabase
-      .from('employee')
-      .select('id')
-      .eq('enterprise_id', enterpriseId)
-      .eq('pin_code', hashedPin)
-
-    if (excludeUserId) {
-      query = query.neq('id', excludeUserId)
-    }
-
-    const { data, error } = await query
-
-    if (error) throw error
-    return !data || data.length === 0
-  }
-
-  /**
-   * Get user statistics
-   */
-  async getStats(userId: string): Promise<{
+  async getEmployeeStats(employeeId: string): Promise<{
     tasksCompleted: number
     roomsAccessible: number
   }> {
@@ -263,20 +276,201 @@ export class UsersService {
     const { count: tasksCount } = await this.supabase
       .from('task_completion')
       .select('*', { count: 'exact', head: true })
-      .eq('performed_by_id', userId)
+      .eq('performed_by_id', employeeId)
       .eq('status', 'FAIT')
 
     // Count accessible rooms
     const { count: roomsCount } = await this.supabase
       .from('employee_room_access')
       .select('*', { count: 'exact', head: true })
-      .eq('employee_id', userId)
+      .eq('employee_id', employeeId)
 
     return {
       tasksCompleted: tasksCount || 0,
       roomsAccessible: roomsCount || 0
     }
   }
+
+  // ==========================================================================
+  // OWNER METHODS (profiles where role='Owner')
+  // ==========================================================================
+
+  /**
+   * Create a new owner (requires admin privileges - Developer only)
+   * This wraps the server action
+   */
+  async createOwner(input: CreateOwnerInput): Promise<Profile> {
+    // Import dynamically to avoid client-side issues
+    const { createOwner: createOwnerAction } = await import('@/lib/actions/users.actions')
+
+    const result = await createOwnerAction(input)
+
+    if (!result.success || !result.data) {
+      throw new Error(result.error || 'Failed to create owner')
+    }
+
+    return result.data
+  }
+
+  /**
+   * Get all owners (Developer only)
+   */
+  async getOwners(): Promise<Profile[]> {
+    const { data, error } = await this.supabase
+      .from('profiles')
+      .select('*')
+      .eq('role', 'Owner')
+      .order('last_name', { ascending: true })
+
+    if (error) throw error
+    return data || []
+  }
+
+  /**
+   * Get owner by ID
+   */
+  async getOwnerById(id: string): Promise<Profile | null> {
+    const { data, error } = await this.supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', id)
+      .eq('role', 'Owner')
+      .single()
+
+    if (error) {
+      if (error.code === 'PGRST116') return null
+      throw error
+    }
+
+    return data
+  }
+
+  /**
+   * Update owner profile
+   */
+  async updateOwner(id: string, input: {
+    first_name?: string
+    last_name?: string
+    avatar_url?: string
+  }): Promise<Profile> {
+    const { data, error } = await this.supabase
+      .from('profiles')
+      .update(input)
+      .eq('id', id)
+      .eq('role', 'Owner')
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  }
+
+  // ==========================================================================
+  // DEVELOPER METHODS (profiles where role='Developer')
+  // ==========================================================================
+
+  /**
+   * Get developer by ID
+   */
+  async getDeveloperById(id: string): Promise<Profile | null> {
+    const { data, error } = await this.supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', id)
+      .eq('role', 'Developer')
+      .single()
+
+    if (error) {
+      if (error.code === 'PGRST116') return null
+      throw error
+    }
+
+    return data
+  }
+
+  // ==========================================================================
+  // GENERIC PROFILE METHODS
+  // ==========================================================================
+
+  /**
+   * Get profile by ID (any role)
+   */
+  async getProfileById(id: string): Promise<Profile | null> {
+    const { data, error } = await this.supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (error) {
+      if (error.code === 'PGRST116') return null
+      throw error
+    }
+
+    return data
+  }
+
+  /**
+   * Get profile by email (any role)
+   */
+  async getProfileByEmail(email: string): Promise<Profile | null> {
+    const { data, error } = await this.supabase
+      .from('profiles')
+      .select('*')
+      .eq('email', email)
+      .single()
+
+    if (error) {
+      if (error.code === 'PGRST116') return null
+      throw error
+    }
+
+    return data
+  }
+
+  /**
+   * Check if username exists (for collision detection)
+   */
+  async isUsernameAvailable(username: string): Promise<boolean> {
+    const { data, error } = await this.supabase
+      .from('profiles')
+      .select('id')
+      .eq('username', username)
+      .single()
+
+    if (error?.code === 'PGRST116') return true // Not found = available
+    if (error) throw error
+    return !data
+  }
+
+  /**
+   * Generate unique username for employee
+   * Format: "Prénom N" where N is first letter(s) of last name
+   */
+  async generateUniqueUsername(firstName: string, lastName: string): Promise<string> {
+    let suffixLength = 1
+    let username = `${firstName} ${lastName.substring(0, suffixLength).toUpperCase()}`
+
+    while (!(await this.isUsernameAvailable(username))) {
+      suffixLength++
+      if (suffixLength > lastName.length) {
+        // Fallback: add random number
+        username = `${firstName} ${lastName[0].toUpperCase()}${Math.floor(Math.random() * 100)}`
+        break
+      }
+      username = `${firstName} ${lastName.substring(0, suffixLength).toUpperCase()}`
+    }
+
+    return username
+  }
 }
 
 export const usersService = new UsersService()
+
+// ============================================================================
+// LEGACY EXPORTS (for backwards compatibility)
+// ============================================================================
+
+// Re-export Profile as Employee for existing code
+export type Employee = Profile
+export type EmployeeWithRooms = ProfileWithRooms

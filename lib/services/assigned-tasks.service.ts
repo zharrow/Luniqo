@@ -165,7 +165,7 @@ export class AssignedTasksService {
    * Create a new assigned task
    */
   async create(input: CreateAssignedTaskInput): Promise<AssignedTask> {
-    const { data, error } = await this.supabase
+    const { data, error } = await (this.supabase
       .from('assigned_task')
       .insert({
         room_id: input.room_id,
@@ -176,7 +176,7 @@ export class AssignedTasksService {
         expected_duration: input.expected_duration || null,
         order_in_room: input.order_in_room || null,
         is_active: true
-      })
+      } as any)
       .select(`
         *,
         task_template:task_template_id (
@@ -186,7 +186,7 @@ export class AssignedTasksService {
           estimated_duration
         )
       `)
-      .single()
+      .single() as any)
 
     if (error) throw error
     return data as any
@@ -203,9 +203,9 @@ export class AssignedTasksService {
       is_active: true
     }))
 
-    const { data, error } = await this.supabase
+    const { data, error } = await (this.supabase
       .from('assigned_task')
-      .insert(inserts)
+      .insert(inserts as any)
       .select(`
         *,
         task_template:task_template_id (
@@ -214,7 +214,7 @@ export class AssignedTasksService {
           category,
           estimated_duration
         )
-      `)
+      `) as any)
 
     if (error) throw error
     return (data as any[]) || []
@@ -224,7 +224,8 @@ export class AssignedTasksService {
    * Update an assigned task
    */
   async update(id: string, input: UpdateAssignedTaskInput): Promise<AssignedTask> {
-    const { data, error } = await this.supabase
+    const supabase = this.supabase as any
+    const { data, error } = await supabase
       .from('assigned_task')
       .update(input)
       .eq('id', id)
@@ -247,7 +248,8 @@ export class AssignedTasksService {
    * Soft delete an assigned task
    */
   async softDelete(id: string): Promise<void> {
-    const { error } = await this.supabase
+    const supabase = this.supabase as any
+    const { error } = await supabase
       .from('assigned_task')
       .update({ is_active: false })
       .eq('id', id)
@@ -284,8 +286,9 @@ export class AssignedTasksService {
    * Reorder assigned tasks in a room
    */
   async reorder(taskOrders: { id: string; order_in_room: number }[]): Promise<void> {
+    const supabase = this.supabase as any
     const promises = taskOrders.map(({ id, order_in_room }) =>
-      this.supabase
+      supabase
         .from('assigned_task')
         .update({ order_in_room })
         .eq('id', id)

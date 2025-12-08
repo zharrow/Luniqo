@@ -6,10 +6,10 @@ import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/contexts/AuthContext'
 
 interface EnterpriseSetupFormProps {
-  adminId: string
+  ownerId: string
 }
 
-export default function EnterpriseSetupForm({ adminId }: EnterpriseSetupFormProps) {
+export default function EnterpriseSetupForm({ ownerId }: EnterpriseSetupFormProps) {
   const [formData, setFormData] = useState({
     name: '',
     legal_form: '',
@@ -28,11 +28,11 @@ export default function EnterpriseSetupForm({ adminId }: EnterpriseSetupFormProp
     try {
       const supabase = createClient()
 
-      // Vérifier qu'aucune entreprise n'existe déjà pour cet admin
+      // Vérifier qu'aucune entreprise n'existe déjà pour cet owner
       const { data: existingEnterprise } = await supabase
         .from('enterprise')
         .select('id')
-        .eq('admin_id', adminId)
+        .eq('owner_id', ownerId)
         .single()
 
       if (existingEnterprise) {
@@ -42,16 +42,16 @@ export default function EnterpriseSetupForm({ adminId }: EnterpriseSetupFormProp
       }
 
       // Créer l'entreprise
-      const { data: newEnterprise, error: createError } = await supabase
+      const { data: newEnterprise, error: createError } = await (supabase
         .from('enterprise')
         .insert({
-          admin_id: adminId,
+          owner_id: ownerId,
           name: formData.name,
           legal_form: formData.legal_form || null,
           siret: formData.siret || null
-        })
+        } as any)
         .select()
-        .single()
+        .single() as any)
 
       if (createError) {
         console.error('Error creating enterprise:', createError)

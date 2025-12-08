@@ -2,11 +2,12 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import type { User, Enterprise } from '@/types/auth.types'
+import type { Profile } from '@/types/auth.types'
+import type { Enterprise } from '@/types/database.types'
 
-// Tablet-specific session type (User/Employee only)
+// Tablet-specific session type (Employee only)
 export interface TabletSession {
-  user: User
+  user: Profile
   enterprise: Enterprise
   accessibleRooms: string[]
 }

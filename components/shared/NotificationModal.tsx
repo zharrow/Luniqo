@@ -18,7 +18,7 @@ interface NotificationModalProps {
   isOpen: boolean
   onClose: () => void
   userId: string
-  userRole: 'Admin' | 'Developer' | 'User'
+  userRole: 'Owner' | 'Developer' | 'Employee'
   enterpriseId?: string
 }
 
