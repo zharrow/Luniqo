@@ -100,7 +100,7 @@ async function clearDatabase() {
 async function seedDeveloper() {
   console.log('👨‍💻 Creating developer...')
 
-  // Create auth user with Developer role
+  // Create auth user with Developer role (trigger will create profile)
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
     email: 'dev@luniqo.fr',
     password: 'admin123',
@@ -112,7 +112,39 @@ async function seedDeveloper() {
     }
   })
 
-  if (authError) throw authError
+  if (authError) {
+    console.error('Auth error details:', authError)
+    throw authError
+  }
+
+  // Wait a bit for trigger to complete
+  await new Promise(resolve => setTimeout(resolve, 1000))
+
+  // Check if profile was created by trigger
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', authData.user.id)
+    .single()
+
+  if (profileError || !profile) {
+    console.log('   ⚠️  Profile not created by trigger, creating manually...')
+
+    // Manually create profile if trigger failed
+    const { error: insertError } = await supabase
+      .from('profiles')
+      .insert({
+        id: authData.user.id,
+        role: 'Developer',
+        email: 'dev@luniqo.fr',
+        first_name: 'Admin',
+        last_name: 'Dev',
+        enterprise_id: null,
+        created_by_id: null
+      })
+
+    if (insertError) throw insertError
+  }
 
   console.log(`✅ Created developer: dev@luniqo.fr`)
   return authData.user
@@ -144,14 +176,41 @@ async function seedOwnersAndEnterprises() {
 
     if (authError) throw authError
 
-    // Get the profile created by the trigger
-    const { data: profile, error: profileError } = await supabase
+    // Wait for trigger
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    // Check if profile was created by trigger, otherwise create manually
+    let { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', authData.user.id)
       .single()
 
-    if (profileError) throw profileError
+    if (profileError || !profile) {
+      // Create profile manually
+      const { error: insertError } = await supabase
+        .from('profiles')
+        .insert({
+          id: authData.user.id,
+          role: 'Owner',
+          email: owner.email,
+          first_name: owner.first_name,
+          last_name: owner.last_name,
+          enterprise_id: null,
+          created_by_id: null
+        })
+
+      if (insertError) throw insertError
+
+      // Fetch the created profile
+      const { data: newProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authData.user.id)
+        .single()
+
+      profile = newProfile!
+    }
 
     createdOwners.push(profile)
 
@@ -290,28 +349,69 @@ async function seedEmployees(enterpriseId: string, ownerId: string, roomIds: str
 
     if (authError) throw authError
 
-    // Generate username and set PIN on the profile
+    // Wait for trigger
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    // Generate username and set PIN
     const username = generateUsername(employee.first_name, employee.last_name)
     const pinHash = hashPin(employee.pin)
 
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({
-        username: username,
-        pin_hash: pinHash
-      })
-      .eq('id', authData.user.id)
-
-    if (updateError) throw updateError
-
-    // Get the updated profile
-    const { data: profile, error: profileError } = await supabase
+    // Check if profile exists, otherwise create manually
+    let { data: profile } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', authData.user.id)
       .single()
 
-    if (profileError) throw profileError
+    if (!profile) {
+      // Create profile manually if trigger failed
+      const { error: insertError } = await supabase
+        .from('profiles')
+        .insert({
+          id: authData.user.id,
+          role: 'Employee',
+          email: employee.email,
+          first_name: employee.first_name,
+          last_name: employee.last_name,
+          username: username,
+          pin_hash: pinHash,
+          enterprise_id: enterpriseId,
+          created_by_id: ownerId
+        })
+
+      if (insertError) throw insertError
+
+      // Fetch the created profile
+      const { data: newProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authData.user.id)
+        .single()
+
+      profile = newProfile!
+    } else {
+      // Update with username and PIN if profile was created by trigger
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          username: username,
+          pin_hash: pinHash,
+          enterprise_id: enterpriseId,
+          created_by_id: ownerId
+        })
+        .eq('id', authData.user.id)
+
+      if (updateError) throw updateError
+
+      // Fetch the updated profile
+      const { data: updatedProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authData.user.id)
+        .single()
+
+      profile = updatedProfile!
+    }
 
     createdEmployees.push(profile)
     console.log(`   ✅ Employee: ${employee.email} (PIN: ${employee.pin}, Username: ${username})`)

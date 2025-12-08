@@ -11,7 +11,8 @@ interface Employee {
   id: string
   first_name: string
   last_name: string
-  email: string | null
+  username: string | null
+  avatar_url: string | null
 }
 
 export default function TabletLoginPage() {
@@ -275,8 +276,8 @@ export default function TabletLoginPage() {
                     <h3 className="text-2xl font-semibold mb-1 text-gray-900 tracking-tight">
                       {employee.first_name} {employee.last_name}
                     </h3>
-                    {employee.email && (
-                      <p className="text-lg text-gray-600">{employee.email}</p>
+                    {employee.username && (
+                      <p className="text-lg text-gray-600">@{employee.username}</p>
                     )}
                   </div>
                 </button>

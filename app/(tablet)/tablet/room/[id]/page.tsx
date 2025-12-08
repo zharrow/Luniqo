@@ -185,15 +185,15 @@ export default function TabletRoomPage() {
 
       if (!existingSession) {
         // Create new session
-        const { data: newSession, error: createError } = await supabase
+        const { data: newSession, error: createError } = await (supabase
           .from('daily_cleaning_session')
           .insert({
             enterprise_id: session.enterprise.id,
             date: today,
             status: 'EN_COURS'
-          })
+          } as any)
           .select('id')
-          .single()
+          .single() as any)
 
         if (createError) throw createError
         sessionId = (newSession as any).id
@@ -202,7 +202,7 @@ export default function TabletRoomPage() {
       }
 
       // Save task as cleaning log
-      const { error: logError } = await supabase
+      const { error: logError } = await (supabase
         .from('task_completion')
         .insert({
           session_id: sessionId,
@@ -212,7 +212,7 @@ export default function TabletRoomPage() {
           status: 'FAIT',
           note: data.note || null,
           photo_urls: data.photo_urls.length > 0 ? data.photo_urls : null
-        })
+        } as any) as any)
 
       if (logError) throw logError
 

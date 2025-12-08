@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/client'
 import { hashPin } from '@/lib/utils/auth.client'
-import { Profile, UserRole } from '@/types/database.types'
+import { Profile } from '@/types/database.types'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/database.types'
 
 // ============================================================================
 // TYPES
@@ -40,7 +42,11 @@ export interface CreateOwnerInput {
 // ============================================================================
 
 export class UsersService {
-  private supabase = createClient()
+  private supabase: SupabaseClient<Database>
+
+  constructor() {
+    this.supabase = createClient()
+  }
 
   // ==========================================================================
   // EMPLOYEE METHODS (profiles where role='Employee')
@@ -180,6 +186,27 @@ export class UsersService {
   }
 
   /**
+   * Create a new employee (requires admin privileges)
+   * This wraps the server action
+   */
+  async createEmployee(
+    enterpriseId: string,
+    createdById: string,
+    input: CreateEmployeeInput
+  ): Promise<Profile> {
+    // Import dynamically to avoid client-side issues
+    const { createEmployee: createEmployeeAction } = await import('@/lib/actions/users.actions')
+
+    const result = await createEmployeeAction(enterpriseId, createdById, input)
+
+    if (!result.success || !result.data) {
+      throw new Error(result.error || 'Failed to create employee')
+    }
+
+    return result.data
+  }
+
+  /**
    * Update employee room assignments
    */
   async updateRoomAccess(employeeId: string, roomIds: string[]): Promise<void> {
@@ -232,6 +259,13 @@ export class UsersService {
   }
 
   /**
+   * Alias for softDeleteEmployee (backwards compatibility)
+   */
+  async softDelete(id: string, enterpriseId: string): Promise<void> {
+    return this.softDeleteEmployee(id, enterpriseId)
+  }
+
+  /**
    * Get employee statistics
    */
   async getEmployeeStats(employeeId: string): Promise<{
@@ -260,6 +294,23 @@ export class UsersService {
   // ==========================================================================
   // OWNER METHODS (profiles where role='Owner')
   // ==========================================================================
+
+  /**
+   * Create a new owner (requires admin privileges - Developer only)
+   * This wraps the server action
+   */
+  async createOwner(input: CreateOwnerInput): Promise<Profile> {
+    // Import dynamically to avoid client-side issues
+    const { createOwner: createOwnerAction } = await import('@/lib/actions/users.actions')
+
+    const result = await createOwnerAction(input)
+
+    if (!result.success || !result.data) {
+      throw new Error(result.error || 'Failed to create owner')
+    }
+
+    return result.data
+  }
 
   /**
    * Get all owners (Developer only)

@@ -487,7 +487,7 @@ BEGIN
     INSERT INTO public.profiles (id, role, email, first_name, last_name, enterprise_id, created_by_id)
     VALUES (
         NEW.id,
-        COALESCE((NEW.raw_user_meta_data->>'role')::user_type, 'Owner'),
+        COALESCE((NEW.raw_user_meta_data->>'role')::user_role, 'Owner'),
         NEW.email,
         COALESCE(NEW.raw_user_meta_data->>'first_name', ''),
         COALESCE(NEW.raw_user_meta_data->>'last_name', ''),

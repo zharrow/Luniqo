@@ -29,17 +29,8 @@ export default function LoginPage() {
 
       if (response.success) {
         console.log('✅ Login successful, role:', response.role)
-        // Small delay to allow session to be set before redirect
-        await new Promise(resolve => setTimeout(resolve, 500))
-
-        // Redirect based on role
-        if (response.role === 'Developer') {
-          console.log('🚀 Redirecting to /analytics')
-          router.push('/analytics')
-        } else if (response.role === 'Owner' || response.role === 'Employee') {
-          console.log('🚀 Redirecting to /dashboard')
-          router.push('/dashboard')
-        }
+        // Redirect is now handled in AuthContext.handleLoginWithEmail
+        // No need to redirect here - the AuthContext will handle it
         // Note: Don't set isLoading(false) here - let the redirect happen while loading
       } else {
         console.error('❌ Login failed:', response.error)

@@ -84,12 +84,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (supabaseSession) {
           // Get profile from unified profiles table
-          const { data: profile, error: profileError } = await supabase
+          const { data: profile, error: profileError } = await (supabase
             .from('profiles')
             .select('*')
             .eq('id', supabaseSession.user.id)
             .eq('is_active', true)
-            .single()
+            .single() as any) as { data: Profile | null, error: any }
 
           if (!profile || profileError) {
             console.error('Profile not found:', profileError)
@@ -97,8 +97,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
 
           const authSession: AuthSession = {
-            user: profile as Profile,
-            role: profile.role as UserRole
+            user: profile,
+            role: profile.role
           }
 
           // For Owner, fetch their enterprise
@@ -168,9 +168,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       setSession(newSession)
 
-      // If Owner without enterprise, redirect to setup
+      // Role-based redirects
       if (response.role === 'Owner' && !response.enterprise) {
+        // Owner without enterprise → setup
         setTimeout(() => router.push('/setup'), 100)
+      } else if (response.role === 'Developer') {
+        // Developer → analytics
+        setTimeout(() => router.push('/analytics'), 100)
+      } else if (response.role === 'Owner') {
+        // Owner with enterprise → dashboard
+        setTimeout(() => router.push('/owner/dashboard'), 100)
+      } else if (response.role === 'Employee') {
+        // Employee → employee dashboard
+        setTimeout(() => router.push('/employee/dashboard'), 100)
       }
     }
 

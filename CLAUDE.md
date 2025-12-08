@@ -55,10 +55,11 @@ The application has 3 distinct user roles with **unified architecture**:
    - Auth: Supabase Auth (email/password)
    - Table: `profiles` (where role = 'Owner')
    - Linked to: `enterprise` via `enterprise.owner_id`
-   - Access: Full back-office (`/dashboard`)
+   - Access: Full back-office (route group `(owner)`)
+   - Routes: `/owner/dashboard`, `/owner/profil`, `/owner/haccp`, `/owner/rooms`, `/owner/users`, `/owner/sessions`, etc.
    - Manages one childcare facility (1 owner = 1 enterprise)
    - **First login flow**: Owner without enterprise is redirected to `/setup` to create their enterprise
-   - Login: `/login` with email/password
+   - Login: `/login` with email/password → redirects to `/owner/dashboard`
 
 3. **Employee (Childcare Staff)**
    - Auth: **Dual authentication system**
@@ -70,13 +71,13 @@ The application has 3 distinct user roles with **unified architecture**:
    a) **Dashboard Login** (`/login`)
       - Method: Email + Password (Supabase Auth)
       - Device: Desktop/Mobile
-      - Access: `/dashboard/employee/*`
+      - Access: Route group `(employee)` - `/employee/dashboard`, `/employee/profile`, `/employee/calendar`, `/employee/history`
       - Features: Profile, history, calendar, stats, PIN management
 
    b) **Tablet Login** (`/tablet/login`)
       - Method: Username + PIN (custom auth)
       - Device: Tablet
-      - Access: `/tablet/*`
+      - Access: Route group `(tablet)` - `/tablet/*`
       - Features: Daily tasks only (quick access)
       - **Username**: Auto-generated (e.g., "Marie D")
       - **PIN**: 4 digits, bcrypt hashed, chosen by employee
@@ -86,24 +87,34 @@ The application has 3 distinct user roles with **unified architecture**:
 
 ### Route Structure
 
-The app uses Next.js App Router with route groups:
+The app uses Next.js App Router with **role-based route groups** for clear separation:
 
 - `(auth)/` - Public authentication pages
   - `/login` - Universal login (email/password for Developer/Owner/Employee)
 
-- `(dashboard)/` - Protected dashboard routes (role-based access)
-  - `/analytics` - Developer-only analytics
-  - `/dashboard` - Owner dashboard (default)
-  - `/dashboard/profil` - Owner profile with enterprise management
-  - `/dashboard/haccp/*` - HACCP module pages (Owner)
-  - `/dashboard/rooms`, `/dashboard/users`, etc. - Owner management pages
-  - `/dashboard/employee/*` - **Employee dashboard** (NEW)
-    - `/dashboard/employee/profile` - Employee profile & PIN management
-    - `/dashboard/employee/history` - Personal task history
-    - `/dashboard/employee/calendar` - Personal calendar
-  - `/setup` - First-time enterprise creation (owners only)
+- `(owner)/` - **Owner routes** (Protected - Owner only)
+  - `/owner/dashboard` - Owner dashboard (home)
+  - `/owner/profil` - Owner profile with enterprise management
+  - `/owner/haccp` - HACCP module main page
+  - `/owner/rooms`, `/owner/rooms/[id]` - Room management
+  - `/owner/users` - Employee management
+  - `/owner/sessions`, `/owner/sessions/[id]` - Cleaning sessions
+  - `/owner/tasks` - Task templates
+  - `/owner/history` - Cleaning history
+  - `/owner/messages`, `/owner/messages/[id]` - Support messages
+  - `/owner/notifications` - Notifications center
+  - `/setup` - First-time enterprise creation (owners without enterprise)
 
-- `(tablet)/` - Tablet interface for employees (quick task access)
+- `(employee)/` - **Employee routes** (Protected - Employee only)
+  - `/employee/dashboard` - Employee dashboard (home)
+  - `/employee/profile` - Employee profile & PIN management
+  - `/employee/calendar` - Personal task calendar
+  - `/employee/history` - Personal task history
+
+- `(developer)/` - **Developer routes** (Protected - Developer only)
+  - `/analytics` - Platform analytics and metrics
+
+- `(tablet)/` - **Tablet interface** for employees (PIN-based quick access)
   - `/tablet/login` - Employee username + PIN login
   - `/tablet/room/[id]` - Room cleaning interface
   - `/tablet/haccp/*` - HACCP data entry
@@ -465,7 +476,49 @@ The app has been heavily optimized for fast page transitions and reduced latency
 
 ## Recent Updates
 
-- 🚀 **UNIFIED PROFILES ARCHITECTURE** (2025-12-07) - Major architectural refactoring
+- 🎯 **OWNER ROUTES URL PREFIX** (2025-12-08) - URL prefix `/owner/*` for better scalability ✅ **COMPLETED**
+  - **URLs updated**: All Owner routes now use `/owner/*` prefix for consistency with Employee routes
+  - **Route structure**:
+    - Owner: `/owner/dashboard`, `/owner/rooms`, `/owner/users`, `/owner/haccp`, `/owner/profil`, etc.
+    - Employee: `/employee/dashboard`, `/employee/profile`, `/employee/calendar`, `/employee/history`
+    - Developer: `/analytics`
+    - Tablet: `/tablet/*` (unchanged)
+  - **Benefits**:
+    - Clear URL namespace per role - no route conflicts
+    - Easy to add new roles (e.g., `/manager/*`) without breaking existing routes
+    - Consistent pattern across all user types
+    - Better organization and discoverability
+  - **Files updated**:
+    - ✅ Moved all pages from `(owner)/*` to `(owner)/owner/*`
+    - ✅ Updated `AppSidebar.tsx` navigation links
+    - ✅ Updated `Header.tsx` profile link
+    - ✅ Updated `AuthContext.tsx` redirects
+    - ✅ Updated all internal links in 20+ pages
+  - **Status**: ✅ **100% complete** - All routes use new prefix, cache cleared (2025-12-08)
+
+- 🎯 **ROLE-BASED ROUTE GROUPS** (2025-12-08) - Architectural refactoring for better separation ✅ **COMPLETED**
+  - **Route structure refactored**: `(dashboard)` → 3 separate route groups `(owner)`, `(employee)`, `(developer)`
+  - **Clear role separation**: Each role has its own isolated route group with dedicated layouts
+  - **Updated components**:
+    - ✅ Created dedicated layouts for each route group (`(owner)/layout.tsx`, `(employee)/layout.tsx`, `(developer)/layout.tsx`)
+    - ✅ Created `EmployeeSidebar.tsx` for employee navigation
+    - ✅ Updated `AppSidebar.tsx` with new Owner routes
+    - ✅ Updated `Header.tsx` with role-based profile links
+    - ✅ Updated `AuthContext.tsx` with role-based redirects after login
+  - **Benefits**:
+    - Better code organization and maintainability
+    - Easier to add role-specific features
+    - Clearer separation of concerns
+    - No more conditional logic in shared layouts
+  - **Status**: ✅ **100% complete** - All routes migrated, old `(dashboard)` folder deleted (2025-12-08)
+
+- 🐛 **DUPLICATE HEADER FIX** (2025-12-08) - Fixed Header rendering twice on all Owner pages ✅ **COMPLETED**
+  - **Problem**: `DashboardLayout` component was rendering a Header, but `(owner)/layout.tsx` already rendered one
+  - **Solution**: Removed `DashboardLayout` usage from all 16+ Owner pages, kept only parent layout Header
+  - **Impact**: Header now renders only once, cleaner component hierarchy
+  - **Status**: ✅ **100% complete** - All pages fixed (2025-12-08)
+
+- 🚀 **UNIFIED PROFILES ARCHITECTURE** (2025-12-08) - Major architectural refactoring ✅ **COMPLETED**
   - **Tables unified**: `developer` + `owner` + `employee` → single `profiles` table
   - **Supabase Auth for all**: All users (Developer, Owner, Employee) now use `auth.users`
   - **Employee dual login**: Dashboard (email/password) + Tablet (username/PIN)
@@ -476,15 +529,17 @@ The app has been heavily optimized for fast page transitions and reduced latency
     - ✅ Deleted old migrations (01-07) after preserving important changes
   - **Pattern standard Supabase**: 1:1 relationship `auth.users` ↔ `profiles`
   - **Code migration completed**:
-    - ✅ Types updated (`database.types.ts`, `auth.types.ts`)
+    - ✅ Types updated (`database.types.ts`, `auth.types.ts`, `analytics.types.ts`)
     - ✅ Services rewritten (`users`, `analytics`, `messaging`, `auth.client`, `auth.server`)
+    - ✅ Server actions created (`lib/actions/users.actions.ts`) - `createEmployee()`, `createOwner()`
     - ✅ AuthContext completely rewritten for profiles table
     - ✅ Seed script updated to use `auth.admin.createUser()`
-    - ✅ Core components updated (`Header`, `Sidebar`, `AppSidebar`, `NotificationModal`)
-    - ✅ Key pages updated (`login`, `dashboard`, `setup`, `users`, `messages`, `tablet/login`)
+    - ✅ All components updated (`Header`, `Sidebar`, `AppSidebar`, `NotificationModal`, `EnterprisesList`)
+    - ✅ All pages updated (15+ files) - `admin` → `owner`, `avatar` → `avatar_url`, TypeScript fixes
+    - ✅ Build compiles successfully with zero TypeScript errors
   - **Impact**: Simpler codebase, better scalability, unified authentication
-  - **New routes**: `/dashboard/employee/*` for employee dashboard access (routes to be created)
-  - **Status**: 🔄 85% complete - Core architecture migrated, remaining pages being updated
+  - **New routes**: `/dashboard/employee/*` for employee dashboard access (profile, history, calendar)
+  - **Status**: ✅ **100% complete** - Migration finished, build passes, ready for testing (2025-12-08)
 - ✅ **Critical Timezone Bug Fix** (2025-12-03) - Fixed task status mismatch between session detail and calendar
   - **Root cause**: Using `toISOString().split('T')[0]` converted dates to UTC, causing mismatches
   - **Solution**: Created `lib/utils/date.ts` with local timezone utilities (`formatDateLocal()`, `getTodayLocal()`, `getDateWithOffset()`)
@@ -518,4 +573,4 @@ The app has been heavily optimized for fast page transitions and reduced latency
 
 ---
 
-**Last updated**: 2025-12-07 (Unified Profiles Architecture Migration)
+**Last updated**: 2025-12-08 (Owner Routes URL Prefix `/owner/*` - 100% Complete)
