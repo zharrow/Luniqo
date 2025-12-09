@@ -13,6 +13,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
 import { FormDialog } from '@/components/shared/FormDialog'
+import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
 export default function ProductsPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
@@ -151,24 +152,41 @@ export default function ProductsPage() {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
-              Produits
-            </h1>
-            <p className="text-muted-foreground">
-              Gestion des produits alimentaires et allergènes
-            </p>
+        {/* Breadcrumb */}
+        <PageBreadcrumb
+          items={[
+            { label: 'Dashboard', href: '/owner/dashboard' },
+            { label: 'HACCP', href: '/owner/haccp' },
+            { label: 'Produits' }
+          ]}
+        />
+
+        {/* Header with Gradient - Module Tasks (Lime) */}
+        <div className="relative mb-8 p-8 rounded-3xl bg-gradient-to-br from-lime-50 via-green-50 to-emerald-50 border border-lime-200/50 overflow-hidden">
+          <div className="absolute inset-0 bg-[url('/patterns/dots.svg')] opacity-5"></div>
+          <div className="relative flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-lime-400 to-green-500 flex items-center justify-center shadow-lg shadow-lime-500/30">
+                <ShoppingBagIcon className="w-8 h-8 text-white" strokeWidth={1.5} />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-lime-600 to-green-600 bg-clip-text text-transparent" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+                  Produits
+                </h1>
+                <p className="text-lime-700/70">
+                  Gestion des produits alimentaires et allergènes
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={openCreateModal}
+              disabled={suppliers.length === 0}
+              className="px-6 py-3 rounded-2xl bg-gradient-to-r from-lime-500 to-green-500 text-white font-medium shadow-lg shadow-lime-500/30 hover:shadow-xl hover:shadow-lime-500/40 hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              <PlusIcon className="w-5 h-5" />
+              Nouveau produit
+            </button>
           </div>
-          <button
-            onClick={openCreateModal}
-            className="btn btn-primary flex items-center gap-2"
-            disabled={suppliers.length === 0}
-          >
-            <PlusIcon className="w-5 h-5" />
-            Nouveau produit
-          </button>
         </div>
 
         {suppliers.length === 0 ? (
@@ -227,12 +245,12 @@ export default function ProductsPage() {
                 {filteredProducts.map((product) => (
                   <div
                     key={product.id}
-                    className={`card p-6 ${!product.is_active && 'opacity-50'}`}
+                    className={`group relative p-6 rounded-3xl bg-gradient-to-br from-lime-50/80 to-green-50/80 border border-lime-200/50 hover:shadow-lg hover:shadow-lime-500/20 transition-all duration-300 hover:scale-[1.02] ${!product.is_active && 'opacity-50'}`}
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="w-12 h-12 rounded-lg bg-accent-50 flex items-center justify-center flex-shrink-0">
-                          <ShoppingBagIcon className="w-6 h-6 text-accent-600" />
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-lime-400 to-green-500 flex items-center justify-center flex-shrink-0 shadow-md shadow-lime-500/30 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                          <ShoppingBagIcon className="w-6 h-6 text-white" strokeWidth={2} />
                         </div>
                         <div className="min-w-0">
                           <h3 className="font-semibold truncate">

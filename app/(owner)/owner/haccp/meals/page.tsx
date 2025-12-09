@@ -18,6 +18,7 @@ import {
   ArrowLeftIcon
 } from '@heroicons/react/24/outline'
 import { format, startOfWeek, endOfWeek, addDays, subWeeks, addWeeks } from 'date-fns'
+import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 import { fr } from 'date-fns/locale'
 import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
 import { FormDialog } from '@/components/shared/FormDialog'
@@ -205,27 +206,43 @@ export default function MealsPage() {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-4 mb-6">
-            <button
-              onClick={() => router.push('/haccp')}
-              className="p-2 rounded-lg hover:bg-muted transition-colors"
-              title="Retour au HACCP"
-            >
-              <ArrowLeftIcon className="w-5 h-5 text-muted-foreground" />
-            </button>
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
-                Repas
-              </h1>
-              <p className="text-muted-foreground">
-                Planification des repas et traçabilité alimentaire
-              </p>
+        {/* Breadcrumb */}
+        <PageBreadcrumb
+          items={[
+            { label: 'Dashboard', href: '/owner/dashboard' },
+            { label: 'HACCP', href: '/owner/haccp' },
+            { label: 'Repas' }
+          ]}
+        />
+
+        {/* Header - Style organique pêche (calendar) */}
+        <div
+          className="relative rounded-3xl p-6 mb-8 bg-white overflow-hidden"
+          style={{
+            border: '1px solid #ffe5b433',
+            background: 'linear-gradient(to bottom right, #fffbeb, white)'
+          }}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div
+                className="inline-flex items-center justify-center w-14 h-14 rounded-2xl"
+                style={{ background: 'linear-gradient(to bottom right, #ffe5b41A, #ffe5b40D)' }}
+              >
+                <ClipboardDocumentCheckIcon className="w-7 h-7" style={{ color: '#d4a929' }} strokeWidth={1.5} />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
+                  Repas
+                </h1>
+                <p className="text-muted-foreground">
+                  Planification des repas et traçabilité alimentaire
+                </p>
+              </div>
             </div>
             <button
               onClick={() => openCreateModal()}
-              className="btn btn-primary flex items-center gap-2"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-medium shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
             >
               <PlusIcon className="w-5 h-5" />
               Nouveau repas
@@ -233,24 +250,30 @@ export default function MealsPage() {
           </div>
         </div>
 
-        {/* Week navigation */}
-        <div className="card p-4 mb-6">
+        {/* Week navigation - Style organique */}
+        <div
+          className="relative rounded-3xl p-4 mb-6 bg-white overflow-hidden"
+          style={{
+            border: '1px solid #ffe5b433',
+            background: 'linear-gradient(to bottom right, #fffbeb, white)'
+          }}
+        >
           <div className="flex items-center justify-between">
             <button
               onClick={previousWeek}
-              className="p-2 rounded-lg hover:bg-muted transition-colors"
+              className="p-2 rounded-xl hover:bg-amber-50 transition-all duration-300 hover:scale-110"
             >
-              <ChevronLeftIcon className="w-5 h-5 text-muted-foreground" />
+              <ChevronLeftIcon className="w-5 h-5" style={{ color: '#d4a929' }} />
             </button>
 
             <div className="flex items-center gap-4">
-              <CalendarIcon className="w-5 h-5 text-muted-foreground" />
-              <span className="font-semibold">
+              <CalendarIcon className="w-5 h-5" style={{ color: '#d4a929' }} />
+              <span className="font-semibold text-gray-900">
                 Semaine du {format(weekStart, 'd MMMM yyyy', { locale: fr })}
               </span>
               <button
                 onClick={goToToday}
-                className="px-3 py-1 rounded-lg text-sm bg-primary-50 text-primary-700 hover:bg-primary-100 transition-colors"
+                className="px-3 py-1.5 rounded-xl text-sm bg-gradient-to-br from-amber-100 to-orange-100 text-amber-700 hover:from-amber-200 hover:to-orange-200 transition-all duration-300 font-medium"
               >
                 Aujourd'hui
               </button>
@@ -258,9 +281,9 @@ export default function MealsPage() {
 
             <button
               onClick={nextWeek}
-              className="p-2 rounded-lg hover:bg-muted transition-colors"
+              className="p-2 rounded-xl hover:bg-amber-50 transition-all duration-300 hover:scale-110"
             >
-              <ChevronRightIcon className="w-5 h-5 text-muted-foreground" />
+              <ChevronRightIcon className="w-5 h-5" style={{ color: '#d4a929' }} />
             </button>
           </div>
         </div>

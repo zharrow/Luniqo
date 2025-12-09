@@ -4,11 +4,11 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
 import { messagingService, type Conversation } from '@/lib/services/messaging.service'
-import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { CountBadge } from '@/components/ui/badge'
 import { PlusIcon, ChatBubbleLeftRightIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
+import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
 export default function MessagesPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Owner', 'Developer'])
@@ -69,7 +69,7 @@ export default function MessagesPage() {
         developerId
       )
 
-      router.push(`/dashboard/messages/${conversation.id}`)
+      router.push(`/owner/messages/${conversation.id}`)
     } catch (err: any) {
       console.error('Error creating conversation:', err)
       setError('Erreur lors de la création de la conversation')
@@ -107,50 +107,92 @@ export default function MessagesPage() {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">
-            Messages
-          </h1>
-          <p className="text-muted-foreground">
-            {session?.role === 'Owner'
-              ? 'Communiquez avec le support'
-              : 'Messages des administrateurs'}
-          </p>
-        </div>
+      {/* Breadcrumb */}
+      <PageBreadcrumb
+        items={[
+          { label: 'Dashboard', href: '/owner/dashboard' },
+          { label: 'Messages' }
+        ]}
+      />
 
-        {session?.role === 'Owner' && (
-          <Button onClick={handleCreateConversation} className="inline-flex items-center gap-2">
-            <PlusIcon className="w-5 h-5" />
-            Nouvelle conversation
-          </Button>
-        )}
+      {/* Header - Style organique */}
+      <div
+        className="relative rounded-3xl p-6 mb-8 bg-white overflow-hidden"
+        style={{
+          border: '1px solid #80deea33',
+          background: 'linear-gradient(to bottom right, #f0fdff, white)'
+        }}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div
+              className="inline-flex items-center justify-center w-14 h-14 rounded-2xl"
+              style={{ background: 'linear-gradient(to bottom right, #80deea1A, #80deea0D)' }}
+            >
+              <ChatBubbleLeftRightIcon className="w-7 h-7" style={{ color: '#2c8a99' }} strokeWidth={1.5} />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-cyan-600 to-teal-700 bg-clip-text text-transparent">
+                Messages
+              </h1>
+              <p className="text-muted-foreground">
+                {session?.role === 'Owner'
+                  ? 'Communiquez avec le support'
+                  : 'Messages des administrateurs'}
+              </p>
+            </div>
+          </div>
+
+          {session?.role === 'Owner' && (
+            <Button
+              onClick={handleCreateConversation}
+              className="inline-flex items-center gap-2 bg-gradient-to-br from-cyan-500 to-teal-600 hover:from-cyan-600 hover:to-teal-700 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+            >
+              <PlusIcon className="w-5 h-5" />
+              Nouvelle conversation
+            </Button>
+          )}
+        </div>
       </div>
 
-      {/* Error Message */}
+      {/* Error Message - Style organique */}
       {error && (
-        <Card className="p-4 mb-6 bg-destructive/10 border-destructive/20">
-          <p className="text-destructive">{error}</p>
-        </Card>
+        <div
+          className="relative rounded-3xl p-4 mb-6 bg-white overflow-hidden"
+          style={{
+            border: '1px solid #f8717133',
+            background: 'linear-gradient(to bottom right, #fef2f2, white)'
+          }}
+        >
+          <p className="text-red-700">{error}</p>
+        </div>
       )}
 
       {/* Conversations List */}
       {conversations.length === 0 ? (
-        <Card className="p-12 text-center">
-          <ChatBubbleLeftRightIcon className="w-24 h-24 mx-auto mb-4 text-muted-foreground/30" />
-          <h2 className="text-2xl font-bold mb-2">Aucune conversation</h2>
+        <div
+          className="relative rounded-3xl p-12 bg-white overflow-hidden text-center"
+          style={{
+            border: '1px solid #80deea33',
+            background: 'linear-gradient(to bottom right, #f0fdff, white)'
+          }}
+        >
+          <ChatBubbleLeftRightIcon className="w-24 h-24 mx-auto mb-4" style={{ color: '#80deea40' }} />
+          <h2 className="text-2xl font-bold mb-2 text-gray-900">Aucune conversation</h2>
           <p className="text-muted-foreground mb-6">
             {session?.role === 'Owner'
               ? 'Commencez une nouvelle conversation avec le support'
               : 'Aucun message pour le moment'}
           </p>
           {session?.role === 'Owner' && (
-            <Button onClick={handleCreateConversation}>
+            <Button
+              onClick={handleCreateConversation}
+              className="bg-gradient-to-br from-cyan-500 to-teal-600 hover:from-cyan-600 hover:to-teal-700 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+            >
               Nouvelle conversation
             </Button>
           )}
-        </Card>
+        </div>
       ) : (
         <div className="grid gap-4">
           {conversations.map((conversation) => {
@@ -158,61 +200,86 @@ export default function MessagesPage() {
               session?.role === 'Owner' ? conversation.developer : conversation.owner
 
             return (
-              <Card
+              <div
                 key={conversation.id}
-                className="hover:shadow-lg transition-all cursor-pointer group"
-                onClick={() => router.push(`/dashboard/messages/${conversation.id}`)}
+                className="relative rounded-3xl p-6 bg-white hover:-translate-y-1 transition-all duration-300 cursor-pointer group overflow-hidden"
+                style={{
+                  border: '1px solid #80deea33',
+                  boxShadow: '0 0 0 0 rgba(128,222,234,0.25)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(128,222,234,0.25)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = '0 0 0 0 rgba(128,222,234,0.25)'
+                }}
+                onClick={() => router.push(`/owner/messages/${conversation.id}`)}
               >
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    {/* Avatar */}
-                    <Avatar className="h-14 w-14 flex-shrink-0">
-                      <AvatarFallback className="bg-primary/10 text-primary font-bold text-xl">
+                {/* Gradient fond */}
+                <div
+                  className="absolute inset-0 opacity-60"
+                  style={{ background: 'linear-gradient(to bottom right, #f0fdff, white)' }}
+                />
+
+                <div className="relative z-10 flex items-center gap-4">
+                  {/* Avatar */}
+                  <Avatar className="h-14 w-14 flex-shrink-0 border-2 border-cyan-100 shadow-md">
+                    <AvatarFallback
+                      className="font-bold text-xl"
+                      style={{
+                        background: 'linear-gradient(to bottom right, #80deea, #4fc3d9)',
+                        color: 'white'
+                      }}
+                    >
+                      {(() => {
+                        if (otherParty && 'first_name' in otherParty && typeof otherParty.first_name === 'string') {
+                          return otherParty.first_name[0]?.toUpperCase()
+                        }
+                        return otherParty?.email?.[0]?.toUpperCase() || '?'
+                      })()}
+                    </AvatarFallback>
+                  </Avatar>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <h3 className="text-lg font-bold truncate text-gray-900">
                         {(() => {
-                          if (otherParty && 'first_name' in otherParty && typeof otherParty.first_name === 'string') {
-                            return otherParty.first_name[0]?.toUpperCase()
-                          }
-                          return otherParty?.email?.[0]?.toUpperCase() || '?'
-                        })()}
-                      </AvatarFallback>
-                    </Avatar>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <h3 className="text-lg font-bold truncate">
-                          {(() => {
-                            if (otherParty && 'first_name' in otherParty && 'last_name' in otherParty) {
-                              const admin = otherParty as { first_name?: string; last_name?: string; email: string }
-                              if (admin.first_name && admin.last_name) {
-                                return `${admin.first_name} ${admin.last_name}`
-                              }
+                          if (otherParty && 'first_name' in otherParty && 'last_name' in otherParty) {
+                            const admin = otherParty as { first_name?: string; last_name?: string; email: string }
+                            if (admin.first_name && admin.last_name) {
+                              return `${admin.first_name} ${admin.last_name}`
                             }
-                            return otherParty?.email || 'Utilisateur inconnu'
-                          })()}
-                        </h3>
-                        <span className="text-sm text-muted-foreground ml-2 flex-shrink-0">
-                          {formatDate(conversation.last_message_at)}
-                        </span>
-                      </div>
-
-                      {otherParty?.email && (
-                        <p className="text-sm text-muted-foreground truncate">{otherParty.email}</p>
-                      )}
+                          }
+                          return otherParty?.email || 'Utilisateur inconnu'
+                        })()}
+                      </h3>
+                      <span className="text-sm text-muted-foreground ml-2 flex-shrink-0">
+                        {formatDate(conversation.last_message_at)}
+                      </span>
                     </div>
 
-                    {/* Unread Badge */}
-                    {conversation.unread_count && conversation.unread_count > 0 && (
-                      <div className="flex-shrink-0">
-                        <CountBadge count={conversation.unread_count} />
-                      </div>
+                    {otherParty?.email && (
+                      <p className="text-sm text-muted-foreground truncate">{otherParty.email}</p>
                     )}
-
-                    {/* Arrow */}
-                    <ChevronRightIcon className="w-6 h-6 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0" />
                   </div>
-                </CardContent>
-              </Card>
+
+                  {/* Unread Badge */}
+                  {conversation.unread_count && conversation.unread_count > 0 && (
+                    <div className="flex-shrink-0">
+                      <CountBadge count={conversation.unread_count} />
+                    </div>
+                  )}
+
+                  {/* Chevron */}
+                  <div
+                    className="ml-2 w-8 h-8 rounded-full flex items-center justify-center opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 flex-shrink-0"
+                    style={{ backgroundColor: '#80deea14' }}
+                  >
+                    <ChevronRightIcon className="w-4 h-4" style={{ color: '#2c8a99' }} strokeWidth={2} />
+                  </div>
+                </div>
+              </div>
             )
           })}
         </div>

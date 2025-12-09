@@ -18,6 +18,7 @@ import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
+import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
 export default function SessionsPage() {
   const { session: authSession, isLoading: authLoading } = useRequireAuth(['Owner'])
@@ -142,6 +143,14 @@ export default function SessionsPage() {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="max-w-7xl mx-auto">
+        {/* Breadcrumb */}
+        <PageBreadcrumb
+          items={[
+            { label: 'Dashboard', href: '/owner/dashboard' },
+            { label: 'Sessions' }
+          ]}
+        />
+
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -214,7 +223,7 @@ export default function SessionsPage() {
               </div>
             </div>
           ) : (
-            <Link href={`/dashboard/sessions/${todaySession.id}`}>
+            <Link href={`/owner/sessions/${todaySession.id}`}>
               <div
                 className="relative rounded-3xl p-6 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden cursor-pointer"
                 style={{
@@ -329,7 +338,7 @@ export default function SessionsPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {recentSessions.map((session) => (
-                <Link key={session.id} href={`/dashboard/sessions/${session.id}`}>
+                <Link key={session.id} href={`/owner/sessions/${session.id}`}>
                   <div
                     className="relative rounded-3xl p-6 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden cursor-pointer h-full"
                     style={{

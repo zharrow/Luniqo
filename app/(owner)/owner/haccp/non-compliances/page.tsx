@@ -17,6 +17,7 @@ import {
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { FormDialog } from '@/components/shared/FormDialog'
+import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
 export default function NonCompliancesPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
@@ -179,27 +180,40 @@ export default function NonCompliancesPage() {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-4 mb-6">
+        {/* Breadcrumb */}
+        <PageBreadcrumb
+          items={[
+            { label: 'Dashboard', href: '/owner/dashboard' },
+            { label: 'HACCP', href: '/owner/haccp' },
+            { label: 'Non-conformités' }
+          ]}
+        />
+
+        {/* Header with Gradient - Module Users (Rose) */}
+        <div className="relative mb-8 p-8 rounded-3xl bg-gradient-to-br from-rose-50 via-pink-50 to-red-50 border border-rose-200/50 overflow-hidden">
+          <div className="absolute inset-0 bg-[url('/patterns/dots.svg')] opacity-5"></div>
+          <div className="relative flex items-center gap-4">
             <button
-              onClick={() => router.push('/haccp')}
-              className="p-2 rounded-lg hover:bg-muted transition-colors"
+              onClick={() => router.push('/owner/haccp')}
+              className="p-3 rounded-2xl bg-white/80 hover:bg-white hover:scale-110 transition-all duration-200 shadow-md"
               title="Retour au HACCP"
             >
-              <ArrowLeftIcon className="w-5 h-5 text-muted-foreground" />
+              <ArrowLeftIcon className="w-5 h-5 text-rose-600" />
             </button>
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center shadow-lg shadow-rose-500/30">
+              <ExclamationTriangleIcon className="w-8 h-8 text-white" strokeWidth={1.5} />
+            </div>
             <div className="flex-1">
-              <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+              <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent" style={{ fontFamily: 'Quicksand, sans-serif' }}>
                 Non-conformités
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-rose-700/70">
                 Suivi des incidents et actions correctives
               </p>
             </div>
             <button
               onClick={openCreateModal}
-              className="btn btn-primary flex items-center gap-2"
+              className="px-6 py-3 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-500 text-white font-medium shadow-lg shadow-rose-500/30 hover:shadow-xl hover:shadow-rose-500/40 hover:scale-105 transition-all duration-200 flex items-center gap-2"
             >
               <PlusIcon className="w-5 h-5" />
               Déclarer un incident
@@ -207,23 +221,23 @@ export default function NonCompliancesPage() {
           </div>
         </div>
 
-        {/* Stats */}
+        {/* Stats - Couleurs variées */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           {[
-            { label: 'Tous', value: nonCompliances.length, status: 'ALL', color: 'neutral' },
-            { label: 'Ouverts', value: nonCompliances.filter(nc => nc.status === 'Open').length, status: 'Open', color: 'danger' },
-            { label: 'Corrigés', value: nonCompliances.filter(nc => nc.status === 'Corrected').length, status: 'Corrected', color: 'accent' },
-            { label: 'Fermés', value: nonCompliances.filter(nc => nc.status === 'Closed').length, status: 'Closed', color: 'success' }
+            { label: 'Tous', value: nonCompliances.length, status: 'ALL', gradient: 'from-gray-50 to-slate-50', border: 'gray-200', shadow: 'gray-500' },
+            { label: 'Ouverts', value: nonCompliances.filter(nc => nc.status === 'Open').length, status: 'Open', gradient: 'from-rose-50 to-red-50', border: 'rose-200', shadow: 'rose-500' },
+            { label: 'Corrigés', value: nonCompliances.filter(nc => nc.status === 'Corrected').length, status: 'Corrected', gradient: 'from-amber-50 to-orange-50', border: 'amber-200', shadow: 'amber-500' },
+            { label: 'Fermés', value: nonCompliances.filter(nc => nc.status === 'Closed').length, status: 'Closed', gradient: 'from-emerald-50 to-teal-50', border: 'emerald-200', shadow: 'emerald-500' }
           ].map((stat) => (
             <button
               key={stat.status}
               onClick={() => setFilterStatus(stat.status as any)}
-              className={`card p-4 text-left transition-all ${
-                filterStatus === stat.status ? 'ring-2 ring-primary-500' : ''
+              className={`group p-4 rounded-3xl bg-gradient-to-br ${stat.gradient} border border-${stat.border}/50 hover:shadow-lg hover:shadow-${stat.shadow}/20 transition-all duration-300 hover:scale-105 text-left ${
+                filterStatus === stat.status ? 'ring-2 ring-rose-500' : ''
               }`}
             >
-              <p className="text-sm text-muted-foreground mb-1">{stat.label}</p>
-              <p className="text-2xl font-bold">{stat.value}</p>
+              <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
+              <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
             </button>
           ))}
         </div>
@@ -245,10 +259,10 @@ export default function NonCompliancesPage() {
               const user = users.find(u => u.id === nc.discovered_by_id)
 
               return (
-                <div key={nc.id} className="card p-6">
+                <div key={nc.id} className="group relative p-6 rounded-3xl bg-gradient-to-br from-rose-50/80 to-pink-50/80 border border-rose-200/50 hover:shadow-lg hover:shadow-rose-500/20 transition-all duration-300 hover:scale-[1.01]">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-start gap-4 flex-1">
-                      <div className={`p-3 rounded-lg ${getStatusColor(nc.status)}`}>
+                      <div className={`p-3 rounded-2xl ${getStatusColor(nc.status)} shadow-md group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
                         {getStatusIcon(nc.status)}
                       </div>
 

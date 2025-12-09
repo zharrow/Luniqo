@@ -17,7 +17,8 @@
       "Bash(npm install next-view-transitions)",
       "Bash(npm install)",
       "Bash(pgrep:*)",
-      "Bash(npm run seed:*)"
+      "Bash(npm run seed:*)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []

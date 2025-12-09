@@ -188,84 +188,102 @@ export default function EmployeeCalendarPage() {
 
   return (
     <>
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Mon Calendrier</h1>
-            <p className="text-muted-foreground">
-              Vue hebdomadaire de vos tâches assignées
-            </p>
-          </div>
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header - Style Calendar (Pêche) */}
+        <div className="rounded-3xl bg-gradient-to-br from-amber-100 via-orange-50 to-yellow-100 p-8 border border-amber-200/50 shadow-lg">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-600 to-orange-700 bg-clip-text text-transparent mb-2">
+            Mon Calendrier 📅
+          </h1>
+          <p className="text-gray-600">
+            Vue hebdomadaire de vos tâches assignées
+          </p>
         </div>
 
-        {/* Week Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
+        {/* Week Stats - Couleurs variées */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Total Tasks - Pêche */}
+          <Card className="rounded-3xl border-amber-200/50 bg-gradient-to-br from-amber-50 to-orange-50 shadow-lg hover:shadow-xl hover:shadow-amber-100 transition-all duration-300 hover:scale-105">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-primary-100 flex items-center justify-center">
-                  <CalendarIcon className="w-6 h-6 text-primary-600" />
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center border border-amber-200 shadow-sm group-hover:rotate-6 transition-transform">
+                  <CalendarIcon className="w-7 h-7 text-amber-600" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{totalWeekTasks}</p>
-                  <p className="text-sm text-muted-foreground">Tâches cette semaine</p>
+                  <p className="text-3xl font-bold text-amber-700">{totalWeekTasks}</p>
+                  <p className="text-sm text-amber-600/80">Tâches cette semaine</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          {/* Completed Tasks - Vert */}
+          <Card className="rounded-3xl border-emerald-200/50 bg-gradient-to-br from-emerald-50 to-teal-50 shadow-lg hover:shadow-xl hover:shadow-emerald-100 transition-all duration-300 hover:scale-105">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
-                  <CheckCircleIcon className="w-6 h-6 text-green-600" />
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 flex items-center justify-center border border-emerald-200 shadow-sm group-hover:rotate-6 transition-transform">
+                  <CheckCircleIcon className="w-7 h-7 text-emerald-600" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{totalWeekCompleted}</p>
-                  <p className="text-sm text-muted-foreground">Complétées</p>
+                  <p className="text-3xl font-bold text-emerald-700">{totalWeekCompleted}</p>
+                  <p className="text-sm text-emerald-600/80">Complétées</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          {/* Completion Rate - Bleu */}
+          <Card className="rounded-3xl border-sky-200/50 bg-gradient-to-br from-sky-50 to-blue-50 shadow-lg hover:shadow-xl hover:shadow-sky-100 transition-all duration-300 hover:scale-105">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <ClockIcon className="w-6 h-6 text-blue-600" />
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-sky-100 to-blue-100 flex items-center justify-center border border-sky-200 shadow-sm group-hover:rotate-6 transition-transform">
+                  <ClockIcon className="w-7 h-7 text-sky-600" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{weekCompletionRate}%</p>
-                  <p className="text-sm text-muted-foreground">Taux de complétion</p>
+                  <p className="text-3xl font-bold text-sky-700">{weekCompletionRate}%</p>
+                  <p className="text-sm text-sky-600/80">Taux de complétion</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Week Navigation */}
-        <Card>
+        {/* Week Navigation - Style Pêche */}
+        <Card className="rounded-3xl border-amber-200/50 bg-gradient-to-br from-amber-50 to-orange-50 shadow-lg">
           <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <Button onClick={goToPreviousWeek} variant="outline" size="sm">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <Button
+                onClick={goToPreviousWeek}
+                variant="outline"
+                size="sm"
+                className="border-amber-200 text-amber-700 hover:bg-amber-50 transition-all duration-300 hover:scale-105"
+              >
                 <ChevronLeftIcon className="w-4 h-4" />
                 Semaine précédente
               </Button>
 
               <div className="text-center">
-                <p className="font-semibold">
+                <p className="font-semibold text-amber-700 text-lg">
                   {format(weekDays[0], 'd MMM', { locale: fr })} -{' '}
                   {format(weekDays[6], 'd MMM yyyy', { locale: fr })}
                 </p>
                 {!isCurrentWeek && (
-                  <Button onClick={goToToday} variant="link" size="sm" className="mt-1">
+                  <Button
+                    onClick={goToToday}
+                    variant="link"
+                    size="sm"
+                    className="mt-1 text-amber-600 hover:text-amber-700"
+                  >
                     Aujourd'hui
                   </Button>
                 )}
               </div>
 
-              <Button onClick={goToNextWeek} variant="outline" size="sm">
+              <Button
+                onClick={goToNextWeek}
+                variant="outline"
+                size="sm"
+                className="border-amber-200 text-amber-700 hover:bg-amber-50 transition-all duration-300 hover:scale-105"
+              >
                 Semaine suivante
                 <ChevronRightIcon className="w-4 h-4" />
               </Button>
@@ -284,61 +302,65 @@ export default function EmployeeCalendarPage() {
             return (
               <Card
                 key={index}
-                className={`${
-                  isToday ? 'border-primary-500 border-2' : ''
-                } ${isPast && !isToday ? 'opacity-70' : ''}`}
+                className={`rounded-3xl transition-all duration-300 ${
+                  isToday
+                    ? 'border-2 border-amber-400 bg-gradient-to-br from-amber-50 to-orange-50 shadow-xl shadow-amber-200'
+                    : 'border-gray-200/50 bg-gradient-to-br from-white to-gray-50 shadow-md hover:shadow-lg'
+                } ${isPast && !isToday ? 'opacity-60' : ''}`}
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground uppercase">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                         {format(day, 'EEEE', { locale: fr })}
                       </p>
-                      <p className="text-2xl font-bold">
+                      <p className={`text-3xl font-bold ${isToday ? 'text-amber-700' : 'text-gray-700'}`}>
                         {format(day, 'd', { locale: fr })}
                       </p>
                     </div>
                     {isToday && (
-                      <Badge className="bg-primary-500">Aujourd'hui</Badge>
+                      <Badge className="bg-gradient-to-r from-amber-500 to-orange-600 text-white border-0 shadow-lg">
+                        Aujourd&apos;hui
+                      </Badge>
                     )}
                   </div>
                   {stats.total > 0 && (
-                    <div className="text-xs text-muted-foreground mt-2">
+                    <div className={`text-xs font-medium mt-2 ${isToday ? 'text-amber-600' : 'text-gray-600'}`}>
                       {stats.completed}/{stats.total} tâches
                     </div>
                   )}
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {dayTasks.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-4">
+                    <p className="text-sm text-gray-400 text-center py-6">
                       Aucune tâche
                     </p>
                   ) : (
                     dayTasks.map((task) => (
                       <div
                         key={task.id}
-                        className={`p-2 rounded-lg border ${
+                        className={`p-3 rounded-2xl border transition-all duration-300 ${
                           task.is_completed
-                            ? 'bg-green-50 border-green-200'
-                            : 'bg-muted border-border'
+                            ? 'bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200 shadow-sm hover:shadow-md'
+                            : 'bg-gradient-to-br from-gray-50 to-slate-50 border-gray-200 hover:border-gray-300 shadow-sm'
                         }`}
                       >
                         <div className="flex items-start gap-2">
                           {task.is_completed ? (
-                            <CheckCircleIcon className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                            <CheckCircleIcon className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" strokeWidth={2} />
                           ) : (
-                            <div className="w-4 h-4 rounded-full border-2 border-muted-foreground mt-0.5 flex-shrink-0" />
+                            <div className="w-5 h-5 rounded-full border-2 border-gray-400 mt-0.5 flex-shrink-0" />
                           )}
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium leading-tight">
+                            <p className="text-sm font-semibold leading-tight text-gray-700">
                               {task.task_name}
                             </p>
-                            <p className="text-xs text-muted-foreground">
-                              {task.room_name}
+                            <p className="text-xs text-gray-500 mt-1">
+                              📍 {task.room_name}
                             </p>
                             {task.is_completed && task.duration && (
-                              <p className="text-xs text-green-600 mt-1">
-                                {task.duration} min
+                              <p className="text-xs text-emerald-600 font-medium mt-1">
+                                ⏱️ {task.duration} min
                               </p>
                             )}
                           </div>
@@ -354,11 +376,11 @@ export default function EmployeeCalendarPage() {
 
         {/* Info Card */}
         {totalWeekTasks === 0 && (
-          <Card>
+          <Card className="rounded-3xl border-gray-200 bg-gradient-to-br from-gray-50 to-slate-50 shadow-lg">
             <CardContent className="pt-6 text-center py-12">
-              <CalendarIcon className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">Aucune tâche cette semaine</h3>
-              <p className="text-muted-foreground">
+              <CalendarIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" strokeWidth={1.5} />
+              <h3 className="text-lg font-semibold text-gray-700 mb-2">Aucune tâche cette semaine</h3>
+              <p className="text-gray-500">
                 Vos tâches assignées apparaîtront ici
               </p>
             </CardContent>

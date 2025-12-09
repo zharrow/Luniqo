@@ -414,6 +414,15 @@ NODE_ENV=development
    - **Example of the bug**: December 3rd at 01:00 in France (UTC+1) becomes December 2nd when using `toISOString()` because it converts to UTC
    - See [lib/utils/date.ts](lib/utils/date.ts:1-27) for the utility functions
 
+10. **Session Persistence**: **CRITICAL** - Session is pre-loaded from localStorage to prevent disconnection on tab switch:
+   - Session stored in localStorage with 5-minute TTL (`luniqo_auth_session` + `luniqo_auth_timestamp`)
+   - `useState` initializer loads session synchronously BEFORE first render
+   - `isLoading` initialized based on session presence (`false` if session exists)
+   - `hasInitialized` ref prevents `useEffect` from re-executing on component remount
+   - Background session refresh uses silent mode (`checkSession(force, silent)`) to avoid blocking UI
+   - **Result**: Users can switch tabs/apps without seeing loading screen or being disconnected
+   - See [lib/contexts/AuthContext.tsx](lib/contexts/AuthContext.tsx:24-70) for implementation
+
 ## Database Setup
 
 1. Create Supabase project at [supabase.com](https://supabase.com)
@@ -460,21 +469,92 @@ The app has been heavily optimized for fast page transitions and reduced latency
 1. **Next.js 15 (Stable)** - Downgraded from Next.js 16 for stability and better performance
 2. **React 18** - Downgraded from React 19 for ecosystem compatibility
 3. **Removed `force-dynamic`** - Allows Next.js to cache and optimize pages automatically
-4. **Session Caching (30s TTL)** - AuthContext caches session checks to avoid redundant DB queries
-5. **Optimized Middleware** - Removed expensive DB queries from middleware (moved to client-side)
-6. **Reduced Timeout** - Session check timeout reduced from 30s to 5s for faster error detection
-7. **Optimistic Client Cache** - Enabled in Next.js config for instant navigation
-8. **Package Import Optimization** - Tree-shaking for @heroicons/react and recharts
-9. **Loading States** - Added loading.tsx files for instant feedback during navigation
-10. **Removed visibility check** - No more session refresh when switching apps
+4. **Session Pre-loading (5min TTL)** - Session loaded synchronously from localStorage before first render
+5. **Silent Background Refresh** - Session checks happen invisibly without blocking UI
+6. **Optimized Middleware** - Removed expensive DB queries from middleware (moved to client-side)
+7. **Reduced Timeout** - Session check timeout reduced from 30s to 5s for faster error detection
+8. **Optimistic Client Cache** - Enabled in Next.js config for instant navigation
+9. **Package Import Optimization** - Tree-shaking for @heroicons/react and recharts
+10. **Loading States** - Added loading.tsx files for instant feedback during navigation
+11. **useEffect Guard** - Prevents multiple re-executions with `hasInitialized` ref
 
 **Key files modified:**
-- [lib/contexts/AuthContext.tsx](lib/contexts/AuthContext.tsx:20-62) - Added 30s cache + reduced timeout
+- [lib/contexts/AuthContext.tsx](lib/contexts/AuthContext.tsx:24-70) - Session pre-loading, silent mode, initialization guard
 - [lib/supabase/middleware.ts](lib/supabase/middleware.ts:61-62) - Removed admin/enterprise checks
-- [app/(dashboard)/layout.tsx](app/(dashboard)/layout.tsx:1-2) - Removed force-dynamic
-- [next.config.ts](next.config.ts:13-32) - Added performance optimizations
+- [app/(owner)/layout.tsx](app/(owner)/layout.tsx:8) - Added force-dynamic for protected routes
+- [app/(employee)/layout.tsx](app/(employee)/layout.tsx:8) - Added force-dynamic for protected routes
+- [app/(developer)/layout.tsx](app/(developer)/layout.tsx:5) - Added force-dynamic for protected routes
+- [next.config.mjs](next.config.mjs:16-23) - Static page generation timeout and build ID
 
 ## Recent Updates
+
+- 🔧 **SESSION PERSISTENCE FIX** (2025-12-08) - Fixed frustrating logout issue when switching apps/tabs ✅ **COMPLETED**
+  - **Problem**: Users were disconnected with loading screen/timeout whenever they switched browser tabs or apps, even after just logging in 30 seconds earlier
+  - **Root cause**: `useEffect` re-triggered full session check on every component remount, causing `isLoading = true` and blocking UI
+  - **Solution implemented**:
+    - **Pre-load session from localStorage in `useState` initializer** (synchronous, before first render)
+    - **Initialize `isLoading` based on session presence** (`isLoading = false` if session exists)
+    - **Guard with `hasInitialized` ref** to prevent multiple `useEffect` executions
+    - **Silent background refresh mode** (`checkSession(force, silent)`) to avoid showing loading state during background checks
+    - **Session TTL**: 5 minutes in localStorage
+  - **Technical details**:
+    ```typescript
+    // Session pre-loaded BEFORE first render (synchronous)
+    const [session] = useState(() => {
+      const savedSession = localStorage.getItem('luniqo_auth_session')
+      const savedTimestamp = localStorage.getItem('luniqo_auth_timestamp')
+      if (savedSession && age < 5min) return parsedSession
+      return null
+    })
+
+    // isLoading starts false if session exists
+    const [isLoading] = useState(() => session === null)
+
+    // Guard to prevent re-execution
+    const hasInitialized = useRef(false)
+    useEffect(() => {
+      if (hasInitialized.current) return
+      hasInitialized.current = true
+      // ... initialization logic
+    })
+    ```
+  - **Files modified**:
+    - ✅ `lib/contexts/AuthContext.tsx` - Pre-load session, silent mode, initialization guard
+  - **Impact**:
+    - ✅ Users can now switch tabs/apps without being disconnected
+    - ✅ Instant page display on return (no loading screen)
+    - ✅ Background session refresh is invisible to user
+    - ✅ Session valid for 5 minutes without re-checking
+  - **Status**: ✅ **100% complete** - Tested on Safari & Chrome, works perfectly (2025-12-08)
+
+- 🎨 **HACCP PAGE ORGANIC REDESIGN** (2025-12-08) - More colorful and organic HACCP dashboard ✅ **COMPLETED**
+  - **Problem**: HACCP dashboard was monotonous with green mint color everywhere
+  - **Solution**: Applied varied pastel colors from design system to each module for visual diversity
+  - **Color mapping**:
+    - Enfants → Rose pastel (`users`)
+    - Repas → Pêche pastel (`calendar`)
+    - Produits → Lime pastel (`tasks`)
+    - Fournisseurs → Turquoise (`communication`)
+    - Températures → Vert menthe (`haccp`)
+    - Équipements → Violet lavande (`settings`)
+    - Documents → Indigo pastel (`analytics`)
+    - Non-conformités → Rose (`users`)
+  - **Files modified**:
+    - ✅ `app/(owner)/owner/haccp/page.tsx` - Removed duplicate stats grid, applied varied colors to modules
+  - **Impact**: More organic and lively interface, each HACCP module has its own visual identity
+  - **Status**: ✅ **100% complete** - Design system "Douceur Professionnelle" fully applied (2025-12-08)
+
+- 🔨 **BUILD FIX FOR PROTECTED ROUTES** (2025-12-08) - Fixed prerendering errors for auth-protected pages ✅ **COMPLETED**
+  - **Problem**: Build was failing with `Cannot read properties of null (reading 'useContext')` for all protected routes
+  - **Root cause**: Next.js tried to prerender pages that use React Context (AuthContext) during build, but context is not available at build time
+  - **Solution**: Added `export const dynamic = 'force-dynamic'` to all protected route group layouts
+  - **Files modified**:
+    - ✅ `app/(owner)/layout.tsx` - Added `export const dynamic = 'force-dynamic'`
+    - ✅ `app/(employee)/layout.tsx` - Added `export const dynamic = 'force-dynamic'`
+    - ✅ `app/(developer)/layout.tsx` - Added `export const dynamic = 'force-dynamic'`
+    - ✅ `next.config.mjs` - Added `staticPageGenerationTimeout` and `generateBuildId` config
+  - **Impact**: Protected pages are now server-rendered at runtime instead of being pre-generated
+  - **Status**: ✅ **100% complete** - Build succeeds, all routes work correctly (2025-12-08)
 
 - 🎯 **OWNER ROUTES URL PREFIX** (2025-12-08) - URL prefix `/owner/*` for better scalability ✅ **COMPLETED**
   - **URLs updated**: All Owner routes now use `/owner/*` prefix for consistency with Employee routes
@@ -573,4 +653,4 @@ The app has been heavily optimized for fast page transitions and reduced latency
 
 ---
 
-**Last updated**: 2025-12-08 (Owner Routes URL Prefix `/owner/*` - 100% Complete)
+**Last updated**: 2025-12-08 (Session Persistence Fix - Instant tab switching without disconnection)

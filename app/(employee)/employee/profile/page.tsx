@@ -245,54 +245,59 @@ export default function EmployeeProfilePage() {
 
   return (
     <>
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* En-tête avec avatar */}
-        <div className="flex items-center gap-6">
-          <Avatar className="h-24 w-24 border-4 border-primary-100">
-            {employeeData?.avatar ? (
-              <AvatarImage src={`/${employeeData.avatar}`} alt="Avatar" />
-            ) : null}
-            <AvatarFallback className="bg-gradient-to-br from-primary-400 to-primary-600 text-white text-2xl font-bold">
-              {getInitials(employeeData?.first_name, employeeData?.last_name)}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent">
-              Mon Profil
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Gérez vos informations personnelles et votre code PIN
-            </p>
-            <div className="flex gap-2 mt-3">
-              <Badge variant="secondary" className="gap-1">
-                <ShieldCheckIcon className="w-3 h-3" />
-                Employé
-              </Badge>
-              {enterpriseData && (
-                <Badge variant="outline" className="gap-1">
-                  <BuildingOfficeIcon className="w-3 h-3" />
-                  {enterpriseData.name}
+      <div className="max-w-4xl mx-auto space-y-8">
+        {/* En-tête avec avatar - Style Violet Lavande (settings) */}
+        <div className="rounded-3xl bg-gradient-to-br from-violet-100 via-purple-50 to-indigo-100 p-8 border border-violet-200/50 shadow-lg">
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+            <Avatar className="h-24 w-24 border-4 border-white shadow-xl">
+              {employeeData?.avatar ? (
+                <AvatarImage src={`/${employeeData.avatar}`} alt="Avatar" />
+              ) : null}
+              <AvatarFallback className="bg-gradient-to-br from-violet-400 to-purple-600 text-white text-2xl font-bold">
+                {getInitials(employeeData?.first_name, employeeData?.last_name)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 text-center md:text-left">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-600 to-purple-700 bg-clip-text text-transparent">
+                Mon Profil 👤
+              </h1>
+              <p className="text-gray-600 mt-2">
+                Gérez vos informations personnelles et votre code PIN
+              </p>
+              <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-3">
+                <Badge variant="secondary" className="gap-1 bg-violet-100 text-violet-700 border-violet-200">
+                  <ShieldCheckIcon className="w-3 h-3" />
+                  Employé
                 </Badge>
-              )}
+                {enterpriseData && (
+                  <Badge variant="outline" className="gap-1 border-violet-200 text-violet-700">
+                    <BuildingOfficeIcon className="w-3 h-3" />
+                    {enterpriseData.name}
+                  </Badge>
+                )}
+              </div>
             </div>
+            {!isEditingProfile && !isEditingPin && (
+              <Button
+                onClick={() => setIsEditingProfile(true)}
+                className="gap-2 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 shadow-lg shadow-violet-200 transition-all duration-300 hover:scale-105"
+              >
+                <PencilIcon className="w-4 h-4" />
+                Modifier le profil
+              </Button>
+            )}
           </div>
-          {!isEditingProfile && !isEditingPin && (
-            <Button onClick={() => setIsEditingProfile(true)} className="gap-2">
-              <PencilIcon className="w-4 h-4" />
-              Modifier le profil
-            </Button>
-          )}
         </div>
 
         {/* Messages */}
         {error && (
-          <Card className="border-red-200 bg-red-50">
+          <Card className="rounded-3xl border-rose-200 bg-gradient-to-br from-rose-50 to-pink-50 shadow-lg shadow-rose-100">
             <CardContent className="pt-6">
               <div className="flex items-start gap-3">
-                <XCircleIcon className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                <XCircleIcon className="w-6 h-6 text-rose-600 mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
-                  <p className="font-semibold text-red-900">Erreur</p>
-                  <p className="text-sm text-red-700">{error}</p>
+                  <p className="font-semibold text-rose-900">Erreur</p>
+                  <p className="text-sm text-rose-700">{error}</p>
                 </div>
               </div>
             </CardContent>
@@ -300,29 +305,33 @@ export default function EmployeeProfilePage() {
         )}
 
         {success && (
-          <Card className="border-green-200 bg-green-50">
+          <Card className="rounded-3xl border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 shadow-lg shadow-emerald-100">
             <CardContent className="pt-6">
               <div className="flex items-start gap-3">
-                <CheckCircleIcon className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <CheckCircleIcon className="w-6 h-6 text-emerald-600 mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
-                  <p className="font-semibold text-green-900">Succès</p>
-                  <p className="text-sm text-green-700">{success}</p>
+                  <p className="font-semibold text-emerald-900">Succès</p>
+                  <p className="text-sm text-emerald-700">{success}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Section Informations personnelles */}
-        <Card>
+        {/* Section Informations personnelles - Style Users (Rose) */}
+        <Card className="rounded-3xl border-rose-200/50 bg-gradient-to-br from-rose-50 to-pink-50 shadow-lg hover:shadow-xl hover:shadow-rose-100 transition-all duration-300">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <UserCircleIcon className="w-5 h-5 text-primary-500" />
-              <CardTitle>Informations personnelles</CardTitle>
+              <div className="rounded-2xl bg-gradient-to-br from-rose-100 to-pink-100 p-2 border border-rose-200">
+                <UserCircleIcon className="w-5 h-5 text-rose-600" strokeWidth={1.5} />
+              </div>
+              <div>
+                <CardTitle className="text-rose-700">Informations personnelles</CardTitle>
+                <CardDescription className="text-rose-600/70">
+                  Vos informations d'identification et de contact
+                </CardDescription>
+              </div>
             </div>
-            <CardDescription>
-              Vos informations d'identification et de contact
-            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Sélecteur d'avatar en mode édition */}
@@ -402,13 +411,13 @@ export default function EmployeeProfilePage() {
 
         {/* Boutons d'action profil */}
         {isEditingProfile && (
-          <Card>
+          <Card className="rounded-3xl border-violet-200/50 bg-gradient-to-br from-violet-50 to-purple-50 shadow-lg">
             <CardContent className="pt-6">
               <div className="flex gap-3">
                 <Button
                   onClick={handleSaveProfile}
                   disabled={isSaving}
-                  className="flex-1"
+                  className="flex-1 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 shadow-lg shadow-violet-200 transition-all duration-300 hover:scale-105"
                 >
                   {isSaving ? 'Enregistrement...' : 'Enregistrer les modifications'}
                 </Button>
@@ -416,6 +425,7 @@ export default function EmployeeProfilePage() {
                   onClick={handleCancelProfile}
                   disabled={isSaving}
                   variant="outline"
+                  className="border-violet-200 text-violet-700 hover:bg-violet-50"
                 >
                   Annuler
                 </Button>
@@ -424,23 +434,32 @@ export default function EmployeeProfilePage() {
           </Card>
         )}
 
-        {/* Section Code PIN */}
-        <Card>
+        {/* Section Code PIN - Style Clean (Bleu) */}
+        <Card className="rounded-3xl border-sky-200/50 bg-gradient-to-br from-sky-50 to-cyan-50 shadow-lg hover:shadow-xl hover:shadow-sky-100 transition-all duration-300">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <KeyIcon className="w-5 h-5 text-primary-500" />
-                <CardTitle>Code PIN Tablette</CardTitle>
+                <div className="rounded-2xl bg-gradient-to-br from-sky-100 to-cyan-100 p-2 border border-sky-200">
+                  <KeyIcon className="w-5 h-5 text-sky-600" strokeWidth={1.5} />
+                </div>
+                <div>
+                  <CardTitle className="text-sky-700">Code PIN Tablette 🔐</CardTitle>
+                  <CardDescription className="text-sky-600/70">
+                    Gérez votre code PIN à 4 chiffres pour l'accès tablette
+                  </CardDescription>
+                </div>
               </div>
               {!isEditingPin && !isEditingProfile && (
-                <Button onClick={() => setIsEditingPin(true)} variant="outline" size="sm">
+                <Button
+                  onClick={() => setIsEditingPin(true)}
+                  variant="outline"
+                  size="sm"
+                  className="border-sky-200 text-sky-700 hover:bg-sky-50 transition-all duration-300 hover:scale-105"
+                >
                   Modifier le PIN
                 </Button>
               )}
             </div>
-            <CardDescription>
-              Gérez votre code PIN à 4 chiffres pour l'accès tablette
-            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {isEditingPin ? (
@@ -499,7 +518,7 @@ export default function EmployeeProfilePage() {
                   <Button
                     onClick={handleSavePin}
                     disabled={isSaving}
-                    className="flex-1"
+                    className="flex-1 bg-gradient-to-r from-sky-500 to-cyan-600 hover:from-sky-600 hover:to-cyan-700 shadow-lg shadow-sky-200 transition-all duration-300 hover:scale-105"
                   >
                     {isSaving ? 'Enregistrement...' : 'Modifier le PIN'}
                   </Button>
@@ -507,19 +526,20 @@ export default function EmployeeProfilePage() {
                     onClick={handleCancelPin}
                     disabled={isSaving}
                     variant="outline"
+                    className="border-sky-200 text-sky-700 hover:bg-sky-50"
                   >
                     Annuler
                   </Button>
                 </div>
               </>
             ) : (
-              <div className="space-y-3">
-                <p className="text-muted-foreground">
+              <div className="space-y-3 bg-sky-50/50 rounded-2xl p-4 border border-sky-100">
+                <p className="text-sky-700">
                   Votre code PIN est utilisé pour vous connecter rapidement sur la tablette.
                 </p>
                 <div className="flex items-center gap-2 text-sm">
-                  <CheckCircleIcon className="w-4 h-4 text-green-600" />
-                  <span className="text-green-700">PIN configuré</span>
+                  <CheckCircleIcon className="w-5 h-5 text-emerald-600" />
+                  <span className="font-medium text-emerald-700">PIN configuré</span>
                 </div>
               </div>
             )}

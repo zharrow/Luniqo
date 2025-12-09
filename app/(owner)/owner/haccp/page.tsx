@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
 import { haccpService } from '@/lib/services/haccp.service'
 import { pdfExportService } from '@/lib/services/pdf-export.service'
@@ -16,52 +16,13 @@ import {
   InformationCircleIcon,
   ArrowDownTrayIcon
 } from '@heroicons/react/24/outline'
-import { Card, CardContent } from '@/components/ui/card'
-import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ModuleCard } from '@/components/shared/ModuleCard'
-
-interface HaccpStats {
-  totalChildren: number
-  activeChildren: number
-  totalProducts: number
-  totalSuppliers: number
-  openNonCompliances: number
-  todayMeals: number
-}
+import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
 export default function HaccpDashboardPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
-  const [stats, setStats] = useState<HaccpStats>({
-    totalChildren: 0,
-    activeChildren: 0,
-    totalProducts: 0,
-    totalSuppliers: 0,
-    openNonCompliances: 0,
-    todayMeals: 0
-  })
-  const [loading, setLoading] = useState(true)
   const [exporting, setExporting] = useState(false)
-
-  useEffect(() => {
-    if (session?.enterprise) {
-      loadStats()
-    }
-  }, [session])
-
-  async function loadStats() {
-    if (!session?.enterprise?.id) return
-
-    try {
-      setLoading(true)
-      const data = await haccpService.getHaccpStats(session.enterprise.id)
-      setStats(data)
-    } catch (error) {
-      console.error('Error loading HACCP stats:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   async function handleExportHACCP() {
     if (!session?.enterprise) return
@@ -129,7 +90,7 @@ export default function HaccpDashboardPage() {
     }
   }
 
-  if (authLoading || loading) {
+  if (authLoading) {
     return (
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-center h-64">
@@ -144,49 +105,65 @@ export default function HaccpDashboardPage() {
       name: 'Enfants',
       description: 'Gestion des enfants inscrits et allergènes',
       icon: <UserGroupIcon className="w-5 h-5" strokeWidth={1.5} />,
-      href: '/haccp/children'
+      href: '/owner/haccp/children',
+      module: 'users' as const, // Rose pastel
+      colSpan: 'md:col-span-1'
     },
     {
       name: 'Repas',
       description: 'Planification des repas et traçabilité',
       icon: <ClipboardDocumentCheckIcon className="w-5 h-5" strokeWidth={1.5} />,
-      href: '/haccp/meals'
+      href: '/owner/haccp/meals',
+      module: 'calendar' as const, // Pêche pastel
+      colSpan: 'md:col-span-1'
     },
     {
       name: 'Produits',
       description: 'Gestion des produits alimentaires',
       icon: <ShoppingBagIcon className="w-5 h-5" strokeWidth={1.5} />,
-      href: '/haccp/products'
+      href: '/owner/haccp/products',
+      module: 'tasks' as const, // Lime pastel
+      colSpan: 'md:col-span-1'
     },
     {
       name: 'Fournisseurs',
       description: 'Gestion des fournisseurs',
       icon: <TruckIcon className="w-5 h-5" strokeWidth={1.5} />,
-      href: '/haccp/suppliers'
+      href: '/owner/haccp/suppliers',
+      module: 'communication' as const, // Turquoise
+      colSpan: 'md:col-span-1'
     },
     {
       name: 'Températures',
       description: 'Contrôle des températures',
       icon: <BeakerIcon className="w-5 h-5" strokeWidth={1.5} />,
-      href: '/haccp/temperatures'
+      href: '/owner/haccp/temperatures',
+      module: 'haccp' as const, // Vert menthe (gardé pour ce qui est vraiment HACCP)
+      colSpan: 'md:col-span-1'
     },
     {
       name: 'Équipements',
       description: 'Maintenance des équipements',
       icon: <WrenchIcon className="w-5 h-5" strokeWidth={1.5} />,
-      href: '/haccp/equipment'
+      href: '/owner/haccp/equipment',
+      module: 'settings' as const, // Violet lavande
+      colSpan: 'md:col-span-1'
     },
     {
       name: 'Documents',
       description: 'Documents de conformité',
       icon: <DocumentTextIcon className="w-5 h-5" strokeWidth={1.5} />,
-      href: '/haccp/documents'
+      href: '/owner/haccp/documents',
+      module: 'analytics' as const, // Indigo pastel
+      colSpan: 'md:col-span-1'
     },
     {
       name: 'Non-conformités',
       description: 'Suivi des incidents et actions correctives',
       icon: <ExclamationTriangleIcon className="w-5 h-5" strokeWidth={1.5} />,
-      href: '/haccp/non-compliances'
+      href: '/owner/haccp/non-compliances',
+      module: 'users' as const, // Rose pour alertes
+      colSpan: 'md:col-span-1'
     }
   ]
 
@@ -194,17 +171,12 @@ export default function HaccpDashboardPage() {
     <div className="max-w-7xl mx-auto">
       <div className="max-w-7xl mx-auto">
         {/* Breadcrumb */}
-        <Breadcrumb className="mb-4">
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/owner/dashboard">Dashboard</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>HACCP</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
+        <PageBreadcrumb
+          items={[
+            { label: 'Dashboard', href: '/owner/dashboard' },
+            { label: 'HACCP' }
+          ]}
+        />
 
         {/* Page header */}
         <div className="mb-8">
@@ -241,196 +213,34 @@ export default function HaccpDashboardPage() {
           </p>
         </div>
 
-        {/* Stats grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-          {/* Stat Card 1 - Enfants */}
-          <a
-            href="/owner/haccp/children"
-            className="relative rounded-3xl p-5 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden block"
-            style={{
-              border: '1px solid #81c99533',
-              boxShadow: '0 0 0 0 rgba(129,201,149,0.25)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(129,201,149,0.25)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.boxShadow = '0 0 0 0 rgba(129,201,149,0.25)'
-            }}
-          >
-            <div
-              className="absolute inset-0 opacity-60"
-              style={{ background: 'linear-gradient(to bottom right, #f1f9f3, white)' }}
-            />
-            <div className="relative z-10">
-              <div
-                className="inline-flex items-center justify-center w-10 h-10 rounded-2xl mb-3 group-hover:scale-105 transition-all duration-300"
-                style={{ background: 'linear-gradient(to bottom right, #81c9951A, #81c9950D)' }}
-              >
-                <UserGroupIcon className="w-5 h-5" style={{ color: '#4a8f5a' }} strokeWidth={1.5} />
-              </div>
-              <p className="text-xs text-gray-600 mb-1">Enfants inscrits</p>
-              <div className="flex items-baseline gap-2">
-                <p className="text-2xl font-bold text-gray-900">{stats.activeChildren}</p>
-                <p className="text-sm text-gray-600">/ {stats.totalChildren}</p>
-              </div>
-            </div>
-          </a>
-
-          {/* Stat Card 2 - Produits */}
-          <a
-            href="/owner/haccp/products"
-            className="relative rounded-3xl p-5 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden block"
-            style={{
-              border: '1px solid #81c99533',
-              boxShadow: '0 0 0 0 rgba(129,201,149,0.25)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(129,201,149,0.25)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.boxShadow = '0 0 0 0 rgba(129,201,149,0.25)'
-            }}
-          >
-            <div
-              className="absolute inset-0 opacity-60"
-              style={{ background: 'linear-gradient(to bottom right, #f1f9f3, white)' }}
-            />
-            <div className="relative z-10">
-              <div
-                className="inline-flex items-center justify-center w-10 h-10 rounded-2xl mb-3 group-hover:scale-105 transition-all duration-300"
-                style={{ background: 'linear-gradient(to bottom right, #81c9951A, #81c9950D)' }}
-              >
-                <ShoppingBagIcon className="w-5 h-5" style={{ color: '#4a8f5a' }} strokeWidth={1.5} />
-              </div>
-              <p className="text-xs text-gray-600 mb-1">Produits actifs</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.totalProducts}</p>
-            </div>
-          </a>
-
-          {/* Stat Card 3 - Fournisseurs */}
-          <a
-            href="/owner/haccp/suppliers"
-            className="relative rounded-3xl p-5 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden block"
-            style={{
-              border: '1px solid #81c99533',
-              boxShadow: '0 0 0 0 rgba(129,201,149,0.25)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(129,201,149,0.25)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.boxShadow = '0 0 0 0 rgba(129,201,149,0.25)'
-            }}
-          >
-            <div
-              className="absolute inset-0 opacity-60"
-              style={{ background: 'linear-gradient(to bottom right, #f1f9f3, white)' }}
-            />
-            <div className="relative z-10">
-              <div
-                className="inline-flex items-center justify-center w-10 h-10 rounded-2xl mb-3 group-hover:scale-105 transition-all duration-300"
-                style={{ background: 'linear-gradient(to bottom right, #81c9951A, #81c9950D)' }}
-              >
-                <TruckIcon className="w-5 h-5" style={{ color: '#4a8f5a' }} strokeWidth={1.5} />
-              </div>
-              <p className="text-xs text-gray-600 mb-1">Fournisseurs</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.totalSuppliers}</p>
-            </div>
-          </a>
-
-          {/* Stat Card 4 - Non-conformités */}
-          <a
-            href="/owner/haccp/non-compliances"
-            className="relative rounded-3xl p-5 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden block"
-            style={{
-              border: `1px solid ${stats.openNonCompliances > 0 ? '#f8717133' : '#81c99533'}`,
-              boxShadow: `0 0 0 0 ${stats.openNonCompliances > 0 ? 'rgba(248,113,113,0.25)' : 'rgba(129,201,149,0.25)'}`
-            }}
-            onMouseEnter={(e) => {
-              const shadowColor = stats.openNonCompliances > 0 ? 'rgba(248,113,113,0.25)' : 'rgba(129,201,149,0.25)'
-              e.currentTarget.style.boxShadow = `0 16px 48px -12px ${shadowColor}`
-            }}
-            onMouseLeave={(e) => {
-              const shadowColor = stats.openNonCompliances > 0 ? 'rgba(248,113,113,0.25)' : 'rgba(129,201,149,0.25)'
-              e.currentTarget.style.boxShadow = `0 0 0 0 ${shadowColor}`
-            }}
-          >
-            <div
-              className="absolute inset-0 opacity-60"
-              style={{ background: `linear-gradient(to bottom right, ${stats.openNonCompliances > 0 ? '#fef2f2' : '#f1f9f3'}, white)` }}
-            />
-            <div className="relative z-10">
-              <div
-                className="inline-flex items-center justify-center w-10 h-10 rounded-2xl mb-3 group-hover:scale-105 transition-all duration-300"
-                style={{ background: `linear-gradient(to bottom right, ${stats.openNonCompliances > 0 ? '#f871711A' : '#81c9951A'}, ${stats.openNonCompliances > 0 ? '#f871710D' : '#81c9950D'})` }}
-              >
-                <ExclamationTriangleIcon className="w-5 h-5" style={{ color: stats.openNonCompliances > 0 ? '#dc2626' : '#4a8f5a' }} strokeWidth={1.5} />
-              </div>
-              <p className="text-xs text-gray-600 mb-1">Non-conformités ouvertes</p>
-              <p className={`text-2xl font-bold ${stats.openNonCompliances > 0 ? 'text-red-600' : 'text-gray-900'}`}>{stats.openNonCompliances}</p>
-            </div>
-          </a>
-
-          {/* Stat Card 5 - Repas du jour */}
-          <a
-            href="/owner/haccp/meals"
-            className="relative rounded-3xl p-5 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden block"
-            style={{
-              border: '1px solid #81c99533',
-              boxShadow: '0 0 0 0 rgba(129,201,149,0.25)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(129,201,149,0.25)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.boxShadow = '0 0 0 0 rgba(129,201,149,0.25)'
-            }}
-          >
-            <div
-              className="absolute inset-0 opacity-60"
-              style={{ background: 'linear-gradient(to bottom right, #f1f9f3, white)' }}
-            />
-            <div className="relative z-10">
-              <div
-                className="inline-flex items-center justify-center w-10 h-10 rounded-2xl mb-3 group-hover:scale-105 transition-all duration-300"
-                style={{ background: 'linear-gradient(to bottom right, #81c9951A, #81c9950D)' }}
-              >
-                <ClipboardDocumentCheckIcon className="w-5 h-5" style={{ color: '#4a8f5a' }} strokeWidth={1.5} />
-              </div>
-              <p className="text-xs text-gray-600 mb-1">Repas du jour</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.todayMeals}</p>
-            </div>
-          </a>
-        </div>
-
-        {/* Modules grid */}
+        {/* Modules grid - Layout organique avec couleurs variées */}
         <div>
           <h2 className="text-xl font-semibold mb-4">
             Modules HACCP
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {modules.map((module) => (
-              <ModuleCard
-                key={module.name}
-                module="haccp"
-                href={module.href}
-                icon={module.icon}
-                title={module.name}
-                description={module.description}
-              />
+              <div key={module.name} className={module.colSpan}>
+                <ModuleCard
+                  module={module.module}
+                  href={module.href}
+                  icon={module.icon}
+                  title={module.name}
+                  description={module.description}
+                />
+              </div>
             ))}
           </div>
         </div>
 
-        {/* Quick actions */}
+        {/* Quick actions - Couleurs variées */}
         <div className="mt-8">
           <h2 className="text-xl font-semibold mb-4">
             Actions rapides
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <ModuleCard
-              module="haccp"
+              module="calendar"
               href="/owner/haccp/meals"
               icon={<ClipboardDocumentCheckIcon className="w-5 h-5" strokeWidth={1.5} />}
               title="Nouveau repas"
@@ -450,7 +260,7 @@ export default function HaccpDashboardPage() {
             />
 
             <ModuleCard
-              module="haccp"
+              module="users"
               href="/owner/haccp/non-compliances"
               icon={<ExclamationTriangleIcon className="w-5 h-5" strokeWidth={1.5} />}
               title="Déclarer un incident"
@@ -464,26 +274,26 @@ export default function HaccpDashboardPage() {
               disabled={exporting}
               className="relative rounded-3xl p-4 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden text-left disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
-                border: '1px solid #81c99533',
-                boxShadow: '0 0 0 0 rgba(129,201,149,0.25)'
+                border: '1px solid #9fa8da33',
+                boxShadow: '0 0 0 0 rgba(159,168,218,0.25)'
               }}
               onMouseEnter={(e) => {
-                if (!exporting) e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(129,201,149,0.25)'
+                if (!exporting) e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(159,168,218,0.25)'
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = '0 0 0 0 rgba(129,201,149,0.25)'
+                e.currentTarget.style.boxShadow = '0 0 0 0 rgba(159,168,218,0.25)'
               }}
             >
               <div
                 className="absolute inset-0 opacity-60"
-                style={{ background: 'linear-gradient(to bottom right, #f1f9f3, white)' }}
+                style={{ background: 'linear-gradient(to bottom right, #e8eaf6, white)' }}
               />
               <div className="relative z-10">
                 <div
                   className="inline-flex items-center justify-center w-8 h-8 rounded-2xl mb-3 group-hover:scale-105 transition-all duration-300"
-                  style={{ background: 'linear-gradient(to bottom right, #81c9951A, #81c9950D)' }}
+                  style={{ background: 'linear-gradient(to bottom right, #9fa8da1A, #9fa8da0D)' }}
                 >
-                  <ArrowDownTrayIcon className="w-4 h-4" style={{ color: '#4a8f5a' }} strokeWidth={1.5} />
+                  <ArrowDownTrayIcon className="w-4 h-4" style={{ color: '#6870a0' }} strokeWidth={1.5} />
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-0.5 tracking-tight text-sm">
                   {exporting ? 'Export en cours...' : 'Export PDF HACCP'}

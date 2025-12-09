@@ -4,12 +4,10 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { AvatarSelector } from '@/components/shared/AvatarSelector'
 import {
@@ -20,6 +18,7 @@ import {
   XCircleIcon,
   PencilIcon
 } from '@heroicons/react/24/outline'
+import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
 interface EnterpriseData {
   id: string
@@ -201,85 +200,124 @@ export default function ProfilPage() {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* En-tête avec avatar */}
-        <div className="flex items-center gap-6">
-          <Avatar className="h-24 w-24 border-4 border-primary-100">
-            {ownerData?.avatar ? (
-              <AvatarImage src={`/${ownerData.avatar}`} alt="Avatar" />
-            ) : null}
-            <AvatarFallback className="bg-gradient-to-br from-primary-400 to-primary-600 text-white text-2xl font-bold">
-              {getInitials(ownerData?.first_name, ownerData?.last_name)}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent">
-              Mon Profil
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Gérez vos informations personnelles et celles de votre entreprise
-            </p>
-            <div className="flex gap-2 mt-3">
-              <Badge variant="secondary" className="gap-1">
-                <ShieldCheckIcon className="w-3 h-3" />
-                Propriétaire
-              </Badge>
-              {enterpriseData && (
-                <Badge variant="outline" className="gap-1">
-                  <BuildingOfficeIcon className="w-3 h-3" />
-                  {enterpriseData.name}
+        {/* Breadcrumb */}
+        <PageBreadcrumb
+          items={[
+            { label: 'Dashboard', href: '/owner/dashboard' },
+            { label: 'Profil' }
+          ]}
+        />
+
+        {/* En-tête avec avatar - Style organique */}
+        <div
+          className="relative rounded-3xl p-8 bg-white overflow-hidden"
+          style={{
+            border: '1px solid #c5b3d133',
+            background: 'linear-gradient(to bottom right, #f5f3f8, white)'
+          }}
+        >
+          <div className="flex items-center gap-6">
+            <Avatar className="h-24 w-24 border-4 border-purple-100 shadow-lg">
+              {ownerData?.avatar ? (
+                <AvatarImage src={`/${ownerData.avatar}`} alt="Avatar" />
+              ) : null}
+              <AvatarFallback className="bg-gradient-to-br from-purple-400 to-purple-600 text-white text-2xl font-bold">
+                {getInitials(ownerData?.first_name, ownerData?.last_name)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-500 to-purple-700 bg-clip-text text-transparent">
+                Mon Profil
+              </h1>
+              <p className="text-muted-foreground mt-1">
+                Gérez vos informations personnelles et celles de votre entreprise
+              </p>
+              <div className="flex gap-2 mt-3">
+                <Badge variant="secondary" className="gap-1">
+                  <ShieldCheckIcon className="w-3 h-3" />
+                  Propriétaire
                 </Badge>
-              )}
+                {enterpriseData && (
+                  <Badge variant="outline" className="gap-1 border-purple-200 text-purple-700">
+                    <BuildingOfficeIcon className="w-3 h-3" />
+                    {enterpriseData.name}
+                  </Badge>
+                )}
+              </div>
             </div>
+            {!isEditing && (
+              <Button
+                onClick={() => setIsEditing(true)}
+                className="gap-2 bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+              >
+                <PencilIcon className="w-4 h-4" />
+                Modifier
+              </Button>
+            )}
           </div>
-          {!isEditing && (
-            <Button onClick={() => setIsEditing(true)} className="gap-2">
-              <PencilIcon className="w-4 h-4" />
-              Modifier
-            </Button>
-          )}
         </div>
 
-        {/* Messages */}
+        {/* Messages - Style organique */}
         {error && (
-          <Card className="border-red-200 bg-red-50">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-3">
-                <XCircleIcon className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                  <p className="font-semibold text-red-900">Erreur</p>
-                  <p className="text-sm text-red-700">{error}</p>
-                </div>
+          <div
+            className="relative rounded-3xl p-6 bg-white overflow-hidden"
+            style={{
+              border: '1px solid #f8717133',
+              background: 'linear-gradient(to bottom right, #fef2f2, white)'
+            }}
+          >
+            <div className="flex items-start gap-3">
+              <XCircleIcon className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="font-semibold text-red-900">Erreur</p>
+                <p className="text-sm text-red-700">{error}</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
 
         {success && (
-          <Card className="border-green-200 bg-green-50">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-3">
-                <CheckCircleIcon className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                  <p className="font-semibold text-green-900">Succès</p>
-                  <p className="text-sm text-green-700">{success}</p>
-                </div>
+          <div
+            className="relative rounded-3xl p-6 bg-white overflow-hidden"
+            style={{
+              border: '1px solid #b5ead733',
+              background: 'linear-gradient(to bottom right, #f0fdf4, white)'
+            }}
+          >
+            <div className="flex items-start gap-3">
+              <CheckCircleIcon className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="font-semibold text-green-900">Succès</p>
+                <p className="text-sm text-green-700">{success}</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
 
-        {/* Section Informations personnelles */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <UserCircleIcon className="w-5 h-5 text-primary-500" />
-              <CardTitle>Informations personnelles</CardTitle>
+        {/* Section Informations personnelles - Style organique */}
+        <div
+          className="relative rounded-3xl p-6 bg-white overflow-hidden hover:shadow-lg transition-all duration-300"
+          style={{
+            border: '1px solid #f4c2c233',
+            background: 'linear-gradient(to bottom right, #fef8f8, white)'
+          }}
+        >
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div
+                className="inline-flex items-center justify-center w-10 h-10 rounded-2xl"
+                style={{ background: 'linear-gradient(to bottom right, #f4c2c21A, #f4c2c20D)' }}
+              >
+                <UserCircleIcon className="w-5 h-5" style={{ color: '#e59ba1' }} strokeWidth={1.5} />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900">Informations personnelles</h3>
             </div>
-            <CardDescription>
+            <p className="text-sm text-muted-foreground ml-12">
               Vos informations d'identification et de contact
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            </p>
+          </div>
+
+          <div className="space-y-4">
             {/* Sélecteur d'avatar en mode édition */}
             {isEditing && (
               <>
@@ -287,13 +325,13 @@ export default function ProfilPage() {
                   selectedAvatar={formData.avatar}
                   onSelect={(avatar) => setFormData({ ...formData, avatar })}
                 />
-                <Separator />
+                <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent my-4" />
               </>
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label htmlFor="first_name" className="text-sm font-medium">
+                <label htmlFor="first_name" className="text-sm font-medium text-gray-700">
                   Prénom
                 </label>
                 {isEditing ? (
@@ -302,14 +340,15 @@ export default function ProfilPage() {
                     value={formData.first_name}
                     onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
                     placeholder="Votre prénom"
+                    className="rounded-xl border-gray-200 focus:border-pink-300 focus:ring-pink-200"
                   />
                 ) : (
-                  <p className="text-lg">{ownerData?.first_name || '-'}</p>
+                  <p className="text-lg font-medium text-gray-900">{ownerData?.first_name || '-'}</p>
                 )}
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="last_name" className="text-sm font-medium">
+                <label htmlFor="last_name" className="text-sm font-medium text-gray-700">
                   Nom
                 </label>
                 {isEditing ? (
@@ -318,43 +357,56 @@ export default function ProfilPage() {
                     value={formData.last_name}
                     onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
                     placeholder="Votre nom"
+                    className="rounded-xl border-gray-200 focus:border-pink-300 focus:ring-pink-200"
                   />
                 ) : (
-                  <p className="text-lg">{ownerData?.last_name || '-'}</p>
+                  <p className="text-lg font-medium text-gray-900">{ownerData?.last_name || '-'}</p>
                 )}
               </div>
             </div>
 
-            <Separator />
+            <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent my-4" />
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Email</label>
+              <label className="text-sm font-medium text-gray-700">Email</label>
               <div className="flex items-center gap-2">
-                <p className="text-lg">{ownerData?.email || '-'}</p>
-                <Badge variant="outline" className="text-xs">Non modifiable</Badge>
+                <p className="text-lg font-medium text-gray-900">{ownerData?.email || '-'}</p>
+                <Badge variant="outline" className="text-xs border-pink-200 text-pink-700">Non modifiable</Badge>
               </div>
               <p className="text-xs text-muted-foreground">
                 L'email ne peut pas être modifié. Contactez le développeur si nécessaire.
               </p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* Section Entreprise */}
+        {/* Section Entreprise - Style organique */}
         {enterpriseData && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <BuildingOfficeIcon className="w-5 h-5 text-primary-500" />
-                <CardTitle>Mon Entreprise</CardTitle>
+          <div
+            className="relative rounded-3xl p-6 bg-white overflow-hidden hover:shadow-lg transition-all duration-300"
+            style={{
+              border: '1px solid #c5b3d133',
+              background: 'linear-gradient(to bottom right, #f5f3f8, white)'
+            }}
+          >
+            <div className="mb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div
+                  className="inline-flex items-center justify-center w-10 h-10 rounded-2xl"
+                  style={{ background: 'linear-gradient(to bottom right, #c5b3d11A, #c5b3d10D)' }}
+                >
+                  <BuildingOfficeIcon className="w-5 h-5" style={{ color: '#9c89b8' }} strokeWidth={1.5} />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900">Mon Entreprise</h3>
               </div>
-              <CardDescription>
+              <p className="text-sm text-muted-foreground ml-12">
                 Informations légales et administratives de votre structure
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+              </p>
+            </div>
+
+            <div className="space-y-4">
               <div className="space-y-2">
-                <label htmlFor="enterprise_name" className="text-sm font-medium">
+                <label htmlFor="enterprise_name" className="text-sm font-medium text-gray-700">
                   Nom de l'entreprise
                 </label>
                 {isEditing ? (
@@ -363,15 +415,16 @@ export default function ProfilPage() {
                     value={formData.enterprise_name}
                     onChange={(e) => setFormData({ ...formData, enterprise_name: e.target.value })}
                     placeholder="Nom de votre entreprise"
+                    className="rounded-xl border-gray-200 focus:border-purple-300 focus:ring-purple-200"
                   />
                 ) : (
-                  <p className="text-lg font-semibold">{enterpriseData.name || '-'}</p>
+                  <p className="text-lg font-semibold text-gray-900">{enterpriseData.name || '-'}</p>
                 )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label htmlFor="legal_form" className="text-sm font-medium">
+                  <label htmlFor="legal_form" className="text-sm font-medium text-gray-700">
                     Forme juridique
                   </label>
                   {isEditing ? (
@@ -379,7 +432,7 @@ export default function ProfilPage() {
                       value={formData.legal_form || 'none'}
                       onValueChange={(value) => setFormData({ ...formData, legal_form: value === 'none' ? '' : value })}
                     >
-                      <SelectTrigger id="legal_form">
+                      <SelectTrigger id="legal_form" className="rounded-xl border-gray-200 focus:border-purple-300 focus:ring-purple-200">
                         <SelectValue placeholder="Sélectionnez une forme juridique" />
                       </SelectTrigger>
                       <SelectContent>
@@ -394,12 +447,12 @@ export default function ProfilPage() {
                       </SelectContent>
                     </Select>
                   ) : (
-                    <p className="text-lg">{enterpriseData.legal_form || '-'}</p>
+                    <p className="text-lg font-medium text-gray-900">{enterpriseData.legal_form || '-'}</p>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <label htmlFor="siret" className="text-sm font-medium">
+                  <label htmlFor="siret" className="text-sm font-medium text-gray-700">
                     SIRET
                   </label>
                   {isEditing ? (
@@ -411,64 +464,82 @@ export default function ProfilPage() {
                         placeholder="14 chiffres"
                         maxLength={14}
                         pattern="[0-9]{14}"
+                        className="rounded-xl border-gray-200 focus:border-purple-300 focus:ring-purple-200"
                       />
                       <p className="text-xs text-muted-foreground">
                         Format : 14 chiffres sans espaces
                       </p>
                     </div>
                   ) : (
-                    <p className="text-lg font-mono">{enterpriseData.siret || '-'}</p>
+                    <p className="text-lg font-mono font-medium text-gray-900">{enterpriseData.siret || '-'}</p>
                   )}
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Boutons d'action */}
-        {isEditing && (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex gap-3">
-                <Button
-                  onClick={handleSave}
-                  disabled={isSaving}
-                  className="flex-1"
-                >
-                  {isSaving ? 'Enregistrement...' : 'Enregistrer les modifications'}
-                </Button>
-                <Button
-                  onClick={handleCancel}
-                  disabled={isSaving}
-                  variant="outline"
-                >
-                  Annuler
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Section Sécurité */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <ShieldCheckIcon className="w-5 h-5 text-primary-500" />
-              <CardTitle>Sécurité</CardTitle>
             </div>
-            <CardDescription>
+          </div>
+        )}
+
+        {/* Boutons d'action - Style organique */}
+        {isEditing && (
+          <div
+            className="relative rounded-3xl p-6 bg-white overflow-hidden"
+            style={{
+              border: '1px solid #c5b3d133',
+              background: 'linear-gradient(to bottom right, #f5f3f8, white)'
+            }}
+          >
+            <div className="flex gap-3">
+              <Button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="flex-1 bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 rounded-xl"
+              >
+                {isSaving ? 'Enregistrement...' : 'Enregistrer les modifications'}
+              </Button>
+              <Button
+                onClick={handleCancel}
+                disabled={isSaving}
+                variant="outline"
+                className="border-purple-200 text-purple-700 hover:bg-purple-50 rounded-xl"
+              >
+                Annuler
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Section Sécurité - Style organique */}
+        <div
+          className="relative rounded-3xl p-6 bg-white overflow-hidden hover:shadow-lg transition-all duration-300"
+          style={{
+            border: '1px solid #5a9dc933',
+            background: 'linear-gradient(to bottom right, #f8fbfd, white)'
+          }}
+        >
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div
+                className="inline-flex items-center justify-center w-10 h-10 rounded-2xl"
+                style={{ background: 'linear-gradient(to bottom right, #5a9dc91A, #5a9dc90D)' }}
+              >
+                <ShieldCheckIcon className="w-5 h-5" style={{ color: '#2c5f7f' }} strokeWidth={1.5} />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900">Sécurité</h3>
+            </div>
+            <p className="text-sm text-muted-foreground ml-12">
               Gestion de votre mot de passe et paramètres de sécurité
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
+            </p>
+          </div>
+
+          <div className="space-y-3">
             <p className="text-muted-foreground">
               Pour modifier votre mot de passe, contactez le développeur.
             </p>
             <p className="text-sm text-muted-foreground">
               Une fonctionnalité de réinitialisation de mot de passe sera disponible prochainement.
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   )

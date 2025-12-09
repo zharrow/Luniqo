@@ -14,6 +14,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
 import { FormDialog } from '@/components/shared/FormDialog'
+import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
 export default function SuppliersPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
@@ -131,23 +132,40 @@ export default function SuppliersPage() {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
-              Fournisseurs
-            </h1>
-            <p className="text-muted-foreground">
-              Gestion des fournisseurs de produits alimentaires
-            </p>
+        {/* Breadcrumb */}
+        <PageBreadcrumb
+          items={[
+            { label: 'Dashboard', href: '/owner/dashboard' },
+            { label: 'HACCP', href: '/owner/haccp' },
+            { label: 'Fournisseurs' }
+          ]}
+        />
+
+        {/* Header with Gradient - Module Communication (Turquoise) */}
+        <div className="relative mb-8 p-8 rounded-3xl bg-gradient-to-br from-cyan-50 via-teal-50 to-sky-50 border border-cyan-200/50 overflow-hidden">
+          <div className="absolute inset-0 bg-[url('/patterns/dots.svg')] opacity-5"></div>
+          <div className="relative flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-400 to-teal-500 flex items-center justify-center shadow-lg shadow-cyan-500/30">
+                <TruckIcon className="w-8 h-8 text-white" strokeWidth={1.5} />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-cyan-600 to-teal-600 bg-clip-text text-transparent" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+                  Fournisseurs
+                </h1>
+                <p className="text-cyan-700/70">
+                  Gestion des fournisseurs de produits alimentaires
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={openCreateModal}
+              className="px-6 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-medium shadow-lg shadow-cyan-500/30 hover:shadow-xl hover:shadow-cyan-500/40 hover:scale-105 transition-all duration-200 flex items-center gap-2"
+            >
+              <PlusIcon className="w-5 h-5" />
+              Nouveau fournisseur
+            </button>
           </div>
-          <button
-            onClick={openCreateModal}
-            className="btn btn-primary flex items-center gap-2"
-          >
-            <PlusIcon className="w-5 h-5" />
-            Nouveau fournisseur
-          </button>
         </div>
 
         {/* Suppliers grid */}
@@ -169,12 +187,12 @@ export default function SuppliersPage() {
             {suppliers.map((supplier) => (
               <div
                 key={supplier.id}
-                className={`card p-6 ${!supplier.is_active && 'opacity-50'}`}
+                className={`group relative p-6 rounded-3xl bg-gradient-to-br from-cyan-50/80 to-teal-50/80 border border-cyan-200/50 hover:shadow-lg hover:shadow-cyan-500/20 transition-all duration-300 hover:scale-[1.02] ${!supplier.is_active && 'opacity-50'}`}
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="w-12 h-12 rounded-lg bg-success-50 flex items-center justify-center flex-shrink-0">
-                      <TruckIcon className="w-6 h-6 text-success-600" />
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-400 to-teal-500 flex items-center justify-center flex-shrink-0 shadow-md shadow-cyan-500/30 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                      <TruckIcon className="w-6 h-6 text-white" strokeWidth={2} />
                     </div>
                     <div className="min-w-0">
                       <h3 className="font-semibold truncate">

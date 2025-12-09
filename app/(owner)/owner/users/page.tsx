@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
 import { FormDialog } from '@/components/shared/FormDialog'
+import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
 export default function UsersPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
@@ -195,23 +196,28 @@ export default function UsersPage() {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="max-w-7xl mx-auto">
+        {/* Breadcrumb */}
+        <PageBreadcrumb
+          items={[
+            { label: 'Dashboard', href: '/owner/dashboard' },
+            { label: 'Employés' }
+          ]}
+        />
+
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+            <h1 className="text-3xl font-bold mb-2">
               Employés
             </h1>
             <p className="text-muted-foreground">
               Gérez vos employés et leurs accès aux pièces
             </p>
           </div>
-          <button
-            onClick={openCreateModal}
-            className="btn btn-primary flex items-center gap-2"
-          >
+          <Button onClick={openCreateModal} className="flex items-center gap-2">
             <PlusIcon className="w-5 h-5" />
             Nouvel employé
-          </button>
+          </Button>
         </div>
 
         {/* Users grid */}
@@ -231,11 +237,27 @@ export default function UsersPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {users.map((user) => (
-              <Card
+              <div
                 key={user.id}
-                className={`${!user.is_active && 'opacity-50'} hover:shadow-lg transition-shadow bg-gradient-to-br from-[#fce4ec] to-white border-l-4 border-l-[#f4a5a5]`}
+                className={`${!user.is_active && 'opacity-50'} relative rounded-3xl p-6 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden`}
+                style={{
+                  border: '1px solid #f4a5a520',
+                  boxShadow: '0 0 0 0 rgba(244,165,165,0.25)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(244,165,165,0.25)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = '0 0 0 0 rgba(244,165,165,0.25)'
+                }}
               >
-                <CardContent className="p-6">
+                {/* Gradient fond */}
+                <div
+                  className="absolute inset-0 opacity-60"
+                  style={{ background: 'linear-gradient(to bottom right, #fef6f7, white)' }}
+                />
+
+                <div className="relative z-10">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-12 w-12">
@@ -316,8 +338,8 @@ export default function UsersPage() {
                       </div>
                     )}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ))}
           </div>
         )}

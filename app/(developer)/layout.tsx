@@ -2,6 +2,8 @@
 
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
 
+export const dynamic = 'force-dynamic'
+
 export default function DeveloperLayout({
   children,
 }: {

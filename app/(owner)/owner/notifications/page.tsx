@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/contexts/AuthContext'
 import { messagingService, type Notification } from '@/lib/services/messaging.service'
+import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([])
@@ -96,19 +97,19 @@ export default function NotificationsPage() {
     if (notification.resource_type && notification.resource_id) {
       switch (notification.resource_type) {
         case 'session':
-          router.push(`/dashboard/sessions/${notification.resource_id}`)
+          router.push(`/owner/sessions/${notification.resource_id}`)
           break
         case 'conversation':
-          router.push(`/dashboard/messages/${notification.resource_id}`)
+          router.push(`/owner/messages/${notification.resource_id}`)
           break
         case 'meal':
-          router.push('/haccp/meals')
+          router.push('/owner/haccp/meals')
           break
         case 'temperature':
-          router.push('/haccp/temperatures')
+          router.push('/owner/haccp/temperatures')
           break
         case 'haccp_incident':
-          router.push('/haccp/non-compliances')
+          router.push('/owner/haccp/non-compliances')
           break
         default:
           break
@@ -132,14 +133,29 @@ export default function NotificationsPage() {
     return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
   }
 
-  function getPriorityColor(priority: string): string {
+  function getPriorityColor(priority: string): { border: string; bg: string; iconBg: string; iconColor: string } {
     switch (priority) {
       case 'Critical':
-        return 'bg-danger-100 text-danger-600 border-danger-200'
+        return {
+          border: '#f8717133',
+          bg: 'linear-gradient(to bottom right, #fef2f2, white)',
+          iconBg: 'linear-gradient(to bottom right, #f871711A, #f871710D)',
+          iconColor: '#d84848'
+        }
       case 'Warning':
-        return 'bg-warning-100 text-warning-600 border-warning-200'
+        return {
+          border: '#ffe5b433',
+          bg: 'linear-gradient(to bottom right, #fffbeb, white)',
+          iconBg: 'linear-gradient(to bottom right, #ffe5b41A, #ffe5b40D)',
+          iconColor: '#d4a929'
+        }
       default:
-        return 'bg-info-100 text-info-600 border-info-200'
+        return {
+          border: '#80deea33',
+          bg: 'linear-gradient(to bottom right, #f0fdff, white)',
+          iconBg: 'linear-gradient(to bottom right, #80deea1A, #80deea0D)',
+          iconColor: '#2c8a99'
+        }
     }
   }
 
@@ -198,66 +214,98 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="container mx-auto px-6 py-8">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Notifications</h1>
-          <p className="text-muted-foreground">
-            {unreadCount > 0 ? `${unreadCount} non lue(s)` : 'Toutes vos notifications'}
-          </p>
-        </div>
+    <div className="max-w-7xl mx-auto">
+      {/* Breadcrumb */}
+      <PageBreadcrumb
+        items={[
+          { label: 'Dashboard', href: '/owner/dashboard' },
+          { label: 'Notifications' }
+        ]}
+      />
 
-        {unreadCount > 0 && (
-          <button onClick={handleMarkAllAsRead} className="btn btn-secondary">
-            <svg className="w-5 h-5 mr-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-            Tout marquer comme lu
-          </button>
-        )}
+      {/* Header - Style organique */}
+      <div
+        className="relative rounded-3xl p-6 mb-8 bg-white overflow-hidden"
+        style={{
+          border: '1px solid #80deea33',
+          background: 'linear-gradient(to bottom right, #f0fdff, white)'
+        }}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div
+              className="inline-flex items-center justify-center w-14 h-14 rounded-2xl"
+              style={{ background: 'linear-gradient(to bottom right, #80deea1A, #80deea0D)' }}
+            >
+              <svg className="w-7 h-7" style={{ color: '#2c8a99' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-cyan-600 to-teal-700 bg-clip-text text-transparent">
+                Notifications
+              </h1>
+              <p className="text-muted-foreground">
+                {unreadCount > 0 ? `${unreadCount} non lue(s)` : 'Toutes vos notifications'}
+              </p>
+            </div>
+          </div>
+
+          {unreadCount > 0 && (
+            <button
+              onClick={handleMarkAllAsRead}
+              className="px-4 py-2 rounded-xl bg-gradient-to-br from-cyan-500 to-teal-600 hover:from-cyan-600 hover:to-teal-700 text-white font-medium shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 inline-flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              Tout marquer comme lu
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Error Message */}
+      {/* Error Message - Style organique */}
       {error && (
-        <div className="card p-4 mb-6 bg-danger-50 border-2 border-danger-200">
-          <p className="text-danger-700">{error}</p>
+        <div
+          className="relative rounded-3xl p-4 mb-6 bg-white overflow-hidden"
+          style={{
+            border: '1px solid #f8717133',
+            background: 'linear-gradient(to bottom right, #fef2f2, white)'
+          }}
+        >
+          <p className="text-red-700">{error}</p>
         </div>
       )}
 
-      {/* Filters */}
-      <div className="flex gap-2 mb-6">
+      {/* Filters - Style organique */}
+      <div className="flex gap-3 mb-6">
         <button
           onClick={() => setFilter('all')}
-          className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+          className={`px-5 py-2.5 rounded-xl font-semibold transition-all duration-300 ${
             filter === 'all'
-              ? 'bg-primary-500 text-white'
-              : 'bg-card text-foreground hover:bg-muted'
+              ? 'bg-gradient-to-br from-cyan-500 to-teal-600 text-white shadow-lg scale-105'
+              : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 hover:border-cyan-300'
           }`}
         >
           Toutes ({notifications.length})
         </button>
         <button
           onClick={() => setFilter('unread')}
-          className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+          className={`px-5 py-2.5 rounded-xl font-semibold transition-all duration-300 ${
             filter === 'unread'
-              ? 'bg-primary-500 text-white'
-              : 'bg-card text-foreground hover:bg-muted'
+              ? 'bg-gradient-to-br from-cyan-500 to-teal-600 text-white shadow-lg scale-105'
+              : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 hover:border-cyan-300'
           }`}
         >
           Non lues ({unreadCount})
         </button>
         <button
           onClick={() => setFilter('read')}
-          className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+          className={`px-5 py-2.5 rounded-xl font-semibold transition-all duration-300 ${
             filter === 'read'
-              ? 'bg-primary-500 text-white'
-              : 'bg-card text-foreground hover:bg-muted'
+              ? 'bg-gradient-to-br from-cyan-500 to-teal-600 text-white shadow-lg scale-105'
+              : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 hover:border-cyan-300'
           }`}
         >
           Lues ({notifications.length - unreadCount})
@@ -266,21 +314,28 @@ export default function NotificationsPage() {
 
       {/* Notifications List */}
       {filteredNotifications.length === 0 ? (
-        <div className="card p-12 text-center">
+        <div
+          className="relative rounded-3xl p-12 bg-white overflow-hidden text-center"
+          style={{
+            border: '1px solid #80deea33',
+            background: 'linear-gradient(to bottom right, #f0fdff, white)'
+          }}
+        >
           <svg
-            className="w-24 h-24 mx-auto mb-4 text-muted-foreground/30"
+            className="w-24 h-24 mx-auto mb-4"
+            style={{ color: '#80deea40' }}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
+            strokeWidth={1.5}
           >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeWidth={2}
               d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
             />
           </svg>
-          <h2 className="text-2xl font-bold mb-2">Aucune notification</h2>
+          <h2 className="text-2xl font-bold mb-2 text-gray-900">Aucune notification</h2>
           <p className="text-muted-foreground">
             {filter === 'unread'
               ? 'Toutes vos notifications ont été lues'
@@ -289,87 +344,108 @@ export default function NotificationsPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {filteredNotifications.map((notification) => (
-            <div
-              key={notification.id}
-              onClick={() => handleNotificationClick(notification)}
-              className={`card p-4 hover:shadow-lg transition-all cursor-pointer relative ${
-                notification.status === 'Unread' ? 'bg-primary-50 border-2 border-primary-200' : ''
-              }`}
-            >
-              <div className="flex items-start gap-4">
-                {/* Priority Icon */}
+          {filteredNotifications.map((notification) => {
+            const colors = getPriorityColor(notification.priority)
+            return (
+              <div
+                key={notification.id}
+                onClick={() => handleNotificationClick(notification)}
+                className="relative rounded-3xl p-5 bg-white hover:-translate-y-1 transition-all duration-300 cursor-pointer group overflow-hidden"
+                style={{
+                  border: `1px solid ${colors.border}`,
+                  boxShadow: notification.status === 'Unread' ? '0 4px 12px rgba(128,222,234,0.15)' : '0 0 0 0 rgba(128,222,234,0.25)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = '0 12px 32px -8px rgba(128,222,234,0.25)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = notification.status === 'Unread' ? '0 4px 12px rgba(128,222,234,0.15)' : '0 0 0 0 rgba(128,222,234,0.25)'
+                }}
+              >
+                {/* Gradient fond */}
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 border-2 ${getPriorityColor(
-                    notification.priority
-                  )}`}
-                >
-                  {getPriorityIcon(notification.priority)}
-                </div>
+                  className="absolute inset-0 opacity-60"
+                  style={{ background: colors.bg }}
+                />
 
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between mb-1">
-                    <h3 className="text-lg font-bold">{notification.title}</h3>
-                    <span className="text-sm text-muted-foreground ml-2 flex-shrink-0">
-                      {formatDate(notification.created_at)}
-                    </span>
+                <div className="relative z-10 flex items-start gap-4">
+                  {/* Priority Icon */}
+                  <div
+                    className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm"
+                    style={{ background: colors.iconBg }}
+                  >
+                    <div style={{ color: colors.iconColor }}>
+                      {getPriorityIcon(notification.priority)}
+                    </div>
                   </div>
-                  <p className="mb-2">{notification.content}</p>
-                  {notification.type && (
-                    <span className="inline-block px-3 py-1 bg-muted text-muted-foreground rounded-full text-xs font-semibold">
-                      {notification.type}
-                    </span>
-                  )}
-                </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  {notification.status === 'Unread' && (
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between mb-1">
+                      <h3 className="text-lg font-bold text-gray-900">{notification.title}</h3>
+                      <span className="text-sm text-muted-foreground ml-2 flex-shrink-0">
+                        {formatDate(notification.created_at)}
+                      </span>
+                    </div>
+                    <p className="mb-2 text-gray-700">{notification.content}</p>
+                    {notification.type && (
+                      <span
+                        className="inline-block px-3 py-1 rounded-full text-xs font-semibold"
+                        style={{
+                          backgroundColor: `${colors.iconColor}1A`,
+                          color: colors.iconColor
+                        }}
+                      >
+                        {notification.type}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {notification.status === 'Unread' && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleMarkAsRead(notification.id)
+                        }}
+                        className="p-2 hover:bg-cyan-100 rounded-xl transition-all duration-300 hover:scale-110"
+                        title="Marquer comme lu"
+                      >
+                        <svg className="w-5 h-5 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </button>
+                    )}
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
-                        handleMarkAsRead(notification.id)
+                        handleDelete(notification.id)
                       }}
-                      className="p-2 hover:bg-muted rounded-lg transition-colors"
-                      title="Marquer comme lu"
+                      className="p-2 hover:bg-red-100 rounded-xl transition-all duration-300 hover:scale-110"
+                      title="Supprimer"
                     >
-                      <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                         />
                       </svg>
                     </button>
-                  )}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleDelete(notification.id)
-                    }}
-                    className="p-2 hover:bg-danger-100 rounded-lg transition-colors"
-                    title="Supprimer"
-                  >
-                    <svg className="w-5 h-5 text-danger-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
-                  </button>
+                  </div>
                 </div>
-              </div>
 
-              {/* Unread Indicator */}
-              {notification.status === 'Unread' && (
-                <div className="absolute top-4 left-4 w-3 h-3 bg-primary-500 rounded-full"></div>
-              )}
-            </div>
-          ))}
+                {/* Unread Indicator */}
+                {notification.status === 'Unread' && (
+                  <div
+                    className="absolute top-5 right-5 w-3 h-3 rounded-full animate-pulse"
+                    style={{ backgroundColor: colors.iconColor }}
+                  ></div>
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
     </div>

@@ -175,80 +175,88 @@ export default function EmployeeHistoryPage() {
 
   return (
     <>
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Mon Historique</h1>
-          <p className="text-muted-foreground">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header - Style Analytics (Indigo) */}
+        <div className="rounded-3xl bg-gradient-to-br from-indigo-100 via-blue-50 to-purple-100 p-8 border border-indigo-200/50 shadow-lg">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-blue-700 bg-clip-text text-transparent mb-2">
+            Mon Historique 📊
+          </h1>
+          <p className="text-gray-600">
             Consultez l'historique de vos tâches accomplies
           </p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
+        {/* Stats Cards - Couleurs variées */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {/* Total - Indigo */}
+          <Card className="rounded-3xl border-indigo-200/50 bg-gradient-to-br from-indigo-50 to-blue-50 shadow-lg hover:shadow-xl hover:shadow-indigo-100 transition-all duration-300 hover:scale-105">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-primary-100 flex items-center justify-center">
-                  <ClipboardDocumentListIcon className="w-6 h-6 text-primary-600" />
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-100 to-blue-100 flex items-center justify-center border border-indigo-200 shadow-sm">
+                  <ClipboardDocumentListIcon className="w-7 h-7 text-indigo-600" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{stats.total}</p>
-                  <p className="text-sm text-muted-foreground">Total</p>
+                  <p className="text-3xl font-bold text-indigo-700">{stats.total}</p>
+                  <p className="text-sm text-indigo-600/80">Total</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          {/* This Week - Vert */}
+          <Card className="rounded-3xl border-emerald-200/50 bg-gradient-to-br from-emerald-50 to-teal-50 shadow-lg hover:shadow-xl hover:shadow-emerald-100 transition-all duration-300 hover:scale-105">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
-                  <CalendarIcon className="w-6 h-6 text-green-600" />
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 flex items-center justify-center border border-emerald-200 shadow-sm">
+                  <CalendarIcon className="w-7 h-7 text-emerald-600" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{stats.thisWeek}</p>
-                  <p className="text-sm text-muted-foreground">Cette semaine</p>
+                  <p className="text-3xl font-bold text-emerald-700">{stats.thisWeek}</p>
+                  <p className="text-sm text-emerald-600/80">Cette semaine</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          {/* This Month - Bleu */}
+          <Card className="rounded-3xl border-sky-200/50 bg-gradient-to-br from-sky-50 to-cyan-50 shadow-lg hover:shadow-xl hover:shadow-sky-100 transition-all duration-300 hover:scale-105">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <CheckCircleIcon className="w-6 h-6 text-blue-600" />
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-sky-100 to-cyan-100 flex items-center justify-center border border-sky-200 shadow-sm">
+                  <CheckCircleIcon className="w-7 h-7 text-sky-600" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{stats.thisMonth}</p>
-                  <p className="text-sm text-muted-foreground">Ce mois</p>
+                  <p className="text-3xl font-bold text-sky-700">{stats.thisMonth}</p>
+                  <p className="text-sm text-sky-600/80">Ce mois</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          {/* Avg Duration - Violet */}
+          <Card className="rounded-3xl border-violet-200/50 bg-gradient-to-br from-violet-50 to-purple-50 shadow-lg hover:shadow-xl hover:shadow-violet-100 transition-all duration-300 hover:scale-105">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center">
-                  <ClockIcon className="w-6 h-6 text-purple-600" />
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-100 to-purple-100 flex items-center justify-center border border-violet-200 shadow-sm">
+                  <ClockIcon className="w-7 h-7 text-violet-600" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{stats.avgDuration} min</p>
-                  <p className="text-sm text-muted-foreground">Durée moy.</p>
+                  <p className="text-3xl font-bold text-violet-700">{stats.avgDuration} min</p>
+                  <p className="text-sm text-violet-600/80">Durée moy.</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Filters */}
-        <Card>
+        {/* Filters - Style Indigo */}
+        <Card className="rounded-3xl border-indigo-200/50 bg-gradient-to-br from-indigo-50 to-blue-50 shadow-lg">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <FunnelIcon className="w-5 h-5 text-primary-500" />
-              <CardTitle>Filtres</CardTitle>
+              <div className="rounded-2xl bg-gradient-to-br from-indigo-100 to-blue-100 p-2 border border-indigo-200">
+                <FunnelIcon className="w-5 h-5 text-indigo-600" strokeWidth={1.5} />
+              </div>
+              <CardTitle className="text-indigo-700">Filtres</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
@@ -280,52 +288,54 @@ export default function EmployeeHistoryPage() {
           </CardContent>
         </Card>
 
-        {/* Task Completions List */}
-        <Card>
+        {/* Task Completions List - Style Indigo */}
+        <Card className="rounded-3xl border-indigo-200/50 bg-gradient-to-br from-white to-indigo-50/30 shadow-lg">
           <CardHeader>
-            <CardTitle>Tâches accomplies ({filteredCompletions.length})</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-indigo-700">
+              Tâches accomplies ({filteredCompletions.length})
+            </CardTitle>
+            <CardDescription className="text-indigo-600/70">
               Liste de toutes vos tâches terminées
             </CardDescription>
           </CardHeader>
           <CardContent>
             {filteredCompletions.length === 0 ? (
               <div className="text-center py-12">
-                <ClipboardDocumentListIcon className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">Aucune tâche trouvée</h3>
-                <p className="text-muted-foreground">
+                <ClipboardDocumentListIcon className="w-16 h-16 text-indigo-300 mx-auto mb-4" strokeWidth={1.5} />
+                <h3 className="text-lg font-semibold text-indigo-700 mb-2">Aucune tâche trouvée</h3>
+                <p className="text-indigo-600/70">
                   {searchTerm || filterPeriod !== 'all'
                     ? 'Essayez de modifier vos filtres'
                     : 'Vos tâches accomplies apparaîtront ici'}
                 </p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {filteredCompletions.map((completion) => (
                   <div
                     key={completion.id}
-                    className="flex items-start gap-4 p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                    className="flex items-start gap-4 p-5 rounded-2xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50 to-teal-50 hover:shadow-lg hover:shadow-emerald-100 transition-all duration-300"
                   >
-                    <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                      <CheckCircleIcon className="w-5 h-5 text-green-600" />
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 flex items-center justify-center flex-shrink-0 border border-emerald-200 shadow-sm">
+                      <CheckCircleIcon className="w-6 h-6 text-emerald-600" strokeWidth={2} />
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-4 mb-1">
+                      <div className="flex items-start justify-between gap-4 mb-2">
                         <div>
-                          <h4 className="font-semibold">{completion.task_name}</h4>
-                          <p className="text-sm text-muted-foreground">{completion.room_name}</p>
+                          <h4 className="font-semibold text-gray-800">{completion.task_name}</h4>
+                          <p className="text-sm text-gray-600">📍 {completion.room_name}</p>
                         </div>
                         {completion.duration && (
-                          <Badge variant="outline" className="flex-shrink-0">
-                            <ClockIcon className="w-3 h-3 mr-1" />
+                          <Badge variant="outline" className="flex-shrink-0 border-emerald-200 bg-emerald-50 text-emerald-700">
+                            <ClockIcon className="w-3 h-3 mr-1" strokeWidth={1.5} />
                             {formatDuration(completion.duration)}
                           </Badge>
                         )}
                       </div>
 
-                      <p className="text-sm text-muted-foreground mb-2">
-                        {formatDate(completion.completed_at)}
+                      <p className="text-sm text-gray-600 mb-2">
+                        🕒 {formatDate(completion.completed_at)}
                         {completion.session_date && (
                           <span className="ml-2">
                             • Session du {format(new Date(completion.session_date), 'd MMM yyyy', { locale: fr })}
@@ -334,9 +344,9 @@ export default function EmployeeHistoryPage() {
                       </p>
 
                       {completion.notes && (
-                        <div className="mt-2 p-2 bg-muted rounded text-sm">
-                          <p className="font-medium text-xs text-muted-foreground mb-1">Notes :</p>
-                          <p>{completion.notes}</p>
+                        <div className="mt-3 p-3 bg-white/70 rounded-xl border border-emerald-100 text-sm">
+                          <p className="font-medium text-xs text-emerald-600 mb-1">📝 Notes :</p>
+                          <p className="text-gray-700">{completion.notes}</p>
                         </div>
                       )}
                     </div>

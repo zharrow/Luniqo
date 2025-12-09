@@ -7,6 +7,7 @@ import { haccpService } from '@/lib/services/haccp.service'
 import { storageService } from '@/lib/services/storage.service'
 import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
 import { FormDialog } from '@/components/shared/FormDialog'
+import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
 interface HaccpDocument {
   id: string
@@ -187,25 +188,44 @@ export default function HaccpDocumentsPage() {
 
   return (
     <div className="p-8">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Documents HACCP</h1>
-          <p className="text-muted-foreground">Gestion des documents de conformité</p>
-        </div>
-        <div className="flex gap-3">
-          <button
-            onClick={handleAdd}
-            className="btn btn-primary"
-          >
-            + Ajouter un document
-          </button>
-          <button
-            onClick={() => router.push('/haccp')}
-            className="btn btn-secondary"
-          >
-            ← Retour
-          </button>
+      {/* Breadcrumb */}
+      <PageBreadcrumb
+        items={[
+          { label: 'Dashboard', href: '/owner/dashboard' },
+          { label: 'HACCP', href: '/owner/haccp' },
+          { label: 'Documents' }
+        ]}
+      />
+
+      {/* Header with Gradient - Module Analytics (Indigo) */}
+      <div className="relative mb-8 p-8 rounded-3xl bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 border border-indigo-200/50 overflow-hidden">
+        <div className="absolute inset-0 bg-[url('/patterns/dots.svg')] opacity-5"></div>
+        <div className="relative flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-400 to-blue-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+              <span className="text-3xl">📄</span>
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+                Documents HACCP
+              </h1>
+              <p className="text-indigo-700/70">Gestion des documents de conformité</p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={handleAdd}
+              className="px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-500 to-blue-500 text-white font-medium shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 hover:scale-105 transition-all duration-200"
+            >
+              + Ajouter un document
+            </button>
+            <button
+              onClick={() => router.push('/owner/haccp')}
+              className="px-6 py-3 rounded-2xl bg-white/80 hover:bg-white border border-indigo-200 text-indigo-700 font-medium hover:scale-105 transition-all duration-200"
+            >
+              ← Retour
+            </button>
+          </div>
         </div>
       </div>
 
@@ -267,10 +287,10 @@ export default function HaccpDocumentsPage() {
             const categoryInfo = categories[doc.category as DocumentCategory]
 
             return (
-              <div key={doc.id} className="card p-6">
+              <div key={doc.id} className="group relative p-6 rounded-3xl bg-gradient-to-br from-indigo-50/80 to-blue-50/80 border border-indigo-200/50 hover:shadow-lg hover:shadow-indigo-500/20 transition-all duration-300 hover:scale-[1.02]">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-lg bg-${categoryInfo.color}-100 flex items-center justify-center text-xl`}>
+                    <div className={`w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-400 to-blue-500 flex items-center justify-center text-xl shadow-md shadow-indigo-500/30 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
                       {categoryInfo.icon}
                     </div>
                     <span className={`px-2 py-1 rounded-full text-xs font-semibold bg-${categoryInfo.color}-100 text-${categoryInfo.color}-700`}>

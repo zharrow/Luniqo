@@ -12,6 +12,7 @@ import {
   ExclamationTriangleIcon,
   ChartBarIcon
 } from '@heroicons/react/24/outline'
+import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
 export default function HistoryPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
@@ -101,6 +102,14 @@ export default function HistoryPage() {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="max-w-7xl mx-auto">
+        {/* Breadcrumb */}
+        <PageBreadcrumb
+          items={[
+            { label: 'Dashboard', href: '/owner/dashboard' },
+            { label: 'Historique' }
+          ]}
+        />
+
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
