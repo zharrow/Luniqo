@@ -2,7 +2,7 @@
 
 Guide complet du design system de **Luniqo** - Application de gestion de crèches avec traçabilité HACCP.
 
-**Dernière mise à jour**: 2025-12-03 - **Ajout du style "Douceur Professionnelle"** ⭐
+**Dernière mise à jour**: 2025-12-09 - **Évolution du style "Douceur Professionnelle"** ⭐
 
 ---
 
@@ -184,15 +184,26 @@ className="hover:bg-gradient-to-br from-[#e3f2fd] to-white"
 
 ## Style "Douceur Professionnelle"
 
-⭐ **Nouveau design system 2025** - Style minimaliste, moderne et chaleureux adapté à l'univers de la petite enfance.
+⭐ **Design system Luniqo 2025** - Style minimaliste, moderne et chaleureux adapté à l'univers de la petite enfance.
 
 ### 🎨 Philosophie du design
 
 Le style "Douceur Professionnelle" combine :
 - ✨ **Minimalisme élégant** (inspiration Apple, Arc Browser)
-- 🎨 **Chaleur pastel** (univers petite enfance)
-- 💎 **Profondeur subtile** (ombres douces, effet flottant)
+- 🎨 **Chaleur pastel organique** - Utilise **toute la palette de couleurs** pour éviter la monotonie
+- 💎 **Profondeur subtile** (ombres douces colorées, effet flottant)
 - 🎯 **Micro-interactions ludiques** (rotation, scale, animations)
+- 🌈 **Diversité visuelle** - Chaque module a sa propre identité colorée
+
+### 🎨 Principe clé : **Éviter la monotonie**
+
+**❌ Problème identifié** : Utiliser une seule couleur (ex: vert menthe pour tout HACCP) rend l'interface monotone et moins engageante.
+
+**✅ Solution appliquée** : Attribuer des couleurs variées de la palette pastel à chaque module pour créer une interface **organique et vivante**.
+
+**Exemple concret (page HACCP)** :
+- ❌ **Avant** : Toutes les cartes en vert menthe → monotone
+- ✅ **Après** : Enfants (rose) + Repas (pêche) + Produits (lime) + Fournisseurs (turquoise) + Températures (vert) + Équipements (violet) + Documents (indigo) + Non-conformités (rose) → **interface vivante et colorée**
 
 ### 📐 Anatomie d'une carte moderne
 
@@ -310,9 +321,11 @@ rounded-3xl  // 24px border-radius (vs rounded-xl = 12px)
 
 **Effet :** Plus doux, plus "cocon", moins corporate.
 
-### 📦 Composant Card réutilisable
+### 📦 Composant ModuleCard (Déjà implémenté ✅)
 
-Créez un composant `ModuleCard` pour standardiser :
+**Fichier** : `components/shared/ModuleCard.tsx`
+
+Le composant `ModuleCard` standardise toutes les cartes de l'application avec le style "Douceur Professionnelle" :
 
 ```tsx
 // components/shared/ModuleCard.tsx
@@ -428,19 +441,21 @@ export function ModuleCard({
 }
 ```
 
-### 🎯 Utilisation du composant
+### 🎯 Utilisation du composant ModuleCard
+
+**Exemple d'utilisation** (Dashboard Owner) :
 
 ```tsx
 import { ModuleCard } from '@/components/shared/ModuleCard'
-import { ClipboardDocumentCheckIcon, BeakerIcon } from '@heroicons/react/24/outline'
+import { ClipboardDocumentCheckIcon, BeakerIcon, UserGroupIcon } from '@heroicons/react/24/outline'
 
 // Dans votre page
 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-  {/* Grande carte */}
+  {/* Grande carte principale - double largeur */}
   <div className="col-span-2">
     <ModuleCard
       module="clean"
-      href="/dashboard/sessions"
+      href="/owner/sessions"
       icon={<ClipboardDocumentCheckIcon className="w-6 h-6" strokeWidth={1.5} />}
       title="Nouvelle session"
       description="Démarrer une session de nettoyage"
@@ -449,16 +464,49 @@ import { ClipboardDocumentCheckIcon, BeakerIcon } from '@heroicons/react/24/outl
     />
   </div>
 
-  {/* Carte normale */}
+  {/* Cartes normales avec couleurs variées */}
   <ModuleCard
     module="haccp"
-    href="/dashboard/haccp"
+    href="/owner/haccp"
     icon={<BeakerIcon className="w-5 h-5" strokeWidth={1.5} />}
     title="HACCP"
     description="Traçabilité"
   />
+
+  <ModuleCard
+    module="users"
+    href="/owner/users"
+    icon={<UserGroupIcon className="w-5 h-5" strokeWidth={1.5} />}
+    title="Employés"
+    description="Gérer"
+  />
+
+  <ModuleCard
+    module="tasks"
+    href="/owner/tasks"
+    icon={<ClipboardDocumentListIcon className="w-5 h-5" strokeWidth={1.5} />}
+    title="Tâches"
+    description="Gérer"
+  />
 </div>
 ```
+
+### 🎨 Règle d'attribution des couleurs
+
+**Pour éviter la monotonie, variez les couleurs des cartes selon le contexte :**
+
+| Contexte | Couleur recommandée | Module |
+|----------|---------------------|---------|
+| Nettoyage, sessions, pièces | Bleu clair | `clean` |
+| HACCP, températures, conformité | Vert menthe | `haccp` |
+| Employés, RH, alertes | Rose pastel | `users` |
+| Tâches, checklist | Lime pastel | `tasks` |
+| Repas, planning, calendrier | Pêche pastel | `calendar` |
+| Paramètres, équipements | Violet lavande | `settings` |
+| Messages, fournisseurs | Turquoise | `communication` |
+| Stats, analytics, documents | Indigo pastel | `analytics` |
+
+**💡 Conseil** : Sur une même page avec plusieurs cartes, **variez les couleurs** pour créer une interface vivante et organique !
 
 ### 🎨 Variantes de design
 
@@ -487,6 +535,70 @@ className="hover:border-[#5a9dc9]/40"  // Passe de 20% à 40% au hover
 </div>
 ```
 
+### 📋 Patterns d'application du style
+
+#### Pattern 1 : Page avec grille de modules (Actions rapides)
+
+**Utilisation** : Dashboard, pages principales avec accès rapide
+
+```tsx
+<div className="mb-8">
+  <h2 className="text-xl font-semibold mb-4">Actions rapides</h2>
+  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+    {/* Action principale (double largeur) */}
+    <div className="col-span-2">
+      <ModuleCard module="clean" {...props} size="lg" />
+    </div>
+
+    {/* Actions secondaires avec couleurs variées */}
+    <ModuleCard module="haccp" {...props} />
+    <ModuleCard module="users" {...props} />
+    <ModuleCard module="tasks" {...props} />
+    <ModuleCard module="calendar" {...props} />
+  </div>
+</div>
+```
+
+#### Pattern 2 : Page thématique avec cartes du même thème
+
+**Utilisation** : Pages HACCP, pages de sous-modules
+
+```tsx
+// ❌ ÉVITER : Toutes les cartes de la même couleur
+<ModuleCard module="haccp" /> // Vert
+<ModuleCard module="haccp" /> // Vert - MONOTONE !
+<ModuleCard module="haccp" /> // Vert
+
+// ✅ PRÉFÉRER : Varier les couleurs par sous-module
+<ModuleCard module="users" title="Enfants" />      // Rose
+<ModuleCard module="calendar" title="Repas" />     // Pêche
+<ModuleCard module="tasks" title="Produits" />     // Lime
+<ModuleCard module="communication" title="Fournisseurs" /> // Turquoise
+<ModuleCard module="haccp" title="Températures" /> // Vert
+<ModuleCard module="settings" title="Équipements" /> // Violet
+```
+
+#### Pattern 3 : Liste avec items cliquables
+
+**Pour les listes d'items** (pièces, sessions, employés), créer un composant similaire :
+
+```tsx
+// Créer un composant ItemCard basé sur ModuleCard
+<a
+  href={item.href}
+  className="relative rounded-3xl p-5 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden"
+  style={{
+    border: `1px solid ${colors.primary}33`,
+    boxShadow: `0 0 0 0 ${colors.shadow}`
+  }}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.boxShadow = `0 16px 48px -12px ${colors.shadow}`
+  }}
+>
+  {/* Contenu de l'item */}
+</a>
+```
+
 ### ✅ Checklist pour appliquer ce style
 
 Quand vous créez une nouvelle carte/module :
@@ -500,10 +612,12 @@ Quand vous créez une nouvelle carte/module :
 - [ ] **Transitions fluides** : `transition-all duration-300`
 - [ ] **Chevron animé (optionnel)** : Apparaît au hover avec `translate-x`
 - [ ] **Status indicator (optionnel)** : Avec animation `ping` pour l'état actif
+- [ ] **⭐ NOUVEAU : Varier les couleurs** : Utiliser différents modules de couleur pour éviter la monotonie
 
 ### 🚫 Erreurs à éviter
 
 ❌ **Ne pas faire :**
+- **Monotonie de couleur** : Utiliser la même couleur pour toutes les cartes d'une page (ex: tout en vert)
 - Bordure gauche épaisse (`border-l-4`) - trop "lourd"
 - Bordure grise générique (`border-gray-200`) - perd l'identité du module
 - Ligne colorée en haut uniquement - crée un déséquilibre visuel
@@ -512,8 +626,9 @@ Quand vous créez une nouvelle carte/module :
 - Bordures trop opaques (`/50` ou plus) - trop visible
 
 ✅ **À faire :**
+- **Varier les couleurs** : Utiliser toute la palette pour une interface vivante et organique
 - Bordure fine colorée tout autour (`border-[COULEUR]/20`)
-- Ombres colorées douces au hover
+- Ombres colorées douces au hover (qui reprennent la couleur de la carte)
 - Animations à `duration-300` minimum
 - Gradients pastels en fond avec `opacity-60`
 - Micro-rotations subtiles (`rotate-2`)
@@ -1306,16 +1421,17 @@ import { motion, AnimatePresence } from 'framer-motion'
 
 ### ❌ À éviter
 
-1. ❌ Ne pas utiliser `value=""` dans SelectItem (utiliser `"none"`)
-2. ❌ Ne pas oublier le filtre `enterprise_id` dans les requêtes
-3. ❌ Ne pas créer de composants custom si shadcn/ui existe
-4. ❌ Ne pas utiliser des couleurs hors palette
-5. ❌ Ne pas oublier les états de chargement
-6. ❌ Ne pas oublier la protection par rôle (`useRequireAuth`)
-7. ❌ **Ne pas utiliser de bordures gauche épaisses** (`border-l-4`) - préférer les bordures fines tout autour
-8. ❌ **Ne pas utiliser d'ombres noires dures** (`shadow-lg`) - préférer les ombres colorées douces
-9. ❌ **Ne pas créer d'animations trop rapides** (`duration-100`) - minimum `duration-300`
-10. ❌ **Ne pas utiliser `rounded-xl`** pour les cartes - préférer `rounded-3xl` (plus doux)
+1. ❌ **Ne pas créer d'interfaces monochromes** - Varier les couleurs pour éviter la monotonie
+2. ❌ Ne pas utiliser `value=""` dans SelectItem (utiliser `"none"`)
+3. ❌ Ne pas oublier le filtre `enterprise_id` dans les requêtes
+4. ❌ Ne pas créer de composants custom si shadcn/ui existe
+5. ❌ Ne pas utiliser des couleurs hors palette
+6. ❌ Ne pas oublier les états de chargement
+7. ❌ Ne pas oublier la protection par rôle (`useRequireAuth`)
+8. ❌ **Ne pas utiliser de bordures gauche épaisses** (`border-l-4`) - préférer les bordures fines tout autour
+9. ❌ **Ne pas utiliser d'ombres noires dures** (`shadow-lg`) - préférer les ombres colorées douces
+10. ❌ **Ne pas créer d'animations trop rapides** (`duration-100`) - minimum `duration-300`
+11. ❌ **Ne pas utiliser `rounded-xl`** pour les cartes - préférer `rounded-3xl` (plus doux)
 
 ---
 
@@ -1345,8 +1461,10 @@ Quand tu crées une nouvelle page, vérifie :
 
 **🎨 Design & Style**
 - [ ] **Appliquer le style "Douceur Professionnelle"** (voir section dédiée ci-dessus)
+- [ ] **⭐ Varier les couleurs** des cartes pour éviter la monotonie (utiliser toute la palette pastel)
+- [ ] Utiliser le composant `ModuleCard` quand possible
 - [ ] Bordures colorées fines (`border-[COULEUR]/20`)
-- [ ] Ombres colorées au hover
+- [ ] Ombres colorées au hover (reprenant la couleur de la carte)
 - [ ] Gradients pastels en fond
 - [ ] Micro-animations (scale, rotate)
 - [ ] `rounded-3xl` pour les cartes

@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import {
   CalendarIcon,
   CheckCircleIcon,
@@ -14,7 +14,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon
 } from '@heroicons/react/24/outline'
-import { format, startOfWeek, addDays, isSameDay, parseISO } from 'date-fns'
+import { format, startOfWeek, addDays, isSameDay } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { getTodayLocal, formatDateLocal } from '@/lib/utils/date'
 
@@ -27,6 +27,43 @@ interface AssignedTaskWithCompletion {
   completed_at: string | null
   duration: number | null
 }
+
+// Stats card config - couleurs du design system
+const statsConfig = [
+  {
+    key: 'total',
+    label: 'Tâches cette semaine',
+    icon: CalendarIcon,
+    color: {
+      primary: '#ffab91', // calendar
+      light: '#fff3e0',
+      dark: '#d97557',
+      shadow: 'rgba(255,171,145,0.25)'
+    }
+  },
+  {
+    key: 'completed',
+    label: 'Complétées',
+    icon: CheckCircleIcon,
+    color: {
+      primary: '#81c995', // haccp
+      light: '#e8f5e9',
+      dark: '#4a8f5a',
+      shadow: 'rgba(129,201,149,0.25)'
+    }
+  },
+  {
+    key: 'rate',
+    label: 'Taux de complétion',
+    icon: ClockIcon,
+    color: {
+      primary: '#5a9dc9', // clean
+      light: '#e3f2fd',
+      dark: '#2c5f7f',
+      shadow: 'rgba(90,157,201,0.25)'
+    }
+  }
+]
 
 export default function EmployeeCalendarPage() {
   const { session, isLoading: authLoading, role } = useAuth()
@@ -178,102 +215,146 @@ export default function EmployeeCalendarPage() {
 
   if (authLoading || loading) {
     return (
-      <>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-        </div>
-      </>
+      <div className="flex items-center justify-center py-12">
+        <LoadingSpinner />
+      </div>
     )
+  }
+
+  const statsValues = {
+    total: totalWeekTasks,
+    completed: totalWeekCompleted,
+    rate: `${weekCompletionRate}%`
   }
 
   return (
     <>
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Mon Calendrier</h1>
-            <p className="text-muted-foreground">
-              Vue hebdomadaire de vos tâches assignées
-            </p>
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header - Style "Douceur Professionnelle" avec couleur Calendar */}
+        <div
+          className="relative rounded-3xl p-8 bg-white border overflow-hidden shadow-lg"
+          style={{
+            borderColor: `${statsConfig[0].color.primary}33`
+          }}
+        >
+          <div
+            className="absolute inset-0 opacity-60"
+            style={{
+              background: `linear-gradient(to bottom right, ${statsConfig[0].color.light}, white)`
+            }}
+          />
+          <div className="relative z-10">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Mon Calendrier</h1>
+            <p className="text-gray-600">Vue hebdomadaire de vos tâches assignées</p>
           </div>
         </div>
 
-        {/* Week Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-primary-100 flex items-center justify-center">
-                  <CalendarIcon className="w-6 h-6 text-primary-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{totalWeekTasks}</p>
-                  <p className="text-sm text-muted-foreground">Tâches cette semaine</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Week Stats - Couleurs variées du design system */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {statsConfig.map((config) => {
+            const Icon = config.icon
+            const value = statsValues[config.key as keyof typeof statsValues]
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
-                  <CheckCircleIcon className="w-6 h-6 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{totalWeekCompleted}</p>
-                  <p className="text-sm text-muted-foreground">Complétées</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            return (
+              <div
+                key={config.key}
+                className="relative rounded-3xl p-6 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden"
+                style={{
+                  border: `1px solid ${config.color.primary}33`,
+                  boxShadow: '0 0 0 0 transparent'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = `0 16px 48px -12px ${config.color.shadow}`
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = '0 0 0 0 transparent'
+                }}
+              >
+                {/* Gradient fond */}
+                <div
+                  className="absolute inset-0 opacity-60"
+                  style={{
+                    background: `linear-gradient(to bottom right, ${config.color.light}, white)`
+                  }}
+                />
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <ClockIcon className="w-6 h-6 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{weekCompletionRate}%</p>
-                  <p className="text-sm text-muted-foreground">Taux de complétion</p>
+                <div className="relative z-10 flex items-center gap-3">
+                  {/* Icône avec animation */}
+                  <div
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center group-hover:scale-105 group-hover:rotate-2 transition-all duration-300"
+                    style={{
+                      background: `linear-gradient(to bottom right, ${config.color.primary}1A, ${config.color.primary}0D)`
+                    }}
+                  >
+                    <Icon className="w-6 h-6" strokeWidth={1.5} style={{ color: config.color.dark }} />
+                  </div>
+
+                  <div>
+                    <p className="text-3xl font-bold text-gray-900">{value}</p>
+                    <p className="text-sm text-gray-600">{config.label}</p>
+                  </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            )
+          })}
         </div>
 
-        {/* Week Navigation */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <Button onClick={goToPreviousWeek} variant="outline" size="sm">
-                <ChevronLeftIcon className="w-4 h-4" />
-                Semaine précédente
-              </Button>
+        {/* Week Navigation - Style "Douceur Professionnelle" avec couleur Calendar */}
+        <div
+          className="relative rounded-3xl p-6 bg-white transition-all duration-300 overflow-hidden shadow-lg"
+          style={{
+            border: `1px solid ${statsConfig[0].color.primary}33`
+          }}
+        >
+          {/* Gradient fond */}
+          <div
+            className="absolute inset-0 opacity-60"
+            style={{
+              background: `linear-gradient(to bottom right, ${statsConfig[0].color.light}, white)`
+            }}
+          />
 
-              <div className="text-center">
-                <p className="font-semibold">
-                  {format(weekDays[0], 'd MMM', { locale: fr })} -{' '}
-                  {format(weekDays[6], 'd MMM yyyy', { locale: fr })}
-                </p>
-                {!isCurrentWeek && (
-                  <Button onClick={goToToday} variant="link" size="sm" className="mt-1">
-                    Aujourd'hui
-                  </Button>
-                )}
-              </div>
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-4">
+            <Button
+              onClick={goToPreviousWeek}
+              variant="outline"
+              size="sm"
+              className="hover:scale-105 transition-all duration-300"
+            >
+              <ChevronLeftIcon className="w-4 h-4" />
+              Semaine précédente
+            </Button>
 
-              <Button onClick={goToNextWeek} variant="outline" size="sm">
-                Semaine suivante
-                <ChevronRightIcon className="w-4 h-4" />
-              </Button>
+            <div className="text-center">
+              <p className="font-semibold text-gray-900 text-lg">
+                {format(weekDays[0], 'd MMM', { locale: fr })} -{' '}
+                {format(weekDays[6], 'd MMM yyyy', { locale: fr })}
+              </p>
+              {!isCurrentWeek && (
+                <Button
+                  onClick={goToToday}
+                  variant="link"
+                  size="sm"
+                  className="mt-1"
+                >
+                  Aujourd&apos;hui
+                </Button>
+              )}
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Calendar Grid */}
+            <Button
+              onClick={goToNextWeek}
+              variant="outline"
+              size="sm"
+              className="hover:scale-105 transition-all duration-300"
+            >
+              Semaine suivante
+              <ChevronRightIcon className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Calendar Grid - Style "Douceur Professionnelle" */}
         <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
           {weekDays.map((day, index) => {
             const dayTasks = getTasksForDay(day)
@@ -281,88 +362,151 @@ export default function EmployeeCalendarPage() {
             const isToday = formatDateLocal(day) === today
             const isPast = formatDateLocal(day) < today
 
+            // Couleur du jour : Calendar (pêche) si aujourd'hui, Tasks (lime) sinon
+            const dayColor = isToday
+              ? statsConfig[0].color // calendar (pêche)
+              : { primary: '#aed581', light: '#f1f8e9', dark: '#7da453', shadow: 'rgba(174,213,129,0.25)' } // tasks (lime)
+
             return (
-              <Card
+              <div
                 key={index}
-                className={`${
-                  isToday ? 'border-primary-500 border-2' : ''
-                } ${isPast && !isToday ? 'opacity-70' : ''}`}
+                className={`relative rounded-3xl p-5 bg-white hover:-translate-y-1 transition-all duration-300 overflow-hidden ${
+                  isPast && !isToday ? 'opacity-60' : ''
+                }`}
+                style={{
+                  border: `${isToday ? '2px' : '1px'} solid ${dayColor.primary}${isToday ? '66' : '33'}`,
+                  boxShadow: isToday
+                    ? `0 16px 48px -12px ${dayColor.shadow}`
+                    : '0 0 0 0 transparent'
+                }}
+                onMouseEnter={(e) => {
+                  if (!isToday) {
+                    e.currentTarget.style.boxShadow = `0 16px 48px -12px ${dayColor.shadow}`
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isToday) {
+                    e.currentTarget.style.boxShadow = '0 0 0 0 transparent'
+                  }
+                }}
               >
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
+                {/* Gradient fond */}
+                <div
+                  className="absolute inset-0 opacity-60"
+                  style={{
+                    background: `linear-gradient(to bottom right, ${dayColor.light}, white)`
+                  }}
+                />
+
+                <div className="relative z-10">
+                  {/* Header du jour */}
+                  <div className="flex items-center justify-between mb-3">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground uppercase">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                         {format(day, 'EEEE', { locale: fr })}
                       </p>
-                      <p className="text-2xl font-bold">
+                      <p className="text-3xl font-bold text-gray-900">
                         {format(day, 'd', { locale: fr })}
                       </p>
                     </div>
                     {isToday && (
-                      <Badge className="bg-primary-500">Aujourd'hui</Badge>
+                      <Badge
+                        className="border-0 text-white font-semibold shadow-lg"
+                        style={{
+                          background: `linear-gradient(to right, ${dayColor.primary}, ${dayColor.dark})`
+                        }}
+                      >
+                        Aujourd&apos;hui
+                      </Badge>
                     )}
                   </div>
+
                   {stats.total > 0 && (
-                    <div className="text-xs text-muted-foreground mt-2">
+                    <div className="text-xs font-medium mb-3 text-gray-600">
                       {stats.completed}/{stats.total} tâches
                     </div>
                   )}
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {dayTasks.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-4">
-                      Aucune tâche
-                    </p>
-                  ) : (
-                    dayTasks.map((task) => (
-                      <div
-                        key={task.id}
-                        className={`p-2 rounded-lg border ${
-                          task.is_completed
-                            ? 'bg-green-50 border-green-200'
-                            : 'bg-muted border-border'
-                        }`}
-                      >
-                        <div className="flex items-start gap-2">
-                          {task.is_completed ? (
-                            <CheckCircleIcon className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                          ) : (
-                            <div className="w-4 h-4 rounded-full border-2 border-muted-foreground mt-0.5 flex-shrink-0" />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium leading-tight">
-                              {task.task_name}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {task.room_name}
-                            </p>
-                            {task.is_completed && task.duration && (
-                              <p className="text-xs text-green-600 mt-1">
-                                {task.duration} min
-                              </p>
-                            )}
+
+                  {/* Liste des tâches */}
+                  <div className="space-y-2">
+                    {dayTasks.length === 0 ? (
+                      <p className="text-sm text-gray-400 text-center py-6">Aucune tâche</p>
+                    ) : (
+                      dayTasks.map((task) => {
+                        // Couleur de la tâche : HACCP (vert) si complétée, gris sinon
+                        const taskColor = task.is_completed
+                          ? statsConfig[1].color // haccp (vert)
+                          : { primary: '#9ca3af', light: '#f9fafb', dark: '#6b7280' } // gris
+
+                        return (
+                          <div
+                            key={task.id}
+                            className="p-3 rounded-2xl relative overflow-hidden transition-all duration-300 hover:scale-105"
+                            style={{
+                              border: `1px solid ${taskColor.primary}33`,
+                              background: `linear-gradient(to bottom right, ${taskColor.light}, white)`
+                            }}
+                          >
+                            <div className="flex items-start gap-2">
+                              {task.is_completed ? (
+                                <CheckCircleIcon
+                                  className="w-5 h-5 mt-0.5 flex-shrink-0"
+                                  strokeWidth={2}
+                                  style={{ color: taskColor.dark }}
+                                />
+                              ) : (
+                                <div
+                                  className="w-5 h-5 rounded-full border-2 mt-0.5 flex-shrink-0"
+                                  style={{ borderColor: taskColor.primary }}
+                                />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold leading-tight text-gray-900">
+                                  {task.task_name}
+                                </p>
+                                <p className="text-xs text-gray-600 mt-1">{task.room_name}</p>
+                                {task.is_completed && task.duration && (
+                                  <p className="text-xs font-medium mt-1" style={{ color: taskColor.dark }}>
+                                    {task.duration} min
+                                  </p>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </CardContent>
-              </Card>
+                        )
+                      })
+                    )}
+                  </div>
+                </div>
+              </div>
             )
           })}
         </div>
 
-        {/* Info Card */}
+        {/* Info Card - Empty State */}
         {totalWeekTasks === 0 && (
-          <Card>
-            <CardContent className="pt-6 text-center py-12">
-              <CalendarIcon className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">Aucune tâche cette semaine</h3>
-              <p className="text-muted-foreground">
-                Vos tâches assignées apparaîtront ici
-              </p>
-            </CardContent>
-          </Card>
+          <div
+            className="relative rounded-3xl p-6 bg-white transition-all duration-300 overflow-hidden shadow-lg"
+            style={{
+              border: '1px solid #9ca3af33'
+            }}
+          >
+            {/* Gradient fond */}
+            <div
+              className="absolute inset-0 opacity-60"
+              style={{
+                background: 'linear-gradient(to bottom right, #f9fafb, white)'
+              }}
+            />
+
+            <div className="relative z-10 text-center py-12">
+              <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
+                <CalendarIcon className="w-10 h-10 text-gray-400" strokeWidth={1.5} />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucune tâche cette semaine</h3>
+              <p className="text-gray-600">Vos tâches assignées apparaîtront ici</p>
+            </div>
+          </div>
         )}
       </div>
     </>

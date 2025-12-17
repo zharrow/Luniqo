@@ -11,9 +11,9 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline'
 import { Button } from '@/components/ui/button'
-import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
 import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
 import { FormDialog } from '@/components/shared/FormDialog'
+import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
 export default function ChildrenPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
@@ -167,79 +167,104 @@ export default function ChildrenPage() {
     <div className="max-w-7xl mx-auto">
       <div className="max-w-7xl mx-auto">
         {/* Breadcrumb */}
-        <Breadcrumb className="mb-4">
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/owner/dashboard">Dashboard</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/owner/haccp">HACCP</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>Enfants</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
+        <PageBreadcrumb
+          items={[
+            { label: 'Dashboard', href: '/owner/dashboard' },
+            { label: 'HACCP', href: '/owner/haccp' },
+            { label: 'Enfants' }
+          ]}
+        />
 
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              {/* Badge HACCP */}
-              <div className="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-[#81c995]/10 to-[#81c995]/5">
-                <UserGroupIcon className="w-5 h-5 text-[#4a8f5a]" strokeWidth={1.5} />
+        {/* Header - Style organique rose (users) */}
+        <div
+          className="relative rounded-3xl p-6 mb-8 bg-white overflow-hidden"
+          style={{
+            border: '1px solid #f4c2c233',
+            background: 'linear-gradient(to bottom right, #fef8f8, white)'
+          }}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div
+                className="inline-flex items-center justify-center w-14 h-14 rounded-2xl"
+                style={{ background: 'linear-gradient(to bottom right, #f4c2c21A, #f4c2c20D)' }}
+              >
+                <UserGroupIcon className="w-7 h-7" style={{ color: '#e59ba1' }} strokeWidth={1.5} />
               </div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Enfants
-              </h1>
+              <div>
+                <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-pink-500 to-rose-600 bg-clip-text text-transparent">
+                  Enfants
+                </h1>
+                <p className="text-muted-foreground">
+                  Gestion des enfants inscrits et suivi des allergènes
+                </p>
+              </div>
             </div>
-            <p className="text-gray-600">
-              Gestion des enfants inscrits et suivi des allergènes
-            </p>
+            <Button
+              onClick={openCreateModal}
+              className="flex items-center gap-2 bg-gradient-to-br from-pink-400 to-rose-500 hover:from-pink-500 hover:to-rose-600 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+            >
+              <PlusIcon className="w-5 h-5" />
+              Nouvel enfant
+            </Button>
           </div>
-          <Button onClick={openCreateModal} className="flex items-center gap-2 bg-gradient-to-r from-[#81c995] to-[#4a8f5a] hover:from-[#4a8f5a] hover:to-[#81c995] text-white">
-            <PlusIcon className="w-5 h-5" />
-            Nouvel enfant
-          </Button>
         </div>
 
         {/* Children grid */}
         {children.length === 0 ? (
-          <div className="relative rounded-3xl p-12 text-center bg-white border border-[#81c995]/20 overflow-hidden">
-            {/* Gradient fond HACCP */}
-            <div className="absolute inset-0 bg-gradient-to-br from-[#e8f5e9] to-white opacity-60"></div>
-
-            <div className="relative z-10">
-              <UserGroupIcon className="w-16 h-16 text-[#81c995]/30 mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2 text-gray-900">
-                Aucun enfant inscrit
-              </h3>
-              <p className="text-gray-600 mb-4">
-                Commencez par inscrire votre premier enfant
-              </p>
-              <Button onClick={openCreateModal}>
-                Inscrire un enfant
-              </Button>
-            </div>
+          <div
+            className="relative rounded-3xl p-12 text-center bg-white overflow-hidden"
+            style={{
+              border: '1px solid #f4c2c233',
+              background: 'linear-gradient(to bottom right, #fef8f8, white)'
+            }}
+          >
+            <UserGroupIcon className="w-16 h-16 mx-auto mb-4" style={{ color: '#f4c2c240' }} />
+            <h3 className="text-lg font-medium mb-2 text-gray-900">
+              Aucun enfant inscrit
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Commencez par inscrire votre premier enfant
+            </p>
+            <Button
+              onClick={openCreateModal}
+              className="bg-gradient-to-br from-pink-400 to-rose-500 hover:from-pink-500 hover:to-rose-600 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+            >
+              Inscrire un enfant
+            </Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {children.map((child) => (
               <div
                 key={child.id}
-                className={`relative rounded-3xl p-6 bg-white hover:-translate-y-1 hover:shadow-[0_16px_48px_-12px_rgba(129,201,149,0.25)] transition-all duration-300 group overflow-hidden border border-[#81c995]/20 ${!child.is_active && 'opacity-50'}`}
+                className={`relative rounded-3xl p-6 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden ${!child.is_active && 'opacity-50'}`}
+                style={{
+                  border: '1px solid #f4c2c233',
+                  boxShadow: '0 0 0 0 rgba(244,194,194,0.25)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(244,194,194,0.25)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = '0 0 0 0 rgba(244,194,194,0.25)'
+                }}
               >
-                {/* Gradient fond HACCP */}
-                <div className="absolute inset-0 bg-gradient-to-br from-[#e8f5e9] to-white opacity-60"></div>
+                {/* Gradient fond rose */}
+                <div
+                  className="absolute inset-0 opacity-60"
+                  style={{ background: 'linear-gradient(to bottom right, #fef8f8, white)' }}
+                />
 
                 <div className="relative z-10">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3 flex-1">
-                      {/* Avatar avec animation */}
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#81c995]/10 to-[#81c995]/5 flex items-center justify-center flex-shrink-0 group-hover:scale-105 group-hover:rotate-2 transition-all duration-300">
-                        <span className="text-lg font-semibold text-[#4a8f5a]">
+                      {/* Avatar avec animation rose */}
+                      <div
+                        className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 group-hover:rotate-2 transition-all duration-300"
+                        style={{ background: 'linear-gradient(to bottom right, #f4c2c21A, #f4c2c20D)' }}
+                      >
+                        <span className="text-lg font-semibold" style={{ color: '#e59ba1' }}>
                           {child.first_name[0]}{child.last_name[0]}
                         </span>
                       </div>
@@ -255,17 +280,17 @@ export default function ChildrenPage() {
                     <div className="flex gap-2 flex-shrink-0">
                       <button
                         onClick={() => openEditModal(child)}
-                        className="p-2 rounded-xl hover:bg-[#81c995]/10 transition-all duration-300"
+                        className="p-2 rounded-xl hover:bg-pink-50 transition-all duration-300 hover:scale-110"
                         title="Modifier"
                       >
-                        <PencilIcon className="w-4 h-4 text-[#4a8f5a]" />
+                        <PencilIcon className="w-4 h-4 text-pink-600" />
                       </button>
                       <button
                         onClick={() => openDeleteDialog(child)}
-                        className="p-2 rounded-xl hover:bg-danger-50 transition-all duration-300"
+                        className="p-2 rounded-xl hover:bg-red-50 transition-all duration-300 hover:scale-110"
                         title="Désactiver"
                       >
-                        <TrashIcon className="w-4 h-4 text-danger-600" />
+                        <TrashIcon className="w-4 h-4 text-red-600" />
                       </button>
                     </div>
                   </div>

@@ -27,6 +27,7 @@ import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmation
 import { FormDialog } from '@/components/shared/FormDialog'
 import { BentoGrid } from '@/components/ui/bento-grid'
 import { cn } from '@/lib/utils'
+import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
 export default function RoomsPage() {
   const router = useRouter()
@@ -135,20 +136,39 @@ export default function RoomsPage() {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">
-              Pièces
-            </h1>
-            <p className="text-muted-foreground">
-              Gérez les pièces de votre crèche
-            </p>
+        {/* Breadcrumb */}
+        <PageBreadcrumb
+          items={[
+            { label: 'Dashboard', href: '/owner/dashboard' },
+            { label: 'Pièces' }
+          ]}
+        />
+
+        {/* Header with Gradient - Module Clean (Bleu) */}
+        <div className="relative mb-8 p-8 rounded-3xl bg-gradient-to-br from-sky-50 via-blue-50 to-cyan-50 border border-sky-200/50 overflow-hidden">
+          <div className="absolute inset-0 bg-[url('/patterns/dots.svg')] opacity-5"></div>
+          <div className="relative flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center shadow-lg shadow-sky-500/30">
+                <BuildingOfficeIcon className="w-8 h-8 text-white" strokeWidth={1.5} />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+                  Pièces
+                </h1>
+                <p className="text-sky-700/70">
+                  Gérez les pièces de votre crèche
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={openCreateModal}
+              className="px-6 py-3 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-500 text-white font-medium shadow-lg shadow-sky-500/30 hover:shadow-xl hover:shadow-sky-500/40 hover:scale-105 transition-all duration-200 flex items-center gap-2"
+            >
+              <PlusIcon className="w-5 h-5" />
+              Nouvelle pièce
+            </button>
           </div>
-          <Button onClick={openCreateModal} className="flex items-center gap-2">
-            <PlusIcon className="w-5 h-5" />
-            Nouvelle pièce
-          </Button>
         </div>
 
         {/* Rooms Bento Grid */}
@@ -179,31 +199,31 @@ export default function RoomsPage() {
                 <div
                   key={room.id}
                   className={cn(
-                    'group relative col-span-1 flex flex-col justify-between overflow-hidden rounded-xl',
-                    'bg-gradient-to-br from-[#e3f2fd] to-white',
-                    'border border-border border-l-4 border-l-[#5a9dc9]',
-                    'hover:shadow-lg transition-all duration-300',
+                    'group relative col-span-1 flex flex-col justify-between overflow-hidden rounded-3xl',
+                    'bg-gradient-to-br from-sky-50/80 to-blue-50/80',
+                    'border border-sky-200/50',
+                    'hover:shadow-lg hover:shadow-sky-500/20 transition-all duration-300',
                     'hover:scale-[1.02]',
                     !room.is_active && 'opacity-50 hover:opacity-75',
                     colSpanClass
                   )}
                 >
                   {/* Background decoration */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#5a9dc9]/5 via-transparent to-[#5a9dc9]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-sky-400/5 via-transparent to-blue-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                   {/* Sparkle effect on hover */}
-                  <SparklesIcon className="absolute top-4 right-4 w-6 h-6 text-[#5a9dc9]/20 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:rotate-12" />
+                  <SparklesIcon className="absolute top-4 right-4 w-6 h-6 text-sky-400/20 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:rotate-12" />
 
                   {/* Content */}
                   <div className="relative z-10 p-6 flex-1 flex flex-col">
                     {/* Header with icon and actions */}
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3 flex-1">
-                        <div className="w-12 h-12 rounded-xl bg-[#5a9dc9]/10 flex items-center justify-center group-hover:bg-[#5a9dc9]/20 transition-colors duration-300 group-hover:scale-110 transform">
-                          <BuildingOfficeIcon className="w-6 h-6 text-[#2c5f7f]" />
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center shadow-md shadow-sky-500/30 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                          <BuildingOfficeIcon className="w-6 h-6 text-white" strokeWidth={2} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-lg truncate group-hover:text-[#2c5f7f] transition-colors">
+                          <h3 className="font-semibold text-lg truncate group-hover:text-sky-700 transition-colors">
                             {room.name}
                           </h3>
                           {!room.is_active && (
@@ -226,7 +246,7 @@ export default function RoomsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => router.push(`/dashboard/rooms/${room.id}`)}>
+                          <DropdownMenuItem onClick={() => router.push(`/owner/rooms/${room.id}`)}>
                             <ClipboardDocumentListIcon className="w-4 h-4" />
                             Gérer les tâches
                           </DropdownMenuItem>
@@ -262,8 +282,8 @@ export default function RoomsPage() {
                       <Button
                         variant="link"
                         size="sm"
-                        className="p-0 h-auto font-medium text-[#2c5f7f] hover:text-[#5a9dc9]"
-                        onClick={() => router.push(`/dashboard/rooms/${room.id}`)}
+                        className="p-0 h-auto font-medium text-sky-700 hover:text-sky-600"
+                        onClick={() => router.push(`/owner/rooms/${room.id}`)}
                       >
                         Gérer les tâches
                         <ClipboardDocumentListIcon className="w-4 h-4 ml-2" />
@@ -272,7 +292,7 @@ export default function RoomsPage() {
                   </div>
 
                   {/* Hover effect overlay */}
-                  <div className="absolute inset-0 pointer-events-none border-2 border-[#5a9dc9]/0 group-hover:border-[#5a9dc9]/20 rounded-xl transition-all duration-300" />
+                  <div className="absolute inset-0 pointer-events-none border-2 border-sky-400/0 group-hover:border-sky-400/20 rounded-3xl transition-all duration-300" />
                 </div>
               )
             })}

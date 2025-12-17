@@ -6,6 +6,8 @@ import { useAuth } from '@/lib/contexts/AuthContext'
 import { haccpService } from '@/lib/services/haccp.service'
 import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
 import { FormDialog } from '@/components/shared/FormDialog'
+import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
+import { PlusIcon } from '@heroicons/react/24/outline'
 
 interface HaccpEquipment {
   id: string
@@ -158,24 +160,51 @@ export default function HaccpEquipmentPage() {
 
   return (
     <div className="p-8">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Équipements</h1>
-          <p className="text-muted-foreground">Gestion de la maintenance des équipements</p>
-        </div>
-        <div className="flex gap-3">
+      {/* Breadcrumb */}
+      <PageBreadcrumb
+        items={[
+          { label: 'Dashboard', href: '/owner/dashboard' },
+          { label: 'HACCP', href: '/owner/haccp' },
+          { label: 'Équipements' }
+        ]}
+      />
+
+      {/* Header - Style organique violet lavande pastel (settings) */}
+      <div
+        className="relative rounded-3xl p-6 mb-8 bg-white overflow-hidden hover:-translate-y-1 transition-all duration-300"
+        style={{
+          border: '1px solid #b39ddb33',
+          background: 'linear-gradient(to bottom right, #faf8fc, white)',
+          boxShadow: '0 0 0 0 rgba(179,157,219,0.25)'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(179,157,219,0.25)'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.boxShadow = '0 0 0 0 rgba(179,157,219,0.25)'
+        }}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div
+              className="inline-flex items-center justify-center w-14 h-14 rounded-2xl"
+              style={{ background: 'linear-gradient(to bottom right, #b39ddb1A, #b39ddb0D)' }}
+            >
+              <span className="text-3xl">🔧</span>
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">
+                Équipements
+              </h1>
+              <p className="text-muted-foreground">Gestion de la maintenance des équipements</p>
+            </div>
+          </div>
           <button
             onClick={handleAdd}
-            className="btn btn-primary"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600 text-white font-medium shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
           >
-            + Ajouter un équipement
-          </button>
-          <button
-            onClick={() => router.push('/haccp')}
-            className="btn btn-secondary"
-          >
-            ← Retour
+            <PlusIcon className="w-5 h-5" />
+            Ajouter un équipement
           </button>
         </div>
       </div>
@@ -187,40 +216,40 @@ export default function HaccpEquipmentPage() {
         </div>
       )}
 
-      {/* Stats */}
+      {/* Stats - Couleurs variées */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="card p-6">
+        <div className="group p-6 rounded-3xl bg-gradient-to-br from-purple-50 to-violet-50 border border-purple-200/50 hover:shadow-lg hover:shadow-purple-500/20 transition-all duration-300 hover:scale-105">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-primary-100 flex items-center justify-center text-2xl">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-400 to-violet-500 flex items-center justify-center text-2xl shadow-md shadow-purple-500/30 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
               🔧
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Total équipements</p>
-              <p className="text-2xl font-bold">{activeEquipment.length}</p>
+              <p className="text-sm text-purple-700/70">Total équipements</p>
+              <p className="text-2xl font-bold text-purple-900">{activeEquipment.length}</p>
             </div>
           </div>
         </div>
 
-        <div className="card p-6">
+        <div className="group p-6 rounded-3xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/50 hover:shadow-lg hover:shadow-amber-500/20 transition-all duration-300 hover:scale-105">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-warning-100 flex items-center justify-center text-2xl">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-2xl shadow-md shadow-amber-500/30 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
               ⚠️
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Maintenance à venir (7j)</p>
-              <p className="text-2xl font-bold text-warning-600">{needsMaintenance.length}</p>
+              <p className="text-sm text-amber-700/70">Maintenance à venir (7j)</p>
+              <p className="text-2xl font-bold text-amber-900">{needsMaintenance.length}</p>
             </div>
           </div>
         </div>
 
-        <div className="card p-6">
+        <div className="group p-6 rounded-3xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/50 hover:shadow-lg hover:shadow-emerald-500/20 transition-all duration-300 hover:scale-105">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-success-100 flex items-center justify-center text-2xl">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-2xl shadow-md shadow-emerald-500/30 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
               ✅
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">À jour</p>
-              <p className="text-2xl font-bold text-success-600">
+              <p className="text-sm text-emerald-700/70">À jour</p>
+              <p className="text-2xl font-bold text-emerald-900">
                 {activeEquipment.length - needsMaintenance.length}
               </p>
             </div>
@@ -240,11 +269,11 @@ export default function HaccpEquipmentPage() {
             return (
               <div
                 key={equip.id}
-                className={`card p-6 ${
-                  isOverdue ? 'border-l-4 border-danger-500 bg-danger-50' :
-                  isSoon ? 'border-l-4 border-warning-500 bg-warning-50' :
-                  'border-l-4 border-success-500'
-                }`}
+                className={`group relative p-6 rounded-3xl ${
+                  isOverdue ? 'bg-gradient-to-br from-rose-50 to-pink-50 border border-rose-200/50 hover:shadow-lg hover:shadow-rose-500/20' :
+                  isSoon ? 'bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/50 hover:shadow-lg hover:shadow-amber-500/20' :
+                  'bg-gradient-to-br from-purple-50 to-violet-50 border border-purple-200/50 hover:shadow-lg hover:shadow-purple-500/20'
+                } transition-all duration-300 hover:scale-[1.02]`}
               >
                 <div className="flex justify-between items-start mb-4">
                   <h3 className="text-xl font-bold">{equip.name}</h3>

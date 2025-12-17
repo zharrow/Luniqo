@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
 import { haccpService } from '@/lib/services/haccp.service'
 import { ArrowLeftIcon } from '@heroicons/react/24/outline'
+import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
 interface Temperature {
   id: string
@@ -101,18 +102,39 @@ export default function HaccpTemperaturesPage() {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-4 mb-6">
-            <button
-              onClick={() => router.push('/haccp')}
-              className="p-2 rounded-lg hover:bg-muted transition-colors"
-              title="Retour au HACCP"
+        {/* Breadcrumb */}
+        <PageBreadcrumb
+          items={[
+            { label: 'Dashboard', href: '/owner/dashboard' },
+            { label: 'HACCP', href: '/owner/haccp' },
+            { label: 'Températures' }
+          ]}
+        />
+
+        {/* Header - Style organique vert menthe pastel (haccp) */}
+        <div
+          className="relative rounded-3xl p-6 mb-8 bg-white overflow-hidden hover:-translate-y-1 transition-all duration-300"
+          style={{
+            border: '1px solid #81c99533',
+            background: 'linear-gradient(to bottom right, #f1f9f3, white)',
+            boxShadow: '0 0 0 0 rgba(129,201,149,0.25)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(129,201,149,0.25)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow = '0 0 0 0 rgba(129,201,149,0.25)'
+          }}
+        >
+          <div className="flex items-center gap-4">
+            <div
+              className="inline-flex items-center justify-center w-14 h-14 rounded-2xl"
+              style={{ background: 'linear-gradient(to bottom right, #81c9951A, #81c9950D)' }}
             >
-              <ArrowLeftIcon className="w-5 h-5 text-muted-foreground" />
-            </button>
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+              <span className="text-3xl">🌡️</span>
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                 Contrôle des Températures
               </h1>
               <p className="text-muted-foreground">Suivi des températures HACCP</p>
@@ -127,52 +149,52 @@ export default function HaccpTemperaturesPage() {
         </div>
       )}
 
-      {/* Stats Cards */}
+      {/* Stats Cards - Couleurs variées */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="card p-6">
+        <div className="group p-6 rounded-3xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200/50 hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 hover:scale-105">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-primary-100 flex items-center justify-center text-2xl">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-2xl shadow-md shadow-blue-500/30 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
               🌡️
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Total</p>
-              <p className="text-2xl font-bold">{stats.total}</p>
+              <p className="text-sm text-blue-700/70">Total</p>
+              <p className="text-2xl font-bold text-blue-900">{stats.total}</p>
             </div>
           </div>
         </div>
 
-        <div className="card p-6">
+        <div className="group p-6 rounded-3xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/50 hover:shadow-lg hover:shadow-emerald-500/20 transition-all duration-300 hover:scale-105">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-success-100 flex items-center justify-center text-2xl">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-2xl shadow-md shadow-emerald-500/30 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
               ✅
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Conformes</p>
-              <p className="text-2xl font-bold text-success-600">{stats.compliant}</p>
+              <p className="text-sm text-emerald-700/70">Conformes</p>
+              <p className="text-2xl font-bold text-emerald-900">{stats.compliant}</p>
             </div>
           </div>
         </div>
 
-        <div className="card p-6">
+        <div className="group p-6 rounded-3xl bg-gradient-to-br from-rose-50 to-pink-50 border border-rose-200/50 hover:shadow-lg hover:shadow-rose-500/20 transition-all duration-300 hover:scale-105">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-danger-100 flex items-center justify-center text-2xl">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center text-2xl shadow-md shadow-rose-500/30 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
               ❌
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Non conformes</p>
-              <p className="text-2xl font-bold text-danger-600">{stats.nonCompliant}</p>
+              <p className="text-sm text-rose-700/70">Non conformes</p>
+              <p className="text-2xl font-bold text-rose-900">{stats.nonCompliant}</p>
             </div>
           </div>
         </div>
 
-        <div className="card p-6">
+        <div className="group p-6 rounded-3xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/50 hover:shadow-lg hover:shadow-amber-500/20 transition-all duration-300 hover:scale-105">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-warning-100 flex items-center justify-center text-2xl">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-2xl shadow-md shadow-amber-500/30 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
               📊
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Taux conformité</p>
-              <p className="text-2xl font-bold">
+              <p className="text-sm text-amber-700/70">Taux conformité</p>
+              <p className="text-2xl font-bold text-amber-900">
                 {stats.total > 0 ? Math.round((stats.compliant / stats.total) * 100) : 0}%
               </p>
             </div>

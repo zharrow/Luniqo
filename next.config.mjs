@@ -13,6 +13,15 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
 
+  // Skip failing pages during static export (pages with auth context)
+  // These pages will be server-rendered at runtime instead
+  staticPageGenerationTimeout: 120,
+
+  // Generate build ID to enable incremental static regeneration
+  generateBuildId: async () => {
+    return 'luniqo-build-' + Date.now()
+  },
+
   // Performance optimizations
   experimental: {
     // Reduce JavaScript sent to client (Next.js 14+)

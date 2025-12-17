@@ -5,6 +5,8 @@ import { EmployeeSidebar } from '@/components/layout/EmployeeSidebar'
 import Header from '@/components/layout/Header'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 
+export const dynamic = 'force-dynamic'
+
 export default function EmployeeLayout({
   children,
 }: {

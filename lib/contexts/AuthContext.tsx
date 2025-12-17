@@ -16,25 +16,86 @@ import type {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-// Cache duration: 30 seconds
-const SESSION_CACHE_TTL = 30 * 1000
+// Cache duration: 5 minutes (plus long pour éviter les déconnexions)
+const SESSION_CACHE_TTL = 5 * 60 * 1000
+const SESSION_STORAGE_KEY = 'luniqo_auth_session'
+const SESSION_TIMESTAMP_KEY = 'luniqo_auth_timestamp'
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<AuthSession | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  // Initialize session from localStorage BEFORE first render (synchronous)
+  const [session, setSessionState] = useState<AuthSession | null>(() => {
+    if (typeof window === 'undefined') return null
+
+    try {
+      const savedSession = localStorage.getItem(SESSION_STORAGE_KEY)
+      const savedTimestamp = localStorage.getItem(SESSION_TIMESTAMP_KEY)
+
+      if (savedSession && savedTimestamp) {
+        const timestamp = parseInt(savedTimestamp, 10)
+        const age = Date.now() - timestamp
+
+        // If session is less than 5 minutes old, restore it
+        if (age < SESSION_CACHE_TTL) {
+          console.log('🚀 Pre-loaded session from localStorage (age: ' + Math.round(age / 1000) + 's)')
+          return JSON.parse(savedSession) as AuthSession
+        }
+      }
+    } catch (e) {
+      console.error('Failed to pre-load session:', e)
+    }
+
+    return null
+  })
+
+  // If we have a pre-loaded session, start with isLoading = false
+  const [isLoading, setIsLoading] = useState(() => session === null)
   const router = useRouter()
   const [supabase] = useState(() => createClient())
   const lastCheckTimestamp = useRef<number>(0)
+  const hasInitialized = useRef(false)
 
+  // Wrapper to save session to localStorage automatically
+  const setSession = (newSession: AuthSession | null) => {
+    setSessionState(newSession)
+
+    if (newSession) {
+      // Save to localStorage with timestamp
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(newSession))
+      localStorage.setItem(SESSION_TIMESTAMP_KEY, Date.now().toString())
+    } else {
+      // Clear localStorage on logout
+      localStorage.removeItem(SESSION_STORAGE_KEY)
+      localStorage.removeItem(SESSION_TIMESTAMP_KEY)
+    }
+  }
+
+  // Run initialization only once
   useEffect(() => {
+    // Prevent multiple initializations
+    if (hasInitialized.current) return
+    hasInitialized.current = true
+
     // Only run on client side
     if (typeof window === 'undefined') {
       setIsLoading(false)
       return
     }
 
-    // Check initial session
-    checkSession()
+    // If we already have a session (pre-loaded), just do silent background check
+    if (session) {
+      const savedTimestamp = localStorage.getItem(SESSION_TIMESTAMP_KEY)
+      if (savedTimestamp) {
+        lastCheckTimestamp.current = parseInt(savedTimestamp, 10)
+      }
+
+      console.log('✅ Using pre-loaded session, refreshing silently in background')
+      // Refresh in background (non-blocking and SILENT)
+      checkSession(true, true).catch(console.error)
+    } else {
+      // No pre-loaded session, do full check with loading
+      console.log('🔍 No session found, checking with server...')
+      checkSession(false, false)
+    }
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, supabaseSession) => {
@@ -56,8 +117,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  async function checkSession(force = false) {
-    // Cache: Skip if last check was less than 30 seconds ago (unless forced)
+  async function checkSession(force = false, silent = false) {
+    // Cache: Skip if last check was less than 5 minutes ago (unless forced)
     const now = Date.now()
     const timeSinceLastCheck = now - lastCheckTimestamp.current
 
@@ -71,7 +132,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const previousSession = session
 
     try {
-      setIsLoading(true)
+      // Si silent = true, on ne met pas isLoading à true (vérification en arrière-plan)
+      if (!silent) {
+        setIsLoading(true)
+      }
 
       // Reduced timeout to 5 seconds
       const timeoutPromise = new Promise((_, reject) =>
@@ -149,10 +213,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(null)
       } else {
         console.warn('Keeping previous session due to check failure')
-        setSession(previousSession)
+        setSessionState(previousSession) // Use setSessionState to avoid re-saving
       }
     } finally {
-      setIsLoading(false)
+      // Only set isLoading to false if not in silent mode
+      if (!silent) {
+        setIsLoading(false)
+      }
     }
   }
 

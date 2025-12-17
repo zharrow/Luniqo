@@ -13,6 +13,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
 import { FormDialog } from '@/components/shared/FormDialog'
+import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
 export default function ProductsPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
@@ -151,24 +152,56 @@ export default function ProductsPage() {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
-              Produits
-            </h1>
-            <p className="text-muted-foreground">
-              Gestion des produits alimentaires et allergènes
-            </p>
+        {/* Breadcrumb */}
+        <PageBreadcrumb
+          items={[
+            { label: 'Dashboard', href: '/owner/dashboard' },
+            { label: 'HACCP', href: '/owner/haccp' },
+            { label: 'Produits' }
+          ]}
+        />
+
+        {/* Header - Style organique lime pastel (tasks) */}
+        <div
+          className="relative rounded-3xl p-6 mb-8 bg-white overflow-hidden hover:-translate-y-1 transition-all duration-300"
+          style={{
+            border: '1px solid #aed58133',
+            background: 'linear-gradient(to bottom right, #f9fcf5, white)',
+            boxShadow: '0 0 0 0 rgba(174,213,129,0.25)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(174,213,129,0.25)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow = '0 0 0 0 rgba(174,213,129,0.25)'
+          }}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div
+                className="inline-flex items-center justify-center w-14 h-14 rounded-2xl"
+                style={{ background: 'linear-gradient(to bottom right, #aed5811A, #aed5810D)' }}
+              >
+                <ShoppingBagIcon className="w-7 h-7" style={{ color: '#7da453' }} strokeWidth={1.5} />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-lime-600 to-green-600 bg-clip-text text-transparent">
+                  Produits
+                </h1>
+                <p className="text-muted-foreground">
+                  Gestion des produits alimentaires et allergènes
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={openCreateModal}
+              disabled={suppliers.length === 0}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-lime-500 to-green-600 hover:from-lime-600 hover:to-green-700 text-white font-medium shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <PlusIcon className="w-5 h-5" />
+              Nouveau produit
+            </button>
           </div>
-          <button
-            onClick={openCreateModal}
-            className="btn btn-primary flex items-center gap-2"
-            disabled={suppliers.length === 0}
-          >
-            <PlusIcon className="w-5 h-5" />
-            Nouveau produit
-          </button>
         </div>
 
         {suppliers.length === 0 ? (
@@ -227,13 +260,33 @@ export default function ProductsPage() {
                 {filteredProducts.map((product) => (
                   <div
                     key={product.id}
-                    className={`card p-6 ${!product.is_active && 'opacity-50'}`}
+                    className={`group relative p-6 rounded-3xl bg-white hover:-translate-y-1 transition-all duration-300 overflow-hidden ${!product.is_active && 'opacity-50'}`}
+                    style={{
+                      border: '1px solid #aed58133',
+                      boxShadow: '0 0 0 0 rgba(174,213,129,0.25)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(174,213,129,0.25)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.boxShadow = '0 0 0 0 rgba(174,213,129,0.25)'
+                    }}
                   >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="w-12 h-12 rounded-lg bg-accent-50 flex items-center justify-center flex-shrink-0">
-                          <ShoppingBagIcon className="w-6 h-6 text-accent-600" />
-                        </div>
+                    {/* Gradient fond lime pastel */}
+                    <div
+                      className="absolute inset-0 opacity-60"
+                      style={{ background: 'linear-gradient(to bottom right, #f9fcf5, white)' }}
+                    />
+
+                    <div className="relative z-10">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div
+                            className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 group-hover:rotate-2 transition-all duration-300"
+                            style={{ background: 'linear-gradient(to bottom right, #aed5811A, #aed5810D)' }}
+                          >
+                            <ShoppingBagIcon className="w-6 h-6" style={{ color: '#7da453' }} strokeWidth={1.5} />
+                          </div>
                         <div className="min-w-0">
                           <h3 className="font-semibold truncate">
                             {product.name}
@@ -304,6 +357,7 @@ export default function ProductsPage() {
                           <span className="text-xs text-danger-600 font-medium">Désactivé</span>
                         </div>
                       )}
+                    </div>
                     </div>
                   </div>
                 ))}

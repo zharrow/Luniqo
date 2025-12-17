@@ -10,8 +10,8 @@ import { CountBadge } from '@/components/ui/badge'
 import { PlusIcon, ChatBubbleLeftRightIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
-export default function MessagesPage() {
-  const { session, isLoading: authLoading } = useRequireAuth(['Owner', 'Developer'])
+export default function EmployeeMessagesPage() {
+  const { session, isLoading: authLoading } = useRequireAuth(['Employee'])
   const router = useRouter()
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -24,7 +24,7 @@ export default function MessagesPage() {
 
     // Subscribe to new messages for real-time updates
     const channel = messagingService.subscribeToNotifications(
-      session.role as 'Owner' | 'Developer',
+      'Employee',
       session.user.id,
       () => {
         // Reload conversations when new message arrives
@@ -42,37 +42,14 @@ export default function MessagesPage() {
 
     try {
       setIsLoading(true)
-      const data = await messagingService.getConversations(
-        session.user.id,
-        session.role as 'Developer' | 'Owner'
-      )
-      setConversations(data)
+      // TODO: Implement employee messaging functionality
+      // For now, employees don't have access to conversations
+      setConversations([])
     } catch (err: any) {
       console.error('Error loading conversations:', err)
       setError('Erreur lors du chargement des conversations')
     } finally {
       setIsLoading(false)
-    }
-  }
-
-  async function handleCreateConversation() {
-    if (!session?.user?.id || session.role !== 'Owner') return
-
-    try {
-      // For demo, use a fixed developer ID
-      // In production, you'd have a list of developers to choose from
-      const developerId = prompt('Developer ID:')
-      if (!developerId) return
-
-      const conversation = await messagingService.getOrCreateConversation(
-        session.user.id,
-        developerId
-      )
-
-      router.push(`/owner/messages/${conversation.id}`)
-    } catch (err: any) {
-      console.error('Error creating conversation:', err)
-      setError('Erreur lors de la création de la conversation')
     }
   }
 
@@ -106,20 +83,19 @@ export default function MessagesPage() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      <div className="max-w-7xl mx-auto">
       {/* Breadcrumb */}
       <PageBreadcrumb
         items={[
-          { label: 'Dashboard', href: '/owner/dashboard' },
+          { label: 'Dashboard', href: '/employee/dashboard' },
           { label: 'Messages' }
         ]}
       />
 
-      {/* Header - Style organique */}
+      {/* Header - Style organique turquoise (module communication) */}
       <div
         className="relative rounded-3xl p-6 mb-8 bg-white overflow-hidden"
         style={{
-          border: '1px solid #80deea33',
+          border: '1px solid #64b5d133',
           background: 'linear-gradient(to bottom right, #f0fdff, white)'
         }}
       >
@@ -127,7 +103,7 @@ export default function MessagesPage() {
           <div className="flex items-center gap-4">
             <div
               className="inline-flex items-center justify-center w-14 h-14 rounded-2xl"
-              style={{ background: 'linear-gradient(to bottom right, #80deea1A, #80deea0D)' }}
+              style={{ background: 'linear-gradient(to bottom right, #64b5d11A, #64b5d10D)' }}
             >
               <ChatBubbleLeftRightIcon className="w-7 h-7" style={{ color: '#2c8a99' }} strokeWidth={1.5} />
             </div>
@@ -136,22 +112,10 @@ export default function MessagesPage() {
                 Messages
               </h1>
               <p className="text-muted-foreground">
-                {session?.role === 'Owner'
-                  ? 'Communiquez avec le support'
-                  : 'Messages des administrateurs'}
+                Communiquez avec votre équipe
               </p>
             </div>
           </div>
-
-          {session?.role === 'Owner' && (
-            <Button
-              onClick={handleCreateConversation}
-              className="inline-flex items-center gap-2 bg-gradient-to-br from-cyan-500 to-teal-600 hover:from-cyan-600 hover:to-teal-700 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
-            >
-              <PlusIcon className="w-5 h-5" />
-              Nouvelle conversation
-            </Button>
-          )}
         </div>
       </div>
 
@@ -173,47 +137,36 @@ export default function MessagesPage() {
         <div
           className="relative rounded-3xl p-12 bg-white overflow-hidden text-center"
           style={{
-            border: '1px solid #80deea33',
+            border: '1px solid #64b5d133',
             background: 'linear-gradient(to bottom right, #f0fdff, white)'
           }}
         >
-          <ChatBubbleLeftRightIcon className="w-24 h-24 mx-auto mb-4" style={{ color: '#80deea40' }} />
+          <ChatBubbleLeftRightIcon className="w-24 h-24 mx-auto mb-4" style={{ color: '#64b5d140' }} />
           <h2 className="text-2xl font-bold mb-2 text-gray-900">Aucune conversation</h2>
-          <p className="text-muted-foreground mb-6">
-            {session?.role === 'Owner'
-              ? 'Commencez une nouvelle conversation avec le support'
-              : 'Aucun message pour le moment'}
+          <p className="text-muted-foreground">
+            Aucun message pour le moment
           </p>
-          {session?.role === 'Owner' && (
-            <Button
-              onClick={handleCreateConversation}
-              className="bg-gradient-to-br from-cyan-500 to-teal-600 hover:from-cyan-600 hover:to-teal-700 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
-            >
-              Nouvelle conversation
-            </Button>
-          )}
         </div>
       ) : (
         <div className="grid gap-4">
           {conversations.map((conversation) => {
-            const otherParty =
-              session?.role === 'Owner' ? conversation.developer : conversation.owner
+            const otherParty = conversation.owner
 
             return (
               <div
                 key={conversation.id}
                 className="relative rounded-3xl p-6 bg-white hover:-translate-y-1 transition-all duration-300 cursor-pointer group overflow-hidden"
                 style={{
-                  border: '1px solid #80deea33',
-                  boxShadow: '0 0 0 0 rgba(128,222,234,0.25)'
+                  border: '1px solid #64b5d133',
+                  boxShadow: '0 0 0 0 rgba(100,181,209,0.25)'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(128,222,234,0.25)'
+                  e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(100,181,209,0.25)'
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = '0 0 0 0 rgba(128,222,234,0.25)'
+                  e.currentTarget.style.boxShadow = '0 0 0 0 rgba(100,181,209,0.25)'
                 }}
-                onClick={() => router.push(`/owner/messages/${conversation.id}`)}
+                onClick={() => router.push(`/employee/messages/${conversation.id}`)}
               >
                 {/* Gradient fond */}
                 <div
@@ -227,7 +180,7 @@ export default function MessagesPage() {
                     <AvatarFallback
                       className="font-bold text-xl"
                       style={{
-                        background: 'linear-gradient(to bottom right, #80deea, #4fc3d9)',
+                        background: 'linear-gradient(to bottom right, #64b5d1, #4fc3d9)',
                         color: 'white'
                       }}
                     >
@@ -274,7 +227,7 @@ export default function MessagesPage() {
                   {/* Chevron */}
                   <div
                     className="ml-2 w-8 h-8 rounded-full flex items-center justify-center opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 flex-shrink-0"
-                    style={{ backgroundColor: '#80deea14' }}
+                    style={{ backgroundColor: '#64b5d114' }}
                   >
                     <ChevronRightIcon className="w-4 h-4" style={{ color: '#2c8a99' }} strokeWidth={2} />
                   </div>
@@ -284,7 +237,6 @@ export default function MessagesPage() {
           })}
         </div>
       )}
-      </div>
     </div>
   )
 }

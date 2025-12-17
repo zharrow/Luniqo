@@ -23,6 +23,7 @@ import {
 import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
 import { FormDialog } from '@/components/shared/FormDialog'
 import { Card } from '@/components/ui/card'
+import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
 export default function TasksPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
@@ -150,20 +151,39 @@ export default function TasksPage() {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">
-              Tâches
-            </h1>
-            <p className="text-muted-foreground">
-              Gérez les templates de tâches de nettoyage
-            </p>
+        {/* Breadcrumb */}
+        <PageBreadcrumb
+          items={[
+            { label: 'Dashboard', href: '/owner/dashboard' },
+            { label: 'Tâches' }
+          ]}
+        />
+
+        {/* Header with Gradient - Module Tasks (Lime) */}
+        <div className="relative mb-8 p-8 rounded-3xl bg-gradient-to-br from-lime-50 via-green-50 to-emerald-50 border border-lime-200/50 overflow-hidden">
+          <div className="absolute inset-0 bg-[url('/patterns/dots.svg')] opacity-5"></div>
+          <div className="relative flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-lime-400 to-green-500 flex items-center justify-center shadow-lg shadow-lime-500/30">
+                <ClipboardDocumentListIcon className="w-8 h-8 text-white" strokeWidth={1.5} />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-lime-600 to-green-600 bg-clip-text text-transparent" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+                  Tâches
+                </h1>
+                <p className="text-lime-700/70">
+                  Gérez les templates de tâches de nettoyage
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={openCreateModal}
+              className="px-6 py-3 rounded-2xl bg-gradient-to-r from-lime-500 to-green-500 text-white font-medium shadow-lg shadow-lime-500/30 hover:shadow-xl hover:shadow-lime-500/40 hover:scale-105 transition-all duration-200 flex items-center gap-2"
+            >
+              <PlusIcon className="w-5 h-5" />
+              Nouvelle tâche
+            </button>
           </div>
-          <Button onClick={openCreateModal} className="flex items-center gap-2">
-            <PlusIcon className="w-5 h-5" />
-            Nouvelle tâche
-          </Button>
         </div>
 
         {/* Empty state */}
@@ -185,13 +205,23 @@ export default function TasksPage() {
             {Object.entries(tasksByCategory).map(([category, categoryTasks]) => (
               <div key={category}>
                 <div className="mb-3 flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-primary" />
-                  <h3 className="font-semibold text-sm">{category}</h3>
-                  <span className="text-xs text-muted-foreground ml-auto">{categoryTasks.length}</span>
+                  <div className="w-3 h-3 rounded-full bg-gradient-to-br from-lime-400 to-green-500 shadow-sm shadow-lime-500/30" />
+                  <h3 className="font-semibold text-sm text-lime-900">{category}</h3>
+                  <span className="text-xs text-lime-700/60 ml-auto">{categoryTasks.length}</span>
                 </div>
                 <div className="space-y-2">
                   {categoryTasks.map((task) => (
-                    <Card key={task.id} className="p-4 hover:shadow-md transition-all duration-200">
+                    <div
+                      key={task.id}
+                      className="group relative rounded-3xl p-4 bg-gradient-to-br from-lime-50/80 to-green-50/80 border border-lime-200/50 hover:shadow-lg hover:shadow-lime-500/20 hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                    >
+                      {/* Gradient fond */}
+                      <div
+                        className="absolute inset-0 opacity-30 group-hover:opacity-50 transition-opacity duration-300"
+                        style={{ background: 'linear-gradient(to bottom right, rgba(217, 249, 157, 0.3), rgba(134, 239, 172, 0.3))' }}
+                      />
+
+                      <div className="relative z-10">
                       <div className="flex items-start justify-between mb-2">
                         <h4 className="font-medium text-sm flex-1 pr-2">{task.name}</h4>
                         <DropdownMenu>
@@ -225,7 +255,8 @@ export default function TasksPage() {
                         )}
                         {!task.is_active && <Badge variant="danger" size="sm">Désactivée</Badge>}
                       </div>
-                    </Card>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>

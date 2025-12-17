@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -27,7 +27,7 @@ interface EmployeeData {
   email: string
   first_name: string
   last_name: string
-  avatar: string | null
+  avatar_url: string | null
   username: string
   enterprise_id: string
 }
@@ -50,7 +50,7 @@ export default function EmployeeProfilePage() {
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
-    avatar: ''
+    avatar_url: ''
   })
   const [pinData, setPinData] = useState({
     currentPin: '',
@@ -87,7 +87,7 @@ export default function EmployeeProfilePage() {
       setFormData({
         first_name: (employee as any).first_name || '',
         last_name: (employee as any).last_name || '',
-        avatar: (employee as any).avatar || ''
+        avatar_url: (employee as any).avatar_url || ''
       })
 
       // Charger les données entreprise
@@ -116,7 +116,7 @@ export default function EmployeeProfilePage() {
       const updateData = {
         first_name: formData.first_name,
         last_name: formData.last_name,
-        avatar_url: formData.avatar || null
+        avatar_url: formData.avatar_url || null
       }
 
       const { error: updateError } = await (supabase as any)
@@ -211,7 +211,7 @@ export default function EmployeeProfilePage() {
       setFormData({
         first_name: employeeData.first_name || '',
         last_name: employeeData.last_name || '',
-        avatar: employeeData.avatar || ''
+        avatar_url: employeeData.avatar_url || ''
       })
     }
     setIsEditingProfile(false)
@@ -245,92 +245,147 @@ export default function EmployeeProfilePage() {
 
   return (
     <>
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* En-tête avec avatar */}
-        <div className="flex items-center gap-6">
-          <Avatar className="h-24 w-24 border-4 border-primary-100">
-            {employeeData?.avatar ? (
-              <AvatarImage src={`/${employeeData.avatar}`} alt="Avatar" />
-            ) : null}
-            <AvatarFallback className="bg-gradient-to-br from-primary-400 to-primary-600 text-white text-2xl font-bold">
-              {getInitials(employeeData?.first_name, employeeData?.last_name)}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent">
-              Mon Profil
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Gérez vos informations personnelles et votre code PIN
-            </p>
-            <div className="flex gap-2 mt-3">
-              <Badge variant="secondary" className="gap-1">
-                <ShieldCheckIcon className="w-3 h-3" />
-                Employé
-              </Badge>
-              {enterpriseData && (
-                <Badge variant="outline" className="gap-1">
-                  <BuildingOfficeIcon className="w-3 h-3" />
-                  {enterpriseData.name}
+      <div className="max-w-4xl mx-auto space-y-8">
+        {/* En-tête avec avatar - Style Violet Lavande (settings) - Adouci */}
+        <div
+          className="relative rounded-3xl p-8 bg-white overflow-hidden hover:-translate-y-1 transition-all duration-300"
+          style={{
+            border: '1px solid #b39ddb33',
+            background: 'linear-gradient(135deg, #faf5ff 0%, #ffffff 100%)',
+            boxShadow: '0 0 0 0 rgba(179,157,219,0.15)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.boxShadow = '0 12px 40px -10px rgba(179,157,219,0.15)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow = '0 0 0 0 rgba(179,157,219,0.15)'
+          }}
+        >
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+            <Avatar className="h-24 w-24 border-4 border-white shadow-xl transition-transform duration-300 hover:scale-105">
+              {employeeData?.avatar_url ? (
+                <AvatarImage src={employeeData.avatar_url} alt="Avatar" />
+              ) : null}
+              <AvatarFallback className="bg-gradient-to-br from-violet-400 to-purple-600 text-white text-2xl font-bold">
+                {getInitials(employeeData?.first_name, employeeData?.last_name)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 text-center md:text-left">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-600 to-purple-700 bg-clip-text text-transparent mb-2">
+                Mon Profil 👤
+              </h1>
+              <p className="text-gray-600 mb-3">
+                Gérez vos informations personnelles et votre code PIN
+              </p>
+              <div className="flex flex-wrap justify-center md:justify-start gap-2">
+                <Badge
+                  variant="secondary"
+                  className="gap-1 bg-violet-50 text-violet-700 border-violet-200 transition-all duration-300 hover:scale-105"
+                >
+                  <ShieldCheckIcon className="w-3 h-3" />
+                  Employé
                 </Badge>
-              )}
+                {enterpriseData && (
+                  <Badge
+                    variant="outline"
+                    className="gap-1 border-violet-200 text-violet-700 transition-all duration-300 hover:scale-105"
+                  >
+                    <BuildingOfficeIcon className="w-3 h-3" />
+                    {enterpriseData.name}
+                  </Badge>
+                )}
+              </div>
             </div>
+            {!isEditingProfile && !isEditingPin && (
+              <Button
+                onClick={() => setIsEditingProfile(true)}
+                className="gap-2 bg-gradient-to-br from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 shadow-md hover:shadow-lg transition-all duration-300"
+              >
+                <PencilIcon className="w-4 h-4" />
+                Modifier le profil
+              </Button>
+            )}
           </div>
-          {!isEditingProfile && !isEditingPin && (
-            <Button onClick={() => setIsEditingProfile(true)} className="gap-2">
-              <PencilIcon className="w-4 h-4" />
-              Modifier le profil
-            </Button>
-          )}
         </div>
 
         {/* Messages */}
         {error && (
-          <Card className="border-red-200 bg-red-50">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-3">
-                <XCircleIcon className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                  <p className="font-semibold text-red-900">Erreur</p>
-                  <p className="text-sm text-red-700">{error}</p>
-                </div>
+          <div
+            className="relative rounded-3xl p-6 bg-white overflow-hidden"
+            style={{
+              border: '1px solid #f4a5a533',
+              background: 'linear-gradient(135deg, #fff5f7 0%, #ffffff 100%)'
+            }}
+          >
+            <div className="flex items-start gap-3">
+              <XCircleIcon className="w-6 h-6 text-rose-600 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="font-semibold text-rose-900">Erreur</p>
+                <p className="text-sm text-rose-700">{error}</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
 
         {success && (
-          <Card className="border-green-200 bg-green-50">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-3">
-                <CheckCircleIcon className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                  <p className="font-semibold text-green-900">Succès</p>
-                  <p className="text-sm text-green-700">{success}</p>
-                </div>
+          <div
+            className="relative rounded-3xl p-6 bg-white overflow-hidden"
+            style={{
+              border: '1px solid #81c99533',
+              background: 'linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%)'
+            }}
+          >
+            <div className="flex items-start gap-3">
+              <CheckCircleIcon className="w-6 h-6 text-emerald-600 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="font-semibold text-emerald-900">Succès</p>
+                <p className="text-sm text-emerald-700">{success}</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
 
-        {/* Section Informations personnelles */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <UserCircleIcon className="w-5 h-5 text-primary-500" />
-              <CardTitle>Informations personnelles</CardTitle>
+        {/* Section Informations personnelles - Style Users (Rose) - Adouci */}
+        <div
+          className="relative rounded-3xl p-6 bg-white overflow-hidden hover:-translate-y-1 transition-all duration-300"
+          style={{
+            border: '1px solid #f4a5a533',
+            background: 'linear-gradient(135deg, #fff5f7 0%, #ffffff 100%)',
+            boxShadow: '0 0 0 0 rgba(244,165,165,0.15)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.boxShadow = '0 12px 40px -10px rgba(244,165,165,0.15)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow = '0 0 0 0 rgba(244,165,165,0.15)'
+          }}
+        >
+          <CardHeader className="p-0 mb-6">
+            <div className="flex items-center gap-3">
+              <div
+                className="rounded-2xl p-3 border transition-all duration-300 hover:scale-105 hover:rotate-2"
+                style={{
+                  background: 'linear-gradient(135deg, #fff5f7, #fce4ec)',
+                  borderColor: '#f4a5a533'
+                }}
+              >
+                <UserCircleIcon className="w-6 h-6 text-rose-600" strokeWidth={1.5} />
+              </div>
+              <div>
+                <CardTitle className="text-rose-700">Informations personnelles</CardTitle>
+                <CardDescription className="text-rose-600/70">
+                  Vos informations d'identification et de contact
+                </CardDescription>
+              </div>
             </div>
-            <CardDescription>
-              Vos informations d'identification et de contact
-            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 p-0">
             {/* Sélecteur d'avatar en mode édition */}
             {isEditingProfile && (
               <>
                 <AvatarSelector
-                  selectedAvatar={formData.avatar}
-                  onSelect={(avatar) => setFormData({ ...formData, avatar })}
+                  selectedAvatar={formData.avatar_url}
+                  onSelect={(avatar) => setFormData({ ...formData, avatar_url: avatar })}
                 />
                 <Separator />
               </>
@@ -347,6 +402,7 @@ export default function EmployeeProfilePage() {
                     value={formData.first_name}
                     onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
                     placeholder="Votre prénom"
+                    className="transition-all duration-300 focus:scale-[1.01]"
                   />
                 ) : (
                   <p className="text-lg">{employeeData?.first_name || '-'}</p>
@@ -363,6 +419,7 @@ export default function EmployeeProfilePage() {
                     value={formData.last_name}
                     onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
                     placeholder="Votre nom"
+                    className="transition-all duration-300 focus:scale-[1.01]"
                   />
                 ) : (
                   <p className="text-lg">{employeeData?.last_name || '-'}</p>
@@ -398,51 +455,84 @@ export default function EmployeeProfilePage() {
               </p>
             </div>
           </CardContent>
-        </Card>
+        </div>
 
         {/* Boutons d'action profil */}
         {isEditingProfile && (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex gap-3">
-                <Button
-                  onClick={handleSaveProfile}
-                  disabled={isSaving}
-                  className="flex-1"
-                >
-                  {isSaving ? 'Enregistrement...' : 'Enregistrer les modifications'}
-                </Button>
-                <Button
-                  onClick={handleCancelProfile}
-                  disabled={isSaving}
-                  variant="outline"
-                >
-                  Annuler
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <div
+            className="relative rounded-3xl p-6 bg-white overflow-hidden"
+            style={{
+              border: '1px solid #b39ddb33',
+              background: 'linear-gradient(135deg, #faf5ff 0%, #ffffff 100%)'
+            }}
+          >
+            <div className="flex gap-3">
+              <Button
+                onClick={handleSaveProfile}
+                disabled={isSaving}
+                className="flex-1 bg-gradient-to-br from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 shadow-md hover:shadow-lg transition-all duration-300"
+              >
+                {isSaving ? 'Enregistrement...' : 'Enregistrer les modifications'}
+              </Button>
+              <Button
+                onClick={handleCancelProfile}
+                disabled={isSaving}
+                variant="outline"
+                className="border-violet-200 text-violet-700 hover:bg-violet-50 transition-all duration-300"
+              >
+                Annuler
+              </Button>
+            </div>
+          </div>
         )}
 
-        {/* Section Code PIN */}
-        <Card>
-          <CardHeader>
+        {/* Section Code PIN - Style Clean (Bleu) - Adouci */}
+        <div
+          className="relative rounded-3xl p-6 bg-white overflow-hidden hover:-translate-y-1 transition-all duration-300"
+          style={{
+            border: '1px solid #5a9dc933',
+            background: 'linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%)',
+            boxShadow: '0 0 0 0 rgba(90,157,201,0.15)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.boxShadow = '0 12px 40px -10px rgba(90,157,201,0.15)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow = '0 0 0 0 rgba(90,157,201,0.15)'
+          }}
+        >
+          <CardHeader className="p-0 mb-6">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <KeyIcon className="w-5 h-5 text-primary-500" />
-                <CardTitle>Code PIN Tablette</CardTitle>
+              <div className="flex items-center gap-3">
+                <div
+                  className="rounded-2xl p-3 border transition-all duration-300 hover:scale-105 hover:rotate-2"
+                  style={{
+                    background: 'linear-gradient(135deg, #f0f9ff, #dbeafe)',
+                    borderColor: '#5a9dc933'
+                  }}
+                >
+                  <KeyIcon className="w-6 h-6 text-sky-600" strokeWidth={1.5} />
+                </div>
+                <div>
+                  <CardTitle className="text-sky-700">Code PIN Tablette 🔐</CardTitle>
+                  <CardDescription className="text-sky-600/70">
+                    Gérez votre code PIN à 4 chiffres pour l'accès tablette
+                  </CardDescription>
+                </div>
               </div>
               {!isEditingPin && !isEditingProfile && (
-                <Button onClick={() => setIsEditingPin(true)} variant="outline" size="sm">
+                <Button
+                  onClick={() => setIsEditingPin(true)}
+                  variant="outline"
+                  size="sm"
+                  className="border-sky-200 text-sky-700 hover:bg-sky-50 transition-all duration-300"
+                >
                   Modifier le PIN
                 </Button>
               )}
             </div>
-            <CardDescription>
-              Gérez votre code PIN à 4 chiffres pour l'accès tablette
-            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 p-0">
             {isEditingPin ? (
               <>
                 <div className="space-y-2">
@@ -457,6 +547,7 @@ export default function EmployeeProfilePage() {
                     value={pinData.currentPin}
                     onChange={(e) => setPinData({ ...pinData, currentPin: e.target.value.replace(/\D/g, '') })}
                     placeholder="••••"
+                    className="transition-all duration-300 focus:scale-[1.01]"
                   />
                 </div>
 
@@ -474,6 +565,7 @@ export default function EmployeeProfilePage() {
                     value={pinData.newPin}
                     onChange={(e) => setPinData({ ...pinData, newPin: e.target.value.replace(/\D/g, '') })}
                     placeholder="••••"
+                    className="transition-all duration-300 focus:scale-[1.01]"
                   />
                   <p className="text-xs text-muted-foreground">
                     4 chiffres uniquement
@@ -492,6 +584,7 @@ export default function EmployeeProfilePage() {
                     value={pinData.confirmPin}
                     onChange={(e) => setPinData({ ...pinData, confirmPin: e.target.value.replace(/\D/g, '') })}
                     placeholder="••••"
+                    className="transition-all duration-300 focus:scale-[1.01]"
                   />
                 </div>
 
@@ -499,7 +592,7 @@ export default function EmployeeProfilePage() {
                   <Button
                     onClick={handleSavePin}
                     disabled={isSaving}
-                    className="flex-1"
+                    className="flex-1 bg-gradient-to-br from-sky-500 to-cyan-600 hover:from-sky-600 hover:to-cyan-700 shadow-md hover:shadow-lg transition-all duration-300"
                   >
                     {isSaving ? 'Enregistrement...' : 'Modifier le PIN'}
                   </Button>
@@ -507,24 +600,31 @@ export default function EmployeeProfilePage() {
                     onClick={handleCancelPin}
                     disabled={isSaving}
                     variant="outline"
+                    className="border-sky-200 text-sky-700 hover:bg-sky-50 transition-all duration-300"
                   >
                     Annuler
                   </Button>
                 </div>
               </>
             ) : (
-              <div className="space-y-3">
-                <p className="text-muted-foreground">
+              <div
+                className="space-y-3 rounded-2xl p-4 border"
+                style={{
+                  background: 'linear-gradient(135deg, #f0f9ff, #ffffff)',
+                  borderColor: '#5a9dc933'
+                }}
+              >
+                <p className="text-sky-700">
                   Votre code PIN est utilisé pour vous connecter rapidement sur la tablette.
                 </p>
                 <div className="flex items-center gap-2 text-sm">
-                  <CheckCircleIcon className="w-4 h-4 text-green-600" />
-                  <span className="text-green-700">PIN configuré</span>
+                  <CheckCircleIcon className="w-5 h-5 text-emerald-600" />
+                  <span className="font-medium text-emerald-700">PIN configuré</span>
                 </div>
               </div>
             )}
           </CardContent>
-        </Card>
+        </div>
       </div>
     </>
   )
