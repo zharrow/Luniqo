@@ -141,26 +141,41 @@ export default function SuppliersPage() {
           ]}
         />
 
-        {/* Header with Gradient - Module Communication (Turquoise) */}
-        <div className="relative mb-8 p-8 rounded-3xl bg-gradient-to-br from-cyan-50 via-teal-50 to-sky-50 border border-cyan-200/50 overflow-hidden">
-          <div className="absolute inset-0 bg-[url('/patterns/dots.svg')] opacity-5"></div>
-          <div className="relative flex items-center justify-between">
+        {/* Header - Style organique turquoise pastel (communication) */}
+        <div
+          className="relative rounded-3xl p-6 mb-8 bg-white overflow-hidden hover:-translate-y-1 transition-all duration-300"
+          style={{
+            border: '1px solid #64b5d133',
+            background: 'linear-gradient(to bottom right, #e0f7fa, white)',
+            boxShadow: '0 0 0 0 rgba(100,181,209,0.25)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(100,181,209,0.25)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow = '0 0 0 0 rgba(100,181,209,0.25)'
+          }}
+        >
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-400 to-teal-500 flex items-center justify-center shadow-lg shadow-cyan-500/30">
-                <TruckIcon className="w-8 h-8 text-white" strokeWidth={1.5} />
+              <div
+                className="inline-flex items-center justify-center w-14 h-14 rounded-2xl"
+                style={{ background: 'linear-gradient(to bottom right, #64b5d11A, #64b5d10D)' }}
+              >
+                <TruckIcon className="w-7 h-7" style={{ color: '#3a7a8f' }} strokeWidth={1.5} />
               </div>
               <div>
-                <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-cyan-600 to-teal-600 bg-clip-text text-transparent" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+                <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-cyan-600 to-teal-600 bg-clip-text text-transparent">
                   Fournisseurs
                 </h1>
-                <p className="text-cyan-700/70">
+                <p className="text-muted-foreground">
                   Gestion des fournisseurs de produits alimentaires
                 </p>
               </div>
             </div>
             <button
               onClick={openCreateModal}
-              className="px-6 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-medium shadow-lg shadow-cyan-500/30 hover:shadow-xl hover:shadow-cyan-500/40 hover:scale-105 transition-all duration-200 flex items-center gap-2"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600 text-white font-medium shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
             >
               <PlusIcon className="w-5 h-5" />
               Nouveau fournisseur

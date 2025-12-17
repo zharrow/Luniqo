@@ -161,19 +161,34 @@ export default function ProductsPage() {
           ]}
         />
 
-        {/* Header with Gradient - Module Tasks (Lime) */}
-        <div className="relative mb-8 p-8 rounded-3xl bg-gradient-to-br from-lime-50 via-green-50 to-emerald-50 border border-lime-200/50 overflow-hidden">
-          <div className="absolute inset-0 bg-[url('/patterns/dots.svg')] opacity-5"></div>
-          <div className="relative flex items-center justify-between">
+        {/* Header - Style organique lime pastel (tasks) */}
+        <div
+          className="relative rounded-3xl p-6 mb-8 bg-white overflow-hidden hover:-translate-y-1 transition-all duration-300"
+          style={{
+            border: '1px solid #aed58133',
+            background: 'linear-gradient(to bottom right, #f9fcf5, white)',
+            boxShadow: '0 0 0 0 rgba(174,213,129,0.25)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(174,213,129,0.25)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow = '0 0 0 0 rgba(174,213,129,0.25)'
+          }}
+        >
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-lime-400 to-green-500 flex items-center justify-center shadow-lg shadow-lime-500/30">
-                <ShoppingBagIcon className="w-8 h-8 text-white" strokeWidth={1.5} />
+              <div
+                className="inline-flex items-center justify-center w-14 h-14 rounded-2xl"
+                style={{ background: 'linear-gradient(to bottom right, #aed5811A, #aed5810D)' }}
+              >
+                <ShoppingBagIcon className="w-7 h-7" style={{ color: '#7da453' }} strokeWidth={1.5} />
               </div>
               <div>
-                <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-lime-600 to-green-600 bg-clip-text text-transparent" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+                <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-lime-600 to-green-600 bg-clip-text text-transparent">
                   Produits
                 </h1>
-                <p className="text-lime-700/70">
+                <p className="text-muted-foreground">
                   Gestion des produits alimentaires et allergènes
                 </p>
               </div>
@@ -181,7 +196,7 @@ export default function ProductsPage() {
             <button
               onClick={openCreateModal}
               disabled={suppliers.length === 0}
-              className="px-6 py-3 rounded-2xl bg-gradient-to-r from-lime-500 to-green-500 text-white font-medium shadow-lg shadow-lime-500/30 hover:shadow-xl hover:shadow-lime-500/40 hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-lime-500 to-green-600 hover:from-lime-600 hover:to-green-700 text-white font-medium shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <PlusIcon className="w-5 h-5" />
               Nouveau produit
@@ -245,13 +260,33 @@ export default function ProductsPage() {
                 {filteredProducts.map((product) => (
                   <div
                     key={product.id}
-                    className={`group relative p-6 rounded-3xl bg-gradient-to-br from-lime-50/80 to-green-50/80 border border-lime-200/50 hover:shadow-lg hover:shadow-lime-500/20 transition-all duration-300 hover:scale-[1.02] ${!product.is_active && 'opacity-50'}`}
+                    className={`group relative p-6 rounded-3xl bg-white hover:-translate-y-1 transition-all duration-300 overflow-hidden ${!product.is_active && 'opacity-50'}`}
+                    style={{
+                      border: '1px solid #aed58133',
+                      boxShadow: '0 0 0 0 rgba(174,213,129,0.25)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(174,213,129,0.25)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.boxShadow = '0 0 0 0 rgba(174,213,129,0.25)'
+                    }}
                   >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-lime-400 to-green-500 flex items-center justify-center flex-shrink-0 shadow-md shadow-lime-500/30 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                          <ShoppingBagIcon className="w-6 h-6 text-white" strokeWidth={2} />
-                        </div>
+                    {/* Gradient fond lime pastel */}
+                    <div
+                      className="absolute inset-0 opacity-60"
+                      style={{ background: 'linear-gradient(to bottom right, #f9fcf5, white)' }}
+                    />
+
+                    <div className="relative z-10">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div
+                            className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 group-hover:rotate-2 transition-all duration-300"
+                            style={{ background: 'linear-gradient(to bottom right, #aed5811A, #aed5810D)' }}
+                          >
+                            <ShoppingBagIcon className="w-6 h-6" style={{ color: '#7da453' }} strokeWidth={1.5} />
+                          </div>
                         <div className="min-w-0">
                           <h3 className="font-semibold truncate">
                             {product.name}
@@ -322,6 +357,7 @@ export default function ProductsPage() {
                           <span className="text-xs text-danger-600 font-medium">Désactivé</span>
                         </div>
                       )}
+                    </div>
                     </div>
                   </div>
                 ))}

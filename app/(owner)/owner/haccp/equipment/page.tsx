@@ -7,6 +7,7 @@ import { haccpService } from '@/lib/services/haccp.service'
 import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
 import { FormDialog } from '@/components/shared/FormDialog'
 import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
+import { PlusIcon } from '@heroicons/react/24/outline'
 
 interface HaccpEquipment {
   id: string
@@ -168,35 +169,43 @@ export default function HaccpEquipmentPage() {
         ]}
       />
 
-      {/* Header with Gradient - Module Settings (Violet) */}
-      <div className="relative mb-8 p-8 rounded-3xl bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 border border-purple-200/50 overflow-hidden">
-        <div className="absolute inset-0 bg-[url('/patterns/dots.svg')] opacity-5"></div>
-        <div className="relative flex items-center justify-between">
+      {/* Header - Style organique violet lavande pastel (settings) */}
+      <div
+        className="relative rounded-3xl p-6 mb-8 bg-white overflow-hidden hover:-translate-y-1 transition-all duration-300"
+        style={{
+          border: '1px solid #b39ddb33',
+          background: 'linear-gradient(to bottom right, #faf8fc, white)',
+          boxShadow: '0 0 0 0 rgba(179,157,219,0.25)'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(179,157,219,0.25)'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.boxShadow = '0 0 0 0 rgba(179,157,219,0.25)'
+        }}
+      >
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-400 to-violet-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
+            <div
+              className="inline-flex items-center justify-center w-14 h-14 rounded-2xl"
+              style={{ background: 'linear-gradient(to bottom right, #b39ddb1A, #b39ddb0D)' }}
+            >
               <span className="text-3xl">🔧</span>
             </div>
             <div>
-              <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+              <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">
                 Équipements
               </h1>
-              <p className="text-purple-700/70">Gestion de la maintenance des équipements</p>
+              <p className="text-muted-foreground">Gestion de la maintenance des équipements</p>
             </div>
           </div>
-          <div className="flex gap-3">
-            <button
-              onClick={handleAdd}
-              className="px-6 py-3 rounded-2xl bg-gradient-to-r from-purple-500 to-violet-500 text-white font-medium shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40 hover:scale-105 transition-all duration-200"
-            >
-              + Ajouter un équipement
-            </button>
-            <button
-              onClick={() => router.push('/owner/haccp')}
-              className="px-6 py-3 rounded-2xl bg-white/80 hover:bg-white border border-purple-200 text-purple-700 font-medium hover:scale-105 transition-all duration-200"
-            >
-              ← Retour
-            </button>
-          </div>
+          <button
+            onClick={handleAdd}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600 text-white font-medium shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+          >
+            <PlusIcon className="w-5 h-5" />
+            Ajouter un équipement
+          </button>
         </div>
       </div>
 

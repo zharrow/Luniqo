@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import bcrypt from 'bcryptjs'
 import type { Database } from '@/types/database.types'
 import type { Profile } from '@/types/database.types'
 
@@ -29,6 +30,7 @@ function getAdminClient() {
 export interface CreateEmployeeInput {
   email: string
   password: string  // For Supabase Auth (dashboard login)
+  pin: string        // 4-digit PIN for tablet login (will be hashed)
   first_name: string
   last_name: string
   avatar_url?: string
@@ -76,31 +78,39 @@ export async function createEmployee(
     // 2. Generate unique username (e.g., "Marie D")
     const username = await generateUniqueUsername(input.first_name, input.last_name, supabase)
 
-    // 3. Update the auto-created profile with enterprise_id, username, and created_by
-    // Use type assertion to bypass TypeScript strict checks with admin client
-    const profileUpdate = await (supabase as any)
+    // 3. Hash the PIN for tablet login
+    const pin_hash = await bcrypt.hash(input.pin, 10)
+
+    // 4. Create the profile manually (don't rely on trigger)
+    const { data: profile, error: profileError } = await (supabase as any)
       .from('profiles')
-      .update({
-        enterprise_id: enterpriseId,
+      .insert({
+        id: userId,
+        role: 'Employee',
+        email: input.email,
+        first_name: input.first_name,
+        last_name: input.last_name,
         username: username,
+        pin_hash: pin_hash,
+        enterprise_id: enterpriseId,
         created_by_id: createdById,
-        avatar_url: input.avatar_url || null
+        avatar_url: input.avatar_url || null,
+        is_active: true
       })
-      .eq('id', userId)
       .select()
       .single()
 
-    const profile = profileUpdate.data
-    const profileError = profileUpdate.error
-
     if (profileError) {
-      console.error('Error updating profile:', profileError)
-      // Rollback: delete the auth user if profile update fails
+      console.error('Error creating profile:', profileError)
+      console.error('Profile error details:', JSON.stringify(profileError, null, 2))
+      // Rollback: delete the auth user if profile creation fails
       await supabase.auth.admin.deleteUser(userId)
-      return { success: false, error: 'Failed to update profile' }
+      return { success: false, error: `Failed to create profile: ${profileError.message || JSON.stringify(profileError)}` }
     }
 
-    // 4. Assign rooms if provided
+    console.log('Profile created successfully:', profile)
+
+    // 5. Assign rooms if provided
     if (input.room_ids && input.room_ids.length > 0) {
       const assignments = input.room_ids.map(room_id => ({
         employee_id: userId,

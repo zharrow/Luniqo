@@ -111,25 +111,33 @@ export default function HaccpTemperaturesPage() {
           ]}
         />
 
-        {/* Header with Gradient - Module HACCP (Vert) */}
-        <div className="relative mb-8 p-8 rounded-3xl bg-gradient-to-br from-emerald-50 via-teal-50 to-green-50 border border-emerald-200/50 overflow-hidden">
-          <div className="absolute inset-0 bg-[url('/patterns/dots.svg')] opacity-5"></div>
-          <div className="relative flex items-center gap-4">
-            <button
-              onClick={() => router.push('/owner/haccp')}
-              className="p-3 rounded-2xl bg-white/80 hover:bg-white hover:scale-110 transition-all duration-200 shadow-md"
-              title="Retour au HACCP"
+        {/* Header - Style organique vert menthe pastel (haccp) */}
+        <div
+          className="relative rounded-3xl p-6 mb-8 bg-white overflow-hidden hover:-translate-y-1 transition-all duration-300"
+          style={{
+            border: '1px solid #81c99533',
+            background: 'linear-gradient(to bottom right, #f1f9f3, white)',
+            boxShadow: '0 0 0 0 rgba(129,201,149,0.25)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(129,201,149,0.25)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow = '0 0 0 0 rgba(129,201,149,0.25)'
+          }}
+        >
+          <div className="flex items-center gap-4">
+            <div
+              className="inline-flex items-center justify-center w-14 h-14 rounded-2xl"
+              style={{ background: 'linear-gradient(to bottom right, #81c9951A, #81c9950D)' }}
             >
-              <ArrowLeftIcon className="w-5 h-5 text-emerald-600" />
-            </button>
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
               <span className="text-3xl">🌡️</span>
             </div>
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+            <div>
+              <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                 Contrôle des Températures
               </h1>
-              <p className="text-emerald-700/70">Suivi des températures HACCP</p>
+              <p className="text-muted-foreground">Suivi des températures HACCP</p>
             </div>
           </div>
         </div>

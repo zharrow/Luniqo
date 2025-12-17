@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import {
   ClipboardDocumentListIcon,
   CheckCircleIcon,
@@ -27,6 +27,54 @@ interface TaskCompletion {
   duration: number | null
   notes: string | null
 }
+
+// Stats card config - couleurs du design system
+const statsConfig = [
+  {
+    key: 'total',
+    label: 'Total',
+    icon: ClipboardDocumentListIcon,
+    color: {
+      primary: '#9fa8da', // analytics
+      light: '#e8eaf6',
+      dark: '#6870a0',
+      shadow: 'rgba(159,168,218,0.25)'
+    }
+  },
+  {
+    key: 'thisWeek',
+    label: 'Cette semaine',
+    icon: CalendarIcon,
+    color: {
+      primary: '#aed581', // tasks
+      light: '#f1f8e9',
+      dark: '#7da453',
+      shadow: 'rgba(174,213,129,0.25)'
+    }
+  },
+  {
+    key: 'thisMonth',
+    label: 'Ce mois',
+    icon: CheckCircleIcon,
+    color: {
+      primary: '#5a9dc9', // clean
+      light: '#e3f2fd',
+      dark: '#2c5f7f',
+      shadow: 'rgba(90,157,201,0.25)'
+    }
+  },
+  {
+    key: 'avgDuration',
+    label: 'Durée moy.',
+    icon: ClockIcon,
+    color: {
+      primary: '#b39ddb', // settings
+      light: '#f3e5f5',
+      dark: '#7e57a3',
+      shadow: 'rgba(179,157,219,0.25)'
+    }
+  }
+]
 
 export default function EmployeeHistoryPage() {
   const { session, isLoading: authLoading, role } = useAuth()
@@ -165,104 +213,122 @@ export default function EmployeeHistoryPage() {
 
   if (authLoading || loading) {
     return (
-      <>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-        </div>
-      </>
+      <div className="flex items-center justify-center py-12">
+        <LoadingSpinner />
+      </div>
     )
   }
 
   return (
     <>
       <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header - Style Analytics (Indigo) */}
-        <div className="rounded-3xl bg-gradient-to-br from-indigo-100 via-blue-50 to-purple-100 p-8 border border-indigo-200/50 shadow-lg">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-blue-700 bg-clip-text text-transparent mb-2">
-            Mon Historique 📊
-          </h1>
-          <p className="text-gray-600">
-            Consultez l'historique de vos tâches accomplies
-          </p>
+        {/* Header - Style "Douceur Professionnelle" avec couleur Analytics */}
+        <div className="relative rounded-3xl p-8 bg-white border overflow-hidden shadow-lg"
+          style={{
+            borderColor: `${statsConfig[0].color.primary}33`
+          }}
+        >
+          <div className="absolute inset-0 opacity-60"
+            style={{
+              background: `linear-gradient(to bottom right, ${statsConfig[0].color.light}, white)`
+            }}
+          />
+          <div className="relative z-10">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Mon Historique
+            </h1>
+            <p className="text-gray-600">
+              Consultez l'historique de vos tâches accomplies
+            </p>
+          </div>
         </div>
 
-        {/* Stats Cards - Couleurs variées */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {/* Total - Indigo */}
-          <Card className="rounded-3xl border-indigo-200/50 bg-gradient-to-br from-indigo-50 to-blue-50 shadow-lg hover:shadow-xl hover:shadow-indigo-100 transition-all duration-300 hover:scale-105">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-100 to-blue-100 flex items-center justify-center border border-indigo-200 shadow-sm">
-                  <ClipboardDocumentListIcon className="w-7 h-7 text-indigo-600" strokeWidth={1.5} />
-                </div>
-                <div>
-                  <p className="text-3xl font-bold text-indigo-700">{stats.total}</p>
-                  <p className="text-sm text-indigo-600/80">Total</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Stats Cards - Couleurs variées du design system */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {statsConfig.map((config) => {
+            const Icon = config.icon
+            const value = config.key === 'avgDuration'
+              ? `${stats[config.key]} min`
+              : stats[config.key as keyof typeof stats]
 
-          {/* This Week - Vert */}
-          <Card className="rounded-3xl border-emerald-200/50 bg-gradient-to-br from-emerald-50 to-teal-50 shadow-lg hover:shadow-xl hover:shadow-emerald-100 transition-all duration-300 hover:scale-105">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 flex items-center justify-center border border-emerald-200 shadow-sm">
-                  <CalendarIcon className="w-7 h-7 text-emerald-600" strokeWidth={1.5} />
-                </div>
-                <div>
-                  <p className="text-3xl font-bold text-emerald-700">{stats.thisWeek}</p>
-                  <p className="text-sm text-emerald-600/80">Cette semaine</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            return (
+              <div
+                key={config.key}
+                className="relative rounded-3xl p-6 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden"
+                style={{
+                  border: `1px solid ${config.color.primary}33`,
+                  boxShadow: '0 0 0 0 transparent'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = `0 16px 48px -12px ${config.color.shadow}`
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = '0 0 0 0 transparent'
+                }}
+              >
+                {/* Gradient fond */}
+                <div
+                  className="absolute inset-0 opacity-60"
+                  style={{
+                    background: `linear-gradient(to bottom right, ${config.color.light}, white)`
+                  }}
+                />
 
-          {/* This Month - Bleu */}
-          <Card className="rounded-3xl border-sky-200/50 bg-gradient-to-br from-sky-50 to-cyan-50 shadow-lg hover:shadow-xl hover:shadow-sky-100 transition-all duration-300 hover:scale-105">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-sky-100 to-cyan-100 flex items-center justify-center border border-sky-200 shadow-sm">
-                  <CheckCircleIcon className="w-7 h-7 text-sky-600" strokeWidth={1.5} />
-                </div>
-                <div>
-                  <p className="text-3xl font-bold text-sky-700">{stats.thisMonth}</p>
-                  <p className="text-sm text-sky-600/80">Ce mois</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                <div className="relative z-10 flex items-center gap-3">
+                  {/* Icône avec animation */}
+                  <div
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center group-hover:scale-105 group-hover:rotate-2 transition-all duration-300"
+                    style={{
+                      background: `linear-gradient(to bottom right, ${config.color.primary}1A, ${config.color.primary}0D)`
+                    }}
+                  >
+                    <Icon className="w-6 h-6" strokeWidth={1.5} style={{ color: config.color.dark }} />
+                  </div>
 
-          {/* Avg Duration - Violet */}
-          <Card className="rounded-3xl border-violet-200/50 bg-gradient-to-br from-violet-50 to-purple-50 shadow-lg hover:shadow-xl hover:shadow-violet-100 transition-all duration-300 hover:scale-105">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-100 to-purple-100 flex items-center justify-center border border-violet-200 shadow-sm">
-                  <ClockIcon className="w-7 h-7 text-violet-600" strokeWidth={1.5} />
-                </div>
-                <div>
-                  <p className="text-3xl font-bold text-violet-700">{stats.avgDuration} min</p>
-                  <p className="text-sm text-violet-600/80">Durée moy.</p>
+                  <div>
+                    <p className="text-3xl font-bold text-gray-900">{value}</p>
+                    <p className="text-sm text-gray-600">{config.label}</p>
+                  </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            )
+          })}
         </div>
 
-        {/* Filters - Style Indigo */}
-        <Card className="rounded-3xl border-indigo-200/50 bg-gradient-to-br from-indigo-50 to-blue-50 shadow-lg">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <div className="rounded-2xl bg-gradient-to-br from-indigo-100 to-blue-100 p-2 border border-indigo-200">
-                <FunnelIcon className="w-5 h-5 text-indigo-600" strokeWidth={1.5} />
+        {/* Filters - Style "Douceur Professionnelle" avec couleur Communication */}
+        <div
+          className="relative rounded-3xl p-6 bg-white hover:-translate-y-1 transition-all duration-300 overflow-hidden shadow-lg"
+          style={{
+            border: `1px solid #64b5d133`, // communication
+            boxShadow: '0 0 0 0 transparent'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(100,181,209,0.25)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow = '0 0 0 0 transparent'
+          }}
+        >
+          {/* Gradient fond */}
+          <div
+            className="absolute inset-0 opacity-60"
+            style={{ background: 'linear-gradient(to bottom right, #e0f7fa, white)' }}
+          />
+
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-6">
+              <div
+                className="w-10 h-10 rounded-2xl flex items-center justify-center"
+                style={{ background: 'linear-gradient(to bottom right, #64b5d11A, #64b5d10D)' }}
+              >
+                <FunnelIcon className="w-5 h-5 text-[#3a7a8f]" strokeWidth={1.5} />
               </div>
-              <CardTitle className="text-indigo-700">Filtres</CardTitle>
+              <h3 className="text-lg font-semibold text-gray-900">Filtres</h3>
             </div>
-          </CardHeader>
-          <CardContent>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Rechercher</label>
+                <label className="text-sm font-medium text-gray-700">Rechercher</label>
                 <Input
                   placeholder="Tâche, pièce, notes..."
                   value={searchTerm}
@@ -271,7 +337,7 @@ export default function EmployeeHistoryPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Période</label>
+                <label className="text-sm font-medium text-gray-700">Période</label>
                 <Select value={filterPeriod} onValueChange={setFilterPeriod}>
                   <SelectTrigger>
                     <SelectValue />
@@ -280,30 +346,44 @@ export default function EmployeeHistoryPage() {
                     <SelectItem value="7">7 derniers jours</SelectItem>
                     <SelectItem value="30">30 derniers jours</SelectItem>
                     <SelectItem value="90">90 derniers jours</SelectItem>
-                    <SelectItem value="all">Tout l'historique</SelectItem>
+                    <SelectItem value="all">Tout l&apos;historique</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* Task Completions List - Style Indigo */}
-        <Card className="rounded-3xl border-indigo-200/50 bg-gradient-to-br from-white to-indigo-50/30 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-indigo-700">
-              Tâches accomplies ({filteredCompletions.length})
-            </CardTitle>
-            <CardDescription className="text-indigo-600/70">
-              Liste de toutes vos tâches terminées
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+        {/* Task Completions List - Style "Douceur Professionnelle" avec couleur Tasks */}
+        <div
+          className="relative rounded-3xl p-6 bg-white transition-all duration-300 overflow-hidden shadow-lg"
+          style={{
+            border: `1px solid #aed58133`, // tasks
+          }}
+        >
+          {/* Gradient fond */}
+          <div
+            className="absolute inset-0 opacity-60"
+            style={{ background: 'linear-gradient(to bottom right, #f1f8e9, white)' }}
+          />
+
+          <div className="relative z-10">
+            <div className="mb-6">
+              <h3 className="text-xl font-semibold text-gray-900 mb-1">
+                Tâches accomplies ({filteredCompletions.length})
+              </h3>
+              <p className="text-sm text-gray-600">
+                Liste de toutes vos tâches terminées
+              </p>
+            </div>
+
             {filteredCompletions.length === 0 ? (
               <div className="text-center py-12">
-                <ClipboardDocumentListIcon className="w-16 h-16 text-indigo-300 mx-auto mb-4" strokeWidth={1.5} />
-                <h3 className="text-lg font-semibold text-indigo-700 mb-2">Aucune tâche trouvée</h3>
-                <p className="text-indigo-600/70">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#aed581]/10 to-[#aed581]/5 flex items-center justify-center mx-auto mb-4">
+                  <ClipboardDocumentListIcon className="w-10 h-10 text-[#7da453]" strokeWidth={1.5} />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucune tâche trouvée</h3>
+                <p className="text-gray-600">
                   {searchTerm || filterPeriod !== 'all'
                     ? 'Essayez de modifier vos filtres'
                     : 'Vos tâches accomplies apparaîtront ici'}
@@ -314,48 +394,70 @@ export default function EmployeeHistoryPage() {
                 {filteredCompletions.map((completion) => (
                   <div
                     key={completion.id}
-                    className="flex items-start gap-4 p-5 rounded-2xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50 to-teal-50 hover:shadow-lg hover:shadow-emerald-100 transition-all duration-300"
+                    className="relative rounded-3xl p-5 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden"
+                    style={{
+                      border: '1px solid #81c99533', // haccp/success
+                      boxShadow: '0 0 0 0 transparent'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(129,201,149,0.25)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.boxShadow = '0 0 0 0 transparent'
+                    }}
                   >
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 flex items-center justify-center flex-shrink-0 border border-emerald-200 shadow-sm">
-                      <CheckCircleIcon className="w-6 h-6 text-emerald-600" strokeWidth={2} />
-                    </div>
+                    {/* Gradient fond */}
+                    <div
+                      className="absolute inset-0 opacity-60"
+                      style={{ background: 'linear-gradient(to bottom right, #e8f5e9, white)' }}
+                    />
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-4 mb-2">
-                        <div>
-                          <h4 className="font-semibold text-gray-800">{completion.task_name}</h4>
-                          <p className="text-sm text-gray-600">📍 {completion.room_name}</p>
-                        </div>
-                        {completion.duration && (
-                          <Badge variant="outline" className="flex-shrink-0 border-emerald-200 bg-emerald-50 text-emerald-700">
-                            <ClockIcon className="w-3 h-3 mr-1" strokeWidth={1.5} />
-                            {formatDuration(completion.duration)}
-                          </Badge>
-                        )}
+                    <div className="relative z-10 flex items-start gap-4">
+                      {/* Icône avec animation */}
+                      <div
+                        className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 group-hover:rotate-2 transition-all duration-300"
+                        style={{ background: 'linear-gradient(to bottom right, #81c9951A, #81c9950D)' }}
+                      >
+                        <CheckCircleIcon className="w-6 h-6 text-[#4a8f5a]" strokeWidth={2} />
                       </div>
 
-                      <p className="text-sm text-gray-600 mb-2">
-                        🕒 {formatDate(completion.completed_at)}
-                        {completion.session_date && (
-                          <span className="ml-2">
-                            • Session du {format(new Date(completion.session_date), 'd MMM yyyy', { locale: fr })}
-                          </span>
-                        )}
-                      </p>
-
-                      {completion.notes && (
-                        <div className="mt-3 p-3 bg-white/70 rounded-xl border border-emerald-100 text-sm">
-                          <p className="font-medium text-xs text-emerald-600 mb-1">📝 Notes :</p>
-                          <p className="text-gray-700">{completion.notes}</p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-4 mb-2">
+                          <div>
+                            <h4 className="font-semibold text-gray-900">{completion.task_name}</h4>
+                            <p className="text-sm text-gray-600">{completion.room_name}</p>
+                          </div>
+                          {completion.duration && (
+                            <Badge variant="outline" className="flex-shrink-0">
+                              <ClockIcon className="w-3 h-3 mr-1" strokeWidth={1.5} />
+                              {formatDuration(completion.duration)}
+                            </Badge>
+                          )}
                         </div>
-                      )}
+
+                        <p className="text-sm text-gray-600 mb-2">
+                          {formatDate(completion.completed_at)}
+                          {completion.session_date && (
+                            <span className="ml-2">
+                              • Session du {format(new Date(completion.session_date), 'd MMM yyyy', { locale: fr })}
+                            </span>
+                          )}
+                        </p>
+
+                        {completion.notes && (
+                          <div className="mt-3 p-3 bg-white/70 rounded-xl border border-gray-200 text-sm">
+                            <p className="font-medium text-xs text-gray-500 mb-1">Notes :</p>
+                            <p className="text-gray-700">{completion.notes}</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </>
   )

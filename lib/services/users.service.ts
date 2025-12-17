@@ -13,6 +13,7 @@ export interface ProfileWithRooms extends Profile {
 export interface CreateEmployeeInput {
   email: string
   password: string  // For Supabase Auth (dashboard login)
+  pin: string        // 4-digit PIN for tablet login (will be hashed)
   first_name: string
   last_name: string
   avatar_url?: string

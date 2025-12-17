@@ -247,10 +247,18 @@ export default function Header() {
               </span>
             </div>
 
-            {/* Avatar with initials */}
-            <div className="w-10 h-10 rounded-full bg-linear-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
-              {getInitials(userDisplayName)}
-            </div>
+            {/* Avatar with image or initials */}
+            {session?.user?.avatar_url ? (
+              <img
+                src={session.user.avatar_url}
+                alt="Avatar"
+                className="w-10 h-10 rounded-full shadow-md object-cover"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-linear-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
+                {getInitials(userDisplayName)}
+              </div>
+            )}
           </motion.button>
 
           {/* Dropdown menu with Framer Motion */}
@@ -277,9 +285,17 @@ export default function Header() {
                   {/* Header with gradient */}
                   <div className="px-4 py-3 bg-linear-to-br from-primary-50 to-secondary-50 border-b border-neutral-200">
                     <div className="flex items-center gap-3 mb-2">
-                      <div className="w-12 h-12 rounded-full bg-linear-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-bold shadow-md">
-                        {getInitials(userDisplayName)}
-                      </div>
+                      {session?.user?.avatar_url ? (
+                        <img
+                          src={session.user.avatar_url}
+                          alt="Avatar"
+                          className="w-12 h-12 rounded-full shadow-md object-cover"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-linear-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-bold shadow-md">
+                          {getInitials(userDisplayName)}
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-neutral-900 truncate">{userDisplayName}</p>
                         <p className="text-xs text-neutral-600 truncate">{session?.user?.email || 'Pas d\'email'}</p>

@@ -45,6 +45,7 @@ export default function UsersPage() {
     last_name: '',
     email: '',
     password: '',
+    pin: '',
     avatar_url: '',
     room_ids: []
   })
@@ -80,6 +81,7 @@ export default function UsersPage() {
       last_name: '',
       email: '',
       password: '',
+      pin: '',
       avatar_url: '',
       room_ids: []
     })
@@ -93,6 +95,7 @@ export default function UsersPage() {
       last_name: user.last_name || '',
       email: user.email || '',
       password: '', // Don't pre-fill password for security
+      pin: '', // Don't pre-fill PIN for security
       avatar_url: user.avatar_url || '',
       room_ids: user.accessible_rooms
     })
@@ -103,10 +106,20 @@ export default function UsersPage() {
     e.preventDefault()
     if (!session?.enterprise?.id || !session?.user?.id) return
 
-    // Validate PIN
-    if (!editingUser && formData.password.length < 4) {
-      alert('Le code PIN doit contenir au moins 4 chiffres')
-      return
+    // Validate required fields for creation
+    if (!editingUser) {
+      if (!formData.email) {
+        alert('L\'email est obligatoire')
+        return
+      }
+      if (!formData.password || formData.password.length < 8) {
+        alert('Le mot de passe doit contenir au moins 8 caractères')
+        return
+      }
+      if (!formData.pin || formData.pin.length !== 4) {
+        alert('Le code PIN doit contenir exactement 4 chiffres')
+        return
+      }
     }
 
     try {
@@ -121,12 +134,12 @@ export default function UsersPage() {
         }
 
         // Only update PIN if provided (when editing)
-        if (formData.password) {
-          if (formData.password.length < 4) {
-            alert('Le code PIN doit contenir au moins 4 chiffres')
+        if (formData.pin) {
+          if (formData.pin.length !== 4) {
+            alert('Le code PIN doit contenir exactement 4 chiffres')
             return
           }
-          updateData.pin = formData.password
+          updateData.pin = formData.pin
         }
 
         await usersService.updateEmployee(editingUser.id, session.enterprise.id, updateData)
@@ -204,20 +217,31 @@ export default function UsersPage() {
           ]}
         />
 
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">
-              Employés
-            </h1>
-            <p className="text-muted-foreground">
-              Gérez vos employés et leurs accès aux pièces
-            </p>
+        {/* Header with Gradient - Module Users (Rose) */}
+        <div className="relative mb-8 p-8 rounded-3xl bg-gradient-to-br from-pink-50 via-rose-50 to-red-50 border border-pink-200/50 overflow-hidden">
+          <div className="absolute inset-0 bg-[url('/patterns/dots.svg')] opacity-5"></div>
+          <div className="relative flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center shadow-lg shadow-pink-500/30">
+                <UserGroupIcon className="w-8 h-8 text-white" strokeWidth={1.5} />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+                  Employés
+                </h1>
+                <p className="text-pink-700/70">
+                  Gérez vos employés et leurs accès aux pièces
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={openCreateModal}
+              className="px-6 py-3 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 text-white font-medium shadow-lg shadow-pink-500/30 hover:shadow-xl hover:shadow-pink-500/40 hover:scale-105 transition-all duration-200 flex items-center gap-2"
+            >
+              <PlusIcon className="w-5 h-5" />
+              Nouvel employé
+            </button>
           </div>
-          <Button onClick={openCreateModal} className="flex items-center gap-2">
-            <PlusIcon className="w-5 h-5" />
-            Nouvel employé
-          </Button>
         </div>
 
         {/* Users grid */}
@@ -387,30 +411,52 @@ export default function UsersPage() {
 
           <div>
             <label className="block text-sm font-medium mb-1">
-              Email
+              Email *
             </label>
             <Input
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="optionnel"
+              placeholder="email@exemple.fr"
+              required={!editingUser}
+              disabled={editingUser} // Email cannot be changed after creation
             />
+            <p className="text-xs text-muted-foreground mt-1">
+              Pour la connexion au dashboard
+            </p>
           </div>
 
           <div>
             <label className="block text-sm font-medium mb-1">
-              {editingUser ? 'Code PIN (4 chiffres)' : 'Mot de passe *'}
+              Mot de passe {!editingUser && '*'}
             </label>
             <Input
-              type={editingUser ? "text" : "password"}
+              type="password"
               value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: editingUser ? e.target.value.replace(/\D/g, '').slice(0, 4) : e.target.value })}
-              placeholder={editingUser ? 'Laisser vide pour ne pas modifier le PIN' : 'Mot de passe fort'}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              placeholder={editingUser ? 'Laisser vide pour ne pas modifier' : 'Min. 8 caractères'}
               required={!editingUser}
-              maxLength={editingUser ? 4 : undefined}
             />
             <p className="text-xs text-muted-foreground mt-1">
-              {editingUser ? 'Code PIN pour la connexion tablette (4 chiffres)' : 'Mot de passe pour la connexion au dashboard'}
+              Pour la connexion au dashboard
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Code PIN {!editingUser && '*'}
+            </label>
+            <Input
+              type="text"
+              inputMode="numeric"
+              value={formData.pin}
+              onChange={(e) => setFormData({ ...formData, pin: e.target.value.replace(/\D/g, '').slice(0, 4) })}
+              placeholder={editingUser ? 'Laisser vide pour ne pas modifier' : '4 chiffres'}
+              required={!editingUser}
+              maxLength={4}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Pour la connexion tablette (4 chiffres)
             </p>
           </div>
 
