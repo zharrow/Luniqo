@@ -419,7 +419,7 @@ export default function UsersPage() {
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder="email@exemple.fr"
               required={!editingUser}
-              disabled={editingUser} // Email cannot be changed after creation
+              disabled={!!editingUser} // Email cannot be changed after creation
             />
             <p className="text-xs text-muted-foreground mt-1">
               Pour la connexion au dashboard
