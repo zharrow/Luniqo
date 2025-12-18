@@ -213,11 +213,11 @@ export default function TasksPage() {
                   {categoryTasks.map((task) => (
                     <div
                       key={task.id}
-                      className="group relative rounded-3xl p-4 bg-gradient-to-br from-lime-50/80 to-green-50/80 border border-lime-200/50 hover:shadow-lg hover:shadow-lime-500/20 hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                      className="group relative rounded-3xl p-4 bg-gradient-to-br from-lime-50/80 to-green-50/80 border border-lime-200/50 hover:shadow-lg hover:shadow-lime-500/20 hover:-translate-y-1 transition-all duration-300"
                     >
                       {/* Gradient fond */}
                       <div
-                        className="absolute inset-0 opacity-30 group-hover:opacity-50 transition-opacity duration-300"
+                        className="absolute inset-0 opacity-30 group-hover:opacity-50 transition-opacity duration-300 rounded-3xl pointer-events-none"
                         style={{ background: 'linear-gradient(to bottom right, rgba(217, 249, 157, 0.3), rgba(134, 239, 172, 0.3))' }}
                       />
 
@@ -225,12 +225,10 @@ export default function TasksPage() {
                       <div className="flex items-start justify-between mb-2">
                         <h4 className="font-medium text-sm flex-1 pr-2">{task.name}</h4>
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-6 w-6 -mt-1 flex-shrink-0">
-                              <EllipsisVerticalIcon className="w-3 h-3" />
-                            </Button>
+                          <DropdownMenuTrigger className="h-6 w-6 -mt-1 flex-shrink-0 inline-flex items-center justify-center rounded-md hover:bg-accent transition-colors">
+                            <EllipsisVerticalIcon className="w-4 h-4" />
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+                          <DropdownMenuContent align="end" className="z-[100]">
                             <DropdownMenuItem onClick={() => openEditModal(task)}>
                               <PencilIcon className="w-4 h-4" />
                               Modifier
