@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
+import { TaskCategory } from './task-categories.service'
 
 export interface AssignedTask {
   id: string
@@ -16,8 +17,9 @@ export interface AssignedTask {
   task_template?: {
     id: string
     name: string
-    category: string | null
+    category_id: string | null
     estimated_duration: number | null
+    task_category?: TaskCategory | null
   }
   room?: {
     id: string
@@ -65,8 +67,9 @@ export class AssignedTasksService {
         task_template:task_template_id (
           id,
           name,
-          category,
-          estimated_duration
+          category_id,
+          estimated_duration,
+          task_category (*)
         )
       `)
       .eq('room_id', roomId)
@@ -87,8 +90,9 @@ export class AssignedTasksService {
         task_template:task_template_id (
           id,
           name,
-          category,
-          estimated_duration
+          category_id,
+          estimated_duration,
+          task_category (*)
         )
       `)
       .eq('room_id', roomId)
@@ -110,8 +114,9 @@ export class AssignedTasksService {
         task_template:task_template_id (
           id,
           name,
-          category,
-          estimated_duration
+          category_id,
+          estimated_duration,
+          task_category (*)
         ),
         room:room_id!inner (
           id,
@@ -137,8 +142,9 @@ export class AssignedTasksService {
         task_template:task_template_id (
           id,
           name,
-          category,
-          estimated_duration
+          category_id,
+          estimated_duration,
+          task_category (*)
         ),
         room:room_id (
           id,
@@ -182,8 +188,9 @@ export class AssignedTasksService {
         task_template:task_template_id (
           id,
           name,
-          category,
-          estimated_duration
+          category_id,
+          estimated_duration,
+          task_category (*)
         )
       `)
       .single() as any)
@@ -211,8 +218,9 @@ export class AssignedTasksService {
         task_template:task_template_id (
           id,
           name,
-          category,
-          estimated_duration
+          category_id,
+          estimated_duration,
+          task_category (*)
         )
       `) as any)
 
@@ -234,8 +242,9 @@ export class AssignedTasksService {
         task_template:task_template_id (
           id,
           name,
-          category,
-          estimated_duration
+          category_id,
+          estimated_duration,
+          task_category (*)
         )
       `)
       .single()

@@ -259,8 +259,41 @@ async function seedRooms(enterpriseId: string) {
 }
 
 async function seedTasks(enterpriseId: string) {
+  console.log('📋 Creating task categories...')
+
+  // Step 1: Create task categories
+  const categories = [
+    { name: 'Sols', color: '#84cc16' },        // Lime
+    { name: 'Hygiène', color: '#b5ead7' },     // Mint (HACCP green)
+    { name: 'Sanitaires', color: '#5a9dc9' },  // Blue
+    { name: 'Entretien', color: '#f4c2c2' },   // Pink
+    { name: 'Vitres', color: '#c6def1' },      // Sky blue
+    { name: 'Cuisine', color: '#ffe5b4' },     // Peach
+    { name: 'Extérieur', color: '#a8e6cf' },   // Light green
+    { name: 'Gestion', color: '#e2cff4' }      // Lavender
+  ].map(c => ({
+    ...c,
+    enterprise_id: enterpriseId,
+    is_active: true
+  }))
+
+  const { data: categoriesData, error: categoriesError } = await supabase
+    .from('task_category')
+    .insert(categories)
+    .select()
+
+  if (categoriesError) throw categoriesError
+  console.log(`✅ Created ${categoriesData.length} task categories`)
+
+  // Create a map of category names to IDs
+  const categoryMap: Record<string, string> = {}
+  categoriesData.forEach(cat => {
+    categoryMap[cat.name] = cat.id
+  })
+
   console.log('📋 Creating task templates...')
 
+  // Step 2: Create tasks with category_id
   const tasks = [
     // Sols
     { name: 'Aspirer les sols', category: 'Sols', estimated_duration: 15 },
@@ -306,9 +339,11 @@ async function seedTasks(enterpriseId: string) {
     { name: 'Inventaire produits', category: 'Gestion', estimated_duration: 120 },
     { name: 'Vérifier les stocks de nettoyage', category: 'Gestion', estimated_duration: 15 }
   ].map(t => ({
-    ...t,
+    name: t.name,
     enterprise_id: enterpriseId,
     description: `Tâche de ${t.category.toLowerCase()}`,
+    estimated_duration: t.estimated_duration,
+    category_id: categoryMap[t.category], // Use category_id instead of category
     is_active: true
   }))
 
