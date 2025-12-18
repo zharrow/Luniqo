@@ -158,6 +158,38 @@ export interface Database {
           created_at?: string
         }
       }
+      task_category: {
+        Row: {
+          id: string
+          enterprise_id: string
+          name: string
+          color: string
+          icon: string | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          enterprise_id: string
+          name: string
+          color?: string
+          icon?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          enterprise_id?: string
+          name?: string
+          color?: string
+          icon?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
       task_template: {
         Row: {
           id: string
@@ -165,7 +197,7 @@ export interface Database {
           name: string
           description: string | null
           estimated_duration: number | null
-          category: string | null
+          category_id: string | null
           is_active: boolean
           created_at: string
           updated_at: string
@@ -176,7 +208,7 @@ export interface Database {
           name: string
           description?: string | null
           estimated_duration?: number | null
-          category?: string | null
+          category_id?: string | null
           is_active?: boolean
           created_at?: string
           updated_at?: string
@@ -187,7 +219,7 @@ export interface Database {
           name?: string
           description?: string | null
           estimated_duration?: number | null
-          category?: string | null
+          category_id?: string | null
           is_active?: boolean
           created_at?: string
           updated_at?: string
