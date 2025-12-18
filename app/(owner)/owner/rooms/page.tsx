@@ -209,10 +209,10 @@ export default function RoomsPage() {
                   )}
                 >
                   {/* Background decoration */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-sky-400/5 via-transparent to-blue-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-sky-400/5 via-transparent to-blue-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
                   {/* Sparkle effect on hover */}
-                  <SparklesIcon className="absolute top-4 right-4 w-6 h-6 text-sky-400/20 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:rotate-12" />
+                  <SparklesIcon className="absolute top-4 right-4 w-6 h-6 text-sky-400/20 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:rotate-12 pointer-events-none" />
 
                   {/* Content */}
                   <div className="relative z-10 p-6 flex-1 flex flex-col">
@@ -235,15 +235,8 @@ export default function RoomsPage() {
                       </div>
 
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="shrink-0 hover:bg-primary/10"
-                            title="Actions"
-                          >
-                            <EllipsisVerticalIcon className="w-5 h-5" />
-                          </Button>
+                        <DropdownMenuTrigger className="shrink-0 inline-flex items-center justify-center size-9 rounded-md hover:bg-accent transition-colors">
+                          <EllipsisVerticalIcon className="w-5 h-5" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => router.push(`/owner/rooms/${room.id}`)}>
