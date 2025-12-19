@@ -21,7 +21,7 @@ export const DEFAULT_TASK_CATEGORIES = [
  * @returns Array of created categories
  */
 export async function createDefaultCategories(enterpriseId: string) {
-  const supabase: any = createClient()
+  const supabase = createClient() as any
 
   const categories = DEFAULT_TASK_CATEGORIES.map(cat => ({
     name: cat.name,
@@ -49,7 +49,7 @@ export async function createDefaultCategories(enterpriseId: string) {
  * @returns True if the enterprise has categories, false otherwise
  */
 export async function hasCategories(enterpriseId: string): Promise<boolean> {
-  const supabase: any = createClient()
+  const supabase = createClient()
 
   const { count, error } = await supabase
     .from('task_category')
@@ -79,7 +79,7 @@ export async function ensureDefaultCategories(enterpriseId: string) {
   }
 
   // Return existing categories
-  const supabase: any = createClient()
+  const supabase = createClient()
   const { data } = await supabase
     .from('task_category')
     .select('*')

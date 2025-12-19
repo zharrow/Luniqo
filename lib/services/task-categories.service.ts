@@ -29,7 +29,7 @@ export const taskCategoriesService = {
    * Get all active task categories for an enterprise
    */
   async getAll(enterpriseId: string): Promise<TaskCategory[]> {
-    const supabase: any = createClient()
+    const supabase = createClient() as any
 
     const { data, error } = await supabase
       .from('task_category')
@@ -46,7 +46,7 @@ export const taskCategoriesService = {
    * Get all task categories (including inactive) for an enterprise
    */
   async getAllIncludingInactive(enterpriseId: string): Promise<TaskCategory[]> {
-    const supabase: any = createClient()
+    const supabase = createClient() as any
 
     const { data, error } = await supabase
       .from('task_category')
@@ -62,7 +62,7 @@ export const taskCategoriesService = {
    * Get a single task category by ID
    */
   async getById(id: string, enterpriseId: string): Promise<TaskCategory | null> {
-    const supabase: any = createClient()
+    const supabase = createClient() as any
 
     const { data, error } = await supabase
       .from('task_category')
@@ -82,7 +82,7 @@ export const taskCategoriesService = {
     enterpriseId: string,
     input: CreateTaskCategoryInput
   ): Promise<TaskCategory> {
-    const supabase: any = createClient()
+    const supabase = createClient() as any as any
 
     const { data, error } = await supabase
       .from('task_category')
@@ -108,7 +108,7 @@ export const taskCategoriesService = {
     enterpriseId: string,
     input: UpdateTaskCategoryInput
   ): Promise<TaskCategory> {
-    const supabase: any = createClient()
+    const supabase = createClient() as any
 
     const { data, error } = await supabase
       .from('task_category')
@@ -129,7 +129,7 @@ export const taskCategoriesService = {
    * Soft delete a task category (set is_active to false)
    */
   async softDelete(id: string, enterpriseId: string): Promise<void> {
-    const supabase: any = createClient()
+    const supabase = createClient() as any
 
     const { error } = await supabase
       .from('task_category')
@@ -148,7 +148,7 @@ export const taskCategoriesService = {
    * WARNING: This will set category_id to NULL for all associated tasks
    */
   async hardDelete(id: string, enterpriseId: string): Promise<void> {
-    const supabase = createClient()
+    const supabase = createClient() as any
 
     const { error } = await supabase
       .from('task_category')
@@ -163,7 +163,7 @@ export const taskCategoriesService = {
    * Check if a category name already exists for an enterprise
    */
   async exists(enterpriseId: string, name: string, excludeId?: string): Promise<boolean> {
-    const supabase = createClient()
+    const supabase = createClient() as any
 
     let query = supabase
       .from('task_category')
