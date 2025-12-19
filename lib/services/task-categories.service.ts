@@ -29,7 +29,7 @@ export const taskCategoriesService = {
    * Get all active task categories for an enterprise
    */
   async getAll(enterpriseId: string): Promise<TaskCategory[]> {
-    const supabase = createClient()
+    const supabase: any = createClient()
 
     const { data, error } = await supabase
       .from('task_category')
@@ -46,7 +46,7 @@ export const taskCategoriesService = {
    * Get all task categories (including inactive) for an enterprise
    */
   async getAllIncludingInactive(enterpriseId: string): Promise<TaskCategory[]> {
-    const supabase = createClient()
+    const supabase: any = createClient()
 
     const { data, error } = await supabase
       .from('task_category')
@@ -62,7 +62,7 @@ export const taskCategoriesService = {
    * Get a single task category by ID
    */
   async getById(id: string, enterpriseId: string): Promise<TaskCategory | null> {
-    const supabase = createClient()
+    const supabase: any = createClient()
 
     const { data, error } = await supabase
       .from('task_category')
@@ -82,7 +82,7 @@ export const taskCategoriesService = {
     enterpriseId: string,
     input: CreateTaskCategoryInput
   ): Promise<TaskCategory> {
-    const supabase = createClient()
+    const supabase: any = createClient()
 
     const { data, error } = await supabase
       .from('task_category')
@@ -108,7 +108,7 @@ export const taskCategoriesService = {
     enterpriseId: string,
     input: UpdateTaskCategoryInput
   ): Promise<TaskCategory> {
-    const supabase = createClient()
+    const supabase: any = createClient()
 
     const { data, error } = await supabase
       .from('task_category')
@@ -129,7 +129,7 @@ export const taskCategoriesService = {
    * Soft delete a task category (set is_active to false)
    */
   async softDelete(id: string, enterpriseId: string): Promise<void> {
-    const supabase = createClient()
+    const supabase: any = createClient()
 
     const { error } = await supabase
       .from('task_category')
