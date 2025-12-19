@@ -415,10 +415,10 @@ export default function RoomTasksPage() {
                               {assignedTask.task_template?.name || 'Tâche supprimée'}
                             </h4>
                             <div className="flex flex-wrap items-center gap-3 mt-1">
-                              {assignedTask.task_template?.category && (
-                                <p className="text-sm text-muted-foreground">
-                                  {assignedTask.task_template.category}
-                                </p>
+                              {assignedTask.task_template?.task_category && (
+                                <Badge variant="neutral" size="sm">
+                                  {assignedTask.task_template.task_category.name}
+                                </Badge>
                               )}
                               {assignedTask.suggested_time && (
                                 <div className="flex items-center gap-1 text-sm text-primary-600">

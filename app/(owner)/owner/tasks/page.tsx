@@ -3,12 +3,15 @@
 import { useEffect, useState } from 'react'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
 import { tasksService, type TaskTemplate, type CreateTaskInput } from '@/lib/services/tasks.service'
+import { taskCategoriesService, type TaskCategory } from '@/lib/services/task-categories.service'
+import { DEFAULT_TASK_CATEGORIES } from '@/lib/utils/default-categories'
 import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
   ClipboardDocumentListIcon,
-  EllipsisVerticalIcon
+  EllipsisVerticalIcon,
+  TagIcon
 } from '@heroicons/react/24/outline'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,6 +23,13 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
 import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
 import { FormDialog } from '@/components/shared/FormDialog'
 import { Card } from '@/components/ui/card'
@@ -28,34 +38,46 @@ import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 export default function TasksPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
   const [tasks, setTasks] = useState<TaskTemplate[]>([])
+  const [availableCategories, setAvailableCategories] = useState<TaskCategory[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
+  const [showCategoryModal, setShowCategoryModal] = useState(false)
   const [editingTask, setEditingTask] = useState<TaskTemplate | null>(null)
+  const [editingCategory, setEditingCategory] = useState<TaskCategory | null>(null)
+  const [categoryToDelete, setCategoryToDelete] = useState<TaskCategory | null>(null)
   const [taskToDelete, setTaskToDelete] = useState<TaskTemplate | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState<CreateTaskInput>({
     name: '',
     description: '',
-    category: '',
+    category_id: null,
     estimated_duration: undefined
+  })
+  const [categoryFormData, setCategoryFormData] = useState({
+    name: '',
+    color: '#84cc16'
   })
 
   useEffect(() => {
     if (session?.enterprise) {
-      loadTasks()
+      loadData()
     }
   }, [session])
 
-  async function loadTasks() {
+  async function loadData() {
     if (!session?.enterprise?.id) return
 
     try {
       setLoading(true)
-      const data = await tasksService.getAll(session.enterprise.id)
-      setTasks(data)
+      const [tasksData, categoriesData] = await Promise.all([
+        tasksService.getAll(session.enterprise.id),
+        taskCategoriesService.getAll(session.enterprise.id)
+      ])
+      setTasks(tasksData)
+      setAvailableCategories(categoriesData)
     } catch (error) {
-      console.error('Error loading tasks:', error)
+      console.error('Error loading data:', error)
     } finally {
       setLoading(false)
     }
@@ -66,7 +88,7 @@ export default function TasksPage() {
     setFormData({
       name: '',
       description: '',
-      category: '',
+      category_id: null,
       estimated_duration: undefined
     })
     setShowModal(true)
@@ -77,7 +99,7 @@ export default function TasksPage() {
     setFormData({
       name: task.name,
       description: task.description || '',
-      category: task.category || '',
+      category_id: task.category_id || null,
       estimated_duration: task.estimated_duration || undefined
     })
     setShowModal(true)
@@ -96,7 +118,7 @@ export default function TasksPage() {
       }
 
       setShowModal(false)
-      loadTasks()
+      loadData()
     } catch (error) {
       console.error('Error saving task:', error)
       alert('Erreur lors de la sauvegarde')
@@ -115,7 +137,7 @@ export default function TasksPage() {
     try {
       setIsDeleting(true)
       await tasksService.delete(taskToDelete.id, session.enterprise.id)
-      loadTasks()
+      loadData()
     } catch (error) {
       console.error('Error deleting task:', error)
       alert('Erreur lors de la suppression')
@@ -125,15 +147,76 @@ export default function TasksPage() {
     }
   }
 
+  // Category management functions
+  function openCreateCategoryModal() {
+    setEditingCategory(null)
+    setCategoryFormData({ name: '', color: '#84cc16' })
+    setShowCategoryModal(true)
+  }
+
+  function openEditCategoryModal(category: TaskCategory) {
+    setEditingCategory(category)
+    setCategoryFormData({ name: category.name, color: category.color || '#84cc16' })
+    setShowCategoryModal(true)
+  }
+
+  function selectDefaultCategory(categoryName: string, categoryColor: string) {
+    setCategoryFormData({ name: categoryName, color: categoryColor })
+  }
+
+  async function handleCategorySubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!session?.enterprise?.id) return
+
+    try {
+      setIsSubmitting(true)
+      if (editingCategory) {
+        await taskCategoriesService.update(editingCategory.id, session.enterprise.id, categoryFormData)
+      } else {
+        await taskCategoriesService.create(session.enterprise.id, categoryFormData)
+      }
+      setShowCategoryModal(false)
+      loadData()
+    } catch (error) {
+      console.error('Error saving category:', error)
+      alert('Erreur lors de la sauvegarde de la catégorie')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  async function handleConfirmDeleteCategory() {
+    if (!session?.enterprise?.id || !categoryToDelete) return
+
+    try {
+      setIsDeleting(true)
+      await taskCategoriesService.hardDelete(categoryToDelete.id, session.enterprise.id)
+      loadData()
+    } catch (error) {
+      console.error('Error deleting category:', error)
+      alert('Erreur lors de la suppression de la catégorie')
+    } finally {
+      setIsDeleting(false)
+      setCategoryToDelete(null)
+    }
+  }
+
   // Grouper les tâches par catégorie pour la vue Kanban
-  const categories = Array.from(new Set(tasks.map(t => t.category).filter(Boolean)))
-  const tasksByCategory = categories.reduce((acc, category) => {
-    acc[category!] = tasks.filter(t => t.category === category)
-    return acc
-  }, {} as Record<string, TaskTemplate[]>)
+  const tasksByCategory: Record<string, TaskTemplate[]> = {}
+
+  // Grouper les tâches qui ont une catégorie
+  tasks.forEach(task => {
+    if (task.task_category) {
+      const categoryName = task.task_category.name
+      if (!tasksByCategory[categoryName]) {
+        tasksByCategory[categoryName] = []
+      }
+      tasksByCategory[categoryName].push(task)
+    }
+  })
 
   // Ajouter une catégorie "Sans catégorie" pour les tâches sans catégorie
-  const uncategorizedTasks = tasks.filter(t => !t.category)
+  const uncategorizedTasks = tasks.filter(t => !t.task_category)
   if (uncategorizedTasks.length > 0) {
     tasksByCategory['Sans catégorie'] = uncategorizedTasks
   }
@@ -176,13 +259,23 @@ export default function TasksPage() {
                 </p>
               </div>
             </div>
-            <button
-              onClick={openCreateModal}
-              className="px-6 py-3 rounded-2xl bg-gradient-to-r from-lime-500 to-green-500 text-white font-medium shadow-lg shadow-lime-500/30 hover:shadow-xl hover:shadow-lime-500/40 hover:scale-105 transition-all duration-200 flex items-center gap-2"
-            >
-              <PlusIcon className="w-5 h-5" />
-              Nouvelle tâche
-            </button>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                onClick={openCreateCategoryModal}
+                className="flex items-center gap-2"
+              >
+                <TagIcon className="w-5 h-5" />
+                Gérer les catégories
+              </Button>
+              <button
+                onClick={openCreateModal}
+                className="px-6 py-3 rounded-2xl bg-gradient-to-r from-lime-500 to-green-500 text-white font-medium shadow-lg shadow-lime-500/30 hover:shadow-xl hover:shadow-lime-500/40 hover:scale-105 transition-all duration-200 flex items-center gap-2"
+              >
+                <PlusIcon className="w-5 h-5" />
+                Nouvelle tâche
+              </button>
+            </div>
           </div>
         </div>
 
@@ -213,11 +306,11 @@ export default function TasksPage() {
                   {categoryTasks.map((task) => (
                     <div
                       key={task.id}
-                      className="group relative rounded-3xl p-4 bg-gradient-to-br from-lime-50/80 to-green-50/80 border border-lime-200/50 hover:shadow-lg hover:shadow-lime-500/20 hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                      className="group relative rounded-3xl p-4 bg-gradient-to-br from-lime-50/80 to-green-50/80 border border-lime-200/50 hover:shadow-lg hover:shadow-lime-500/20 hover:-translate-y-1 transition-all duration-300"
                     >
                       {/* Gradient fond */}
                       <div
-                        className="absolute inset-0 opacity-30 group-hover:opacity-50 transition-opacity duration-300"
+                        className="absolute inset-0 opacity-30 group-hover:opacity-50 transition-opacity duration-300 rounded-3xl pointer-events-none"
                         style={{ background: 'linear-gradient(to bottom right, rgba(217, 249, 157, 0.3), rgba(134, 239, 172, 0.3))' }}
                       />
 
@@ -225,12 +318,10 @@ export default function TasksPage() {
                       <div className="flex items-start justify-between mb-2">
                         <h4 className="font-medium text-sm flex-1 pr-2">{task.name}</h4>
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-6 w-6 -mt-1 flex-shrink-0">
-                              <EllipsisVerticalIcon className="w-3 h-3" />
-                            </Button>
+                          <DropdownMenuTrigger className="h-6 w-6 -mt-1 flex-shrink-0 inline-flex items-center justify-center rounded-md hover:bg-accent transition-colors">
+                            <EllipsisVerticalIcon className="w-4 h-4" />
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+                          <DropdownMenuContent align="end" className="z-[100]">
                             <DropdownMenuItem onClick={() => openEditModal(task)}>
                               <PencilIcon className="w-4 h-4" />
                               Modifier
@@ -290,12 +381,25 @@ export default function TasksPage() {
             <label className="block text-sm font-medium mb-1">
               Catégorie
             </label>
-            <Input
-              type="text"
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              placeholder="ex: Sols, Sanitaires, Cuisine"
-            />
+            <Select
+              value={formData.category_id || 'none'}
+              onValueChange={(value) => setFormData({ ...formData, category_id: value === 'none' ? null : value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Sélectionnez une catégorie" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Aucune catégorie</SelectItem>
+                {availableCategories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-1">
+              Les catégories permettent d'organiser vos tâches
+            </p>
           </div>
 
           <div>
@@ -328,12 +432,139 @@ export default function TasksPage() {
           </div>
         </FormDialog>
 
-        {/* Delete Confirmation Dialog */}
+        {/* Category Management Modal */}
+        <FormDialog
+          isOpen={showCategoryModal}
+          onClose={() => setShowCategoryModal(false)}
+          onSubmit={handleCategorySubmit}
+          title={editingCategory ? 'Modifier la catégorie' : 'Nouvelle catégorie'}
+          submitLabel={editingCategory ? 'Modifier' : 'Créer'}
+          isSubmitting={isSubmitting}
+        >
+          {/* Suggested Categories (only when creating new) */}
+          {!editingCategory && (
+            <div className="mb-4 p-3 rounded-lg bg-muted/50 border">
+              <h3 className="text-sm font-medium mb-2">Catégories suggérées</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {DEFAULT_TASK_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.name}
+                    type="button"
+                    onClick={() => selectDefaultCategory(cat.name, cat.color)}
+                    className="flex items-center gap-2 p-2 rounded-md border hover:bg-accent transition-colors text-left"
+                  >
+                    <div
+                      className="w-4 h-4 rounded flex-shrink-0"
+                      style={{ backgroundColor: cat.color }}
+                    />
+                    <span className="text-sm">{cat.name}</span>
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Cliquez pour pré-remplir le formulaire
+              </p>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Nom de la catégorie *
+            </label>
+            <Input
+              type="text"
+              value={categoryFormData.name}
+              onChange={(e) => setCategoryFormData({ ...categoryFormData, name: e.target.value })}
+              placeholder="ex: Sols, Sanitaires, Cuisine"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Couleur
+            </label>
+            <div className="flex gap-2 items-center">
+              <Input
+                type="color"
+                value={categoryFormData.color}
+                onChange={(e) => setCategoryFormData({ ...categoryFormData, color: e.target.value })}
+                className="w-20 h-10"
+              />
+              <Input
+                type="text"
+                value={categoryFormData.color}
+                onChange={(e) => setCategoryFormData({ ...categoryFormData, color: e.target.value })}
+                placeholder="#84cc16"
+                className="flex-1"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Couleur utilisée pour afficher la catégorie dans l'interface
+            </p>
+          </div>
+
+          {/* Existing Categories List */}
+          {!editingCategory && availableCategories.length > 0 && (
+            <div className="pt-4 border-t">
+              <h3 className="text-sm font-medium mb-3">Catégories existantes</h3>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {availableCategories.map((category) => (
+                  <div
+                    key={category.id}
+                    className="flex items-center justify-between p-2 rounded-lg border hover:bg-accent"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{ backgroundColor: category.color || '#84cc16' }}
+                      />
+                      <span className="text-sm">{category.name}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          openEditCategoryModal(category)
+                        }}
+                      >
+                        <PencilIcon className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setCategoryToDelete(category)
+                        }}
+                      >
+                        <TrashIcon className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </FormDialog>
+
+        {/* Delete Task Confirmation Dialog */}
         <DeleteConfirmationDialog
           isOpen={!!taskToDelete}
           onClose={() => setTaskToDelete(null)}
           onConfirm={handleConfirmDelete}
           itemName={taskToDelete?.name}
+          isDeleting={isDeleting}
+        />
+
+        {/* Delete Category Confirmation Dialog */}
+        <DeleteConfirmationDialog
+          isOpen={!!categoryToDelete}
+          onClose={() => setCategoryToDelete(null)}
+          onConfirm={handleConfirmDeleteCategory}
+          itemName={categoryToDelete?.name}
           isDeleting={isDeleting}
         />
       </div>

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
+import { TaskCategory } from './task-categories.service'
 
 export interface TaskTemplate {
   id: string
@@ -6,24 +7,26 @@ export interface TaskTemplate {
   name: string
   description: string | null
   estimated_duration: number | null
-  category: string | null
+  category_id: string | null
   is_active: boolean
   created_at: string
   updated_at: string
+  // Relations (optional, loaded with select)
+  task_category?: TaskCategory | null
 }
 
 export interface CreateTaskInput {
   name: string
   description?: string
   estimated_duration?: number
-  category?: string
+  category_id?: string | null
 }
 
 export interface UpdateTaskInput {
   name?: string
   description?: string
   estimated_duration?: number
-  category?: string
+  category_id?: string | null
   is_active?: boolean
 }
 
@@ -31,12 +34,12 @@ export class TasksService {
   private supabase: any = createClient()
 
   /**
-   * Get all task templates for an enterprise
+   * Get all task templates for an enterprise (with category relation)
    */
   async getAll(enterpriseId: string): Promise<TaskTemplate[]> {
     const { data, error } = await this.supabase
       .from('task_template')
-      .select('*')
+      .select('*, task_category(*)')
       .eq('enterprise_id', enterpriseId)
       .order('name', { ascending: true })
 
@@ -45,12 +48,12 @@ export class TasksService {
   }
 
   /**
-   * Get active tasks only
+   * Get active tasks only (with category relation)
    */
   async getActive(enterpriseId: string): Promise<TaskTemplate[]> {
     const { data, error } = await this.supabase
       .from('task_template')
-      .select('*')
+      .select('*, task_category(*)')
       .eq('enterprise_id', enterpriseId)
       .eq('is_active', true)
       .order('name', { ascending: true })
@@ -60,14 +63,14 @@ export class TasksService {
   }
 
   /**
-   * Get tasks by category
+   * Get tasks by category ID
    */
-  async getByCategory(enterpriseId: string, category: string): Promise<TaskTemplate[]> {
+  async getByCategoryId(enterpriseId: string, categoryId: string): Promise<TaskTemplate[]> {
     const { data, error } = await this.supabase
       .from('task_template')
-      .select('*')
+      .select('*, task_category(*)')
       .eq('enterprise_id', enterpriseId)
-      .eq('category', category)
+      .eq('category_id', categoryId)
       .eq('is_active', true)
       .order('name', { ascending: true })
 
@@ -76,12 +79,12 @@ export class TasksService {
   }
 
   /**
-   * Get a single task by ID
+   * Get a single task by ID (with category relation)
    */
   async getById(id: string, enterpriseId: string): Promise<TaskTemplate | null> {
     const { data, error } = await this.supabase
       .from('task_template')
-      .select('*')
+      .select('*, task_category(*)')
       .eq('id', id)
       .eq('enterprise_id', enterpriseId)
       .single()
@@ -105,10 +108,10 @@ export class TasksService {
         name: input.name,
         description: input.description || null,
         estimated_duration: input.estimated_duration || null,
-        category: input.category || null,
+        category_id: input.category_id || null,
         is_active: true
       })
-      .select()
+      .select('*, task_category(*)')
       .single()
 
     if (error) throw error
@@ -124,7 +127,7 @@ export class TasksService {
       .update(input)
       .eq('id', id)
       .eq('enterprise_id', enterpriseId)
-      .select()
+      .select('*, task_category(*)')
       .single()
 
     if (error) throw error
@@ -171,24 +174,6 @@ export class TasksService {
     }
   }
 
-  /**
-   * Get all unique categories
-   */
-  async getCategories(enterpriseId: string): Promise<string[]> {
-    const { data, error } = await this.supabase
-      .from('task_template')
-      .select('category')
-      .eq('enterprise_id', enterpriseId)
-      .not('category', 'is', null)
-
-    if (error) throw error
-
-    const categories = Array.from(
-      new Set((data as any[]).map(t => t.category).filter(Boolean))
-    )
-
-    return categories.sort()
-  }
 }
 
 export const tasksService = new TasksService()
