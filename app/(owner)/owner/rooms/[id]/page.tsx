@@ -112,6 +112,11 @@ export default function RoomTasksPage() {
         return
       }
 
+      // Build time string from hours and minutes
+      const suggestedTime = suggestedHour && suggestedMinute
+        ? `${suggestedHour.padStart(2, '0')}:${suggestedMinute.padStart(2, '0')}`
+        : null
+
       // Build frequency object if days are selected
       const frequency = selectedDays.length > 0
         ? { type: 'specific_days' as const, days: selectedDays }
@@ -122,7 +127,7 @@ export default function RoomTasksPage() {
         room_id: id as string,
         task_template_id: selectedTaskId,
         order_in_room: assignedTasks.length + 1,
-        suggested_time: suggestedTime || null,
+        suggested_time: suggestedTime,
         expected_duration: expectedDuration ? parseInt(expectedDuration) : null,
         frequency
       })
@@ -146,13 +151,18 @@ export default function RoomTasksPage() {
     try {
       setSaving(true)
 
+      // Build time string from hours and minutes
+      const suggestedTime = editHour && editMinute
+        ? `${editHour.padStart(2, '0')}:${editMinute.padStart(2, '0')}`
+        : null
+
       // Build frequency object if days are selected
       const frequency = editDays.length > 0
         ? { type: 'specific_days' as const, days: editDays }
         : null
 
       await assignedTasksService.update(assignedTaskId, {
-        suggested_time: editTime || null,
+        suggested_time: suggestedTime,
         expected_duration: editDuration ? parseInt(editDuration) : null,
         frequency
       })

@@ -21,7 +21,7 @@ export const DEFAULT_TASK_CATEGORIES = [
  * @returns Array of created categories
  */
 export async function createDefaultCategories(enterpriseId: string) {
-  const supabase: any = createClient()
+  const supabase = createClient() as any
 
   const categories = DEFAULT_TASK_CATEGORIES.map(cat => ({
     name: cat.name,

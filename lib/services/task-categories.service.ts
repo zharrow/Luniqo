@@ -148,7 +148,7 @@ export const taskCategoriesService = {
    * WARNING: This will set category_id to NULL for all associated tasks
    */
   async hardDelete(id: string, enterpriseId: string): Promise<void> {
-    const supabase = createClient()
+    const supabase = createClient() as any
 
     const { error } = await supabase
       .from('task_category')
@@ -163,7 +163,7 @@ export const taskCategoriesService = {
    * Check if a category name already exists for an enterprise
    */
   async exists(enterpriseId: string, name: string, excludeId?: string): Promise<boolean> {
-    const supabase = createClient()
+    const supabase = createClient() as any
 
     let query = supabase
       .from('task_category')
