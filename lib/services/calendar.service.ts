@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
-import { AssignedTask, assignedTasksService } from './assigned-tasks.service'
+import { AssignedTask, assignedTasksService, DayOfWeek } from './assigned-tasks.service'
 import { formatDateLocal } from '@/lib/utils/date'
 
 export interface CalendarTask {
@@ -65,10 +65,16 @@ export class CalendarService {
     date: Date,
     weekStart: Date
   ): boolean {
-    // All assigned tasks appear every day by default
-    // You can extend this logic later if you want to use the frequency field
-    // for custom scheduling
-    return true
+    // If no frequency specified, task appears every day
+    if (!task.frequency || !task.frequency.days || task.frequency.days.length === 0) {
+      return true
+    }
+
+    // Get day name in English (Monday, Tuesday, etc.)
+    const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }) as DayOfWeek
+
+    // Check if this day is in the frequency days
+    return task.frequency.days.includes(dayName)
   }
 
   /**
@@ -176,7 +182,7 @@ export class CalendarService {
             dayTasks.push({
               id: assignedTask.task_template.id,
               name: assignedTask.task_template.name,
-              category: assignedTask.task_template.category,
+              category: assignedTask.task_template.task_category?.name || null,
               room: {
                 id: assignedTask.room.id,
                 name: assignedTask.room.name
@@ -263,7 +269,7 @@ export class CalendarService {
           dayTasks.push({
             id: assignedTask.task_template.id,
             name: assignedTask.task_template.name,
-            category: assignedTask.task_template.category,
+            category: assignedTask.task_template.task_category?.name || null,
             room: {
               id: assignedTask.room.id,
               name: assignedTask.room.name

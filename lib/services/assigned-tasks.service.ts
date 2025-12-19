@@ -1,12 +1,20 @@
 import { createClient } from '@/lib/supabase/client'
 import { TaskCategory } from './task-categories.service'
 
+// Task frequency types
+export type DayOfWeek = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday'
+
+export interface TaskFrequency {
+  type: 'specific_days'
+  days: DayOfWeek[]
+}
+
 export interface AssignedTask {
   id: string
   room_id: string | null
   task_template_id: string | null
   default_performer_id: string | null
-  frequency: Record<string, any> | null
+  frequency: TaskFrequency | null
   suggested_time: string | null
   expected_duration: number | null
   order_in_room: number | null
@@ -36,7 +44,7 @@ export interface CreateAssignedTaskInput {
   room_id: string
   task_template_id: string
   default_performer_id?: string | null
-  frequency?: Record<string, any> | null
+  frequency?: TaskFrequency | null
   suggested_time?: string | null
   expected_duration?: number | null
   order_in_room?: number | null
@@ -46,7 +54,7 @@ export interface UpdateAssignedTaskInput {
   room_id?: string
   task_template_id?: string
   default_performer_id?: string | null
-  frequency?: Record<string, any> | null
+  frequency?: TaskFrequency | null
   suggested_time?: string | null
   expected_duration?: number | null
   order_in_room?: number | null
