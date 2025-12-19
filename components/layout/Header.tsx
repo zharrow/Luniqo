@@ -1,48 +1,26 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/contexts/AuthContext'
 import { getUserDisplayName } from '@/lib/utils/auth.client'
 import { messagingService } from '@/lib/services/messaging.service'
-import { createClient } from '@/lib/supabase/client'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   BellIcon,
   UserCircleIcon,
-  ArrowRightOnRectangleIcon,
-  BuildingOfficeIcon,
-  ClipboardDocumentListIcon,
-  UserGroupIcon,
-  CheckCircleIcon
+  ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/outline'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import NotificationModal from '@/components/shared/NotificationModal'
-
-interface DashboardStats {
-  totalRooms: number
-  totalTasks: number
-  totalUsers: number
-  todayCompletion: number
-}
 
 export default function Header() {
   const { session, logout } = useAuth()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showNotificationModal, setShowNotificationModal] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
-  const [stats, setStats] = useState<DashboardStats>({
-    totalRooms: 0,
-    totalTasks: 0,
-    totalUsers: 0,
-    todayCompletion: 0
-  })
-  const router = useRouter()
-  const supabase = createClient()
 
   const userDisplayName = session?.user ? getUserDisplayName(session.user) : 'User'
   const userRole = session?.role || 'Employee'
-  const isOwner = userRole === 'Owner'
 
   const roleLabels: Record<string, string> = {
     Developer: 'Développeur',
@@ -61,11 +39,6 @@ export default function Header() {
 
     loadUnreadCount()
 
-    // Load stats for Owner users
-    if (isOwner && session.enterprise) {
-      loadStats()
-    }
-
     // Subscribe to real-time notifications
     const channel = messagingService.subscribeToNotifications(
       session.role as 'Developer' | 'Owner' | 'Employee',
@@ -78,7 +51,7 @@ export default function Header() {
     return () => {
       messagingService.unsubscribe(channel)
     }
-  }, [session, isOwner])
+  }, [session])
 
   async function loadUnreadCount() {
     if (!session?.user?.id || !session.role) return
@@ -95,56 +68,6 @@ export default function Header() {
     }
   }
 
-  async function loadStats() {
-    if (!session?.enterprise?.id) return
-
-    try {
-      const enterpriseId = session.enterprise.id
-
-      // Count rooms
-      const { count: roomsCount } = await supabase
-        .from('room')
-        .select('*', { count: 'exact', head: true })
-        .eq('enterprise_id', enterpriseId)
-        .eq('is_active', true)
-
-      // Count tasks
-      const { count: tasksCount } = await supabase
-        .from('task_template')
-        .select('*', { count: 'exact', head: true })
-        .eq('enterprise_id', enterpriseId)
-        .eq('is_active', true)
-
-      // Count users (employees)
-      const { count: usersCount } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('enterprise_id', enterpriseId)
-        .eq('role', 'Employee')
-        .eq('is_active', true)
-
-      // Get today's session completion
-      const today = new Date().toISOString().split('T')[0]
-      const { data: todaySession, error: sessionError } = await supabase
-        .from('daily_cleaning_session')
-        .select('status')
-        .eq('enterprise_id', enterpriseId)
-        .eq('date', today)
-        .maybeSingle() as { data: { status: string } | null; error: any }
-
-      const completion = todaySession && !sessionError && todaySession.status === 'COMPLETED' ? 100 : 0
-
-      setStats({
-        totalRooms: roomsCount || 0,
-        totalTasks: tasksCount || 0,
-        totalUsers: usersCount || 0,
-        todayCompletion: completion
-      })
-    } catch (error) {
-      console.error('Error loading stats:', error)
-    }
-  }
-
   // Get initials for avatar
   const getInitials = (name: string) => {
     return name
@@ -157,54 +80,10 @@ export default function Header() {
 
   return (
     <header className="h-16 bg-white/80 backdrop-blur-xl border-b border-neutral-200 flex items-center justify-between px-6 sticky top-0 z-40">
-      {/* Left section with sidebar trigger and logo */}
+      {/* Left section with sidebar trigger */}
       <div className="flex items-center gap-3">
         <SidebarTrigger className="hover:bg-neutral-100" />
-        <div className="flex items-center gap-2">
-          <img
-            src="/luniqo.png"
-            alt="Luniqo"
-            className="w-8 h-8 object-contain"
-          />
-          <span className="text-lg font-bold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent hidden sm:inline" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-            Luniqo
-          </span>
-        </div>
       </div>
-
-      {/* Center section - Stats (Owner only) */}
-      {isOwner && (
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 px-2 py-1 bg-primary-50 rounded-lg border border-primary-200">
-            <BuildingOfficeIcon className="w-4 h-4 text-primary-600" />
-            <div className="flex items-baseline gap-1">
-              <span className="text-lg font-bold text-primary-700">{stats.totalRooms}</span>
-              <span className="text-[10px] text-muted-foreground">pièces</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 px-2 py-1 bg-secondary-50 rounded-lg border border-secondary-200">
-            <ClipboardDocumentListIcon className="w-4 h-4 text-secondary-600" />
-            <div className="flex items-baseline gap-1">
-              <span className="text-lg font-bold text-secondary-700">{stats.totalTasks}</span>
-              <span className="text-[10px] text-muted-foreground">tâches</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 px-2 py-1 bg-accent-50 rounded-lg border border-accent-200">
-            <UserGroupIcon className="w-4 h-4 text-accent-700" />
-            <div className="flex items-baseline gap-1">
-              <span className="text-lg font-bold text-accent-700">{stats.totalUsers}</span>
-              <span className="text-[10px] text-muted-foreground">employés</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 px-2 py-1 bg-success-50 rounded-lg border border-success-200">
-            <CheckCircleIcon className="w-4 h-4 text-success-600" />
-            <div className="flex items-baseline gap-1">
-              <span className="text-lg font-bold text-success-700">{stats.todayCompletion}%</span>
-              <span className="text-[10px] text-muted-foreground">aujourd'hui</span>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Right section */}
       <div className="flex items-center gap-3">
