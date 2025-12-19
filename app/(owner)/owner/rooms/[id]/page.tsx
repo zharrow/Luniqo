@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
 import { roomsService, type Room } from '@/lib/services/rooms.service'
 import { tasksService, type TaskTemplate } from '@/lib/services/tasks.service'
-import { assignedTasksService, type AssignedTask } from '@/lib/services/assigned-tasks.service'
+import { assignedTasksService, type AssignedTask, type DayOfWeek } from '@/lib/services/assigned-tasks.service'
 import {
   ArrowLeftIcon,
   PlusIcon,
@@ -40,10 +40,12 @@ export default function RoomTasksPage() {
   const [suggestedHour, setSuggestedHour] = useState<string>('12')
   const [suggestedMinute, setSuggestedMinute] = useState<string>('30')
   const [expectedDuration, setExpectedDuration] = useState<string>('')
+  const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>([])
   const [editingTask, setEditingTask] = useState<string | null>(null)
   const [editHour, setEditHour] = useState<string>('')
   const [editMinute, setEditMinute] = useState<string>('')
   const [editDuration, setEditDuration] = useState<string>('')
+  const [editDays, setEditDays] = useState<DayOfWeek[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -110,18 +112,19 @@ export default function RoomTasksPage() {
         return
       }
 
-      // Build time string from hours and minutes
-      const suggestedTime = suggestedHour && suggestedMinute
-        ? `${suggestedHour.padStart(2, '0')}:${suggestedMinute.padStart(2, '0')}`
+      // Build frequency object if days are selected
+      const frequency = selectedDays.length > 0
+        ? { type: 'specific_days' as const, days: selectedDays }
         : null
 
-      // Assign task with optional time and duration
+      // Assign task with optional time, duration, and frequency
       await assignedTasksService.create({
         room_id: id as string,
         task_template_id: selectedTaskId,
         order_in_room: assignedTasks.length + 1,
-        suggested_time: suggestedTime,
-        expected_duration: expectedDuration ? parseInt(expectedDuration) : null
+        suggested_time: suggestedTime || null,
+        expected_duration: expectedDuration ? parseInt(expectedDuration) : null,
+        frequency
       })
 
       // Reset selection and reload
@@ -129,6 +132,7 @@ export default function RoomTasksPage() {
       setSuggestedHour('12')
       setSuggestedMinute('30')
       setExpectedDuration('')
+      setSelectedDays([])
       loadData()
     } catch (error) {
       console.error('Error assigning task:', error)
@@ -142,14 +146,15 @@ export default function RoomTasksPage() {
     try {
       setSaving(true)
 
-      // Build time string from hours and minutes
-      const suggestedTime = editHour && editMinute
-        ? `${editHour.padStart(2, '0')}:${editMinute.padStart(2, '0')}`
+      // Build frequency object if days are selected
+      const frequency = editDays.length > 0
+        ? { type: 'specific_days' as const, days: editDays }
         : null
 
       await assignedTasksService.update(assignedTaskId, {
-        suggested_time: suggestedTime,
-        expected_duration: editDuration ? parseInt(editDuration) : null
+        suggested_time: editTime || null,
+        expected_duration: editDuration ? parseInt(editDuration) : null,
+        frequency
       })
 
       // Reset edit state and reload
@@ -157,6 +162,7 @@ export default function RoomTasksPage() {
       setEditHour('')
       setEditMinute('')
       setEditDuration('')
+      setEditDays([])
       loadData()
     } catch (error) {
       console.error('Error updating task schedule:', error)
@@ -180,6 +186,7 @@ export default function RoomTasksPage() {
     }
 
     setEditDuration(assignedTask.expected_duration?.toString() || '')
+    setEditDays(assignedTask.frequency?.days || [])
   }
 
   function cancelEditing() {
@@ -187,6 +194,7 @@ export default function RoomTasksPage() {
     setEditHour('')
     setEditMinute('')
     setEditDuration('')
+    setEditDays([])
   }
 
   async function handleUnassign(assignedTaskId: string) {
@@ -353,6 +361,45 @@ export default function RoomTasksPage() {
                   </div>
                 </div>
 
+                {/* Days of week selection */}
+                <div>
+                  <Label className="mb-2 block">
+                    Jours spécifiques (optionnel)
+                  </Label>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Si vide, la tâche sera répétée tous les jours. Sélectionnez les jours pour une tâche hebdomadaire.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as DayOfWeek[]).map((day) => {
+                      const dayLabels = {
+                        Monday: 'Lundi',
+                        Tuesday: 'Mardi',
+                        Wednesday: 'Mercredi',
+                        Thursday: 'Jeudi',
+                        Friday: 'Vendredi'
+                      }
+                      const isSelected = selectedDays.includes(day)
+
+                      return (
+                        <Badge
+                          key={day}
+                          variant={isSelected ? 'default' : 'outline'}
+                          className="cursor-pointer px-3 py-1.5 text-sm"
+                          onClick={() => {
+                            if (isSelected) {
+                              setSelectedDays(selectedDays.filter(d => d !== day))
+                            } else {
+                              setSelectedDays([...selectedDays, day])
+                            }
+                          }}
+                        >
+                          {dayLabels[day]}
+                        </Badge>
+                      )
+                    })}
+                  </div>
+                </div>
+
                 <Button
                   onClick={handleAssignTask}
                   disabled={selectedTaskId === 'none' || saving}
@@ -451,6 +498,42 @@ export default function RoomTasksPage() {
                           </div>
                         </div>
 
+                        {/* Days of week selection - Edit mode */}
+                        <div>
+                          <Label className="text-xs mb-2 block">
+                            Jours spécifiques (optionnel)
+                          </Label>
+                          <div className="flex flex-wrap gap-2">
+                            {(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as DayOfWeek[]).map((day) => {
+                              const dayLabels = {
+                                Monday: 'Lun',
+                                Tuesday: 'Mar',
+                                Wednesday: 'Mer',
+                                Thursday: 'Jeu',
+                                Friday: 'Ven'
+                              }
+                              const isSelected = editDays.includes(day)
+
+                              return (
+                                <Badge
+                                  key={day}
+                                  variant={isSelected ? 'default' : 'outline'}
+                                  className="cursor-pointer px-2 py-1 text-xs"
+                                  onClick={() => {
+                                    if (isSelected) {
+                                      setEditDays(editDays.filter(d => d !== day))
+                                    } else {
+                                      setEditDays([...editDays, day])
+                                    }
+                                  }}
+                                >
+                                  {dayLabels[day]}
+                                </Badge>
+                              )
+                            })}
+                          </div>
+                        </div>
+
                         <div className="flex gap-2">
                           <Button
                             size="sm"
@@ -503,6 +586,39 @@ export default function RoomTasksPage() {
                                 </span>
                               )}
                             </div>
+                            {/* Display selected days */}
+                            {assignedTask.frequency?.days && assignedTask.frequency.days.length > 0 && (
+                              <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                                {assignedTask.frequency.days.map((day) => {
+                                  const dayLabels: Record<DayOfWeek, string> = {
+                                    Monday: 'Lun',
+                                    Tuesday: 'Mar',
+                                    Wednesday: 'Mer',
+                                    Thursday: 'Jeu',
+                                    Friday: 'Ven'
+                                  }
+                                  return (
+                                    <Badge key={day} variant="secondary" size="sm">
+                                      {dayLabels[day]}
+                                    </Badge>
+                                  )
+                                })}
+                              </div>
+                            )}
+                            {assignedTask.frequency?.days && assignedTask.frequency.days.length === 0 && (
+                              <div className="mt-2">
+                                <span className="text-xs text-muted-foreground italic">
+                                  Tous les jours
+                                </span>
+                              </div>
+                            )}
+                            {!assignedTask.frequency && (
+                              <div className="mt-2">
+                                <span className="text-xs text-muted-foreground italic">
+                                  Tous les jours
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center gap-1">
