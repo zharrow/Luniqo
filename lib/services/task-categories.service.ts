@@ -29,11 +29,7 @@ export const taskCategoriesService = {
    * Get all active task categories for an enterprise
    */
   async getAll(enterpriseId: string): Promise<TaskCategory[]> {
-<<<<<<< Updated upstream
-    const supabase = createClient() as any
-=======
     const supabase: any = createClient()
->>>>>>> Stashed changes
 
     const { data, error } = await supabase
       .from('task_category')
@@ -50,11 +46,7 @@ export const taskCategoriesService = {
    * Get all task categories (including inactive) for an enterprise
    */
   async getAllIncludingInactive(enterpriseId: string): Promise<TaskCategory[]> {
-<<<<<<< Updated upstream
-    const supabase = createClient() as any
-=======
     const supabase: any = createClient()
->>>>>>> Stashed changes
 
     const { data, error } = await supabase
       .from('task_category')
@@ -70,11 +62,7 @@ export const taskCategoriesService = {
    * Get a single task category by ID
    */
   async getById(id: string, enterpriseId: string): Promise<TaskCategory | null> {
-<<<<<<< Updated upstream
-    const supabase = createClient() as any
-=======
     const supabase: any = createClient()
->>>>>>> Stashed changes
 
     const { data, error } = await supabase
       .from('task_category')
@@ -94,11 +82,7 @@ export const taskCategoriesService = {
     enterpriseId: string,
     input: CreateTaskCategoryInput
   ): Promise<TaskCategory> {
-<<<<<<< Updated upstream
-    const supabase = createClient() as any as any
-=======
     const supabase: any = createClient()
->>>>>>> Stashed changes
 
     const { data, error } = await supabase
       .from('task_category')
@@ -124,11 +108,7 @@ export const taskCategoriesService = {
     enterpriseId: string,
     input: UpdateTaskCategoryInput
   ): Promise<TaskCategory> {
-<<<<<<< Updated upstream
-    const supabase = createClient() as any
-=======
     const supabase: any = createClient()
->>>>>>> Stashed changes
 
     const { data, error } = await supabase
       .from('task_category')
@@ -149,11 +129,7 @@ export const taskCategoriesService = {
    * Soft delete a task category (set is_active to false)
    */
   async softDelete(id: string, enterpriseId: string): Promise<void> {
-<<<<<<< Updated upstream
-    const supabase = createClient() as any
-=======
     const supabase: any = createClient()
->>>>>>> Stashed changes
 
     const { error } = await supabase
       .from('task_category')
