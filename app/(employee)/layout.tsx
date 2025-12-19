@@ -28,7 +28,7 @@ export default function EmployeeLayout({
   }
 
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={false}>
       <EmployeeSidebar />
       <SidebarInset className="bg-neutral-50">
         <Header />
