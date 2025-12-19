@@ -61,20 +61,20 @@ Ouvrez [http://localhost:3000](http://localhost:3000)
 
 L'application utilise un système d'authentification à 3 niveaux :
 
-1. **Developer** (Super Admin)
+1. **Developer**
    - Authentification : Supabase Auth (email/password)
    - Accès : Dashboard analytics (`/analytics`)
    - Rôle : Créer des admins, voir les métriques globales
 
-2. **Admin** (Gestionnaire de crèche)
+2. **Owner** (Gestionnaire de crèche)
    - Authentification : Supabase Auth (email/password)
-   - Accès : Back-office complet (`/dashboard`)
+   - Accès : Back-office complet (`/owner/`)
    - Rôle : Gérer une crèche (1 admin = 1 crèche)
    - Fonctions : CRUD sur rooms, tasks, users, HACCP
 
-3. **User** (Employé)
-   - Authentification : Code PIN (4-6 chiffres)
-   - Accès : Interface tablette (`/tablet`)
+3. **Employee**
+   - Authentification : Code PIN (4 chiffres)
+   - Accès : Back-office complet (`/employee/`) + Interface tablette (`/tablet`)
    - Rôle : Effectuer les tâches de nettoyage et saisie HACCP
 
 ### Modules Fonctionnels
