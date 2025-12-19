@@ -37,10 +37,12 @@ export default function RoomTasksPage() {
   const [availableTasks, setAvailableTasks] = useState<TaskTemplate[]>([])
   const [assignedTasks, setAssignedTasks] = useState<AssignedTask[]>([])
   const [selectedTaskId, setSelectedTaskId] = useState<string>('none')
-  const [suggestedTime, setSuggestedTime] = useState<string>('')
+  const [suggestedHour, setSuggestedHour] = useState<string>('12')
+  const [suggestedMinute, setSuggestedMinute] = useState<string>('30')
   const [expectedDuration, setExpectedDuration] = useState<string>('')
   const [editingTask, setEditingTask] = useState<string | null>(null)
-  const [editTime, setEditTime] = useState<string>('')
+  const [editHour, setEditHour] = useState<string>('')
+  const [editMinute, setEditMinute] = useState<string>('')
   const [editDuration, setEditDuration] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -108,18 +110,24 @@ export default function RoomTasksPage() {
         return
       }
 
+      // Build time string from hours and minutes
+      const suggestedTime = suggestedHour && suggestedMinute
+        ? `${suggestedHour.padStart(2, '0')}:${suggestedMinute.padStart(2, '0')}`
+        : null
+
       // Assign task with optional time and duration
       await assignedTasksService.create({
         room_id: id as string,
         task_template_id: selectedTaskId,
         order_in_room: assignedTasks.length + 1,
-        suggested_time: suggestedTime || null,
+        suggested_time: suggestedTime,
         expected_duration: expectedDuration ? parseInt(expectedDuration) : null
       })
 
       // Reset selection and reload
       setSelectedTaskId('none')
-      setSuggestedTime('')
+      setSuggestedHour('12')
+      setSuggestedMinute('30')
       setExpectedDuration('')
       loadData()
     } catch (error) {
@@ -134,14 +142,20 @@ export default function RoomTasksPage() {
     try {
       setSaving(true)
 
+      // Build time string from hours and minutes
+      const suggestedTime = editHour && editMinute
+        ? `${editHour.padStart(2, '0')}:${editMinute.padStart(2, '0')}`
+        : null
+
       await assignedTasksService.update(assignedTaskId, {
-        suggested_time: editTime || null,
+        suggested_time: suggestedTime,
         expected_duration: editDuration ? parseInt(editDuration) : null
       })
 
       // Reset edit state and reload
       setEditingTask(null)
-      setEditTime('')
+      setEditHour('')
+      setEditMinute('')
       setEditDuration('')
       loadData()
     } catch (error) {
@@ -154,13 +168,24 @@ export default function RoomTasksPage() {
 
   function startEditingTask(assignedTask: AssignedTask) {
     setEditingTask(assignedTask.id)
-    setEditTime(assignedTask.suggested_time || '')
+
+    // Parse time string (HH:MM) into separate hour and minute
+    if (assignedTask.suggested_time) {
+      const [hour, minute] = assignedTask.suggested_time.split(':')
+      setEditHour(hour || '')
+      setEditMinute(minute || '')
+    } else {
+      setEditHour('')
+      setEditMinute('')
+    }
+
     setEditDuration(assignedTask.expected_duration?.toString() || '')
   }
 
   function cancelEditing() {
     setEditingTask(null)
-    setEditTime('')
+    setEditHour('')
+    setEditMinute('')
     setEditDuration('')
   }
 
@@ -269,17 +294,37 @@ export default function RoomTasksPage() {
                 {/* Time and duration fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="suggested-time" className="flex items-center gap-2">
+                    <Label className="flex items-center gap-2">
                       <ClockIcon className="w-4 h-4" />
                       Horaire suggéré (optionnel)
                     </Label>
-                    <Input
-                      id="suggested-time"
-                      type="time"
-                      value={suggestedTime}
-                      onChange={(e) => setSuggestedTime(e.target.value)}
-                      placeholder="09:00"
-                    />
+                    <div className="flex items-center gap-2">
+                      <Select value={suggestedHour} onValueChange={setSuggestedHour}>
+                        <SelectTrigger className="w-24">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
+                            <SelectItem key={hour} value={hour.toString().padStart(2, '0')}>
+                              {hour.toString().padStart(2, '0')}h
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <span className="text-muted-foreground">:</span>
+                      <Select value={suggestedMinute} onValueChange={setSuggestedMinute}>
+                        <SelectTrigger className="w-24">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map((min) => (
+                            <SelectItem key={min} value={min}>
+                              {min}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <p className="text-xs text-muted-foreground mt-1">
                       Heure idéale pour effectuer cette tâche
                     </p>
@@ -360,15 +405,36 @@ export default function RoomTasksPage() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <div>
-                            <Label htmlFor={`edit-time-${assignedTask.id}`} className="text-xs">
+                            <Label className="text-xs">
                               Horaire suggéré
                             </Label>
-                            <Input
-                              id={`edit-time-${assignedTask.id}`}
-                              type="time"
-                              value={editTime}
-                              onChange={(e) => setEditTime(e.target.value)}
-                            />
+                            <div className="flex items-center gap-2">
+                              <Select value={editHour} onValueChange={setEditHour}>
+                                <SelectTrigger className="w-24">
+                                  <SelectValue placeholder="Heure" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
+                                    <SelectItem key={hour} value={hour.toString().padStart(2, '0')}>
+                                      {hour.toString().padStart(2, '0')}h
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <span className="text-muted-foreground">:</span>
+                              <Select value={editMinute} onValueChange={setEditMinute}>
+                                <SelectTrigger className="w-24">
+                                  <SelectValue placeholder="Min" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map((min) => (
+                                    <SelectItem key={min} value={min}>
+                                      {min}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
                           </div>
                           <div>
                             <Label htmlFor={`edit-duration-${assignedTask.id}`} className="text-xs">
