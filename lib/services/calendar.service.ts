@@ -176,7 +176,7 @@ export class CalendarService {
             dayTasks.push({
               id: assignedTask.task_template.id,
               name: assignedTask.task_template.name,
-              category: assignedTask.task_template.category,
+              category: assignedTask.task_template.task_category?.name || null,
               room: {
                 id: assignedTask.room.id,
                 name: assignedTask.room.name
@@ -263,7 +263,7 @@ export class CalendarService {
           dayTasks.push({
             id: assignedTask.task_template.id,
             name: assignedTask.task_template.name,
-            category: assignedTask.task_template.category,
+            category: assignedTask.task_template.task_category?.name || null,
             room: {
               id: assignedTask.room.id,
               name: assignedTask.room.name
