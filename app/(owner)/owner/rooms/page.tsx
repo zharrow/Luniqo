@@ -9,23 +9,14 @@ import {
   PencilIcon,
   TrashIcon,
   BuildingOfficeIcon,
-  EllipsisVerticalIcon,
   ClipboardDocumentListIcon,
   SparklesIcon
 } from '@heroicons/react/24/outline'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator
-} from '@/components/ui/dropdown-menu'
 import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
 import { FormDialog } from '@/components/shared/FormDialog'
-import { BentoGrid } from '@/components/ui/bento-grid'
 import { cn } from '@/lib/utils'
 import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
@@ -63,6 +54,52 @@ export default function RoomsPage() {
       console.error('Error loading rooms:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Couleurs variées pour chaque pièce (principe "Interface Vivante")
+  const roomColors = [
+    { primary: '#ffab91', light: '#fff3e0', shadow: 'rgba(255,171,145,0.25)' }, // Pêche
+    { primary: '#64b5d1', light: '#e0f7fa', shadow: 'rgba(100,181,209,0.25)' }, // Turquoise
+    { primary: '#b39ddb', light: '#f3e5f5', shadow: 'rgba(179,157,219,0.25)' }, // Violet
+    { primary: '#aed581', light: '#f1f8e9', shadow: 'rgba(174,213,129,0.25)' }, // Lime
+    { primary: '#81c995', light: '#e8f5e9', shadow: 'rgba(129,201,149,0.25)' }, // Vert menthe
+    { primary: '#f4a5a5', light: '#fef6f7', shadow: 'rgba(244,165,165,0.25)' }, // Rose
+    { primary: '#9fa8da', light: '#e8eaf6', shadow: 'rgba(159,168,218,0.25)' }, // Indigo
+    { primary: '#5a9dc9', light: '#e3f2fd', shadow: 'rgba(90,157,201,0.25)' }, // Bleu ciel
+  ]
+
+  const getRoomColor = (index: number) => {
+    return roomColors[index % roomColors.length]
+  }
+
+  // Layout organique : pattern compact sur grille 12 colonnes
+  type CardSize = 'featured' | 'medium' | 'small'
+
+  const getCardLayout = (index: number): {
+    size: CardSize
+    colSpan: string
+  } => {
+    // Première carte toujours featured mais plus compacte (6 colonnes au lieu de 8)
+    if (index === 0) {
+      return {
+        size: 'featured',
+        colSpan: 'col-span-12 md:col-span-6'
+      }
+    }
+
+    // Les 2 cartes suivantes complètent la première ligne (3 colonnes chacune)
+    if (index === 1 || index === 2) {
+      return {
+        size: 'small',
+        colSpan: 'col-span-12 md:col-span-3'
+      }
+    }
+
+    // Le reste en pattern 4 colonnes (3 par ligne) pour maximiser l'espace horizontal
+    return {
+      size: 'medium',
+      colSpan: 'col-span-12 md:col-span-4'
     }
   }
 
@@ -144,26 +181,36 @@ export default function RoomsPage() {
           ]}
         />
 
-        {/* Header with Gradient - Module Clean (Bleu) */}
-        <div className="relative mb-8 p-8 rounded-3xl bg-gradient-to-br from-sky-50 via-blue-50 to-cyan-50 border border-sky-200/50 overflow-hidden">
-          <div className="absolute inset-0 bg-[url('/patterns/dots.svg')] opacity-5"></div>
+        {/* Header - Module Rooms (Pêche) */}
+        <div className="relative mb-6 p-6 rounded-3xl bg-white border overflow-hidden group hover:-translate-y-1 transition-all duration-300"
+          style={{
+            borderColor: '#ffab9133',
+            background: 'linear-gradient(to bottom right, #fff3e0, white)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(255,171,145,0.25)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow = '0 0 0 0 rgba(255,171,145,0.25)'
+          }}
+        >
           <div className="relative flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center shadow-lg shadow-sky-500/30">
-                <BuildingOfficeIcon className="w-8 h-8 text-white" strokeWidth={1.5} />
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#ffab91] to-[#ff8a65] flex items-center justify-center shadow-md shadow-[#ffab91]/30 group-hover:scale-105 group-hover:rotate-2 transition-all duration-300">
+                <BuildingOfficeIcon className="w-6 h-6 text-white" strokeWidth={1.5} />
               </div>
               <div>
-                <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+                <h1 className="text-2xl font-bold text-gray-900">
                   Pièces
                 </h1>
-                <p className="text-sky-700/70">
+                <p className="text-sm text-gray-600">
                   Gérez les pièces de votre crèche
                 </p>
               </div>
             </div>
             <button
               onClick={openCreateModal}
-              className="px-6 py-3 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-500 text-white font-medium shadow-lg shadow-sky-500/30 hover:shadow-xl hover:shadow-sky-500/40 hover:scale-105 transition-all duration-200 flex items-center gap-2"
+              className="px-6 py-3 rounded-2xl bg-[#ffab91] hover:bg-[#ff8a65] text-white font-medium shadow-lg shadow-[#ffab91]/30 hover:shadow-xl hover:shadow-[#ffab91]/40 hover:scale-105 transition-all duration-300 flex items-center gap-2"
             >
               <PlusIcon className="w-5 h-5" />
               Nouvelle pièce
@@ -187,43 +234,68 @@ export default function RoomsPage() {
             </Button>
           </div>
         ) : (
-          <BentoGrid className="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 auto-rows-[18rem]">
+          <div className="grid grid-cols-12 gap-3">
             {rooms.map((room, index) => {
-              // Patterns de colonnes pour un layout Bento dynamique
-              const colSpanClass =
-                index % 7 === 0 ? 'md:col-span-2' :
-                index % 5 === 0 ? 'md:col-span-2' :
-                'md:col-span-1'
+              const colors = getRoomColor(index)
+              const layout = getCardLayout(index)
 
               return (
                 <div
                   key={room.id}
                   className={cn(
-                    'group relative col-span-1 flex flex-col justify-between overflow-hidden rounded-3xl',
-                    'bg-gradient-to-br from-sky-50/80 to-blue-50/80',
-                    'border border-sky-200/50',
-                    'hover:shadow-lg hover:shadow-sky-500/20 transition-all duration-300',
-                    'hover:scale-[1.02]',
+                    'group relative flex flex-col justify-between overflow-hidden rounded-3xl',
+                    'bg-white border',
+                    'hover:-translate-y-1 transition-all duration-300 cursor-pointer',
                     !room.is_active && 'opacity-50 hover:opacity-75',
-                    colSpanClass
+                    layout.colSpan
                   )}
+                  style={{
+                    borderColor: colors.primary + '33',
+                    background: `linear-gradient(to bottom right, ${colors.light}, white)`,
+                    minHeight: layout.size === 'featured' ? '18rem' : layout.size === 'small' ? '14rem' : '15rem'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.boxShadow = `0 16px 48px -12px ${colors.shadow}`
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.boxShadow = '0 0 0 0 rgba(0,0,0,0)'
+                  }}
+                  onClick={() => router.push(`/owner/rooms/${room.id}`)}
                 >
-                  {/* Background decoration */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-sky-400/5 via-transparent to-blue-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                  {/* Sparkle decoration */}
+                  <SparklesIcon
+                    className="absolute top-4 right-4 w-6 h-6 opacity-0 group-hover:opacity-20 transition-all duration-300 group-hover:rotate-12 pointer-events-none"
+                    style={{ color: colors.primary }}
+                  />
 
-                  {/* Sparkle effect on hover */}
-                  <SparklesIcon className="absolute top-4 right-4 w-6 h-6 text-sky-400/20 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:rotate-12 pointer-events-none" />
-
-                  {/* Content */}
-                  <div className="relative z-10 p-6 flex-1 flex flex-col">
-                    {/* Header with icon and actions */}
-                    <div className="flex items-start justify-between mb-4">
+                  {/* Content - Different templates based on size */}
+                  <div className={cn(
+                    "relative z-10 flex-1 flex flex-col",
+                    layout.size === 'small' ? 'p-4' : 'p-5'
+                  )}>
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3 flex-1">
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center shadow-md shadow-sky-500/30 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                          <BuildingOfficeIcon className="w-6 h-6 text-white" strokeWidth={2} />
+                        <div
+                          className={cn(
+                            "rounded-2xl flex items-center justify-center shadow-md group-hover:scale-110 group-hover:rotate-3 transition-all duration-300",
+                            layout.size === 'featured' ? 'w-12 h-12' : layout.size === 'small' ? 'w-9 h-9' : 'w-10 h-10'
+                          )}
+                          style={{
+                            background: `linear-gradient(to bottom right, ${colors.primary}, ${colors.primary}dd)`,
+                            boxShadow: `0 4px 12px ${colors.shadow}`
+                          }}
+                        >
+                          <BuildingOfficeIcon className={cn(
+                            "text-white",
+                            layout.size === 'featured' ? 'w-6 h-6' : layout.size === 'small' ? 'w-5 h-5' : 'w-5 h-5'
+                          )} strokeWidth={2} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-lg truncate group-hover:text-sky-700 transition-colors">
+                          <h3 className={cn(
+                            "font-semibold text-gray-900 group-hover:text-gray-700 transition-colors",
+                            layout.size === 'featured' ? 'text-lg mb-1' : layout.size === 'small' ? 'text-base' : 'text-base'
+                          )}>
                             {room.name}
                           </h3>
                           {!room.is_active && (
@@ -234,35 +306,36 @@ export default function RoomsPage() {
                         </div>
                       </div>
 
-                      <DropdownMenu>
-                        <DropdownMenuTrigger className="shrink-0 inline-flex items-center justify-center size-9 rounded-md hover:bg-accent transition-colors">
-                          <EllipsisVerticalIcon className="w-5 h-5" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => router.push(`/owner/rooms/${room.id}`)}>
-                            <ClipboardDocumentListIcon className="w-4 h-4" />
-                            Gérer les tâches
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => openEditModal(room)}>
-                            <PencilIcon className="w-4 h-4" />
-                            Modifier
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            variant="destructive"
-                            onClick={() => openDeleteDialog(room)}
-                          >
-                            <TrashIcon className="w-4 h-4" />
-                            Supprimer
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <div className="shrink-0 flex items-center gap-1">
+                        <button
+                          className="inline-flex items-center justify-center size-8 rounded-lg hover:bg-gray-100 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openEditModal(room)
+                          }}
+                          title="Modifier"
+                        >
+                          <PencilIcon className="w-4 h-4 text-gray-600" />
+                        </button>
+                        <button
+                          className="inline-flex items-center justify-center size-8 rounded-lg hover:bg-red-50 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openDeleteDialog(room)
+                          }}
+                          title="Supprimer"
+                        >
+                          <TrashIcon className="w-4 h-4 text-red-600" />
+                        </button>
+                      </div>
                     </div>
 
                     {/* Description */}
                     {room.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
+                      <p className={cn(
+                        "text-gray-600 mb-3",
+                        layout.size === 'featured' ? 'text-sm line-clamp-2' : 'text-xs line-clamp-1'
+                      )}>
                         {room.description}
                       </p>
                     )}
@@ -271,25 +344,21 @@ export default function RoomsPage() {
                     <div className="flex-1" />
 
                     {/* Footer CTA */}
-                    <div className="pt-4 border-t border-border/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <Button
-                        variant="link"
-                        size="sm"
-                        className="p-0 h-auto font-medium text-sky-700 hover:text-sky-600"
-                        onClick={() => router.push(`/owner/rooms/${room.id}`)}
+                    <div className="pt-3 border-t opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      style={{ borderColor: colors.primary + '20' }}
+                    >
+                      <div className="flex items-center gap-2 text-sm font-medium"
+                        style={{ color: colors.primary }}
                       >
-                        Gérer les tâches
-                        <ClipboardDocumentListIcon className="w-4 h-4 ml-2" />
-                      </Button>
+                        <span>Gérer les tâches</span>
+                        <ClipboardDocumentListIcon className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
+                      </div>
                     </div>
                   </div>
-
-                  {/* Hover effect overlay */}
-                  <div className="absolute inset-0 pointer-events-none border-2 border-sky-400/0 group-hover:border-sky-400/20 rounded-3xl transition-all duration-300" />
                 </div>
               )
             })}
-          </BentoGrid>
+          </div>
         )}
 
         {/* Form Dialog */}

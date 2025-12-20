@@ -12,7 +12,6 @@ import {
   KeyIcon,
   EllipsisVerticalIcon
 } from '@heroicons/react/24/outline'
-import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -72,6 +71,22 @@ export default function UsersPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Couleurs variées pour chaque employé (principe "Interface Vivante")
+  const userColors = [
+    { primary: '#f4a5a5', light: '#fef6f7', shadow: 'rgba(244,165,165,0.25)' }, // Rose
+    { primary: '#64b5d1', light: '#e0f7fa', shadow: 'rgba(100,181,209,0.25)' }, // Turquoise
+    { primary: '#b39ddb', light: '#f3e5f5', shadow: 'rgba(179,157,219,0.25)' }, // Violet
+    { primary: '#aed581', light: '#f1f8e9', shadow: 'rgba(174,213,129,0.25)' }, // Lime
+    { primary: '#81c995', light: '#e8f5e9', shadow: 'rgba(129,201,149,0.25)' }, // Vert menthe
+    { primary: '#ffab91', light: '#fff3e0', shadow: 'rgba(255,171,145,0.25)' }, // Pêche
+    { primary: '#9fa8da', light: '#e8eaf6', shadow: 'rgba(159,168,218,0.25)' }, // Indigo
+    { primary: '#5a9dc9', light: '#e3f2fd', shadow: 'rgba(90,157,201,0.25)' }, // Bleu ciel
+  ]
+
+  const getUserColor = (index: number) => {
+    return userColors[index % userColors.length]
   }
 
   function openCreateModal() {
@@ -217,26 +232,36 @@ export default function UsersPage() {
           ]}
         />
 
-        {/* Header with Gradient - Module Users (Rose) */}
-        <div className="relative mb-8 p-8 rounded-3xl bg-gradient-to-br from-pink-50 via-rose-50 to-red-50 border border-pink-200/50 overflow-hidden">
-          <div className="absolute inset-0 bg-[url('/patterns/dots.svg')] opacity-5"></div>
+        {/* Header - Module Users (Rose) */}
+        <div className="relative mb-6 p-6 rounded-3xl bg-white border overflow-hidden group hover:-translate-y-1 transition-all duration-300"
+          style={{
+            borderColor: '#f4a5a533',
+            background: 'linear-gradient(to bottom right, #fef6f7, white)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(244,165,165,0.25)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow = '0 0 0 0 rgba(244,165,165,0.25)'
+          }}
+        >
           <div className="relative flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center shadow-lg shadow-pink-500/30">
-                <UserGroupIcon className="w-8 h-8 text-white" strokeWidth={1.5} />
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#f4a5a5] to-[#c66b6b] flex items-center justify-center shadow-md shadow-[#f4a5a5]/30 group-hover:scale-105 group-hover:rotate-2 transition-all duration-300">
+                <UserGroupIcon className="w-6 h-6 text-white" strokeWidth={1.5} />
               </div>
               <div>
-                <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+                <h1 className="text-2xl font-bold text-gray-900">
                   Employés
                 </h1>
-                <p className="text-pink-700/70">
+                <p className="text-sm text-gray-600">
                   Gérez vos employés et leurs accès aux pièces
                 </p>
               </div>
             </div>
             <button
               onClick={openCreateModal}
-              className="px-6 py-3 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 text-white font-medium shadow-lg shadow-pink-500/30 hover:shadow-xl hover:shadow-pink-500/40 hover:scale-105 transition-all duration-200 flex items-center gap-2"
+              className="px-6 py-3 rounded-2xl bg-[#f4a5a5] hover:bg-[#c66b6b] text-white font-medium shadow-lg shadow-[#f4a5a5]/30 hover:shadow-xl hover:shadow-[#f4a5a5]/40 hover:scale-105 transition-all duration-300 flex items-center gap-2"
             >
               <PlusIcon className="w-5 h-5" />
               Nouvel employé
@@ -260,109 +285,141 @@ export default function UsersPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {users.map((user) => (
-              <div
-                key={user.id}
-                className={`${!user.is_active && 'opacity-50'} relative rounded-3xl p-6 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden`}
-                style={{
-                  border: '1px solid #f4a5a520',
-                  boxShadow: '0 0 0 0 rgba(244,165,165,0.25)'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(244,165,165,0.25)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = '0 0 0 0 rgba(244,165,165,0.25)'
-                }}
-              >
-                {/* Gradient fond */}
-                <div
-                  className="absolute inset-0 opacity-60 pointer-events-none"
-                  style={{ background: 'linear-gradient(to bottom right, #fef6f7, white)' }}
-                />
+            {users.map((user, index) => {
+              const colors = getUserColor(index)
 
-                <div className="relative z-10">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-12 w-12">
-                        {user.avatar_url ? (
-                          <AvatarImage src={user.avatar_url} alt="Avatar" />
-                        ) : null}
-                        <AvatarFallback className="bg-[#f4a5a5]/10 text-[#c66b6b] font-semibold">
-                          {user.first_name?.[0] || '?'}{user.last_name?.[0] || '?'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h3 className="font-semibold">
-                          {user.first_name} {user.last_name}
-                        </h3>
-                        {!user.is_active && (
-                          <Badge variant="danger">Désactivé</Badge>
-                        )}
+              return (
+                <div
+                  key={user.id}
+                  className={`${!user.is_active && 'opacity-50'} relative rounded-3xl p-6 bg-white border hover:-translate-y-1 transition-all duration-300 group overflow-hidden cursor-pointer`}
+                  style={{
+                    borderColor: colors.primary + '33',
+                    background: `linear-gradient(to bottom right, ${colors.light}, white)`
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.boxShadow = `0 16px 48px -12px ${colors.shadow}`
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.boxShadow = '0 0 0 0 rgba(0,0,0,0)'
+                  }}
+                >
+                  <div className="relative z-10">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <Avatar className="h-12 w-12 ring-2 group-hover:ring-4 transition-all duration-300"
+                            style={{ '--tw-ring-color': colors.primary + '40' } as React.CSSProperties}
+                          >
+                            {user.avatar_url ? (
+                              <AvatarImage src={user.avatar_url} alt="Avatar" />
+                            ) : null}
+                            <AvatarFallback className="font-semibold text-white"
+                              style={{ background: `linear-gradient(to bottom right, ${colors.primary}, ${colors.primary}dd)` }}
+                            >
+                              {user.first_name?.[0] || '?'}{user.last_name?.[0] || '?'}
+                            </AvatarFallback>
+                          </Avatar>
+                          {/* Status indicator */}
+                          <div
+                            className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white shadow-sm"
+                            style={{
+                              background: user.is_active ? '#81c995' : '#9e9e9e'
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-gray-900 group-hover:text-gray-700 transition-colors">
+                            {user.first_name} {user.last_name}
+                          </h3>
+                          {!user.is_active && (
+                            <Badge variant="danger" size="sm">Désactivé</Badge>
+                          )}
+                        </div>
                       </div>
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger className="inline-flex items-center justify-center size-9 rounded-md hover:bg-gray-100 transition-colors">
+                          <EllipsisVerticalIcon className="w-5 h-5 text-gray-600" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openEditModal(user)}>
+                            <PencilIcon className="w-4 h-4" />
+                            Modifier
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onClick={() => openDeleteDialog(user)}
+                          >
+                            <TrashIcon className="w-4 h-4" />
+                            Désactiver
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
 
-                    <DropdownMenu>
-                      <DropdownMenuTrigger className="inline-flex items-center justify-center size-9 rounded-md hover:bg-accent transition-colors">
-                        <EllipsisVerticalIcon className="w-5 h-5" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => openEditModal(user)}>
-                          <PencilIcon className="w-4 h-4" />
-                          Modifier
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          variant="destructive"
-                          onClick={() => openDeleteDialog(user)}
-                        >
-                          <TrashIcon className="w-4 h-4" />
-                          Désactiver
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-
-                  {user.email && (
-                    <p className="text-sm text-muted-foreground mb-3">
-                      {user.email}
-                    </p>
-                  )}
-
-                  <div className="flex items-center gap-2 mb-3">
-                    <KeyIcon className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Code PIN configuré</span>
-                  </div>
-
-                  <div className="pt-3 border-t">
-                    <p className="text-xs text-muted-foreground mb-2">Accès aux pièces</p>
-                    {user.accessible_rooms.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">Aucune pièce assignée</p>
-                    ) : (
-                      <div className="flex flex-wrap gap-1">
-                        {user.accessible_rooms.slice(0, 3).map(roomId => {
-                          const room = rooms.find(r => r.id === roomId)
-                          return room ? (
-                            <Badge
-                              key={roomId}
-                              variant="users"
-                              size="sm"
-                            >
-                              {room.name}
-                            </Badge>
-                          ) : null
-                        })}
-                        {user.accessible_rooms.length > 3 && (
-                          <Badge variant="neutral" size="sm">
-                            +{user.accessible_rooms.length - 3}
-                          </Badge>
-                        )}
-                      </div>
+                    {user.email && (
+                      <p className="text-sm text-gray-600 mb-3">
+                        {user.email}
+                      </p>
                     )}
+
+                    <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-lg"
+                      style={{ background: colors.primary + '10' }}
+                    >
+                      <KeyIcon className="w-4 h-4" style={{ color: colors.primary }} />
+                      <span className="text-sm font-medium" style={{ color: colors.primary }}>
+                        Code PIN configuré
+                      </span>
+                    </div>
+
+                    <div className="pt-3 border-t"
+                      style={{ borderColor: colors.primary + '20' }}
+                    >
+                      <p className="text-xs text-gray-500 mb-2">Accès aux pièces</p>
+                      {user.accessible_rooms.length === 0 ? (
+                        <p className="text-sm text-gray-500">Aucune pièce assignée</p>
+                      ) : (
+                        <div className="flex flex-wrap gap-1">
+                          {user.accessible_rooms.slice(0, 3).map(roomId => {
+                            const room = rooms.find(r => r.id === roomId)
+                            return room ? (
+                              <Badge
+                                key={roomId}
+                                size="sm"
+                                className="text-white"
+                                style={{
+                                  background: `linear-gradient(to right, ${colors.primary}, ${colors.primary}dd)`,
+                                  boxShadow: `0 2px 8px ${colors.shadow}`
+                                }}
+                              >
+                                {room.name}
+                              </Badge>
+                            ) : null
+                          })}
+                          {user.accessible_rooms.length > 3 && (
+                            <Badge variant="neutral" size="sm">
+                              +{user.accessible_rooms.length - 3}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Micro-animation : icône utilisateur au hover */}
+                  <div
+                    className="absolute bottom-3 right-3 w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:rotate-12 transition-all duration-300"
+                    style={{
+                      background: `linear-gradient(to bottom right, ${colors.primary}, ${colors.primary}dd)`,
+                      boxShadow: `0 4px 12px ${colors.shadow}`
+                    }}
+                  >
+                    <UserGroupIcon className="w-4 h-4 text-white" strokeWidth={2} />
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
 

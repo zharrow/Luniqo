@@ -73,7 +73,7 @@ L'application utilise un système d'authentification à 3 niveaux :
    - Fonctions : CRUD sur rooms, tasks, users, HACCP
 
 3. **Employee**
-   - Authentification : Code PIN (4 chiffres)
+   - Authentification : Supabase Auth (email/password) + Code PIN (4 chiffres)
    - Accès : Back-office complet (`/employee/`) + Interface tablette (`/tablet`)
    - Rôle : Effectuer les tâches de nettoyage et saisie HACCP
 

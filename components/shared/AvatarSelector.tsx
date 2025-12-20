@@ -1,7 +1,5 @@
 'use client'
 
-import { useState } from 'react'
-import Image from 'next/image'
 import { CheckCircleIcon } from '@heroicons/react/24/solid'
 
 interface AvatarSelectorProps {
@@ -10,19 +8,27 @@ interface AvatarSelectorProps {
   className?: string
 }
 
-const AVATARS = [
-  { id: 'men.jpg', label: 'Homme', src: '/men.jpg' },
-  { id: 'women.jpg', label: 'Femme', src: '/women.jpg' }
-]
-
 export function AvatarSelector({ selectedAvatar, onSelect, className = '' }: AvatarSelectorProps) {
+  // Use absolute URL to avoid routing issues with nested paths
+  const getAssetUrl = (filename: string) => {
+    if (typeof window !== 'undefined') {
+      return `${window.location.origin}/${filename}`
+    }
+    return `/${filename}`
+  }
+
+  const avatars = [
+    { id: 'men.jpg', label: 'Homme', src: getAssetUrl('men.jpg') },
+    { id: 'women.jpg', label: 'Femme', src: getAssetUrl('women.jpg') }
+  ]
+
   return (
     <div className={`space-y-3 ${className}`}>
       <label className="block text-sm font-medium text-gray-700">
         Photo de profil
       </label>
       <div className="grid grid-cols-2 gap-4">
-        {AVATARS.map((avatar) => (
+        {avatars.map((avatar) => (
           <button
             key={avatar.id}
             type="button"
@@ -39,11 +45,10 @@ export function AvatarSelector({ selectedAvatar, onSelect, className = '' }: Ava
           >
             {/* Image d'avatar */}
             <div className="relative aspect-square bg-gradient-to-br from-gray-50 to-gray-100">
-              <Image
+              <img
                 src={avatar.src}
                 alt={avatar.label}
-                fill
-                className="object-cover"
+                className="w-full h-full object-cover"
               />
 
               {/* Overlay avec gradient au hover */}

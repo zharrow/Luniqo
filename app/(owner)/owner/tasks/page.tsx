@@ -221,6 +221,22 @@ export default function TasksPage() {
     tasksByCategory['Sans catégorie'] = uncategorizedTasks
   }
 
+  // Couleurs variées pour chaque catégorie (principe "Interface Vivante")
+  const categoryColors = [
+    { primary: '#aed581', light: '#f1f8e9', shadow: 'rgba(174,213,129,0.25)' }, // Lime
+    { primary: '#f4a5a5', light: '#fef6f7', shadow: 'rgba(244,165,165,0.25)' }, // Rose
+    { primary: '#ffab91', light: '#fff3e0', shadow: 'rgba(255,171,145,0.25)' }, // Pêche
+    { primary: '#64b5d1', light: '#e0f7fa', shadow: 'rgba(100,181,209,0.25)' }, // Turquoise
+    { primary: '#b39ddb', light: '#f3e5f5', shadow: 'rgba(179,157,219,0.25)' }, // Violet
+    { primary: '#81c995', light: '#e8f5e9', shadow: 'rgba(129,201,149,0.25)' }, // Vert menthe
+    { primary: '#9fa8da', light: '#e8eaf6', shadow: 'rgba(159,168,218,0.25)' }, // Indigo
+    { primary: '#5a9dc9', light: '#e3f2fd', shadow: 'rgba(90,157,201,0.25)' }, // Bleu ciel
+  ]
+
+  const getCategoryColor = (index: number) => {
+    return categoryColors[index % categoryColors.length]
+  }
+
   if (authLoading || loading) {
     return (
       <div className="max-w-7xl mx-auto">
@@ -242,19 +258,29 @@ export default function TasksPage() {
           ]}
         />
 
-        {/* Header with Gradient - Module Tasks (Lime) */}
-        <div className="relative mb-8 p-8 rounded-3xl bg-gradient-to-br from-lime-50 via-green-50 to-emerald-50 border border-lime-200/50 overflow-hidden">
-          <div className="absolute inset-0 bg-[url('/patterns/dots.svg')] opacity-5"></div>
+        {/* Header - Module Tasks (Lime) */}
+        <div className="relative mb-6 p-6 rounded-3xl bg-white border overflow-hidden group hover:-translate-y-1 transition-all duration-300"
+          style={{
+            borderColor: '#aed58133',
+            background: 'linear-gradient(to bottom right, #f1f8e9, white)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(174,213,129,0.25)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow = '0 0 0 0 rgba(174,213,129,0.25)'
+          }}
+        >
           <div className="relative flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-lime-400 to-green-500 flex items-center justify-center shadow-lg shadow-lime-500/30">
-                <ClipboardDocumentListIcon className="w-8 h-8 text-white" strokeWidth={1.5} />
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#aed581] to-[#81c78a] flex items-center justify-center shadow-md shadow-[#aed581]/30 group-hover:scale-105 group-hover:rotate-2 transition-all duration-300">
+                <ClipboardDocumentListIcon className="w-6 h-6 text-white" strokeWidth={1.5} />
               </div>
               <div>
-                <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-lime-600 to-green-600 bg-clip-text text-transparent" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+                <h1 className="text-2xl font-bold text-gray-900">
                   Tâches
                 </h1>
-                <p className="text-lime-700/70">
+                <p className="text-sm text-gray-600">
                   Gérez les templates de tâches de nettoyage
                 </p>
               </div>
@@ -270,7 +296,7 @@ export default function TasksPage() {
               </Button>
               <button
                 onClick={openCreateModal}
-                className="px-6 py-3 rounded-2xl bg-gradient-to-r from-lime-500 to-green-500 text-white font-medium shadow-lg shadow-lime-500/30 hover:shadow-xl hover:shadow-lime-500/40 hover:scale-105 transition-all duration-200 flex items-center gap-2"
+                className="px-6 py-3 rounded-2xl bg-[#aed581] hover:bg-[#9ac66d] text-white font-medium shadow-lg shadow-[#aed581]/30 hover:shadow-xl hover:shadow-[#aed581]/40 hover:scale-105 transition-all duration-300 flex items-center gap-2"
               >
                 <PlusIcon className="w-5 h-5" />
                 Nouvelle tâche
@@ -294,64 +320,98 @@ export default function TasksPage() {
             </Button>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {Object.entries(tasksByCategory).map(([category, categoryTasks]) => (
-              <div key={category}>
-                <div className="mb-3 flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-gradient-to-br from-lime-400 to-green-500 shadow-sm shadow-lime-500/30" />
-                  <h3 className="font-semibold text-sm text-lime-900">{category}</h3>
-                  <span className="text-xs text-lime-700/60 ml-auto">{categoryTasks.length}</span>
-                </div>
-                <div className="space-y-2">
-                  {categoryTasks.map((task) => (
-                    <div
-                      key={task.id}
-                      className="group relative rounded-3xl p-4 bg-gradient-to-br from-lime-50/80 to-green-50/80 border border-lime-200/50 hover:shadow-lg hover:shadow-lime-500/20 hover:-translate-y-1 transition-all duration-300"
-                    >
-                      {/* Gradient fond */}
-                      <div
-                        className="absolute inset-0 opacity-30 group-hover:opacity-50 transition-opacity duration-300 rounded-3xl pointer-events-none"
-                        style={{ background: 'linear-gradient(to bottom right, rgba(217, 249, 157, 0.3), rgba(134, 239, 172, 0.3))' }}
-                      />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {Object.entries(tasksByCategory).map(([category, categoryTasks], categoryIndex) => {
+              const colors = getCategoryColor(categoryIndex)
 
-                      <div className="relative z-10">
-                      <div className="flex items-start justify-between mb-2">
-                        <h4 className="font-medium text-sm flex-1 pr-2">{task.name}</h4>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger className="h-6 w-6 -mt-1 flex-shrink-0 inline-flex items-center justify-center rounded-md hover:bg-accent transition-colors">
-                            <EllipsisVerticalIcon className="w-4 h-4" />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="z-[100]">
-                            <DropdownMenuItem onClick={() => openEditModal(task)}>
-                              <PencilIcon className="w-4 h-4" />
-                              Modifier
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              variant="destructive"
-                              onClick={() => openDeleteDialog(task)}
-                            >
-                              <TrashIcon className="w-4 h-4" />
-                              Supprimer
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                      {task.description && (
-                        <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{task.description}</p>
-                      )}
-                      <div className="flex items-center justify-between text-xs">
-                        {task.estimated_duration && (
-                          <span className="text-muted-foreground">{task.estimated_duration} min</span>
+              return (
+                <div key={category} className="space-y-3">
+                  {/* Category Header */}
+                  <div className="flex items-center gap-2 px-2">
+                    <div
+                      className="w-3 h-3 rounded-full shadow-sm"
+                      style={{
+                        background: `linear-gradient(to bottom right, ${colors.primary}, ${colors.primary}dd)`,
+                        boxShadow: `0 2px 8px ${colors.shadow}`
+                      }}
+                    />
+                    <h3 className="font-semibold text-sm text-gray-900">{category}</h3>
+                    <span className="text-xs text-gray-500 ml-auto">{categoryTasks.length}</span>
+                  </div>
+
+                  {/* Tasks Cards */}
+                  <div className="space-y-3">
+                    {categoryTasks.map((task) => (
+                      <div
+                        key={task.id}
+                        className="group relative rounded-3xl p-4 bg-white border hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+                        style={{
+                          borderColor: colors.primary + '33',
+                          background: `linear-gradient(to bottom right, ${colors.light}, white)`
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.boxShadow = `0 16px 48px -12px ${colors.shadow}`
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.boxShadow = '0 0 0 0 rgba(0,0,0,0)'
+                        }}
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <h4 className="font-medium text-sm flex-1 pr-2 text-gray-900 group-hover:text-gray-700 transition-colors">
+                            {task.name}
+                          </h4>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger className="h-6 w-6 -mt-1 flex-shrink-0 inline-flex items-center justify-center rounded-md hover:bg-gray-100 transition-colors">
+                              <EllipsisVerticalIcon className="w-4 h-4 text-gray-600" />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="z-[100]">
+                              <DropdownMenuItem onClick={() => openEditModal(task)}>
+                                <PencilIcon className="w-4 h-4" />
+                                Modifier
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                variant="destructive"
+                                onClick={() => openDeleteDialog(task)}
+                              >
+                                <TrashIcon className="w-4 h-4" />
+                                Supprimer
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+
+                        {task.description && (
+                          <p className="text-xs text-gray-600 mb-3 line-clamp-2">
+                            {task.description}
+                          </p>
                         )}
-                        {!task.is_active && <Badge variant="danger" size="sm">Désactivée</Badge>}
+
+                        <div className="flex items-center justify-between text-xs">
+                          {task.estimated_duration ? (
+                            <span className="text-gray-500">{task.estimated_duration} min</span>
+                          ) : (
+                            <span></span>
+                          )}
+                          {!task.is_active && <Badge variant="danger" size="sm">Désactivée</Badge>}
+                        </div>
+
+                        {/* Micro-animation : icône catégorie au hover */}
+                        <div
+                          className="absolute bottom-3 right-3 w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:rotate-12 transition-all duration-300"
+                          style={{
+                            background: `linear-gradient(to bottom right, ${colors.primary}, ${colors.primary}dd)`,
+                            boxShadow: `0 4px 12px ${colors.shadow}`
+                          }}
+                        >
+                          <ClipboardDocumentListIcon className="w-4 h-4 text-white" strokeWidth={2} />
+                        </div>
                       </div>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
 
