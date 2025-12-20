@@ -10,19 +10,11 @@ import {
   PencilIcon,
   TrashIcon,
   ClipboardDocumentListIcon,
-  EllipsisVerticalIcon,
   TagIcon
 } from '@heroicons/react/24/outline'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator
-} from '@/components/ui/dropdown-menu'
 import {
   Select,
   SelectContent,
@@ -360,25 +352,28 @@ export default function TasksPage() {
                           <h4 className="font-medium text-sm flex-1 pr-2 text-gray-900 group-hover:text-gray-700 transition-colors">
                             {task.name}
                           </h4>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger className="h-6 w-6 -mt-1 flex-shrink-0 inline-flex items-center justify-center rounded-md hover:bg-gray-100 transition-colors">
-                              <EllipsisVerticalIcon className="w-4 h-4 text-gray-600" />
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="z-[100]">
-                              <DropdownMenuItem onClick={() => openEditModal(task)}>
-                                <PencilIcon className="w-4 h-4" />
-                                Modifier
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                variant="destructive"
-                                onClick={() => openDeleteDialog(task)}
-                              >
-                                <TrashIcon className="w-4 h-4" />
-                                Supprimer
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <div className="shrink-0 flex items-center gap-1 -mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <button
+                              className="inline-flex items-center justify-center size-6 rounded-lg hover:bg-gray-100 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                openEditModal(task)
+                              }}
+                              title="Modifier"
+                            >
+                              <PencilIcon className="w-3.5 h-3.5 text-gray-600" />
+                            </button>
+                            <button
+                              className="inline-flex items-center justify-center size-6 rounded-lg hover:bg-red-50 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                openDeleteDialog(task)
+                              }}
+                              title="Supprimer"
+                            >
+                              <TrashIcon className="w-3.5 h-3.5 text-red-600" />
+                            </button>
+                          </div>
                         </div>
 
                         {task.description && (

@@ -306,7 +306,7 @@ export default function RoomsPage() {
                         </div>
                       </div>
 
-                      <div className="shrink-0 flex items-center gap-1">
+                      <div className="shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                         <button
                           className="inline-flex items-center justify-center size-8 rounded-lg hover:bg-gray-100 transition-colors"
                           onClick={(e) => {
