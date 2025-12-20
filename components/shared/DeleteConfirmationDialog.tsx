@@ -12,6 +12,9 @@ interface DeleteConfirmationDialogProps {
   description?: string
   itemName?: string
   isDeleting?: boolean
+  confirmButtonText?: string
+  confirmingButtonText?: string
+  showIrreversibleWarning?: boolean
 }
 
 export function DeleteConfirmationDialog({
@@ -21,7 +24,10 @@ export function DeleteConfirmationDialog({
   title = 'Confirmer la suppression',
   description = 'Êtes-vous sûr de vouloir supprimer définitivement',
   itemName,
-  isDeleting = false
+  isDeleting = false,
+  confirmButtonText = 'Supprimer',
+  confirmingButtonText = 'Suppression...',
+  showIrreversibleWarning = true
 }: DeleteConfirmationDialogProps) {
   if (!isOpen) return null
 
@@ -53,9 +59,11 @@ export function DeleteConfirmationDialog({
                     <span className="font-semibold text-foreground">"{itemName}"</span>
                   )} ?
                 </p>
-                <p className="text-sm text-danger-600">
-                  Cette action est irréversible.
-                </p>
+                {showIrreversibleWarning && (
+                  <p className="text-sm text-danger-600">
+                    Cette action est irréversible.
+                  </p>
+                )}
               </div>
             </div>
 
@@ -76,7 +84,7 @@ export function DeleteConfirmationDialog({
                 className="flex-1"
                 disabled={isDeleting}
               >
-                {isDeleting ? 'Suppression...' : 'Supprimer'}
+                {isDeleting ? confirmingButtonText : confirmButtonText}
               </Button>
             </div>
           </CardContent>

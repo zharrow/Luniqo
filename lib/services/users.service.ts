@@ -244,7 +244,7 @@ export class UsersService {
   }
 
   /**
-   * Soft delete an employee
+   * Soft delete an employee (deactivate)
    */
   async softDeleteEmployee(id: string, enterpriseId: string): Promise<void> {
     const { error } = await this.supabase
@@ -262,6 +262,42 @@ export class UsersService {
    */
   async softDelete(id: string, enterpriseId: string): Promise<void> {
     return this.softDeleteEmployee(id, enterpriseId)
+  }
+
+  /**
+   * Reactivate an employee (set is_active = true)
+   */
+  async reactivateEmployee(id: string, enterpriseId: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('profiles')
+      .update({ is_active: true })
+      .eq('id', id)
+      .eq('role', 'Employee')
+      .eq('enterprise_id', enterpriseId)
+
+    if (error) throw error
+  }
+
+  /**
+   * Hard delete an employee (permanent deletion)
+   * WARNING: This will delete all associated data (room access, tasks, etc.)
+   */
+  async hardDeleteEmployee(id: string, enterpriseId: string): Promise<void> {
+    // Delete room access assignments
+    await this.supabase
+      .from('employee_room_access')
+      .delete()
+      .eq('employee_id', id)
+
+    // Delete the profile (this will cascade to auth.users via ON DELETE CASCADE)
+    const { error } = await this.supabase
+      .from('profiles')
+      .delete()
+      .eq('id', id)
+      .eq('role', 'Employee')
+      .eq('enterprise_id', enterpriseId)
+
+    if (error) throw error
   }
 
   /**

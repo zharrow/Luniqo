@@ -10,7 +10,9 @@ import {
   TrashIcon,
   UserGroupIcon,
   KeyIcon,
-  EllipsisVerticalIcon
+  EllipsisVerticalIcon,
+  CheckCircleIcon,
+  XCircleIcon
 } from '@heroicons/react/24/outline'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -37,6 +39,7 @@ export default function UsersPage() {
   const [showModal, setShowModal] = useState(false)
   const [editingUser, setEditingUser] = useState<ProfileWithRooms | null>(null)
   const [userToDelete, setUserToDelete] = useState<ProfileWithRooms | null>(null)
+  const [actionType, setActionType] = useState<'deactivate' | 'reactivate' | 'hardDelete'>('deactivate')
   const [isDeleting, setIsDeleting] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState<CreateEmployeeInput>({
@@ -176,20 +179,39 @@ export default function UsersPage() {
     }
   }
 
-  function openDeleteDialog(user: ProfileWithRooms) {
+  function openDeactivateDialog(user: ProfileWithRooms) {
+    setActionType('deactivate')
     setUserToDelete(user)
   }
 
-  async function handleConfirmDelete() {
+  function openReactivateDialog(user: ProfileWithRooms) {
+    setActionType('reactivate')
+    setUserToDelete(user)
+  }
+
+  function openHardDeleteDialog(user: ProfileWithRooms) {
+    setActionType('hardDelete')
+    setUserToDelete(user)
+  }
+
+  async function handleConfirmAction() {
     if (!session?.enterprise?.id || !userToDelete) return
 
     try {
       setIsDeleting(true)
-      await usersService.softDelete(userToDelete.id, session.enterprise.id)
+
+      if (actionType === 'deactivate') {
+        await usersService.softDelete(userToDelete.id, session.enterprise.id)
+      } else if (actionType === 'reactivate') {
+        await usersService.reactivateEmployee(userToDelete.id, session.enterprise.id)
+      } else if (actionType === 'hardDelete') {
+        await usersService.hardDeleteEmployee(userToDelete.id, session.enterprise.id)
+      }
+
       loadData()
     } catch (error) {
-      console.error('Error deleting user:', error)
-      alert('Erreur lors de la suppression')
+      console.error('Error performing action:', error)
+      alert('Erreur lors de l\'opération')
     } finally {
       setIsDeleting(false)
       setUserToDelete(null)
@@ -347,13 +369,39 @@ export default function UsersPage() {
                             Modifier
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            variant="destructive"
-                            onClick={() => openDeleteDialog(user)}
-                          >
-                            <TrashIcon className="w-4 h-4" />
-                            Désactiver
-                          </DropdownMenuItem>
+                          {user.is_active ? (
+                            <>
+                              <DropdownMenuItem
+                                onClick={() => openDeactivateDialog(user)}
+                              >
+                                <XCircleIcon className="w-4 h-4" />
+                                Désactiver
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                variant="destructive"
+                                onClick={() => openHardDeleteDialog(user)}
+                              >
+                                <TrashIcon className="w-4 h-4" />
+                                Supprimer définitivement
+                              </DropdownMenuItem>
+                            </>
+                          ) : (
+                            <>
+                              <DropdownMenuItem
+                                onClick={() => openReactivateDialog(user)}
+                              >
+                                <CheckCircleIcon className="w-4 h-4" />
+                                Réactiver
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                variant="destructive"
+                                onClick={() => openHardDeleteDialog(user)}
+                              >
+                                <TrashIcon className="w-4 h-4" />
+                                Supprimer définitivement
+                              </DropdownMenuItem>
+                            </>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -540,15 +588,42 @@ export default function UsersPage() {
           </div>
         </FormDialog>
 
-        {/* Delete Confirmation Dialog */}
+        {/* Action Confirmation Dialog */}
         <DeleteConfirmationDialog
           isOpen={!!userToDelete}
           onClose={() => setUserToDelete(null)}
-          onConfirm={handleConfirmDelete}
-          title="Confirmer la désactivation"
-          description="Êtes-vous sûr de vouloir désactiver l'employé"
+          onConfirm={handleConfirmAction}
+          title={
+            actionType === 'deactivate'
+              ? 'Confirmer la désactivation'
+              : actionType === 'reactivate'
+              ? 'Confirmer la réactivation'
+              : 'Confirmer la suppression définitive'
+          }
+          description={
+            actionType === 'deactivate'
+              ? 'Êtes-vous sûr de vouloir désactiver l\'employé'
+              : actionType === 'reactivate'
+              ? 'Êtes-vous sûr de vouloir réactiver l\'employé'
+              : 'Cette action est irréversible. Toutes les données associées seront supprimées. Êtes-vous sûr de vouloir supprimer définitivement l\'employé'
+          }
           itemName={userToDelete ? `${userToDelete.first_name} ${userToDelete.last_name}` : ''}
           isDeleting={isDeleting}
+          confirmButtonText={
+            actionType === 'deactivate'
+              ? 'Désactiver'
+              : actionType === 'reactivate'
+              ? 'Réactiver'
+              : 'Supprimer définitivement'
+          }
+          confirmingButtonText={
+            actionType === 'deactivate'
+              ? 'Désactivation...'
+              : actionType === 'reactivate'
+              ? 'Réactivation...'
+              : 'Suppression...'
+          }
+          showIrreversibleWarning={actionType === 'hardDelete'}
         />
       </div>
     </div>

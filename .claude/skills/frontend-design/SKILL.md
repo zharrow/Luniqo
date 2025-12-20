@@ -3,407 +3,383 @@ name: frontend-design
 description: Crée des interfaces frontend distinctives de qualité production avec haute qualité de design. Utilise quand l'utilisateur demande de construire des composants web, des pages ou des applications. Génère du code créatif et poli qui évite l'esthétique générique d'IA.
 ---
 
-# Frontend Design Skill
+# Frontend Design Skill - Luniqo "Modernité Organique"
 
-Skill pour créer des **interfaces frontend distinctives de qualité production** qui rejettent les patterns de design formulaïques. L'accent est mis sur la délibération esthétique avant l'implémentation.
+Skill pour créer des **interfaces frontend distinctives de qualité production** avec le design system Luniqo v2 "Modernité Organique". Cette skill fournit des formules précises et des règles chirurgicales pour des designs cohérents.
 
-**Adapté pour Luniqo**: Cette skill respecte le design system "Douceur Professionnelle" tout en encourageant la créativité dans les limites de la charte graphique.
+## Les 3 Piliers Fondamentaux (OBLIGATOIRES)
+
+### 1. 🌈 Éviter la Monotonie
+**Règle d'or** : VARIER les couleurs sur une même page pour créer une interface vivante et organique.
+
+❌ **INTERDIT** : Toutes les cartes de la même couleur
+✅ **OBLIGATOIRE** : Au moins 3-4 couleurs de modules différents par page
+
+### 2. ✨ Ombres Colorées
+**Règle d'or** : Les ombres reprennent la couleur du module = signature visuelle moderne.
+
+❌ **INTERDIT** : `shadow-lg` ou ombres grises génériques
+✅ **OBLIGATOIRE** : Ombre colorée au format `0 16px 48px -12px rgba(R,G,B,0.25)`
+
+### 3. 🎭 Micro-interactions
+**Règle d'or** : Animations ludiques et fluides (300ms minimum).
+
+❌ **INTERDIT** : `duration-100` (saccadé), pas d'animations
+✅ **OBLIGATOIRE** : `duration-300` minimum, effets scale/rotate/translate
+
+## Formules Chirurgicales (À COPIER EXACTEMENT)
+
+### Ombre Colorée (Hover)
+```tsx
+// Au hover uniquement via JavaScript
+onMouseEnter={(e) => {
+  e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(R,G,B,0.25)'
+}}
+onMouseLeave={(e) => {
+  e.currentTarget.style.boxShadow = '0 0 0 0 rgba(0,0,0,0)'
+}}
+```
+
+### Bordure Colorée (20% opacity)
+```tsx
+style={{ borderColor: colors.primary + '33' }}
+// ou pour valeur fixe
+style={{ borderColor: '#f4a5a533' }}
+```
+
+### Gradient Pastel (Fond de carte)
+```tsx
+style={{
+  background: 'linear-gradient(to bottom right, ${colors.light}, white)'
+}}
+```
+
+### Badge Icône Animé
+```tsx
+className="rounded-2xl flex items-center justify-center shadow-md
+           group-hover:scale-110 group-hover:rotate-3 transition-all duration-300"
+```
+
+### Effet Flottant (Carte)
+```tsx
+className="hover:-translate-y-1 transition-all duration-300"
+```
+
+### Boutons au Hover (Pattern propre)
+```tsx
+// Conteneur avec opacity-0 par défaut
+<div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+  <button className="size-8 rounded-lg hover:bg-gray-100 transition-colors">
+    <PencilIcon className="w-4 h-4 text-gray-600" />
+  </button>
+  <button className="size-8 rounded-lg hover:bg-red-50 transition-colors">
+    <TrashIcon className="w-4 h-4 text-red-600" />
+  </button>
+</div>
+```
+
+## Palette de Couleurs Modules (8 couleurs fixes)
+
+**IMPORTANT** : Utiliser CES couleurs exactes, ne PAS inventer d'autres couleurs.
+
+```typescript
+const moduleColors = {
+  clean: {
+    primary: '#5a9dc9',
+    light: '#e3f2fd',
+    shadow: 'rgba(90,157,201,0.25)'
+  },
+  haccp: {
+    primary: '#81c995',
+    light: '#e8f5e9',
+    shadow: 'rgba(129,201,149,0.25)'
+  },
+  users: {
+    primary: '#f4a5a5',
+    light: '#fef6f7',
+    shadow: 'rgba(244,165,165,0.25)'
+  },
+  tasks: {
+    primary: '#aed581',
+    light: '#f1f8e9',
+    shadow: 'rgba(174,213,129,0.25)'
+  },
+  calendar: {
+    primary: '#ffab91',
+    light: '#fff3e0',
+    shadow: 'rgba(255,171,145,0.25)'
+  },
+  settings: {
+    primary: '#b39ddb',
+    light: '#f3e5f5',
+    shadow: 'rgba(179,157,219,0.25)'
+  },
+  communication: {
+    primary: '#64b5d1',
+    light: '#e0f7fa',
+    shadow: 'rgba(100,181,209,0.25)'
+  },
+  analytics: {
+    primary: '#9fa8da',
+    light: '#e8eaf6',
+    shadow: 'rgba(159,168,218,0.25)'
+  }
+}
+```
+
+## Standards de Design (Valeurs Exactes)
+
+### Border Radius
+- **Cartes** : `rounded-3xl`
+- **Badges icônes** : `rounded-2xl`
+- **Boutons** : `rounded-lg`
+- ❌ **ÉVITER** : `rounded-xl` (trop anguleux)
+
+### Animations (Timing)
+- **Standard** : `duration-300` (fluide et agréable)
+- **Court** : `duration-200` (transitions rapides)
+- ❌ **INTERDIT** : `duration-100` (saccadé)
+- ❌ **INTERDIT** : `duration-500+` (trop lent)
+
+### Spacing (Grilles)
+- **Gap standard** : `gap-3` (0.75rem) ou `gap-4` (1rem)
+- **Gap large** : `gap-6` (1.5rem)
+
+### Grilles Asymétriques (12 colonnes)
+```tsx
+// ✅ Layout organique avec variation
+<div className="grid grid-cols-12 gap-3">
+  <Card className="col-span-12 md:col-span-6">Featured</Card>
+  <Card className="col-span-12 md:col-span-3">Small</Card>
+  <Card className="col-span-12 md:col-span-3">Small</Card>
+  <Card className="col-span-12 md:col-span-4">Medium</Card>
+  <Card className="col-span-12 md:col-span-4">Medium</Card>
+  <Card className="col-span-12 md:col-span-4">Medium</Card>
+</div>
+```
+
+## Ce qu'il faut ABSOLUMENT Éviter
+
+### ❌ Erreurs Fatales
+
+1. **Monotonie de couleur**
+   - Toutes les cartes de la même couleur = interface morte
+
+2. **Ombres grises**
+   - `shadow-lg` sans couleur = trop corporate
+
+3. **Bordures grises**
+   - `border-gray-200` = perd l'identité du module
+
+4. **Pas de gradients**
+   - `bg-white` pur = trop plat
+
+5. **Animations rapides**
+   - `duration-100` = effet saccadé
+
+6. **Interface statique**
+   - Pas d'animations = interface morte
 
 ## Objectif principal
 
 Construire des interfaces **mémorables et distinctives** qui évitent les clichés de design d'IA générique. Chaque interface doit avoir une **direction esthétique claire** et intentionnelle.
 
-## Principes de design clés
+## Patterns de Code Réutilisables
 
-### 1. Décisions stratégiques (Avant de coder)
-
-**Questions à se poser**:
-- **Objectif**: Quel est le but de cette interface? (Vente, productivité, jeu, éducation?)
-- **Audience**: Qui l'utilisera? (Professionnels de crèche, parents, enfants?)
-- **Ton**: Quelle émotion doit-elle transmettre? (Sérénité, confiance, efficacité?)
-- **Contraintes techniques**: Quel framework? Quelles limitations?
-
-**Pour Luniqo**:
-- **Objectif**: Productivité et conformité HACCP pour crèches
-- **Audience**: Professionnels de la petite enfance
-- **Ton**: Doux, professionnel, rassurant ("Douceur Professionnelle")
-- **Contraintes**: Next.js 15, Tailwind CSS v4, shadcn/ui, palette pastel fixe
-
-### 2. Choisir une direction esthétique claire
-
-**Options possibles** (choisir UNE direction):
-- **Minimaliste** - Épuré, white space généreux, typographie élégante
-- **Maximaliste** - Riche en couleurs, textures, éléments visuels
-- **Rétro-futuriste** - Nostalgie + modernité
-- **Brutaliste** - Brut, géométrique, contrastes forts
-- **Organique** - Formes fluides, courbes, naturel
-- **Néomorphisme** - Relief subtil, ombres douces
-- **Glassmorphisme** - Effets de verre, transparence, flou
-
-**Direction Luniqo** (pré-définie):
-- **Style**: Organique + Néomorphisme léger
-- **Caractéristiques**: Palette pastel, coins arrondis, ombres douces, icônes rondes, transitions fluides
-- **Atmosphère**: Douceur, sérénité, professionnalisme
-
-### 3. Priorités esthétiques
-
-#### A. Typographie
-
-**✅ Faire**:
-- Choisir des polices **belles, uniques et intéressantes**
-- Créer une hiérarchie claire (3-4 niveaux max)
-- Utiliser des tailles généreuses pour les titres
-- Jouer avec le poids (weight) et l'espacement (tracking)
-
-**❌ Éviter**:
-- Polices par défaut sans réflexion (Arial, Times New Roman)
-- Trop de polices différentes (>2-3)
-- Hiérarchie confuse
-- Texte illisible (contraste faible, taille trop petite)
-
-**Luniqo**:
-```css
-/* Font stack */
-font-family: var(--font-geist-sans), system-ui, sans-serif;
-
-/* Hiérarchie */
-h1: text-3xl font-bold (pages)
-h2: text-2xl font-semibold (sections)
-h3: text-lg font-semibold (cards)
-body: text-base (14px)
-small: text-sm (12px)
-```
-
-#### B. Couleurs
-
-**✅ Faire**:
-- Utiliser des couleurs **dominantes** avec des accents percutants
-- Créer des contrastes intentionnels
-- Appliquer la théorie des couleurs (complémentaires, triadiques, monochromes)
-- Utiliser la couleur pour guider l'attention
-
-**❌ Éviter**:
-- Palettes timides et indécises
-- Gradients clichés (bleu-violet, rose-orange)
-- Trop de couleurs vives simultanément
-- Manque de contraste (accessibilité)
-
-**Luniqo** (palette fixe):
-```css
-/* Couleurs pastel par module */
-users: #E8D5E8 (lavande)
-rooms: #FFE5D9 (pêche)
-tasks: #E5F4D7 (lime)
-communication: #D4EEF2 (turquoise)
-haccp: #B5EAD7 (mint)
-settings: #E8E1F5 (violet)
-analytics: #D9E4F5 (indigo)
-
-/* Sémantiques */
-success: #B5EAD7
-warning: #FFE5B4
-error: #FFB4B4
-```
-
-**Créativité dans les limites**:
-- Combiner plusieurs couleurs modules pour richesse visuelle
-- Utiliser des opacités variées (bg-module-rooms/20, /40, /60)
-- Gradients subtils entre couleurs adjacentes
-- Ombres colorées (shadow-module-haccp)
-
-#### C. Mouvement & Animation
-
-**✅ Faire**:
-- Créer des **moments à fort impact** (chargements orchestrés, transitions de page)
-- Animer de manière cohérente (même easing, même durée)
-- Utiliser l'animation pour guider l'attention
-- Microinteractions intentionnelles (hover, focus, click)
-
-**❌ Éviter**:
-- Animations dispersées sans cohérence
-- Trop d'animations simultanées (distraction)
-- Animations lentes (>300ms pour la plupart)
-- Mouvements qui causent le mal de mer
-
-**Luniqo**:
+### Pattern 1: Carte de Module (Standard)
 ```tsx
-// ✅ Transitions douces
-className="transition-all duration-200 hover:shadow-lg hover:scale-[1.02]"
+<div
+  className="group relative rounded-3xl p-5 bg-white border
+             hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+  style={{
+    borderColor: '#f4a5a533', // 20% opacity
+    background: 'linear-gradient(to bottom right, #fef6f7, white)'
+  }}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(244,165,165,0.25)'
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.boxShadow = '0 0 0 0 rgba(0,0,0,0)'
+  }}
+>
+  {/* Badge icône */}
+  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#f4a5a5] to-[#c66b6b]
+                  flex items-center justify-center shadow-md
+                  group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+    <Icon className="w-6 h-6 text-white" strokeWidth={2} />
+  </div>
 
-// ✅ Animation d'entrée orchestrée
-<div className="animate-fade-in stagger-delay-100">
-  {items.map((item, i) => (
-    <Card style={{ animationDelay: `${i * 100}ms` }}>...</Card>
-  ))}
-</div>
-
-// ✅ Loading avec personnalité
-<div className="animate-bounce">
-  <img src="/luniqo-icon.svg" alt="Loading..." />
+  {/* Contenu */}
+  <h3 className="font-semibold text-gray-900 mt-3">{title}</h3>
+  <p className="text-sm text-gray-600">{description}</p>
 </div>
 ```
 
-#### D. Composition & Layout
-
-**✅ Faire**:
-- Utiliser des **layouts inattendus** (asymétrie, grilles brisées)
-- Créer de la profondeur (z-index, ombres, overlaps)
-- Jouer avec l'espace blanc (breathing room)
-- Guider l'œil avec la composition
-
-**❌ Éviter**:
-- Grilles rigides et prévisibles sans variation
-- Tout centrer par défaut
-- Manque d'espace blanc (claustrophobie)
-- Layouts génériques de template
-
-**Luniqo**:
+### Pattern 2: Liste avec Ombres Colorées Variées
 ```tsx
-// ✅ Grid créative avec tailles variées
-<div className="grid grid-cols-12 gap-4">
-  <Card className="col-span-12 md:col-span-8">Featured</Card>
-  <Card className="col-span-12 md:col-span-4">Sidebar</Card>
-  <Card className="col-span-12 md:col-span-4">Small 1</Card>
-  <Card className="col-span-12 md:col-span-4">Small 2</Card>
-  <Card className="col-span-12 md:col-span-4">Small 3</Card>
-</div>
+// Définir les couleurs en dehors du render
+const itemColors = [
+  { primary: '#f4a5a5', light: '#fef6f7', shadow: 'rgba(244,165,165,0.25)' },
+  { primary: '#ffab91', light: '#fff3e0', shadow: 'rgba(255,171,145,0.25)' },
+  { primary: '#aed581', light: '#f1f8e9', shadow: 'rgba(174,213,129,0.25)' },
+  // ... 8 couleurs au total
+]
 
-// ✅ Asymétrie intentionnelle
-<div className="flex items-start gap-6">
-  <div className="w-2/3">{/* Main content */}</div>
-  <div className="w-1/3 sticky top-4">{/* Sidebar */}</div>
-</div>
-```
+const getItemColor = (index: number) => itemColors[index % itemColors.length]
 
-#### E. Détails & Texture
-
-**✅ Faire**:
-- Superposer textures, gradients, effets contextuels
-- Ajouter des détails subtils (grain, bruit, motifs)
-- Créer de l'atmosphère avec les détails
-- Peaufiner les micro-interactions
-
-**❌ Éviter**:
-- Surfaces plates sans profondeur
-- Éléments visuels sans intention
-- Trop de texture (surcharge visuelle)
-
-**Luniqo**:
-```tsx
-// ✅ Profondeur avec ombres subtiles
-className="bg-white shadow-sm hover:shadow-md transition-shadow"
-
-// ✅ Gradient subtil pour ambiance
-className="bg-gradient-to-br from-module-rooms to-module-rooms/50"
-
-// ✅ Border colorée pour accent
-className="border-l-4 border-module-haccp"
-
-// ✅ Motif de fond (optionnel)
-style={{ backgroundImage: 'url(/patterns/dots.svg)' }}
-```
-
-## Contraintes critiques
-
-### ❌ Éviter l'esthétique d'IA générique
-
-**Patterns problématiques à ÉVITER**:
-
-1. **Typographie clichée**:
-   - ❌ Inter/Roboto/Sans-serif par défaut sans réflexion
-   - ❌ Poppins pour "tout" (surutilisée)
-
-2. **Gradients clichés**:
-   - ❌ Bleu → Violet (trop vu)
-   - ❌ Rose → Orange (Instagram clone)
-   - ❌ Gradients trop saturés
-
-3. **Layouts prévisibles**:
-   - ❌ Grid 3 colonnes stricte partout
-   - ❌ Header + Hero + 3 Features + Footer
-   - ❌ Tout centré verticalement/horizontalement
-
-4. **Composants cookie-cutter**:
-   - ❌ Cards blanches avec shadow-md partout
-   - ❌ Boutons bleus arrondis sans personnalité
-   - ❌ Icons outline sans variation
-
-**✅ Pour Luniqo, éviter**:
-- Copier des templates génériques de dashboard
-- Utiliser des couleurs vives non-pastel
-- Ignorer la palette définie
-- Créer des interfaces "corporate" froides
-
-## Workflow de design
-
-### Étape 1: Stratégie (Avant de coder)
-1. Identifier le but, l'audience, le ton
-2. Choisir UNE direction esthétique claire
-3. Esquisser mentalement la hiérarchie visuelle
-4. Prioriser ce qui rend l'interface mémorable
-
-### Étape 2: Fondations
-1. Typographie (hiérarchie, tailles, poids)
-2. Couleurs (dominantes, accents, sémantiques)
-3. Spacing (cohérent, généreux)
-4. Layout (grid system, breakpoints)
-
-### Étape 3: Composants
-1. Créer les composants de base (Button, Card, Input)
-2. Ajouter les états (hover, focus, active, disabled)
-3. Peaufiner les détails (ombres, borders, transitions)
-4. Tester la cohérence visuelle
-
-### Étape 4: Composition
-1. Assembler les composants en layouts
-2. Créer des contrastes intentionnels (taille, couleur, poids)
-3. Guider l'œil avec la hiérarchie
-4. Ajouter des moments à fort impact (animations, transitions)
-
-### Étape 5: Polish
-1. Microinteractions (hover, focus)
-2. Loading states (spinners personnalisés)
-3. Empty states (illustrations, messages encourageants)
-4. Error states (messages utiles, design rassurant)
-
-## Exemples de créativité dans Luniqo
-
-### Exemple 1: Dashboard Module Cards
-
-**Générique** ❌:
-```tsx
-<div className="grid grid-cols-3 gap-4">
-  <Card>
-    <h3>Salles</h3>
-    <p>12</p>
-  </Card>
-  {/* Répétition monotone... */}
-</div>
-```
-
-**Distinctif** ✅:
-```tsx
-<div className="grid grid-cols-12 gap-4">
-  {/* Featured card - Large */}
-  <Card className="col-span-12 md:col-span-8 bg-gradient-to-br from-module-rooms to-module-tasks p-8">
-    <div className="flex items-center justify-between">
-      <div>
-        <h2 className="text-3xl font-bold text-gray-900">12 Salles</h2>
-        <p className="text-gray-700">3 nettoyages en cours</p>
-      </div>
-      <BuildingOfficeIcon className="h-16 w-16 text-gray-800 opacity-20" />
+// Dans le render
+{items.map((item, index) => {
+  const colors = getItemColor(index)
+  return (
+    <div
+      key={item.id}
+      className="p-4 rounded-3xl bg-white border hover:-translate-y-1 transition-all duration-300"
+      style={{
+        borderColor: colors.primary + '33',
+        background: `linear-gradient(to bottom right, ${colors.light}, white)`
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = `0 16px 48px -12px ${colors.shadow}`
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = '0 0 0 0 rgba(0,0,0,0)'
+      }}
+    >
+      {/* Contenu */}
     </div>
-  </Card>
+  )
+})}
+```
 
-  {/* Sidebar stats - Stacked */}
-  <div className="col-span-12 md:col-span-4 space-y-4">
-    <Card className="bg-module-tasks border-l-4 border-green-500">
-      <CardContent className="pt-6">
-        <div className="flex items-center gap-3">
-          <CheckIcon className="h-8 w-8 text-green-600" />
-          <div>
-            <p className="text-2xl font-bold">24</p>
-            <p className="text-sm text-gray-600">Tâches complétées</p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-
-    <Card className="bg-module-warning border-l-4 border-yellow-500">
-      <CardContent className="pt-6">
-        <div className="flex items-center gap-3">
-          <ClockIcon className="h-8 w-8 text-yellow-600" />
-          <div>
-            <p className="text-2xl font-bold">8</p>
-            <p className="text-sm text-gray-600">En attente</p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+### Pattern 3: En-tête de Page Moderne
+```tsx
+<div className="relative mb-6 p-6 rounded-3xl bg-white border overflow-hidden
+                group hover:-translate-y-1 transition-all duration-300"
+  style={{
+    borderColor: '#aed58133',
+    background: 'linear-gradient(to bottom right, #f1f8e9, white)'
+  }}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(174,213,129,0.25)'
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.boxShadow = '0 0 0 0 rgba(174,213,129,0.25)'
+  }}
+>
+  <div className="flex items-center justify-between">
+    <div className="flex items-center gap-3">
+      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#aed581] to-[#81c78a]
+                      flex items-center justify-center shadow-md
+                      group-hover:scale-105 group-hover:rotate-2 transition-all duration-300">
+        <Icon className="w-6 h-6 text-white" strokeWidth={1.5} />
+      </div>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Titre de Page</h1>
+        <p className="text-sm text-gray-600">Description</p>
+      </div>
+    </div>
+    <Button>Action</Button>
   </div>
 </div>
 ```
 
-### Exemple 2: Formulaire avec personnalité
-
-**Générique** ❌:
+### Pattern 4: Grille Bento Asymétrique
 ```tsx
-<form>
-  <input type="text" placeholder="Nom" />
-  <input type="email" placeholder="Email" />
-  <button>Envoyer</button>
-</form>
+// Layout compact pour réduire le scroll (exemple: 6 items sur 2 lignes)
+<div className="grid grid-cols-12 gap-3">
+  {/* Ligne 1: 1 featured (6 col) + 2 small (3 col chacune) */}
+  <Card className="col-span-12 md:col-span-6">Featured Item</Card>
+  <Card className="col-span-12 md:col-span-3">Small 1</Card>
+  <Card className="col-span-12 md:col-span-3">Small 2</Card>
+
+  {/* Ligne 2: 3 medium (4 col chacune) */}
+  <Card className="col-span-12 md:col-span-4">Medium 1</Card>
+  <Card className="col-span-12 md:col-span-4">Medium 2</Card>
+  <Card className="col-span-12 md:col-span-4">Medium 3</Card>
+</div>
 ```
 
-**Distinctif** ✅:
-```tsx
-<Card className="max-w-md mx-auto bg-gradient-to-br from-white to-module-rooms/30">
-  <CardHeader>
-    <CardTitle className="text-2xl flex items-center gap-2">
-      <SparklesIcon className="h-6 w-6 text-primary" />
-      Nouvelle salle
-    </CardTitle>
-  </CardHeader>
-  <CardContent className="space-y-6">
-    <div className="space-y-2">
-      <Label htmlFor="name" className="text-gray-700 font-medium">
-        Nom de la salle
-      </Label>
-      <Input
-        id="name"
-        className="border-2 border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-        placeholder="Ex: Salle des Bébés"
-      />
-    </div>
+## Checklist de Design Chirurgical
 
-    <div className="space-y-2">
-      <Label htmlFor="type">Type</Label>
-      <Select>
-        <SelectTrigger className="border-2 border-gray-200">
-          <SelectValue placeholder="Sélectionner un type" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="BABY">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-module-rooms" />
-              Bébés (0-1 an)
-            </div>
-          </SelectItem>
-          {/* ... */}
-        </SelectContent>
-      </Select>
-    </div>
+Avant de finaliser une interface, vérifier OBLIGATOIREMENT :
 
-    <Button className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3 shadow-lg hover:shadow-xl transition-all">
-      <PlusIcon className="h-5 w-5 mr-2" />
-      Créer la salle
-    </Button>
-  </CardContent>
-</Card>
+### Couleurs
+- [ ] ✅ Au moins 3-4 couleurs de modules différents utilisées
+- [ ] ✅ Palette strictement limitée aux 8 couleurs modules
+- [ ] ❌ Aucune ombre grise (`shadow-lg`, `shadow-md` sans couleur)
+- [ ] ❌ Aucune bordure grise (`border-gray-200`)
+
+### Animations
+- [ ] ✅ Toutes les transitions sont `duration-300` minimum
+- [ ] ✅ Effets hover présents (scale, rotate, translate)
+- [ ] ✅ Boutons d'action apparaissent au hover (`opacity-0 group-hover:opacity-100`)
+- [ ] ❌ Pas de `duration-100` (saccadé)
+
+### Ombres & Bordures
+- [ ] ✅ Ombres colorées au format exact `0 16px 48px -12px rgba(R,G,B,0.25)`
+- [ ] ✅ Bordures colorées à 20% opacity (`#COLOR33`)
+- [ ] ✅ Gradients pastels en fond (`linear-gradient(to bottom right, ${light}, white)`)
+
+### Layout
+- [ ] ✅ Grille 12 colonnes avec variation (pas de grille rigide 3 ou 4 colonnes)
+- [ ] ✅ Border radius `rounded-3xl` pour cartes
+- [ ] ✅ Gap `gap-3` ou `gap-4` (pas trop grand)
+
+### Micro-interactions
+- [ ] ✅ Icônes avec `group-hover:scale-110 group-hover:rotate-3`
+- [ ] ✅ Cartes avec `hover:-translate-y-1`
+- [ ] ✅ Footer CTA apparaît au hover (`opacity-0 group-hover:opacity-100`)
+
+## Workflow de Design Rapide
+
+### Étape 1 : Choix des Couleurs (30 secondes)
+1. Identifier le nombre d'éléments à afficher
+2. Sélectionner 3-8 couleurs modules différentes
+3. Les alterner de manière organique (éviter les patterns répétitifs)
+
+### Étape 2 : Structure de Base (1-2 minutes)
+1. Définir le layout (grille 12 colonnes asymétrique)
+2. Appliquer les formules de base :   - Bordures : `borderColor: colors.primary + '33'`
+   - Gradients : `background: linear-gradient(to bottom right, ${colors.light}, white)`
+   - Border radius : `rounded-3xl`
+
+### Étape 3 : Micro-interactions (1 minute)
+1. Ajouter les handlers d'ombre au hover (copier-coller le pattern)
+2. Ajouter les effets sur badges icônes (`group-hover:scale-110 group-hover:rotate-3`)
+3. Ajouter l'effet flottant sur cartes (`hover:-translate-y-1`)
+4. Rendre les boutons d'action visibles au hover (`opacity-0 group-hover:opacity-100`)
+
+### Étape 4 : Vérification Finale (30 secondes)
+1. Checker la checklist chirurgicale ci-dessus
+2. S'assurer qu'aucune erreur fatale n'est présente
+3. Vérifier la variété des couleurs
+
+## Contexte Luniqo
+
+**Direction esthétique** : Organique + Néomorphisme léger
+**Audience** : Professionnels de la petite enfance
+**Ton** : Doux, professionnel, rassurant
+**Stack** : Next.js 15, Tailwind CSS v4, shadcn/ui
+
+### Typographie Fixe
+```css
+font-family: var(--font-geist-sans), system-ui, sans-serif;
+
+h1: text-3xl font-bold
+h2: text-2xl font-semibold
+h3: text-lg font-semibold
+body: text-base (14px)
+small: text-sm (12px)
 ```
-
-## Checklist de design distinctif
-
-Avant de finaliser une interface:
-
-- [ ] **Direction esthétique claire** - Ai-je une vision cohérente?
-- [ ] **Typographie intentionnelle** - Police choisie avec soin?
-- [ ] **Couleurs dominantes** - Palette audacieuse (dans les limites)?
-- [ ] **Layout inattendu** - Éviter les grilles rigides prévisibles
-- [ ] **Moments à fort impact** - Animations orchestrées?
-- [ ] **Détails polis** - Microinteractions, textures, ombres
-- [ ] **Éviter les clichés d'IA** - Rien de générique ou formulaïque
-- [ ] **Cohérence avec Luniqo** - Respect du design system pastel
-
-## Ressources
-
-- **Design system Luniqo**: `DESIGN-SYSTEM.md`
-- **Composants shadcn**: `components/ui/*`
-- **Inspiration**: Dribbble, Behance, Awwwards
-- **Typographie**: Google Fonts, Adobe Fonts
-- **Couleurs**: Coolors.co, Adobe Color
-- **Animations**: Framer Motion, Tailwind Animate
 
 ---
 
-**Philosophie**: Chaque interface doit être **spécifique au contexte** et **mémorable**. Éviter la convergence vers des choix sûrs et communs. Prendre des décisions de design **intentionnelles et délibérées**.
+## Note Finale
+
+**Philosophie** : Cette skill fournit des règles chirurgicales pour créer des interfaces Luniqo cohérentes et modernes.
+
+**Priorité absolue** : Respecter les 3 piliers fondamentaux (variété de couleurs, ombres colorées, micro-interactions) et utiliser les formules exactes fournies.
+
+**En cas de doute** : Toujours consulter la checklist chirurgicale et les patterns réutilisables ci-dessus.
+
+**Référence** : Voir `/app/design-system/page.tsx` pour des exemples visuels complets du design system.
