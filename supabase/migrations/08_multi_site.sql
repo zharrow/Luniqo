@@ -140,11 +140,11 @@ FROM nursery n
 WHERE n.enterprise_id = m.enterprise_id
   AND n.is_default = TRUE;
 
+-- temperature_check: migrate via meal (meal_id → meal → nursery_id)
 UPDATE temperature_check tc
-SET nursery_id = n.id
-FROM nursery n
-WHERE n.enterprise_id = tc.enterprise_id
-  AND n.is_default = TRUE;
+SET nursery_id = m.nursery_id
+FROM meal m
+WHERE tc.meal_id = m.id;
 
 UPDATE equipment eq
 SET nursery_id = n.id
@@ -182,11 +182,11 @@ FROM nursery n
 WHERE n.enterprise_id = p.enterprise_id
   AND n.is_default = TRUE;
 
+-- batch: migrate via product (product_id → product → nursery_id)
 UPDATE batch b
-SET nursery_id = n.id
-FROM nursery n
-WHERE n.enterprise_id = b.enterprise_id
-  AND n.is_default = TRUE;
+SET nursery_id = p.nursery_id
+FROM product p
+WHERE b.product_id = p.id;
 
 -- ========================================
 -- STEP 7: Make nursery_id NOT NULL
@@ -228,18 +228,21 @@ CREATE INDEX idx_batch_nursery ON batch(nursery_id);
 -- Note: We drop enterprise_id since nursery already references enterprise
 -- This ensures data is filtered by nursery (not enterprise) for better isolation
 
+-- Cleaning module
 ALTER TABLE room DROP COLUMN enterprise_id;
 ALTER TABLE daily_cleaning_session DROP COLUMN enterprise_id;
+
+-- HACCP module (only tables that HAD enterprise_id)
 ALTER TABLE child DROP COLUMN enterprise_id;
 ALTER TABLE meal DROP COLUMN enterprise_id;
-ALTER TABLE temperature_check DROP COLUMN enterprise_id;
+-- temperature_check: never had enterprise_id (linked via meal)
 ALTER TABLE equipment DROP COLUMN enterprise_id;
 ALTER TABLE food_area_cleaning DROP COLUMN enterprise_id;
 ALTER TABLE haccp_incident DROP COLUMN enterprise_id;
 ALTER TABLE document DROP COLUMN enterprise_id;
 ALTER TABLE supplier DROP COLUMN enterprise_id;
 ALTER TABLE product DROP COLUMN enterprise_id;
-ALTER TABLE batch DROP COLUMN enterprise_id;
+-- batch: never had enterprise_id (linked via product)
 
 -- ========================================
 -- STEP 10: Keep enterprise_id on shared resources (task templates, categories)
@@ -284,7 +287,12 @@ WHERE p.role = 'Employee'
 -- ✅ Created employee_nursery_access (multi-site employee assignment)
 -- ✅ Added primary_nursery_id to profiles
 -- ✅ Migrated all operational data to default nurseries
+--    - Direct migration (10 tables with enterprise_id): child, meal, supplier, product,
+--      equipment, food_area_cleaning, haccp_incident, document, room, daily_cleaning_session
+--    - Indirect migration (2 tables): temperature_check (via meal), batch (via product)
 -- ✅ Dropped enterprise_id from operational tables (now use nursery_id)
+--    - 10 tables had enterprise_id dropped
+--    - 2 tables (temperature_check, batch) never had enterprise_id
 -- ✅ Kept enterprise_id on shared resources (task_template, task_category)
 -- ✅ Created indexes for performance
 -- ✅ Assigned employees to their enterprise's default nursery
