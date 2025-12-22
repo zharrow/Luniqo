@@ -21,10 +21,10 @@ import { calendarService, type WeekData, type CalendarTask } from '@/lib/service
 import { roomsService, type Room } from '@/lib/services/rooms.service'
 
 interface WeeklyCalendarProps {
-  enterpriseId: string
+  nurseryId: string
 }
 
-export function WeeklyCalendar({ enterpriseId }: WeeklyCalendarProps) {
+export function WeeklyCalendar({ nurseryId }: WeeklyCalendarProps) {
   const [weekData, setWeekData] = useState<WeekData | null>(null)
   const [weekOffset, setWeekOffset] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -33,15 +33,15 @@ export function WeeklyCalendar({ enterpriseId }: WeeklyCalendarProps) {
 
   useEffect(() => {
     loadRooms()
-  }, [enterpriseId])
+  }, [nurseryId])
 
   useEffect(() => {
     loadWeekData()
-  }, [enterpriseId, weekOffset, selectedRoom])
+  }, [nurseryId, weekOffset, selectedRoom])
 
   async function loadRooms() {
     try {
-      const data = await roomsService.getActive(enterpriseId)
+      const data = await roomsService.getActive(nurseryId)
       setRooms(data)
     } catch (error) {
       console.error('Error loading rooms:', error)
@@ -52,7 +52,7 @@ export function WeeklyCalendar({ enterpriseId }: WeeklyCalendarProps) {
     try {
       setLoading(true)
       const roomFilter = selectedRoom === 'all' ? undefined : selectedRoom
-      const data = await calendarService.getWeeklyData(enterpriseId, weekOffset, roomFilter)
+      const data = await calendarService.getWeeklyData(nurseryId, weekOffset, roomFilter)
       setWeekData(data)
     } catch (error) {
       console.error('Error loading week data:', error)

@@ -12,7 +12,7 @@ import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
 interface HaccpDocument {
   id: string
-  enterprise_id: string
+  nursery_id: string
   title: string
   category: string
   file_key: string

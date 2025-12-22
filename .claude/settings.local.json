@@ -18,7 +18,16 @@
       "Bash(npm install)",
       "Bash(pgrep:*)",
       "Bash(npm run seed:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(ls -la lib/services/*.ts)",
+      "Bash(/tmp/migrate-to-nursery.sh:*)",
+      "Bash(\"app/\\(owner\\)/owner/haccp/children/page.tsx\" )",
+      "Bash(\"app/\\(owner\\)/owner/haccp/meals/page.tsx\" )",
+      "Bash(\"app/\\(owner\\)/owner/haccp/non-compliances/page.tsx\" )",
+      "Bash(\"app/\\(owner\\)/owner/tasks/page.tsx\" )",
+      "Bash(\"app/\\(owner\\)/owner/history/page.tsx\" )",
+      "Bash(\"app/\\(owner\\)/owner/rooms/[id]/page.tsx\")",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

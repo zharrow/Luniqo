@@ -119,6 +119,104 @@ The app uses Next.js App Router with **role-based route groups** for clear separ
   - `/tablet/room/[id]` - Room cleaning interface
   - `/tablet/haccp/*` - HACCP data entry
 
+### Multi-Site Architecture (Phase 0)
+
+**NEW (2025-12-22)**: The application now supports **multiple nurseries per enterprise**.
+
+#### Architectural Levels
+
+```
+Enterprise (Commercial Account)
+  └── Owner (1 owner per enterprise)
+  └── Nursery 1 (Physical establishment)
+       └── Rooms, Tasks, Sessions, HACCP data
+  └── Nursery 2 (Physical establishment)
+       └── Rooms, Tasks, Sessions, HACCP data
+  └── Nursery 3 (Physical establishment)
+       └── Rooms, Tasks, Sessions, HACCP data
+```
+
+**Key Concepts:**
+- **Enterprise**: Commercial account level (billing, owner management)
+- **Nursery**: Physical childcare establishment (operations)
+- **Operational data** is isolated per nursery (rooms, sessions, HACCP)
+- **Shared resources** remain at enterprise level (task templates, employees)
+
+#### Database Schema Changes
+
+**New Tables:**
+- `nursery` - Physical establishments
+  - `id` UUID PRIMARY KEY
+  - `enterprise_id` UUID → `enterprise.id`
+  - `name` VARCHAR(255)
+  - `address`, `city`, `postal_code`, `phone`, `email`
+  - `is_default` BOOLEAN (first nursery created)
+  - `is_active` BOOLEAN
+
+- `employee_nursery_access` - M2M relationship (employees ↔ nurseries)
+  - `employee_id` UUID → `profiles.id`
+  - `nursery_id` UUID → `nursery.id`
+
+**Migrated Tables (enterprise_id → nursery_id):**
+- `room`, `daily_cleaning_session`, `child`, `meal`, `child_meal_record`
+- `temperature_check`, `product`, `batch`, `equipment`
+- `food_area_cleaning`, `haccp_incident`, `document`
+
+**Profiles Table Update:**
+- Added `primary_nursery_id` UUID → `nursery.id` (for employees)
+
+#### Using NurseryContext
+
+**CRITICAL**: All operational pages must use `useNursery()` hook:
+
+```typescript
+import { useNursery } from '@/lib/contexts/NurseryContext'
+
+export default function MyPage() {
+  const { selectedNursery, nurseries, setSelectedNursery, isLoading } = useNursery()
+
+  useEffect(() => {
+    if (selectedNursery?.id) {
+      loadData(selectedNursery.id)
+    }
+  }, [selectedNursery?.id])
+
+  async function loadData(nurseryId: string) {
+    const rooms = await roomsService.getActive(nurseryId)
+    // ...
+  }
+}
+```
+
+**NurserySelector Component:**
+- Located in Header for easy switching between nurseries
+- Persists selection in localStorage
+- Auto-selects default nursery on first load
+- Shows read-only label if only one nursery
+
+#### Service Layer Updates
+
+All operational services now use `nurseryId` instead of `enterpriseId`:
+
+```typescript
+// ✅ CORRECT - Use nursery_id for operational data
+await roomsService.getActive(nurseryId)
+await sessionsService.getToday(nurseryId)
+await haccpService.getChildren(nurseryId)
+
+// ✅ CORRECT - Use enterprise_id for enterprise-level data
+await usersService.getEmployees(enterpriseId)
+await tasksService.getTemplates(enterpriseId)
+```
+
+#### Setup Flow Update
+
+When an Owner creates their enterprise for the first time:
+1. `/setup` page shows 2-step wizard
+2. Step 1: Create enterprise (name, address, etc.)
+3. Step 2: Create first nursery (inherits enterprise info, `is_default = true`)
+4. Redirect to `/owner/dashboard`
+
 ### Supabase Client Patterns
 
 Always use the correct client for the context:
@@ -150,19 +248,30 @@ const { session, isLoading } = useRequireAuth(['Owner']) // or ['Developer'] or 
 const { loginWithEmail, loginWithPin, logout, refreshSession } = useAuth()
 ```
 
-### Enterprise Data Isolation
+### Data Isolation
 
-**CRITICAL**: All queries MUST filter by `enterprise_id` to prevent data leakage between childcare facilities.
+**CRITICAL**: All queries MUST filter correctly to prevent data leakage:
 
+**For Operational Data (rooms, sessions, HACCP):**
 ```typescript
-// ✅ CORRECT - Always filter by enterprise_id
+// ✅ CORRECT - Filter by nursery_id
 const { data } = await supabase
   .from('room')
   .select('*')
-  .eq('enterprise_id', session.enterprise.id)
+  .eq('nursery_id', selectedNursery.id)
 
-// ❌ WRONG - Returns data from ALL enterprises
+// ❌ WRONG - Returns data from ALL nurseries
 const { data } = await supabase.from('room').select('*')
+```
+
+**For Enterprise-Level Data (employees, task templates):**
+```typescript
+// ✅ CORRECT - Filter by enterprise_id
+const { data } = await supabase
+  .from('profiles')
+  .select('*')
+  .eq('role', 'Employee')
+  .eq('enterprise_id', session.enterprise.id)
 ```
 
 The only exception is the Developer role, which can query across enterprises for analytics.
@@ -487,6 +596,34 @@ The app has been heavily optimized for fast page transitions and reduced latency
 - [next.config.mjs](next.config.mjs:16-23) - Static page generation timeout and build ID
 
 ## Recent Updates
+
+- 🏢 **PHASE 0: MULTI-SITE ARCHITECTURE** (2025-12-22) - Enterprise can manage multiple nurseries ✅ **COMPLETED**
+  - **Feature**: Owners can now manage multiple physical nursery locations under one enterprise account
+  - **Architecture changes**:
+    - New `nursery` table for physical establishments
+    - New `employee_nursery_access` table for M2M employee-nursery relationships
+    - Migrated 12 operational tables from `enterprise_id` to `nursery_id`
+    - Added `primary_nursery_id` to `profiles` table
+  - **New components**:
+    - `NurseryContext` - React context for managing selected nursery
+    - `NurserySelector` - Dropdown component in header for switching between nurseries
+    - `NurseryForm` - Reusable form for creating/editing nurseries
+    - Updated `EnterpriseSetupForm` to 2-step wizard (enterprise + first nursery)
+  - **Service updates**: All operational services migrated to use `nurseryId`:
+    - ✅ `rooms.service.ts`, `sessions.service.ts`, `calendar.service.ts`
+    - ✅ `assigned-tasks.service.ts`, `haccp.service.ts` (all 8 modules)
+  - **Page updates**: All Owner pages migrated to `useNursery()` hook:
+    - ✅ Dashboard with calendar components
+    - ✅ Sessions list and detail pages
+    - ✅ All 8 HACCP module pages
+    - ✅ Rooms, Tasks, History pages
+  - **Migration script**: Created `08_multi_site.sql` with zero-downtime strategy
+  - **Impact**:
+    - ✅ Enterprises can scale to multiple locations
+    - ✅ Data isolation per nursery (rooms, sessions, HACCP)
+    - ✅ Shared resources at enterprise level (employees, task templates)
+    - ✅ Seamless switching between nurseries with localStorage persistence
+  - **Status**: ✅ **100% complete** - Build passes, all pages migrated (2025-12-22)
 
 - 🔧 **SESSION PERSISTENCE FIX** (2025-12-08) - Fixed frustrating logout issue when switching apps/tabs ✅ **COMPLETED**
   - **Problem**: Users were disconnected with loading screen/timeout whenever they switched browser tabs or apps, even after just logging in 30 seconds earlier

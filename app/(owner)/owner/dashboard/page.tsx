@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
+import { useNursery } from '@/lib/contexts/NurseryContext'
 import {
   BuildingOfficeIcon,
   ClipboardDocumentListIcon,
@@ -18,6 +19,7 @@ import { ModuleCard } from '@/components/shared/ModuleCard'
 
 export default function DashboardPage() {
   const { session, isLoading } = useRequireAuth(['Owner'])
+  const { selectedNursery } = useNursery()
   const [calendarView, setCalendarView] = useState<'weekly' | 'daily'>('daily')
 
   if (isLoading) {
@@ -143,10 +145,12 @@ export default function DashboardPage() {
             </div>
 
             {/* Calendar Component */}
-            {calendarView === 'weekly' ? (
-              <WeeklyCalendar enterpriseId={session.enterprise.id} />
-            ) : (
-              <DailyCalendar enterpriseId={session.enterprise.id} />
+            {selectedNursery?.id && (
+              calendarView === 'weekly' ? (
+                <WeeklyCalendar nurseryId={selectedNursery.id} />
+              ) : (
+                <DailyCalendar nurseryId={selectedNursery.id} />
+              )
             )}
           </div>
         )}

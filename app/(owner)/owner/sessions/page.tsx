@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
+import { useNursery } from '@/lib/contexts/NurseryContext'
 import { sessionsService, type SessionWithStats } from '@/lib/services/sessions.service'
 import {
   PlusIcon,
@@ -14,24 +15,27 @@ import { Badge } from '@/components/ui/badge'
 import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
 export default function SessionsPage() {
-  const { session: authSession, isLoading: authLoading } = useRequireAuth(['Owner'])
+  const { isLoading: authLoading } = useRequireAuth(['Owner'])
+  const { selectedNursery } = useNursery()
   const [todaySession, setTodaySession] = useState<SessionWithStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
 
   useEffect(() => {
-    if (authSession?.enterprise) {
+    if (selectedNursery?.id) {
       autoCreateTodaySession()
       loadSessions()
+    } else if (!authLoading && !selectedNursery) {
+      setLoading(false)
     }
-  }, [authSession])
+  }, [selectedNursery?.id, authLoading])
 
   async function loadSessions() {
-    if (!authSession?.enterprise?.id) return
+    if (!selectedNursery?.id) return
 
     try {
       setLoading(true)
-      const today = await sessionsService.getToday(authSession.enterprise.id)
+      const today = await sessionsService.getToday(selectedNursery.id)
       setTodaySession(today)
     } catch (error) {
       console.error('Error loading sessions:', error)
@@ -41,14 +45,14 @@ export default function SessionsPage() {
   }
 
   async function createTodaySession() {
-    if (!authSession?.enterprise?.id) return
+    if (!selectedNursery?.id) return
 
     try {
       setCreating(true)
       const { getTodayLocal } = await import('@/lib/utils/date')
       const today = getTodayLocal()
 
-      await sessionsService.create(authSession.enterprise.id, {
+      await sessionsService.create(selectedNursery.id, {
         date: today
       })
 
@@ -65,7 +69,7 @@ export default function SessionsPage() {
    * Auto-create session for weekdays (Monday-Friday)
    */
   async function autoCreateTodaySession() {
-    if (!authSession?.enterprise?.id) return
+    if (!selectedNursery?.id) return
 
     const today = new Date()
     const dayOfWeek = today.getDay() // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
@@ -76,7 +80,7 @@ export default function SessionsPage() {
     }
 
     // Check if session already exists
-    const existingSession = await sessionsService.getToday(authSession.enterprise.id)
+    const existingSession = await sessionsService.getToday(selectedNursery.id)
     if (existingSession) {
       return // Session already exists
     }
@@ -85,7 +89,7 @@ export default function SessionsPage() {
     try {
       const { getTodayLocal } = await import('@/lib/utils/date')
       const todayLocal = getTodayLocal()
-      await sessionsService.create(authSession.enterprise.id, {
+      await sessionsService.create(selectedNursery.id, {
         date: todayLocal
       })
       loadSessions()
