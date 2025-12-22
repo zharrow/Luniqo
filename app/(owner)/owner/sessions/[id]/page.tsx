@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
+import { useNursery } from '@/lib/contexts/NurseryContext'
 import { sessionsService, type SessionWithStats, type CreateLogInput, type LogStatus } from '@/lib/services/sessions.service'
 import { usersService } from '@/lib/services/users.service'
 import { pdfExportService } from '@/lib/services/pdf-export.service'
@@ -76,6 +77,7 @@ export default function SessionDetailPage() {
   const params = useParams()
   const id = params.id as string
   const { session: authSession, isLoading: authLoading } = useRequireAuth(['Owner'])
+  const { selectedNursery } = useNursery()
   const [session, setSession] = useState<SessionWithStats | null>(null)
   const [logs, setLogs] = useState<SessionLog[]>([])
   const [groupedTasks, setGroupedTasks] = useState<GroupedTasks>({})
@@ -95,21 +97,23 @@ export default function SessionDetailPage() {
   })
 
   useEffect(() => {
-    if (authSession?.enterprise?.id) {
+    if (selectedNursery?.id) {
       loadSessionData()
       loadAvailableData()
+    } else if (!authLoading && !selectedNursery) {
+      setLoading(false)
     }
-  }, [authSession, id])
+  }, [selectedNursery?.id, authLoading, id])
 
   async function loadSessionData() {
-    if (!authSession?.enterprise?.id) return
+    if (!selectedNursery?.id) return
 
     try {
       setLoading(true)
       const [sessionData, logsData, allTasks] = await Promise.all([
-        sessionsService.getById(id, authSession.enterprise.id),
+        sessionsService.getById(id, selectedNursery.id),
         sessionsService.getSessionLogs(id),
-        sessionsService.getAssignedTasks(authSession.enterprise.id)
+        sessionsService.getAssignedTasks(selectedNursery.id)
       ])
 
       setSession(sessionData)
@@ -150,12 +154,12 @@ export default function SessionDetailPage() {
   }
 
   async function loadAvailableData() {
-    if (!authSession?.enterprise?.id) return
+    if (!selectedNursery?.id) return
 
     try {
       const [tasks, users] = await Promise.all([
-        sessionsService.getAssignedTasks(authSession.enterprise.id),
-        usersService.getActiveEmployees(authSession.enterprise.id)
+        sessionsService.getAssignedTasks(selectedNursery.id),
+        usersService.getActiveEmployeesByNursery(selectedNursery.id)
       ])
 
       setAvailableTasks(tasks)
@@ -167,7 +171,7 @@ export default function SessionDetailPage() {
 
   async function handleAddLog(e: React.FormEvent) {
     e.preventDefault()
-    if (!authSession?.enterprise?.id) return
+    if (!selectedNursery?.id) return
 
     try {
       setIsSubmitting(true)
@@ -178,7 +182,7 @@ export default function SessionDetailPage() {
       })
 
       // Auto-complete session if all tasks are done
-      await sessionsService.checkAndCompleteSession(id, authSession.enterprise.id)
+      await sessionsService.checkAndCompleteSession(id, selectedNursery.id)
 
       setShowAddModal(false)
       resetForm()
@@ -193,7 +197,7 @@ export default function SessionDetailPage() {
 
   async function handleUpdateLog(e: React.FormEvent) {
     e.preventDefault()
-    if (!editingLog || !authSession?.enterprise?.id) return
+    if (!editingLog || !selectedNursery?.id) return
 
     try {
       setIsSubmitting(true)
@@ -203,7 +207,7 @@ export default function SessionDetailPage() {
       })
 
       // Auto-complete session if all tasks are done
-      await sessionsService.checkAndCompleteSession(id, authSession.enterprise.id)
+      await sessionsService.checkAndCompleteSession(id, selectedNursery.id)
 
       setShowEditModal(false)
       setEditingLog(null)

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
+import { useNursery } from '@/lib/contexts/NurseryContext'
 import { roomsService, type Room } from '@/lib/services/rooms.service'
 import { tasksService, type TaskTemplate } from '@/lib/services/tasks.service'
 import { assignedTasksService, type AssignedTask, type DayOfWeek } from '@/lib/services/assigned-tasks.service'
@@ -32,6 +33,7 @@ export default function RoomTasksPage() {
   const { id } = useParams()
   const router = useRouter()
   const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
+  const { selectedNursery } = useNursery()
 
   const [room, setRoom] = useState<Room | null>(null)
   const [availableTasks, setAvailableTasks] = useState<TaskTemplate[]>([])
@@ -50,7 +52,7 @@ export default function RoomTasksPage() {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    if (session?.enterprise && id) {
+    if (selectedNursery && id) {
       loadData()
     }
   }, [session, id])
@@ -66,13 +68,13 @@ export default function RoomTasksPage() {
   }, [selectedTaskId, availableTasks])
 
   async function loadData() {
-    if (!session?.enterprise?.id || !id) return
+    if (!selectedNursery?.id || !id) return
 
     try {
       setLoading(true)
 
       // Load room details
-      const roomData = await roomsService.getById(id as string, session.enterprise.id)
+      const roomData = await roomsService.getById(id as string, selectedNursery.id)
       if (!roomData) {
         alert('Pièce introuvable')
         router.push('/owner/rooms')
@@ -81,7 +83,7 @@ export default function RoomTasksPage() {
       setRoom(roomData)
 
       // Load all active tasks
-      const tasksData = await tasksService.getActive(session.enterprise.id)
+      const tasksData = await tasksService.getActive(selectedNursery.id)
       setAvailableTasks(tasksData)
 
       // Load assigned tasks for this room

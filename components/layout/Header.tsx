@@ -12,6 +12,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import NotificationModal from '@/components/shared/NotificationModal'
+import NurserySelector from '@/components/layout/NurserySelector'
 
 export default function Header() {
   const { session, logout } = useAuth()
@@ -80,9 +81,12 @@ export default function Header() {
 
   return (
     <header className="h-16 bg-white/80 backdrop-blur-xl border-b border-neutral-200 flex items-center justify-between px-6 sticky top-0 z-40">
-      {/* Left section with sidebar trigger */}
+      {/* Left section with sidebar trigger and nursery selector */}
       <div className="flex items-center gap-3">
         <SidebarTrigger className="hover:bg-neutral-100" />
+
+        {/* Nursery Selector for Owners with multiple nurseries */}
+        {session?.role === 'Owner' && <NurserySelector />}
       </div>
 
       {/* Right section */}

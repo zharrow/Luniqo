@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
+import { useNursery } from '@/lib/contexts/NurseryContext'
 import { haccpService, type Product, type Supplier, type CreateProductInput } from '@/lib/services/haccp.service'
 import {
   PlusIcon,
@@ -17,6 +18,7 @@ import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
 export default function ProductsPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
+  const { selectedNursery } = useNursery()
   const [products, setProducts] = useState<Product[]>([])
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
@@ -37,10 +39,12 @@ export default function ProductsPage() {
   })
 
   useEffect(() => {
-    if (session?.enterprise) {
+    if (selectedNursery?.id) {
       loadData()
+    } else if (!authLoading && !selectedNursery) {
+      setLoading(false)
     }
-  }, [session])
+  }, [selectedNursery?.id, authLoading])
 
   useEffect(() => {
     if (filterCategory === 'ALL') {
@@ -51,13 +55,13 @@ export default function ProductsPage() {
   }, [products, filterCategory])
 
   async function loadData() {
-    if (!session?.enterprise?.id) return
+    if (!selectedNursery?.id) return
 
     try {
       setLoading(true)
       const [productsData, suppliersData] = await Promise.all([
-        haccpService.getProducts(session.enterprise.id),
-        haccpService.getActiveSuppliers(session.enterprise.id)
+        haccpService.getProducts(selectedNursery.id),
+        haccpService.getActiveSuppliers(selectedNursery.id)
       ])
       setProducts(productsData)
       setSuppliers(suppliersData)
@@ -96,14 +100,14 @@ export default function ProductsPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!session?.enterprise?.id) return
+    if (!selectedNursery?.id) return
 
     try {
       setIsSubmitting(true)
       if (editingProduct) {
-        await haccpService.updateProduct(editingProduct.id, session.enterprise.id, formData)
+        await haccpService.updateProduct(editingProduct.id, selectedNursery.id, formData)
       } else {
-        await haccpService.createProduct(session.enterprise.id, formData)
+        await haccpService.createProduct(selectedNursery.id, formData)
       }
 
       setShowModal(false)
@@ -121,11 +125,11 @@ export default function ProductsPage() {
   }
 
   async function handleConfirmDelete() {
-    if (!session?.enterprise?.id || !productToDelete) return
+    if (!selectedNursery?.id || !productToDelete) return
 
     try {
       setIsDeleting(true)
-      await haccpService.deleteProduct(productToDelete.id, session.enterprise.id)
+      await haccpService.deleteProduct(productToDelete.id, selectedNursery.id)
       loadData()
     } catch (error) {
       console.error('Error deleting product:', error)

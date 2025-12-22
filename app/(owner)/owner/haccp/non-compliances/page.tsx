@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
+import { useNursery } from '@/lib/contexts/NurseryContext'
 import { haccpService, type NonCompliance, type CreateNonComplianceInput, type ComplianceType, type ComplianceStatus } from '@/lib/services/haccp.service'
 import { usersService, type ProfileWithRooms } from '@/lib/services/users.service'
 import {
@@ -21,6 +22,7 @@ import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
 export default function NonCompliancesPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
+  const { selectedNursery } = useNursery()
   const router = useRouter()
   const [nonCompliances, setNonCompliances] = useState<NonCompliance[]>([])
   const [users, setUsers] = useState<ProfileWithRooms[]>([])
@@ -38,19 +40,21 @@ export default function NonCompliancesPage() {
   })
 
   useEffect(() => {
-    if (session?.enterprise) {
+    if (selectedNursery?.id) {
       loadData()
+    } else if (!authLoading && !selectedNursery) {
+      setLoading(false)
     }
-  }, [session])
+  }, [selectedNursery?.id, authLoading])
 
   async function loadData() {
-    if (!session?.enterprise?.id) return
+    if (!selectedNursery?.id) return
 
     try {
       setLoading(true)
       const [ncData, usersData] = await Promise.all([
-        haccpService.getNonCompliances(session.enterprise.id),
-        usersService.getEmployees(session.enterprise.id)
+        haccpService.getNonCompliances(selectedNursery.id),
+        usersService.getEmployeesByNursery(selectedNursery.id)
       ])
       setNonCompliances(ncData)
       setUsers(usersData)
@@ -87,7 +91,7 @@ export default function NonCompliancesPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!session?.enterprise?.id) return
+    if (!selectedNursery?.id) return
 
     try {
       setIsSubmitting(true)
@@ -101,9 +105,9 @@ export default function NonCompliancesPage() {
         if (formData.status === 'Closed' && !editingNC.closed_at) {
           updateData.closed_at = new Date().toISOString()
         }
-        await haccpService.updateNonCompliance(editingNC.id, session.enterprise.id, updateData)
+        await haccpService.updateNonCompliance(editingNC.id, selectedNursery.id, updateData)
       } else {
-        await haccpService.createNonCompliance(session.enterprise.id, formData)
+        await haccpService.createNonCompliance(selectedNursery.id, formData)
       }
 
       setShowModal(false)

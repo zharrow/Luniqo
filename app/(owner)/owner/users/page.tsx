@@ -2,8 +2,16 @@
 
 import { useEffect, useState } from 'react'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
+import { useNursery } from '@/lib/contexts/NurseryContext'
+import { createClient } from '@/lib/supabase/client'
 import { usersService, type ProfileWithRooms, type CreateEmployeeInput } from '@/lib/services/users.service'
 import { roomsService, type Room } from '@/lib/services/rooms.service'
+
+interface Nursery {
+  id: string
+  name: string
+  is_active: boolean
+}
 import {
   PlusIcon,
   PencilIcon,
@@ -33,8 +41,10 @@ import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
 export default function UsersPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
+  const { selectedNursery } = useNursery()
   const [users, setUsers] = useState<ProfileWithRooms[]>([])
   const [rooms, setRooms] = useState<Room[]>([])
+  const [nurseries, setNurseries] = useState<Nursery[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingUser, setEditingUser] = useState<ProfileWithRooms | null>(null)
@@ -49,26 +59,39 @@ export default function UsersPage() {
     password: '',
     pin: '',
     avatar_url: '',
+    nursery_ids: [],
     room_ids: []
   })
 
   useEffect(() => {
-    if (session?.enterprise) {
+    if (selectedNursery?.id && session?.enterprise?.id) {
       loadData()
+    } else if (!authLoading && !selectedNursery) {
+      setLoading(false)
     }
-  }, [session])
+  }, [selectedNursery?.id, session?.enterprise?.id, authLoading])
 
   async function loadData() {
-    if (!session?.enterprise?.id) return
+    if (!selectedNursery?.id || !session?.enterprise?.id) return
 
     try {
       setLoading(true)
-      const [usersData, roomsData] = await Promise.all([
-        usersService.getEmployees(session.enterprise.id),
-        roomsService.getActive(session.enterprise.id)
+      const supabase = createClient() as any
+
+      const [usersData, roomsData, nurseriesData] = await Promise.all([
+        usersService.getEmployeesByNursery(selectedNursery.id),
+        roomsService.getActive(selectedNursery.id),
+        supabase
+          .from('nursery')
+          .select('id, name, is_active')
+          .eq('enterprise_id', session.enterprise.id)
+          .eq('is_active', true)
+          .order('name', { ascending: true })
       ])
+
       setUsers(usersData)
       setRooms(roomsData)
+      setNurseries(nurseriesData.data || [])
     } catch (error) {
       console.error('Error loading data:', error)
     } finally {
@@ -101,6 +124,7 @@ export default function UsersPage() {
       password: '',
       pin: '',
       avatar_url: '',
+      nursery_ids: [selectedNursery?.id].filter(Boolean) as string[], // Pre-select current nursery
       room_ids: []
     })
     setShowModal(true)
@@ -115,6 +139,7 @@ export default function UsersPage() {
       password: '', // Don't pre-fill password for security
       pin: '', // Don't pre-fill PIN for security
       avatar_url: user.avatar_url || '',
+      nursery_ids: user.accessible_nurseries || [],
       room_ids: user.accessible_rooms
     })
     setShowModal(true)
@@ -162,11 +187,19 @@ export default function UsersPage() {
 
         await usersService.updateEmployee(editingUser.id, session.enterprise.id, updateData)
 
-        // Update room access
-        await usersService.updateRoomAccess(editingUser.id, formData.room_ids || [])
+        // Update nursery and room access
+        await Promise.all([
+          usersService.updateNurseryAccess(editingUser.id, formData.nursery_ids || []),
+          usersService.updateRoomAccess(editingUser.id, formData.room_ids || [])
+        ])
       } else {
         // Create user
-        await usersService.createEmployee(session.enterprise.id, session.user.id, formData)
+        const newEmployee = await usersService.createEmployee(session.enterprise.id, session.user.id, formData)
+
+        // Assign nurseries to the new employee
+        if (formData.nursery_ids && formData.nursery_ids.length > 0) {
+          await usersService.updateNurseryAccess(newEmployee.id, formData.nursery_ids)
+        }
       }
 
       setShowModal(false)
@@ -215,6 +248,21 @@ export default function UsersPage() {
     } finally {
       setIsDeleting(false)
       setUserToDelete(null)
+    }
+  }
+
+  function toggleNursery(nurseryId: string) {
+    const currentNurseries = formData.nursery_ids || []
+    if (currentNurseries.includes(nurseryId)) {
+      setFormData({
+        ...formData,
+        nursery_ids: currentNurseries.filter(id => id !== nurseryId)
+      })
+    } else {
+      setFormData({
+        ...formData,
+        nursery_ids: [...currentNurseries, nurseryId]
+      })
     }
   }
 
@@ -565,7 +613,34 @@ export default function UsersPage() {
 
           <div>
             <label className="block text-sm font-medium mb-2">
-              Accès aux pièces
+              Crèches assignées *
+            </label>
+            {nurseries.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Aucune crèche disponible</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 border border-border rounded-lg">
+                {nurseries.map((nursery) => (
+                  <label
+                    key={nursery.id}
+                    className="flex items-center gap-2 p-2 rounded hover:bg-muted cursor-pointer"
+                  >
+                    <Checkbox
+                      checked={(formData.nursery_ids || []).includes(nursery.id)}
+                      onCheckedChange={() => toggleNursery(nursery.id)}
+                    />
+                    <span className="text-sm">{nursery.name}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground mt-1">
+              Sélectionnez les crèches où cet employé travaillera
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Accès aux pièces (optionnel)
             </label>
             {rooms.length === 0 ? (
               <p className="text-sm text-muted-foreground">Aucune pièce disponible</p>
@@ -585,6 +660,9 @@ export default function UsersPage() {
                 ))}
               </div>
             )}
+            <p className="text-xs text-muted-foreground mt-1">
+              Les pièces de la crèche actuellement sélectionnée
+            </p>
           </div>
         </FormDialog>
 

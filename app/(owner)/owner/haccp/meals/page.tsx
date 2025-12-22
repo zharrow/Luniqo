@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
+import { useNursery } from '@/lib/contexts/NurseryContext'
 import { haccpService, type Meal, type CreateMealInput, type MealType } from '@/lib/services/haccp.service'
 import { usersService, type ProfileWithRooms } from '@/lib/services/users.service'
 import {
@@ -25,6 +26,7 @@ import { FormDialog } from '@/components/shared/FormDialog'
 
 export default function MealsPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
+  const { selectedNursery } = useNursery()
   const router = useRouter()
   const [meals, setMeals] = useState<Meal[]>([])
   const [users, setUsers] = useState<ProfileWithRooms[]>([])
@@ -44,13 +46,15 @@ export default function MealsPage() {
   })
 
   useEffect(() => {
-    if (session?.enterprise) {
+    if (selectedNursery?.id) {
       loadData()
+    } else if (!authLoading && !selectedNursery) {
+      setLoading(false)
     }
-  }, [session, weekStart])
+  }, [selectedNursery?.id, authLoading, weekStart])
 
   async function loadData() {
-    if (!session?.enterprise?.id) return
+    if (!selectedNursery?.id) return
 
     try {
       setLoading(true)
@@ -58,11 +62,11 @@ export default function MealsPage() {
 
       const [mealsData, usersData] = await Promise.all([
         haccpService.getMeals(
-          session.enterprise.id,
+          selectedNursery.id,
           format(weekStart, 'yyyy-MM-dd'),
           format(weekEnd, 'yyyy-MM-dd')
         ),
-        usersService.getEmployees(session.enterprise.id)
+        usersService.getEmployeesByNursery(selectedNursery.id)
       ])
 
       setMeals(mealsData)
@@ -100,14 +104,14 @@ export default function MealsPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!session?.enterprise?.id) return
+    if (!selectedNursery?.id) return
 
     try {
       setIsSubmitting(true)
       if (editingMeal) {
-        await haccpService.updateMeal(editingMeal.id, session.enterprise.id, formData)
+        await haccpService.updateMeal(editingMeal.id, selectedNursery.id, formData)
       } else {
-        await haccpService.createMeal(session.enterprise.id, formData)
+        await haccpService.createMeal(selectedNursery.id, formData)
       }
 
       setShowModal(false)
@@ -125,11 +129,11 @@ export default function MealsPage() {
   }
 
   async function handleConfirmDelete() {
-    if (!session?.enterprise?.id || !mealToDelete) return
+    if (!selectedNursery?.id || !mealToDelete) return
 
     try {
       setIsDeleting(true)
-      await haccpService.deleteMeal(mealToDelete.id, session.enterprise.id)
+      await haccpService.deleteMeal(mealToDelete.id, selectedNursery.id)
       loadData()
     } catch (error) {
       console.error('Error deleting meal:', error)
@@ -141,10 +145,10 @@ export default function MealsPage() {
   }
 
   async function toggleValidation(meal: Meal) {
-    if (!session?.enterprise?.id) return
+    if (!selectedNursery?.id) return
 
     try {
-      await haccpService.updateMeal(meal.id, session.enterprise.id, {
+      await haccpService.updateMeal(meal.id, selectedNursery.id, {
         is_validated: !meal.is_validated
       })
       loadData()

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/lib/contexts/AuthContext'
+import { useRequireAuth } from '@/lib/contexts/AuthContext'
+import { useNursery } from '@/lib/contexts/NurseryContext'
 import { haccpService } from '@/lib/services/haccp.service'
 import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
 import { FormDialog } from '@/components/shared/FormDialog'
@@ -41,23 +42,23 @@ export default function HaccpEquipmentPage() {
     notes: ''
   })
 
-  const { session } = useAuth()
+  const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
+  const { selectedNursery } = useNursery()
   const router = useRouter()
 
   useEffect(() => {
-    if (!session || !['Owner', 'Developer'].includes(session.role)) {
-      router.push('/login')
-      return
+    if (selectedNursery?.id) {
+      loadEquipment()
+    } else if (!authLoading && !selectedNursery) {
+      setIsLoading(false)
     }
-
-    loadEquipment()
-  }, [session])
+  }, [selectedNursery?.id, authLoading])
 
   async function loadEquipment() {
     try {
-      if (!session?.enterprise?.id) return
+      if (!selectedNursery?.id) return
 
-      const data = await haccpService.getEquipment(session.enterprise.id)
+      const data = await haccpService.getEquipment(selectedNursery.id)
       setEquipment(data as unknown as HaccpEquipment[])
     } catch (err: any) {
       console.error('Error loading equipment:', err)
@@ -99,12 +100,12 @@ export default function HaccpEquipmentPage() {
 
     try {
       setIsSubmitting(true)
-      if (!session?.enterprise?.id) return
+      if (!selectedNursery?.id) return
 
       if (editingEquipment) {
-        await haccpService.updateEquipment(editingEquipment.id, session.enterprise.id, formData)
+        await haccpService.updateEquipment(editingEquipment.id, selectedNursery.id, formData)
       } else {
-        await haccpService.createEquipment(session.enterprise.id, formData)
+        await haccpService.createEquipment(selectedNursery.id, formData)
       }
 
       await loadEquipment()
@@ -122,12 +123,12 @@ export default function HaccpEquipmentPage() {
   }
 
   async function handleConfirmDelete() {
-    if (!session?.enterprise?.id || !equipmentToDelete) return
+    if (!selectedNursery?.id || !equipmentToDelete) return
 
     try {
       setIsDeleting(true)
       // Soft delete - set is_active to false
-      await haccpService.updateEquipment(equipmentToDelete.id, session.enterprise.id, { is_active: false })
+      await haccpService.updateEquipment(equipmentToDelete.id, selectedNursery.id, { is_active: false })
       await loadEquipment()
     } catch (err: any) {
       console.error('Error deleting equipment:', err)

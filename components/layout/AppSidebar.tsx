@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/contexts/AuthContext'
 import {
   HomeIcon,
   BuildingOfficeIcon,
+  BuildingOffice2Icon,
   ClipboardDocumentListIcon,
   UserGroupIcon,
   CalendarIcon,
@@ -41,6 +42,7 @@ interface NavItem {
 
 const mainNavigation: NavItem[] = [
   { name: 'Tableau de bord', href: '/owner/dashboard', icon: HomeIcon, roles: ['Owner'], moduleColor: '#5a9dc9' },
+  { name: 'Crèches', href: '/owner/nurseries', icon: BuildingOffice2Icon, roles: ['Owner'], moduleColor: '#5a9dc9' }, // Multi-site
   { name: 'Pièces', href: '/owner/rooms', icon: BuildingOfficeIcon, roles: ['Owner'], moduleColor: '#5a9dc9' }, // Clean
   { name: 'Tâches', href: '/owner/tasks', icon: ClipboardDocumentListIcon, roles: ['Owner'], moduleColor: '#aed581' }, // Tasks
   { name: 'Employés', href: '/owner/users', icon: UserGroupIcon, roles: ['Owner'], moduleColor: '#f4a5a5' }, // Users

@@ -22,10 +22,10 @@ import { calendarService, type DayTasks, type CalendarTask } from '@/lib/service
 import { roomsService, type Room } from '@/lib/services/rooms.service'
 
 interface DailyCalendarProps {
-  enterpriseId: string
+  nurseryId: string
 }
 
-export function DailyCalendar({ enterpriseId }: DailyCalendarProps) {
+export function DailyCalendar({ nurseryId }: DailyCalendarProps) {
   const [dayData, setDayData] = useState<DayTasks | null>(null)
   const [dayOffset, setDayOffset] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -34,15 +34,15 @@ export function DailyCalendar({ enterpriseId }: DailyCalendarProps) {
 
   useEffect(() => {
     loadRooms()
-  }, [enterpriseId])
+  }, [nurseryId])
 
   useEffect(() => {
     loadDayData()
-  }, [enterpriseId, dayOffset, selectedRoom])
+  }, [nurseryId, dayOffset, selectedRoom])
 
   async function loadRooms() {
     try {
-      const data = await roomsService.getActive(enterpriseId)
+      const data = await roomsService.getActive(nurseryId)
       setRooms(data)
     } catch (error) {
       console.error('Error loading rooms:', error)
@@ -53,7 +53,7 @@ export function DailyCalendar({ enterpriseId }: DailyCalendarProps) {
     try {
       setLoading(true)
       const roomFilter = selectedRoom === 'all' ? undefined : selectedRoom
-      const data = await calendarService.getDailyData(enterpriseId, dayOffset, roomFilter)
+      const data = await calendarService.getDailyData(nurseryId, dayOffset, roomFilter)
       setDayData(data)
     } catch (error) {
       console.error('Error loading day data:', error)

@@ -25,9 +25,10 @@ export interface Database {
           email: string
           first_name: string | null
           last_name: string | null
-          username: string | null      // Auto-generated for Employees (e.g., "Marie D")
-          pin_hash: string | null      // bcrypt hashed PIN for tablet login (Employees only)
-          enterprise_id: string | null // For Employees
+          username: string | null        // Auto-generated for Employees (e.g., "Marie D")
+          pin_hash: string | null        // bcrypt hashed PIN for tablet login (Employees only)
+          enterprise_id: string | null   // For Employees
+          primary_nursery_id: string | null  // Primary nursery for Employees (default location)
           created_by_id: string | null
           is_active: boolean
           avatar_url: string | null
@@ -43,6 +44,7 @@ export interface Database {
           username?: string | null
           pin_hash?: string | null
           enterprise_id?: string | null
+          primary_nursery_id?: string | null
           created_by_id?: string | null
           is_active?: boolean
           avatar_url?: string | null
@@ -58,6 +60,7 @@ export interface Database {
           username?: string | null
           pin_hash?: string | null
           enterprise_id?: string | null
+          primary_nursery_id?: string | null
           created_by_id?: string | null
           is_active?: boolean
           avatar_url?: string | null
@@ -98,6 +101,79 @@ export interface Database {
           siret?: string | null
           created_at?: string
           updated_at?: string
+        }
+      }
+      // ========================================================================
+      // NURSERY TABLE (Multi-Site Architecture)
+      // ========================================================================
+      nursery: {
+        Row: {
+          id: string
+          enterprise_id: string
+          name: string
+          address: string | null
+          city: string | null
+          postal_code: string | null
+          phone: string | null
+          email: string | null
+          capacity: number | null  // Maximum number of children
+          is_default: boolean
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          enterprise_id: string
+          name: string
+          address?: string | null
+          city?: string | null
+          postal_code?: string | null
+          phone?: string | null
+          email?: string | null
+          capacity?: number | null
+          is_default?: boolean
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          enterprise_id?: string
+          name?: string
+          address?: string | null
+          city?: string | null
+          postal_code?: string | null
+          phone?: string | null
+          email?: string | null
+          capacity?: number | null
+          is_default?: boolean
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      // ========================================================================
+      // EMPLOYEE-NURSERY ACCESS (Multi-Site Employee Assignment)
+      // ========================================================================
+      employee_nursery_access: {
+        Row: {
+          id: string
+          employee_id: string  // References profiles.id where role='Employee'
+          nursery_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          employee_id: string
+          nursery_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          employee_id?: string
+          nursery_id?: string
+          created_at?: string
         }
       }
       // ========================================================================
@@ -920,6 +996,16 @@ export type ProfileUpdate = Database['public']['Tables']['profiles']['Update']
 export type Enterprise = Database['public']['Tables']['enterprise']['Row']
 export type EnterpriseInsert = Database['public']['Tables']['enterprise']['Insert']
 export type EnterpriseUpdate = Database['public']['Tables']['enterprise']['Update']
+
+// Nursery type (Multi-Site)
+export type Nursery = Database['public']['Tables']['nursery']['Row']
+export type NurseryInsert = Database['public']['Tables']['nursery']['Insert']
+export type NurseryUpdate = Database['public']['Tables']['nursery']['Update']
+
+// Employee-Nursery Access type (Multi-Site)
+export type EmployeeNurseryAccess = Database['public']['Tables']['employee_nursery_access']['Row']
+export type EmployeeNurseryAccessInsert = Database['public']['Tables']['employee_nursery_access']['Insert']
+export type EmployeeNurseryAccessUpdate = Database['public']['Tables']['employee_nursery_access']['Update']
 
 // Room type
 export type Room = Database['public']['Tables']['room']['Row']

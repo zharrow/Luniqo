@@ -52,10 +52,12 @@ export default function TasksPage() {
   })
 
   useEffect(() => {
-    if (session?.enterprise) {
+    if (session?.enterprise?.id) {
       loadData()
+    } else if (!authLoading && !session) {
+      setLoading(false)
     }
-  }, [session])
+  }, [session?.enterprise?.id, authLoading])
 
   async function loadData() {
     if (!session?.enterprise?.id) return

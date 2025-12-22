@@ -6,7 +6,7 @@ export type LogStatus = 'FAIT' | 'PARTIEL' | 'REPORTE' | 'IMPOSSIBLE'
 
 export interface CleaningSession {
   id: string
-  enterprise_id: string
+  nursery_id: string
   date: string
   status: SessionStatus
   notes: string | null
@@ -70,13 +70,13 @@ export class SessionsService {
   private supabase: any = createClient()
 
   /**
-   * Get all sessions for an enterprise
+   * Get all sessions for a nursery
    */
-  async getAll(enterpriseId: string, limit?: number): Promise<SessionWithStats[]> {
+  async getAll(nurseryId: string, limit?: number): Promise<SessionWithStats[]> {
     let query = this.supabase
       .from('daily_cleaning_session')
       .select('*')
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
       .order('date', { ascending: false })
 
     if (limit) {
@@ -104,13 +104,13 @@ export class SessionsService {
   /**
    * Get today's session
    */
-  async getToday(enterpriseId: string): Promise<SessionWithStats | null> {
+  async getToday(nurseryId: string): Promise<SessionWithStats | null> {
     const today = getTodayLocal()
 
     const { data: session, error } = await this.supabase
       .from('daily_cleaning_session')
       .select('*')
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
       .eq('date', today)
       .single()
 
@@ -130,12 +130,12 @@ export class SessionsService {
   /**
    * Get session by ID
    */
-  async getById(id: string, enterpriseId: string): Promise<SessionWithStats | null> {
+  async getById(id: string, nurseryId: string): Promise<SessionWithStats | null> {
     const { data: session, error } = await this.supabase
       .from('daily_cleaning_session')
       .select('*')
       .eq('id', id)
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
       .single()
 
     if (error) {
@@ -154,11 +154,11 @@ export class SessionsService {
   /**
    * Get session by date
    */
-  async getByDate(enterpriseId: string, date: string): Promise<SessionWithStats | null> {
+  async getByDate(nurseryId: string, date: string): Promise<SessionWithStats | null> {
     const { data: session, error } = await this.supabase
       .from('daily_cleaning_session')
       .select('*')
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
       .eq('date', date)
       .single()
 
@@ -178,11 +178,11 @@ export class SessionsService {
   /**
    * Create a new session
    */
-  async create(enterpriseId: string, input: CreateSessionInput): Promise<CleaningSession> {
+  async create(nurseryId: string, input: CreateSessionInput): Promise<CleaningSession> {
     const { data, error } = await this.supabase
       .from('daily_cleaning_session')
       .insert({
-        enterprise_id: enterpriseId,
+        nursery_id: nurseryId,
         date: input.date,
         status: 'EN_COURS',
         notes: input.notes || null
@@ -197,12 +197,12 @@ export class SessionsService {
   /**
    * Update a session
    */
-  async update(id: string, enterpriseId: string, input: UpdateSessionInput): Promise<CleaningSession> {
+  async update(id: string, nurseryId: string, input: UpdateSessionInput): Promise<CleaningSession> {
     const { data, error } = await this.supabase
       .from('daily_cleaning_session')
       .update(input)
       .eq('id', id)
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
       .select()
       .single()
 
@@ -213,12 +213,12 @@ export class SessionsService {
   /**
    * Delete a session
    */
-  async delete(id: string, enterpriseId: string): Promise<void> {
+  async delete(id: string, nurseryId: string): Promise<void> {
     const { error } = await this.supabase
       .from('daily_cleaning_session')
       .delete()
       .eq('id', id)
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
 
     if (error) throw error
   }
@@ -231,10 +231,10 @@ export class SessionsService {
     completed_tasks: number
     completion_percentage: number
   }> {
-    // Get session to find enterprise_id and date
+    // Get session to find nursery_id and date
     const { data: session } = await this.supabase
       .from('daily_cleaning_session')
-      .select('enterprise_id, date')
+      .select('nursery_id, date')
       .eq('id', sessionId)
       .single()
 
@@ -246,11 +246,11 @@ export class SessionsService {
       }
     }
 
-    // Count total assigned tasks for this enterprise (active tasks)
+    // Count total assigned tasks for this nursery (active tasks)
     const { data: assignedTasks } = await this.supabase
       .from('assigned_task')
-      .select('id, room:room_id!inner(enterprise_id)')
-      .eq('room.enterprise_id', (session as any).enterprise_id)
+      .select('id, room:room_id!inner(nursery_id)')
+      .eq('room.nursery_id', (session as any).nursery_id)
       .eq('is_active', true)
 
     const totalTaskIds = (assignedTasks as any[] || []).map((t: any) => t.id)
@@ -338,7 +338,7 @@ export class SessionsService {
   /**
    * Get assigned tasks for creating session logs
    */
-  async getAssignedTasks(enterpriseId: string): Promise<any[]> {
+  async getAssignedTasks(nurseryId: string): Promise<any[]> {
     const { data, error } = await this.supabase
       .from('assigned_task')
       .select(`
@@ -347,7 +347,7 @@ export class SessionsService {
         task_template:task_template_id (*),
         default_performer:default_performer_id (*)
       `)
-      .eq('room.enterprise_id', enterpriseId)
+      .eq('room.nursery_id', nurseryId)
       .eq('is_active', true)
       .order('room_id', { ascending: true })
       .order('order_in_room', { ascending: true })
@@ -359,11 +359,11 @@ export class SessionsService {
   /**
    * Auto-complete session if all tasks are done
    */
-  async checkAndCompleteSession(sessionId: string, enterpriseId: string): Promise<void> {
+  async checkAndCompleteSession(sessionId: string, nurseryId: string): Promise<void> {
     const stats = await this.getSessionStats(sessionId)
 
     if (stats.completion_percentage === 100) {
-      await this.update(sessionId, enterpriseId, { status: 'COMPLETEE' })
+      await this.update(sessionId, nurseryId, { status: 'COMPLETEE' })
     }
   }
 }

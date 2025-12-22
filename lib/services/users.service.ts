@@ -8,6 +8,7 @@ import { Profile } from '@/types/database.types'
 
 export interface ProfileWithRooms extends Profile {
   accessible_rooms: string[] // room IDs for Employees
+  accessible_nurseries?: string[] // nursery IDs for Employees
 }
 
 export interface CreateEmployeeInput {
@@ -17,6 +18,7 @@ export interface CreateEmployeeInput {
   first_name: string
   last_name: string
   avatar_url?: string
+  nursery_ids?: string[] // Nurseries to grant access to
   room_ids?: string[] // Rooms to grant access to
 }
 
@@ -64,17 +66,24 @@ export class UsersService {
 
     if (error) throw error
 
-    // Get room assignments for each employee
+    // Get room and nursery assignments for each employee
     const employeesWithRooms = await Promise.all(
       (employees || []).map(async (employee: any) => {
-        const { data: rooms } = await this.supabase
-          .from('employee_room_access')
-          .select('room_id')
-          .eq('employee_id', employee.id)
+        const [roomsResult, nurseriesResult] = await Promise.all([
+          this.supabase
+            .from('employee_room_access')
+            .select('room_id')
+            .eq('employee_id', employee.id),
+          this.supabase
+            .from('employee_nursery_access')
+            .select('nursery_id')
+            .eq('employee_id', employee.id)
+        ])
 
         return {
           ...employee,
-          accessible_rooms: (rooms || []).map((r: any) => r.room_id)
+          accessible_rooms: (roomsResult.data || []).map((r: any) => r.room_id),
+          accessible_nurseries: (nurseriesResult.data || []).map((n: any) => n.nursery_id)
         } as ProfileWithRooms
       })
     )
@@ -87,6 +96,67 @@ export class UsersService {
    */
   async getActiveEmployees(enterpriseId: string): Promise<ProfileWithRooms[]> {
     const employees = await this.getEmployees(enterpriseId)
+    return employees.filter(e => e.is_active)
+  }
+
+  /**
+   * Get employees assigned to a specific nursery
+   */
+  async getEmployeesByNursery(nurseryId: string): Promise<ProfileWithRooms[]> {
+    // Get employee IDs assigned to this nursery via employee_nursery_access
+    const { data: assignments, error: assignmentError } = await this.supabase
+      .from('employee_nursery_access')
+      .select('employee_id')
+      .eq('nursery_id', nurseryId)
+
+    if (assignmentError) throw assignmentError
+
+    const employeeIds = (assignments || []).map((a: any) => a.employee_id)
+
+    if (employeeIds.length === 0) {
+      return []
+    }
+
+    // Get employee profiles
+    const { data: employees, error } = await this.supabase
+      .from('profiles')
+      .select('*')
+      .eq('role', 'Employee')
+      .in('id', employeeIds)
+      .order('last_name', { ascending: true })
+
+    if (error) throw error
+
+    // Get room and nursery assignments for each employee
+    const employeesWithRooms = await Promise.all(
+      (employees || []).map(async (employee: any) => {
+        const [roomsResult, nurseriesResult] = await Promise.all([
+          this.supabase
+            .from('employee_room_access')
+            .select('room_id')
+            .eq('employee_id', employee.id),
+          this.supabase
+            .from('employee_nursery_access')
+            .select('nursery_id')
+            .eq('employee_id', employee.id)
+        ])
+
+        return {
+          ...employee,
+          accessible_rooms: (roomsResult.data || []).map((r: any) => r.room_id),
+          accessible_nurseries: (nurseriesResult.data || []).map((n: any) => n.nursery_id)
+        } as ProfileWithRooms
+      })
+    )
+
+    return employeesWithRooms
+  }
+
+  /**
+   * Get active employees assigned to a specific nursery
+   */
+  async getActiveEmployeesByNursery(nurseryId: string): Promise<ProfileWithRooms[]> {
+    const employees = await this.getEmployeesByNursery(nurseryId)
     return employees.filter(e => e.is_active)
   }
 
@@ -203,6 +273,44 @@ export class UsersService {
     }
 
     return result.data
+  }
+
+  /**
+   * Update employee nursery assignments
+   */
+  async updateNurseryAccess(employeeId: string, nurseryIds: string[]): Promise<void> {
+    // Delete existing assignments
+    await this.supabase
+      .from('employee_nursery_access')
+      .delete()
+      .eq('employee_id', employeeId)
+
+    // Insert new assignments
+    if (nurseryIds.length > 0) {
+      const assignments = nurseryIds.map(nursery_id => ({
+        employee_id: employeeId,
+        nursery_id
+      }))
+
+      const { error } = await this.supabase
+        .from('employee_nursery_access')
+        .insert(assignments)
+
+      if (error) throw error
+    }
+  }
+
+  /**
+   * Get nursery IDs accessible by an employee
+   */
+  async getEmployeeNurseries(employeeId: string): Promise<string[]> {
+    const { data, error } = await this.supabase
+      .from('employee_nursery_access')
+      .select('nursery_id')
+      .eq('employee_id', employeeId)
+
+    if (error) throw error
+    return (data || []).map((n: any) => n.nursery_id)
   }
 
   /**

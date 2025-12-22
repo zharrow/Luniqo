@@ -83,7 +83,7 @@ export class CalendarService {
   private async getTasksStatusForDay(
     assignedTaskIds: string[],
     date: Date,
-    enterpriseId: string
+    nurseryId: string
   ): Promise<Map<string, 'todo' | 'in_progress' | 'done'>> {
     const dateStr = formatDateLocal(date)
     const statusMap = new Map<string, 'todo' | 'in_progress' | 'done'>()
@@ -92,7 +92,7 @@ export class CalendarService {
     const { data: session } = await this.supabase
       .from('daily_cleaning_session')
       .select('id, status')
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
       .eq('date', dateStr)
       .maybeSingle()
 
@@ -139,7 +139,7 @@ export class CalendarService {
    * Get weekly calendar data with tasks
    */
   async getWeeklyData(
-    enterpriseId: string,
+    nurseryId: string,
     weekOffset: number = 0,
     roomFilter?: string
   ): Promise<WeekData> {
@@ -152,8 +152,8 @@ export class CalendarService {
     const weekEnd = new Date(weekStart)
     weekEnd.setDate(weekStart.getDate() + 4) // Friday (Mon + 4 days)
 
-    // Get all assigned tasks for the enterprise
-    const assignedTasks = await assignedTasksService.getByEnterprise(enterpriseId)
+    // Get all assigned tasks for the nursery
+    const assignedTasks = await assignedTasksService.getByNursery(nurseryId)
 
     // Filter by room if specified
     const filteredTasks = roomFilter
@@ -199,7 +199,7 @@ export class CalendarService {
       const statusMap = await this.getTasksStatusForDay(
         assignedTaskIds,
         date,
-        enterpriseId
+        nurseryId
       )
 
       // Apply status to tasks
@@ -237,7 +237,7 @@ export class CalendarService {
    * Get daily calendar data with tasks for a single day
    */
   async getDailyData(
-    enterpriseId: string,
+    nurseryId: string,
     dayOffset: number = 0,
     roomFilter?: string
   ): Promise<DayTasks> {
@@ -250,8 +250,8 @@ export class CalendarService {
     // Get week start for context (used by shouldShowTaskOnDay)
     const weekStart = this.getWeekStart(targetDate)
 
-    // Get all assigned tasks for the enterprise
-    const assignedTasks = await assignedTasksService.getByEnterprise(enterpriseId)
+    // Get all assigned tasks for the nursery
+    const assignedTasks = await assignedTasksService.getByNursery(nurseryId)
 
     // Filter by room if specified
     const filteredTasks = roomFilter
@@ -286,7 +286,7 @@ export class CalendarService {
     const statusMap = await this.getTasksStatusForDay(
       assignedTaskIds,
       targetDate,
-      enterpriseId
+      nurseryId
     )
 
     // Apply status to tasks
@@ -320,13 +320,13 @@ export class CalendarService {
   /**
    * Get task count statistics for the week
    */
-  async getWeekStats(enterpriseId: string, weekOffset: number = 0): Promise<{
+  async getWeekStats(nurseryId: string, weekOffset: number = 0): Promise<{
     totalTasks: number
     completedTasks: number
     inProgressTasks: number
     todoTasks: number
   }> {
-    const weekData = await this.getWeeklyData(enterpriseId, weekOffset)
+    const weekData = await this.getWeeklyData(nurseryId, weekOffset)
 
     let totalTasks = 0
     let completedTasks = 0

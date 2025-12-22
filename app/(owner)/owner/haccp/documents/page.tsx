@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/lib/contexts/AuthContext'
+import { useRequireAuth } from '@/lib/contexts/AuthContext'
+import { useNursery } from '@/lib/contexts/NurseryContext'
 import { haccpService } from '@/lib/services/haccp.service'
 import { storageService } from '@/lib/services/storage.service'
 import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
@@ -11,7 +12,7 @@ import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
 interface HaccpDocument {
   id: string
-  enterprise_id: string
+  nursery_id: string
   title: string
   category: string
   file_key: string
@@ -40,17 +41,17 @@ export default function HaccpDocumentsPage() {
     file: null as File | null
   })
 
-  const { session } = useAuth()
+  const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
+  const { selectedNursery } = useNursery()
   const router = useRouter()
 
   useEffect(() => {
-    if (!session || !['Owner', 'Developer'].includes(session.role)) {
-      router.push('/login')
-      return
+    if (selectedNursery?.id) {
+      loadDocuments()
+    } else if (!authLoading && !selectedNursery) {
+      setIsLoading(false)
     }
-
-    loadDocuments()
-  }, [session])
+  }, [selectedNursery?.id, authLoading])
 
   useEffect(() => {
     applyFilters()
@@ -58,9 +59,9 @@ export default function HaccpDocumentsPage() {
 
   async function loadDocuments() {
     try {
-      if (!session?.enterprise?.id) return
+      if (!selectedNursery?.id) return
 
-      const data = await haccpService.getDocuments(session.enterprise.id)
+      const data = await haccpService.getDocuments(selectedNursery.id)
       setDocuments(data as unknown as HaccpDocument[])
     } catch (err: any) {
       console.error('Error loading documents:', err)
@@ -95,7 +96,7 @@ export default function HaccpDocumentsPage() {
     setIsUploading(true)
 
     try {
-      if (!session?.enterprise?.id) return
+      if (!selectedNursery?.id || !session?.user?.id) return
 
       let fileUrl = null
 
@@ -103,7 +104,7 @@ export default function HaccpDocumentsPage() {
       if (formData.file) {
         const result = await storageService.uploadFile(formData.file, {
           bucket: 'documents',
-          path: `haccp/${session.enterprise.id}`,
+          path: `haccp/${selectedNursery.id}`,
           maxSizeMB: 10
         })
 
@@ -115,7 +116,7 @@ export default function HaccpDocumentsPage() {
       }
 
       // Create document
-      await haccpService.createDocument(session.enterprise.id, {
+      await haccpService.createDocument(selectedNursery.id, {
         title: formData.title,
         category: formData.category,
         file_key: formData.file?.name || '',
@@ -137,18 +138,18 @@ export default function HaccpDocumentsPage() {
   }
 
   async function handleConfirmDelete() {
-    if (!documentToDelete || !session?.enterprise?.id) return
+    if (!documentToDelete || !selectedNursery?.id) return
 
     try {
       setIsDeleting(true)
       // Delete file from storage if exists
       if (documentToDelete.file_key) {
-        const path = `haccp/${session.enterprise.id}/${documentToDelete.file_key}`
+        const path = `haccp/${selectedNursery.id}/${documentToDelete.file_key}`
         await storageService.deleteFile('documents', path)
       }
 
       // Delete from database
-      await haccpService.deleteDocument(documentToDelete.id, session.enterprise.id)
+      await haccpService.deleteDocument(documentToDelete.id, selectedNursery.id)
       await loadDocuments()
     } catch (err: any) {
       console.error('Error deleting document:', err)
