@@ -54,10 +54,12 @@ export default function TasksPage() {
   })
 
   useEffect(() => {
-    if (selectedNursery) {
+    if (selectedNursery?.id) {
       loadData()
+    } else if (!authLoading && !selectedNursery) {
+      setLoading(false)
     }
-  }, [session])
+  }, [selectedNursery?.id, authLoading])
 
   async function loadData() {
     if (!selectedNursery?.id) return

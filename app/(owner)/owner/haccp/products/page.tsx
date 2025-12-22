@@ -41,8 +41,10 @@ export default function ProductsPage() {
   useEffect(() => {
     if (selectedNursery?.id) {
       loadData()
+    } else if (!authLoading && !selectedNursery) {
+      setLoading(false)
     }
-  }, [selectedNursery?.id])
+  }, [selectedNursery?.id, authLoading])
 
   useEffect(() => {
     if (filterCategory === 'ALL') {

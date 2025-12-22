@@ -36,10 +36,12 @@ export default function ChildrenPage() {
   })
 
   useEffect(() => {
-    if (selectedNursery) {
+    if (selectedNursery?.id) {
       loadChildren()
+    } else if (!authLoading && !selectedNursery) {
+      setLoading(false)
     }
-  }, [session])
+  }, [selectedNursery?.id, authLoading])
 
   async function loadChildren() {
     if (!selectedNursery?.id) return

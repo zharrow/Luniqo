@@ -46,10 +46,12 @@ export default function MealsPage() {
   })
 
   useEffect(() => {
-    if (selectedNursery) {
+    if (selectedNursery?.id) {
       loadData()
+    } else if (!authLoading && !selectedNursery) {
+      setLoading(false)
     }
-  }, [session, weekStart])
+  }, [selectedNursery?.id, authLoading, weekStart])
 
   async function loadData() {
     if (!selectedNursery?.id) return

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/lib/contexts/AuthContext'
+import { useRequireAuth } from '@/lib/contexts/AuthContext'
 import { useNursery } from '@/lib/contexts/NurseryContext'
 import { haccpService } from '@/lib/services/haccp.service'
 import { storageService } from '@/lib/services/storage.service'
@@ -41,20 +41,17 @@ export default function HaccpDocumentsPage() {
     file: null as File | null
   })
 
-  const { session } = useAuth()
+  const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
   const { selectedNursery } = useNursery()
   const router = useRouter()
 
   useEffect(() => {
-    if (!session || !['Owner', 'Developer'].includes(session.role)) {
-      router.push('/login')
-      return
-    }
-
     if (selectedNursery?.id) {
       loadDocuments()
+    } else if (!authLoading && !selectedNursery) {
+      setIsLoading(false)
     }
-  }, [session, selectedNursery?.id])
+  }, [selectedNursery?.id, authLoading])
 
   useEffect(() => {
     applyFilters()

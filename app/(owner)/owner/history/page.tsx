@@ -39,8 +39,10 @@ export default function HistoryPage() {
       setEndDate(end.toISOString().split('T')[0])
 
       loadSessions()
+    } else if (!authLoading && !selectedNursery) {
+      setIsLoading(false)
     }
-  }, [selectedNursery?.id])
+  }, [selectedNursery?.id, authLoading])
 
   useEffect(() => {
     applyFilters()

@@ -36,10 +36,12 @@ export default function SuppliersPage() {
   })
 
   useEffect(() => {
-    if (selectedNursery) {
+    if (selectedNursery?.id) {
       loadSuppliers()
+    } else if (!authLoading && !selectedNursery) {
+      setLoading(false)
     }
-  }, [session])
+  }, [selectedNursery?.id, authLoading])
 
   async function loadSuppliers() {
     if (!selectedNursery?.id) return

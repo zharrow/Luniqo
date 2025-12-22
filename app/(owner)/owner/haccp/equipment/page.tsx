@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/lib/contexts/AuthContext'
+import { useRequireAuth } from '@/lib/contexts/AuthContext'
 import { useNursery } from '@/lib/contexts/NurseryContext'
 import { haccpService } from '@/lib/services/haccp.service'
 import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
@@ -42,20 +42,17 @@ export default function HaccpEquipmentPage() {
     notes: ''
   })
 
-  const { session } = useAuth()
+  const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
   const { selectedNursery } = useNursery()
   const router = useRouter()
 
   useEffect(() => {
-    if (!session || !['Owner', 'Developer'].includes(session.role)) {
-      router.push('/login')
-      return
-    }
-
     if (selectedNursery?.id) {
       loadEquipment()
+    } else if (!authLoading && !selectedNursery) {
+      setIsLoading(false)
     }
-  }, [session, selectedNursery?.id])
+  }, [selectedNursery?.id, authLoading])
 
   async function loadEquipment() {
     try {

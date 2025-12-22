@@ -35,10 +35,12 @@ export default function HaccpTemperaturesPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    if (selectedNursery) {
+    if (selectedNursery?.id) {
       loadTemperatures()
+    } else if (!authLoading && !selectedNursery) {
+      setIsLoading(false)
     }
-  }, [session])
+  }, [selectedNursery?.id, authLoading])
 
   useEffect(() => {
     applyFilters()
