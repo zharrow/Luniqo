@@ -597,6 +597,54 @@ The app has been heavily optimized for fast page transitions and reduced latency
 
 ## Recent Updates
 
+- 🐛 **EMPLOYEE-NURSERY FILTERING & BUG FIXES** (2025-12-22) - Multi-nursery assignments and proper data filtering ✅ **COMPLETED**
+  - **Problem**: Multiple bugs related to employee-nursery relationships and data filtering
+    1. SQL constraint blocked creating multiple non-default nurseries
+    2. Tasks/categories incorrectly used `nursery_id` instead of `enterprise_id`
+    3. Employees couldn't be assigned to multiple nurseries
+    4. Employee lists showed all enterprise employees instead of filtering by selected nursery
+  - **Solutions implemented**:
+    - **Migration 09**: Fixed `unique_default_per_enterprise` constraint
+      - Replaced `UNIQUE (enterprise_id, is_default)` with partial index `WHERE is_default = true`
+      - Allows: ✅ One default nursery + unlimited non-default nurseries per enterprise
+    - **Service enhancements** ([users.service.ts](lib/services/users.service.ts:1)):
+      - Added `getEmployeesByNursery(nurseryId)` - Filter employees by nursery assignment
+      - Added `getActiveEmployeesByNursery(nurseryId)` - Only active employees
+      - Added `updateNurseryAccess(employeeId, nurseryIds)` - Manage nursery assignments
+      - Added `getEmployeeNurseries(employeeId)` - Get nursery IDs for an employee
+      - Updated `ProfileWithRooms` to include `accessible_nurseries` array
+      - Updated `CreateEmployeeInput` to include `nursery_ids` array
+    - **Page fixes**:
+      - ✅ [tasks/page.tsx](app/(owner)/owner/tasks/page.tsx:70-71) - Use `enterprise_id` for shared resources
+      - ✅ [users/page.tsx](app/(owner)/owner/users/page.tsx:74) - Filter by nursery + multi-nursery selection form
+      - ✅ [sessions/[id]/page.tsx](app/(owner)/owner/sessions/[id]/page.tsx:162) - Filter employees by nursery
+      - ✅ [haccp/meals/page.tsx](app/(owner)/owner/haccp/meals/page.tsx:69) - Use `getEmployeesByNursery`
+      - ✅ [haccp/non-compliances/page.tsx](app/(owner)/owner/haccp/non-compliances/page.tsx:57) - Use `getEmployeesByNursery`
+  - **Employee form improvements**:
+    - New "Crèches assignées" field with multi-select checkboxes
+    - Auto-selects current nursery when creating new employee
+    - Shows all enterprise nurseries for assignment
+    - Updates both nursery and room access on save
+  - **Architecture clarity**:
+    - **Shared at Enterprise level**: Employees, Task Templates, Task Categories
+    - **Isolated per Nursery**: Rooms, Sessions, HACCP data
+    - Employees can work at multiple nurseries via `employee_nursery_access` (M2M)
+  - **Files modified**:
+    - ✅ `supabase/migrations/09_fix_nursery_constraint.sql` - Partial unique index
+    - ✅ `lib/services/users.service.ts` - Nursery filtering methods
+    - ✅ `app/(owner)/owner/tasks/page.tsx` - Enterprise-level resources
+    - ✅ `app/(owner)/owner/users/page.tsx` - Multi-nursery assignment
+    - ✅ `app/(owner)/owner/sessions/[id]/page.tsx` - Filtered employee list
+    - ✅ `app/(owner)/owner/haccp/meals/page.tsx` - Nursery-filtered employees
+    - ✅ `app/(owner)/owner/haccp/non-compliances/page.tsx` - Nursery-filtered employees
+  - **Impact**:
+    - ✅ Owners can create unlimited nurseries per enterprise
+    - ✅ Employees can be assigned to multiple nurseries
+    - ✅ Employee lists filtered by selected nursery (prevents confusion)
+    - ✅ Task categories work correctly (shared across all nurseries)
+    - ✅ Better data isolation and security
+  - **Status**: ✅ **100% complete** - Migration applied, build passes (2025-12-22)
+
 - 🏢 **PHASE 0: MULTI-SITE ARCHITECTURE** (2025-12-22) - Enterprise can manage multiple nurseries ✅ **COMPLETED**
   - **Feature**: Owners can now manage multiple physical nursery locations under one enterprise account
   - **Architecture changes**:
@@ -790,4 +838,4 @@ The app has been heavily optimized for fast page transitions and reduced latency
 
 ---
 
-**Last updated**: 2025-12-08 (Session Persistence Fix - Instant tab switching without disconnection)
+**Last updated**: 2025-12-22 (Employee-Nursery Filtering & Multi-Site Bug Fixes - Migration 09 applied)
