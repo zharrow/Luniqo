@@ -112,9 +112,9 @@ export class AssignedTasksService {
   }
 
   /**
-   * Get all assigned tasks for an enterprise (via rooms)
+   * Get all assigned tasks for a nursery (via rooms)
    */
-  async getByEnterprise(enterpriseId: string): Promise<AssignedTask[]> {
+  async getByNursery(nurseryId: string): Promise<AssignedTask[]> {
     const { data, error } = await this.supabase
       .from('assigned_task')
       .select(`
@@ -129,10 +129,10 @@ export class AssignedTasksService {
         room:room_id!inner (
           id,
           name,
-          enterprise_id
+          nursery_id
         )
       `)
-      .eq('room.enterprise_id', enterpriseId)
+      .eq('room.nursery_id', nurseryId)
       .order('order_in_room', { ascending: true, nullsFirst: false })
 
     if (error) throw error

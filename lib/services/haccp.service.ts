@@ -29,7 +29,7 @@ export type DocumentCategory = 'Temperatures' | 'Cleaning' | 'Training' | 'Compl
 // Children
 export interface Child {
   id: string
-  enterprise_id: string
+  nursery_id: string
   first_name: string
   last_name: string
   birth_date: string
@@ -63,7 +63,7 @@ export interface UpdateChildInput {
 // Suppliers
 export interface Supplier {
   id: string
-  enterprise_id: string
+  nursery_id: string
   name: string
   contact_name: string | null
   phone: string | null
@@ -94,7 +94,7 @@ export interface UpdateSupplierInput {
 // Products
 export interface Product {
   id: string
-  enterprise_id: string
+  nursery_id: string
   supplier_id: string
   name: string
   category: string | null
@@ -129,7 +129,7 @@ export interface UpdateProductInput {
 // Meals
 export interface Meal {
   id: string
-  enterprise_id: string
+  nursery_id: string
   date: string
   type: MealType
   menu: string | null
@@ -160,7 +160,7 @@ export interface UpdateMealInput {
 // Batches
 export interface Batch {
   id: string
-  enterprise_id: string
+  nursery_id: string
   product_id: string
   batch_number: string | null
   reception_date: string
@@ -184,7 +184,7 @@ export interface CreateBatchInput {
 // Temperatures
 export interface Temperature {
   id: string
-  enterprise_id: string
+  nursery_id: string
   meal_id: string | null
   checkpoint_type: CheckpointType
   temperature_value: number
@@ -209,7 +209,7 @@ export interface CreateTemperatureInput {
 // Non-Compliance
 export interface NonCompliance {
   id: string
-  enterprise_id: string
+  nursery_id: string
   type: ComplianceType
   description: string
   discovered_at: string
@@ -240,7 +240,7 @@ export interface UpdateNonComplianceInput {
 // Equipment
 export interface Equipment {
   id: string
-  enterprise_id: string
+  nursery_id: string
   name: string
   category: string | null
   last_maintenance_date: string | null
@@ -271,7 +271,7 @@ export interface UpdateEquipmentInput {
 // Documents
 export interface Document {
   id: string
-  enterprise_id: string
+  nursery_id: string
   title: string
   category: DocumentCategory
   file_key: string
@@ -303,22 +303,22 @@ export class HaccpService {
   // CHILDREN
   // ==========================================================================
 
-  async getChildren(enterpriseId: string): Promise<Child[]> {
+  async getChildren(nurseryId: string): Promise<Child[]> {
     const { data, error } = await this.supabase
       .from('child')
       .select('*')
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
       .order('last_name', { ascending: true })
 
     if (error) throw error
     return (data as any[]) || []
   }
 
-  async getActiveChildren(enterpriseId: string): Promise<Child[]> {
+  async getActiveChildren(nurseryId: string): Promise<Child[]> {
     const { data, error } = await this.supabase
       .from('child')
       .select('*')
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
       .eq('is_active', true)
       .order('last_name', { ascending: true })
 
@@ -326,12 +326,12 @@ export class HaccpService {
     return (data as any[]) || []
   }
 
-  async getChildById(id: string, enterpriseId: string): Promise<Child | null> {
+  async getChildById(id: string, nurseryId: string): Promise<Child | null> {
     const { data, error } = await this.supabase
       .from('child')
       .select('*')
       .eq('id', id)
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
       .single()
 
     if (error) {
@@ -341,11 +341,11 @@ export class HaccpService {
     return data as any
   }
 
-  async createChild(enterpriseId: string, input: CreateChildInput): Promise<Child> {
+  async createChild(nurseryId: string, input: CreateChildInput): Promise<Child> {
     const { data, error } = await this.supabase
       .from('child')
       .insert({
-        enterprise_id: enterpriseId,
+        nursery_id: nurseryId,
         ...input,
         is_active: true
       })
@@ -356,12 +356,12 @@ export class HaccpService {
     return data as any
   }
 
-  async updateChild(id: string, enterpriseId: string, input: UpdateChildInput): Promise<Child> {
+  async updateChild(id: string, nurseryId: string, input: UpdateChildInput): Promise<Child> {
     const { data, error } = await this.supabase
       .from('child')
       .update(input)
       .eq('id', id)
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
       .select()
       .single()
 
@@ -369,12 +369,12 @@ export class HaccpService {
     return data as any
   }
 
-  async deleteChild(id: string, enterpriseId: string): Promise<void> {
+  async deleteChild(id: string, nurseryId: string): Promise<void> {
     const { error } = await this.supabase
       .from('child')
       .update({ is_active: false })
       .eq('id', id)
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
 
     if (error) throw error
   }
@@ -383,22 +383,22 @@ export class HaccpService {
   // SUPPLIERS
   // ==========================================================================
 
-  async getSuppliers(enterpriseId: string): Promise<Supplier[]> {
+  async getSuppliers(nurseryId: string): Promise<Supplier[]> {
     const { data, error } = await this.supabase
       .from('supplier')
       .select('*')
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
       .order('name', { ascending: true })
 
     if (error) throw error
     return (data as any[]) || []
   }
 
-  async getActiveSuppliers(enterpriseId: string): Promise<Supplier[]> {
+  async getActiveSuppliers(nurseryId: string): Promise<Supplier[]> {
     const { data, error } = await this.supabase
       .from('supplier')
       .select('*')
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
       .eq('is_active', true)
       .order('name', { ascending: true })
 
@@ -406,11 +406,11 @@ export class HaccpService {
     return (data as any[]) || []
   }
 
-  async createSupplier(enterpriseId: string, input: CreateSupplierInput): Promise<Supplier> {
+  async createSupplier(nurseryId: string, input: CreateSupplierInput): Promise<Supplier> {
     const { data, error } = await this.supabase
       .from('supplier')
       .insert({
-        enterprise_id: enterpriseId,
+        nursery_id: nurseryId,
         ...input,
         is_active: true
       })
@@ -421,12 +421,12 @@ export class HaccpService {
     return data as any
   }
 
-  async updateSupplier(id: string, enterpriseId: string, input: UpdateSupplierInput): Promise<Supplier> {
+  async updateSupplier(id: string, nurseryId: string, input: UpdateSupplierInput): Promise<Supplier> {
     const { data, error } = await this.supabase
       .from('supplier')
       .update(input)
       .eq('id', id)
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
       .select()
       .single()
 
@@ -434,12 +434,12 @@ export class HaccpService {
     return data as any
   }
 
-  async deleteSupplier(id: string, enterpriseId: string): Promise<void> {
+  async deleteSupplier(id: string, nurseryId: string): Promise<void> {
     const { error } = await this.supabase
       .from('supplier')
       .update({ is_active: false })
       .eq('id', id)
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
 
     if (error) throw error
   }
@@ -448,22 +448,22 @@ export class HaccpService {
   // PRODUCTS
   // ==========================================================================
 
-  async getProducts(enterpriseId: string): Promise<Product[]> {
+  async getProducts(nurseryId: string): Promise<Product[]> {
     const { data, error } = await this.supabase
       .from('product')
       .select('*, supplier(*)')
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
       .order('name', { ascending: true })
 
     if (error) throw error
     return (data as any[]) || []
   }
 
-  async getActiveProducts(enterpriseId: string): Promise<Product[]> {
+  async getActiveProducts(nurseryId: string): Promise<Product[]> {
     const { data, error } = await this.supabase
       .from('product')
       .select('*, supplier(*)')
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
       .eq('is_active', true)
       .order('name', { ascending: true })
 
@@ -471,11 +471,11 @@ export class HaccpService {
     return (data as any[]) || []
   }
 
-  async createProduct(enterpriseId: string, input: CreateProductInput): Promise<Product> {
+  async createProduct(nurseryId: string, input: CreateProductInput): Promise<Product> {
     const { data, error } = await this.supabase
       .from('product')
       .insert({
-        enterprise_id: enterpriseId,
+        nursery_id: nurseryId,
         ...input,
         is_active: true
       })
@@ -486,12 +486,12 @@ export class HaccpService {
     return data as any
   }
 
-  async updateProduct(id: string, enterpriseId: string, input: UpdateProductInput): Promise<Product> {
+  async updateProduct(id: string, nurseryId: string, input: UpdateProductInput): Promise<Product> {
     const { data, error } = await this.supabase
       .from('product')
       .update(input)
       .eq('id', id)
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
       .select()
       .single()
 
@@ -499,12 +499,12 @@ export class HaccpService {
     return data as any
   }
 
-  async deleteProduct(id: string, enterpriseId: string): Promise<void> {
+  async deleteProduct(id: string, nurseryId: string): Promise<void> {
     const { error } = await this.supabase
       .from('product')
       .update({ is_active: false })
       .eq('id', id)
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
 
     if (error) throw error
   }
@@ -513,11 +513,11 @@ export class HaccpService {
   // MEALS
   // ==========================================================================
 
-  async getMeals(enterpriseId: string, startDate?: string, endDate?: string): Promise<Meal[]> {
+  async getMeals(nurseryId: string, startDate?: string, endDate?: string): Promise<Meal[]> {
     let query = this.supabase
       .from('meal')
       .select('*')
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
 
     if (startDate) query = query.gte('date', startDate)
     if (endDate) query = query.lte('date', endDate)
@@ -528,11 +528,11 @@ export class HaccpService {
     return (data as any[]) || []
   }
 
-  async getMealsByDate(enterpriseId: string, startDate: string, endDate?: string): Promise<Meal[]> {
+  async getMealsByDate(nurseryId: string, startDate: string, endDate?: string): Promise<Meal[]> {
     let query = this.supabase
       .from('meal')
       .select('*')
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
       .gte('date', startDate)
 
     if (endDate) {
@@ -585,11 +585,11 @@ export class HaccpService {
     if (error) throw error
   }
 
-  async createMeal(enterpriseId: string, input: CreateMealInput): Promise<Meal> {
+  async createMeal(nurseryId: string, input: CreateMealInput): Promise<Meal> {
     const { data, error } = await this.supabase
       .from('meal')
       .insert({
-        enterprise_id: enterpriseId,
+        nursery_id: nurseryId,
         ...input,
         is_validated: false
       })
@@ -600,12 +600,12 @@ export class HaccpService {
     return data as any
   }
 
-  async updateMeal(id: string, enterpriseId: string, input: UpdateMealInput): Promise<Meal> {
+  async updateMeal(id: string, nurseryId: string, input: UpdateMealInput): Promise<Meal> {
     const { data, error } = await this.supabase
       .from('meal')
       .update(input)
       .eq('id', id)
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
       .select()
       .single()
 
@@ -613,12 +613,12 @@ export class HaccpService {
     return data as any
   }
 
-  async deleteMeal(id: string, enterpriseId: string): Promise<void> {
+  async deleteMeal(id: string, nurseryId: string): Promise<void> {
     const { error } = await this.supabase
       .from('meal')
       .delete()
       .eq('id', id)
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
 
     if (error) throw error
   }
@@ -627,22 +627,22 @@ export class HaccpService {
   // BATCHES
   // ==========================================================================
 
-  async getBatches(enterpriseId: string): Promise<Batch[]> {
+  async getBatches(nurseryId: string): Promise<Batch[]> {
     const { data, error } = await this.supabase
       .from('batch')
       .select('*, product(*, supplier(*))')
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
       .order('reception_date', { ascending: false })
 
     if (error) throw error
     return (data as any[]) || []
   }
 
-  async createBatch(enterpriseId: string, input: CreateBatchInput): Promise<Batch> {
+  async createBatch(nurseryId: string, input: CreateBatchInput): Promise<Batch> {
     const { data, error } = await this.supabase
       .from('batch')
       .insert({
-        enterprise_id: enterpriseId,
+        nursery_id: nurseryId,
         ...input
       })
       .select()
@@ -656,11 +656,11 @@ export class HaccpService {
   // TEMPERATURES
   // ==========================================================================
 
-  async getTemperatures(enterpriseId: string, startDate?: string, endDate?: string): Promise<Temperature[]> {
+  async getTemperatures(nurseryId: string, startDate?: string, endDate?: string): Promise<Temperature[]> {
     let query = this.supabase
       .from('temperature_check')
       .select('*')
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
 
     if (startDate) query = query.gte('measured_at', startDate)
     if (endDate) query = query.lte('measured_at', endDate)
@@ -671,11 +671,11 @@ export class HaccpService {
     return (data as any[]) || []
   }
 
-  async createTemperature(enterpriseId: string, input: CreateTemperatureInput): Promise<Temperature> {
+  async createTemperature(nurseryId: string, input: CreateTemperatureInput): Promise<Temperature> {
     const { data, error } = await this.supabase
       .from('temperature_check')
       .insert({
-        enterprise_id: enterpriseId,
+        nursery_id: nurseryId,
         ...input
       })
       .select()
@@ -689,22 +689,22 @@ export class HaccpService {
   // NON-COMPLIANCE
   // ==========================================================================
 
-  async getNonCompliances(enterpriseId: string): Promise<NonCompliance[]> {
+  async getNonCompliances(nurseryId: string): Promise<NonCompliance[]> {
     const { data, error } = await this.supabase
       .from('haccp_incident')
       .select('*')
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
       .order('discovered_at', { ascending: false })
 
     if (error) throw error
     return (data as any[]) || []
   }
 
-  async createNonCompliance(enterpriseId: string, input: CreateNonComplianceInput): Promise<NonCompliance> {
+  async createNonCompliance(nurseryId: string, input: CreateNonComplianceInput): Promise<NonCompliance> {
     const { data, error } = await this.supabase
       .from('haccp_incident')
       .insert({
-        enterprise_id: enterpriseId,
+        nursery_id: nurseryId,
         ...input,
         status: 'Open'
       })
@@ -715,12 +715,12 @@ export class HaccpService {
     return data as any
   }
 
-  async updateNonCompliance(id: string, enterpriseId: string, input: UpdateNonComplianceInput): Promise<NonCompliance> {
+  async updateNonCompliance(id: string, nurseryId: string, input: UpdateNonComplianceInput): Promise<NonCompliance> {
     const { data, error } = await this.supabase
       .from('haccp_incident')
       .update(input)
       .eq('id', id)
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
       .select()
       .single()
 
@@ -732,22 +732,22 @@ export class HaccpService {
   // EQUIPMENT
   // ==========================================================================
 
-  async getEquipment(enterpriseId: string): Promise<Equipment[]> {
+  async getEquipment(nurseryId: string): Promise<Equipment[]> {
     const { data, error } = await this.supabase
       .from('equipment')
       .select('*')
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
       .order('name', { ascending: true })
 
     if (error) throw error
     return (data as any[]) || []
   }
 
-  async createEquipment(enterpriseId: string, input: CreateEquipmentInput): Promise<Equipment> {
+  async createEquipment(nurseryId: string, input: CreateEquipmentInput): Promise<Equipment> {
     const { data, error } = await this.supabase
       .from('equipment')
       .insert({
-        enterprise_id: enterpriseId,
+        nursery_id: nurseryId,
         ...input,
         is_active: true
       })
@@ -758,12 +758,12 @@ export class HaccpService {
     return data as any
   }
 
-  async updateEquipment(id: string, enterpriseId: string, input: UpdateEquipmentInput): Promise<Equipment> {
+  async updateEquipment(id: string, nurseryId: string, input: UpdateEquipmentInput): Promise<Equipment> {
     const { data, error } = await this.supabase
       .from('equipment')
       .update(input)
       .eq('id', id)
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
       .select()
       .single()
 
@@ -775,22 +775,22 @@ export class HaccpService {
   // DOCUMENTS
   // ==========================================================================
 
-  async getDocuments(enterpriseId: string): Promise<Document[]> {
+  async getDocuments(nurseryId: string): Promise<Document[]> {
     const { data, error } = await this.supabase
       .from('document')
       .select('*')
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
       .order('uploaded_at', { ascending: false })
 
     if (error) throw error
     return (data as any[]) || []
   }
 
-  async createDocument(enterpriseId: string, input: CreateDocumentInput): Promise<Document> {
+  async createDocument(nurseryId: string, input: CreateDocumentInput): Promise<Document> {
     const { data, error } = await this.supabase
       .from('document')
       .insert({
-        enterprise_id: enterpriseId,
+        nursery_id: nurseryId,
         ...input
       })
       .select()
@@ -800,12 +800,12 @@ export class HaccpService {
     return data as any
   }
 
-  async deleteDocument(id: string, enterpriseId: string): Promise<void> {
+  async deleteDocument(id: string, nurseryId: string): Promise<void> {
     const { error } = await this.supabase
       .from('document')
       .delete()
       .eq('id', id)
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
 
     if (error) throw error
   }
@@ -814,7 +814,7 @@ export class HaccpService {
   // STATS & ANALYTICS
   // ==========================================================================
 
-  async getHaccpStats(enterpriseId: string): Promise<{
+  async getHaccpStats(nurseryId: string): Promise<{
     totalChildren: number
     activeChildren: number
     totalProducts: number
@@ -832,12 +832,12 @@ export class HaccpService {
       { count: openNonCompliances },
       { count: todayMeals }
     ] = await Promise.all([
-      this.supabase.from('child').select('*', { count: 'exact', head: true }).eq('enterprise_id', enterpriseId),
-      this.supabase.from('child').select('*', { count: 'exact', head: true }).eq('enterprise_id', enterpriseId).eq('is_active', true),
-      this.supabase.from('product').select('*', { count: 'exact', head: true }).eq('enterprise_id', enterpriseId).eq('is_active', true),
-      this.supabase.from('supplier').select('*', { count: 'exact', head: true }).eq('enterprise_id', enterpriseId).eq('is_active', true),
-      this.supabase.from('haccp_incident').select('*', { count: 'exact', head: true }).eq('enterprise_id', enterpriseId).eq('status', 'Open'),
-      this.supabase.from('meal').select('*', { count: 'exact', head: true }).eq('enterprise_id', enterpriseId).eq('date', today)
+      this.supabase.from('child').select('*', { count: 'exact', head: true }).eq('nursery_id', nurseryId),
+      this.supabase.from('child').select('*', { count: 'exact', head: true }).eq('nursery_id', nurseryId).eq('is_active', true),
+      this.supabase.from('product').select('*', { count: 'exact', head: true }).eq('nursery_id', nurseryId).eq('is_active', true),
+      this.supabase.from('supplier').select('*', { count: 'exact', head: true }).eq('nursery_id', nurseryId).eq('is_active', true),
+      this.supabase.from('haccp_incident').select('*', { count: 'exact', head: true }).eq('nursery_id', nurseryId).eq('status', 'Open'),
+      this.supabase.from('meal').select('*', { count: 'exact', head: true }).eq('nursery_id', nurseryId).eq('date', today)
     ])
 
     return {

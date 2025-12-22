@@ -4,7 +4,7 @@ const supabase: any = createClient()
 
 export interface Room {
   id: string
-  enterprise_id: string
+  nursery_id: string
   name: string
   description: string | null
   display_order: number | null
@@ -35,14 +35,14 @@ export class RoomsService {
   }
 
   /**
-   * Get all rooms for an enterprise
+   * Get all rooms for a nursery
    */
-  async getAll(enterpriseId: string): Promise<Room[]> {
+  async getAll(nurseryId: string): Promise<Room[]> {
     const supabase = this.getClient()
     const { data, error } = await supabase
       .from('room')
       .select('*')
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
       .order('display_order', { ascending: true })
 
     if (error) throw error
@@ -52,12 +52,12 @@ export class RoomsService {
   /**
    * Get active rooms only
    */
-  async getActive(enterpriseId: string): Promise<Room[]> {
+  async getActive(nurseryId: string): Promise<Room[]> {
     const supabase = this.getClient()
     const { data, error } = await supabase
       .from('room')
       .select('*')
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
       .eq('is_active', true)
       .order('display_order', { ascending: true })
 
@@ -68,13 +68,13 @@ export class RoomsService {
   /**
    * Get a single room by ID
    */
-  async getById(id: string, enterpriseId: string): Promise<Room | null> {
+  async getById(id: string, nurseryId: string): Promise<Room | null> {
     const supabase = this.getClient()
     const { data, error } = await supabase
       .from('room')
       .select('*')
       .eq('id', id)
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
       .single()
 
     if (error) {
@@ -88,12 +88,12 @@ export class RoomsService {
   /**
    * Create a new room
    */
-  async create(enterpriseId: string, input: CreateRoomInput): Promise<Room> {
+  async create(nurseryId: string, input: CreateRoomInput): Promise<Room> {
     const supabase = this.getClient()
     const { data, error } = await supabase
       .from('room')
       .insert({
-        enterprise_id: enterpriseId,
+        nursery_id: nurseryId,
         name: input.name,
         description: input.description || null,
         display_order: input.display_order || null,
@@ -110,13 +110,13 @@ export class RoomsService {
   /**
    * Update a room
    */
-  async update(id: string, enterpriseId: string, input: UpdateRoomInput): Promise<Room> {
+  async update(id: string, nurseryId: string, input: UpdateRoomInput): Promise<Room> {
     const supabase = this.getClient()
     const { data, error } = await supabase
       .from('room')
       .update(input)
       .eq('id', id)
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
       .select()
       .single()
 
@@ -127,13 +127,13 @@ export class RoomsService {
   /**
    * Delete a room
    */
-  async delete(id: string, enterpriseId: string): Promise<void> {
+  async delete(id: string, nurseryId: string): Promise<void> {
     const supabase = this.getClient()
     const { error } = await supabase
       .from('room')
       .delete()
       .eq('id', id)
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
 
     if (error) throw error
   }
@@ -141,14 +141,14 @@ export class RoomsService {
   /**
    * Reorder rooms
    */
-  async reorder(enterpriseId: string, roomOrders: { id: string; display_order: number }[]): Promise<void> {
+  async reorder(nurseryId: string, roomOrders: { id: string; display_order: number }[]): Promise<void> {
     const supabase = this.getClient()
     const promises = roomOrders.map(({ id, display_order }) =>
       supabase
         .from('room')
         .update({ display_order })
         .eq('id', id)
-        .eq('enterprise_id', enterpriseId)
+        .eq('nursery_id', nurseryId)
     )
 
     await Promise.all(promises)
@@ -157,7 +157,7 @@ export class RoomsService {
   /**
    * Get room statistics
    */
-  async getStats(roomId: string, enterpriseId: string): Promise<{
+  async getStats(roomId: string, nurseryId: string): Promise<{
     totalTasks: number
     completedToday: number
   }> {
@@ -174,7 +174,7 @@ export class RoomsService {
     const { data: session } = await supabase
       .from('daily_cleaning_session')
       .select('id')
-      .eq('enterprise_id', enterpriseId)
+      .eq('nursery_id', nurseryId)
       .eq('date', today)
       .single()
 

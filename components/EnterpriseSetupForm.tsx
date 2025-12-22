@@ -4,23 +4,35 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/contexts/AuthContext'
+import { NurseryInsert } from '@/types/database.types'
 
 interface EnterpriseSetupFormProps {
   ownerId: string
 }
 
 export default function EnterpriseSetupForm({ ownerId }: EnterpriseSetupFormProps) {
-  const [formData, setFormData] = useState({
+  const [step, setStep] = useState<1 | 2>(1)
+  const [enterpriseData, setEnterpriseData] = useState({
     name: '',
     legal_form: '',
     siret: ''
   })
+  const [nurseryData, setNurseryData] = useState({
+    name: '',
+    address: '',
+    city: '',
+    postal_code: '',
+    phone: '',
+    email: '',
+    capacity: ''
+  })
+  const [createdEnterpriseId, setCreatedEnterpriseId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const { refreshSession } = useAuth()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleEnterpriseSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     setIsLoading(true)
@@ -46,9 +58,9 @@ export default function EnterpriseSetupForm({ ownerId }: EnterpriseSetupFormProp
         .from('enterprise')
         .insert({
           owner_id: ownerId,
-          name: formData.name,
-          legal_form: formData.legal_form || null,
-          siret: formData.siret || null
+          name: enterpriseData.name,
+          legal_form: enterpriseData.legal_form || null,
+          siret: enterpriseData.siret || null
         } as any)
         .select()
         .single() as any)
@@ -60,13 +72,63 @@ export default function EnterpriseSetupForm({ ownerId }: EnterpriseSetupFormProp
         return
       }
 
+      // Sauvegarder l'ID de l'entreprise et passer à l'étape 2
+      setCreatedEnterpriseId(newEnterprise.id)
+      setStep(2)
+      setIsLoading(false)
+    } catch (err) {
+      console.error('Setup error:', err)
+      setError('Une erreur est survenue. Veuillez réessayer.')
+      setIsLoading(false)
+    }
+  }
+
+  const handleNurserySubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    setIsLoading(true)
+
+    try {
+      const supabase = createClient()
+
+      if (!createdEnterpriseId) {
+        setError('Erreur: ID entreprise manquant.')
+        setIsLoading(false)
+        return
+      }
+
+      // Créer la crèche (première crèche = default)
+      const nurseryInsert: NurseryInsert = {
+        enterprise_id: createdEnterpriseId,
+        name: nurseryData.name,
+        address: nurseryData.address || null,
+        city: nurseryData.city || null,
+        postal_code: nurseryData.postal_code || null,
+        phone: nurseryData.phone || null,
+        email: nurseryData.email || null,
+        capacity: nurseryData.capacity ? parseInt(nurseryData.capacity) : null,
+        is_default: true,
+        is_active: true
+      }
+
+      const { error: nurseryError } = await supabase
+        .from('nursery')
+        .insert(nurseryInsert)
+
+      if (nurseryError) {
+        console.error('Error creating nursery:', nurseryError)
+        setError('Erreur lors de la création de la crèche. Veuillez réessayer.')
+        setIsLoading(false)
+        return
+      }
+
       // Rafraîchir la session pour inclure l'entreprise
       await refreshSession()
 
       // Rediriger vers le dashboard
-      router.push('/dashboard')
+      router.push('/owner/dashboard')
     } catch (err) {
-      console.error('Setup error:', err)
+      console.error('Nursery creation error:', err)
       setError('Une erreur est survenue. Veuillez réessayer.')
       setIsLoading(false)
     }
@@ -75,88 +137,260 @@ export default function EnterpriseSetupForm({ ownerId }: EnterpriseSetupFormProp
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10 p-4">
       <div className="card max-w-md w-full p-8">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            Bienvenue ! 🎉
-          </h1>
-          <p className="text-gray-600">
-            Avant de commencer, créons votre entreprise
-          </p>
+        {/* Progress indicator */}
+        <div className="flex items-center justify-center mb-8">
+          <div className="flex items-center gap-2">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
+              step === 1 ? 'bg-primary text-white' : 'bg-green-500 text-white'
+            }`}>
+              {step === 2 ? '✓' : '1'}
+            </div>
+            <div className="w-12 h-0.5 bg-gray-300" />
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
+              step === 2 ? 'bg-primary text-white' : 'bg-gray-200 text-gray-500'
+            }`}>
+              2
+            </div>
+          </div>
         </div>
 
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-            {error}
-          </div>
+        {/* Step 1: Enterprise */}
+        {step === 1 && (
+          <>
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                Bienvenue ! 🎉
+              </h1>
+              <p className="text-gray-600">
+                Étape 1/2 : Créons votre entreprise
+              </p>
+            </div>
+
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleEnterpriseSubmit} className="space-y-6">
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                  Nom de l'entreprise <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="name"
+                  type="text"
+                  required
+                  value={enterpriseData.name}
+                  onChange={(e) => setEnterpriseData({ ...enterpriseData, name: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="Ex: Crèche Les Petits Loups"
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="legal_form" className="block text-sm font-medium text-gray-700 mb-2">
+                  Forme juridique
+                </label>
+                <select
+                  id="legal_form"
+                  value={enterpriseData.legal_form}
+                  onChange={(e) => setEnterpriseData({ ...enterpriseData, legal_form: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  disabled={isLoading}
+                >
+                  <option value="">Sélectionnez (optionnel)</option>
+                  <option value="Auto-entrepreneur">Auto-entrepreneur</option>
+                  <option value="EURL">EURL</option>
+                  <option value="SARL">SARL</option>
+                  <option value="SAS">SAS</option>
+                  <option value="SASU">SASU</option>
+                  <option value="Association">Association</option>
+                  <option value="Autre">Autre</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="siret" className="block text-sm font-medium text-gray-700 mb-2">
+                  Numéro SIRET
+                </label>
+                <input
+                  id="siret"
+                  type="text"
+                  value={enterpriseData.siret}
+                  onChange={(e) => setEnterpriseData({ ...enterpriseData, siret: e.target.value.replace(/\s/g, '') })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="14 chiffres (optionnel)"
+                  maxLength={14}
+                  pattern="[0-9]{14}"
+                  disabled={isLoading}
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Optionnel - Format : 14 chiffres sans espaces
+                </p>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading || !enterpriseData.name}
+                className="w-full btn-primary py-3 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? 'Création en cours...' : 'Continuer →'}
+              </button>
+            </form>
+          </>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-              Nom de l'entreprise <span className="text-red-500">*</span>
-            </label>
-            <input
-              id="name"
-              type="text"
-              required
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-              placeholder="Ex: Crèche Les Petits Loups"
-              disabled={isLoading}
-            />
-          </div>
+        {/* Step 2: Nursery */}
+        {step === 2 && (
+          <>
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                Parfait ! 🏠
+              </h1>
+              <p className="text-gray-600">
+                Étape 2/2 : Créons votre première crèche
+              </p>
+            </div>
 
-          <div>
-            <label htmlFor="legal_form" className="block text-sm font-medium text-gray-700 mb-2">
-              Forme juridique
-            </label>
-            <select
-              id="legal_form"
-              value={formData.legal_form}
-              onChange={(e) => setFormData({ ...formData, legal_form: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-              disabled={isLoading}
-            >
-              <option value="">Sélectionnez (optionnel)</option>
-              <option value="Auto-entrepreneur">Auto-entrepreneur</option>
-              <option value="EURL">EURL</option>
-              <option value="SARL">SARL</option>
-              <option value="SAS">SAS</option>
-              <option value="SASU">SASU</option>
-              <option value="Association">Association</option>
-              <option value="Autre">Autre</option>
-            </select>
-          </div>
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                {error}
+              </div>
+            )}
 
-          <div>
-            <label htmlFor="siret" className="block text-sm font-medium text-gray-700 mb-2">
-              Numéro SIRET
-            </label>
-            <input
-              id="siret"
-              type="text"
-              value={formData.siret}
-              onChange={(e) => setFormData({ ...formData, siret: e.target.value.replace(/\s/g, '') })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-              placeholder="14 chiffres (optionnel)"
-              maxLength={14}
-              pattern="[0-9]{14}"
-              disabled={isLoading}
-            />
-            <p className="mt-1 text-xs text-gray-500">
-              Optionnel - Format : 14 chiffres sans espaces
-            </p>
-          </div>
+            <form onSubmit={handleNurserySubmit} className="space-y-6">
+              <div>
+                <label htmlFor="nursery_name" className="block text-sm font-medium text-gray-700 mb-2">
+                  Nom de la crèche <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="nursery_name"
+                  type="text"
+                  required
+                  value={nurseryData.name}
+                  onChange={(e) => setNurseryData({ ...nurseryData, name: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="Ex: Site Centre-Ville"
+                  disabled={isLoading}
+                />
+              </div>
 
-          <button
-            type="submit"
-            disabled={isLoading || !formData.name}
-            className="w-full btn-primary py-3 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? 'Création en cours...' : 'Créer mon entreprise'}
-          </button>
-        </form>
+              <div>
+                <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
+                  Adresse
+                </label>
+                <input
+                  id="address"
+                  type="text"
+                  value={nurseryData.address}
+                  onChange={(e) => setNurseryData({ ...nurseryData, address: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="Ex: 123 Rue de la République"
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">
+                    Ville
+                  </label>
+                  <input
+                    id="city"
+                    type="text"
+                    value={nurseryData.city}
+                    onChange={(e) => setNurseryData({ ...nurseryData, city: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    placeholder="Ex: Paris"
+                    disabled={isLoading}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="postal_code" className="block text-sm font-medium text-gray-700 mb-2">
+                    Code postal
+                  </label>
+                  <input
+                    id="postal_code"
+                    type="text"
+                    value={nurseryData.postal_code}
+                    onChange={(e) => setNurseryData({ ...nurseryData, postal_code: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    placeholder="75001"
+                    maxLength={5}
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                    Téléphone
+                  </label>
+                  <input
+                    id="phone"
+                    type="tel"
+                    value={nurseryData.phone}
+                    onChange={(e) => setNurseryData({ ...nurseryData, phone: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    placeholder="01 23 45 67 89"
+                    disabled={isLoading}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="capacity" className="block text-sm font-medium text-gray-700 mb-2">
+                    Capacité
+                  </label>
+                  <input
+                    id="capacity"
+                    type="number"
+                    min={1}
+                    value={nurseryData.capacity}
+                    onChange={(e) => setNurseryData({ ...nurseryData, capacity: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    placeholder="20"
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  value={nurseryData.email}
+                  onChange={(e) => setNurseryData({ ...nurseryData, email: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="contact@creche.fr"
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  disabled={isLoading}
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  ← Retour
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading || !nurseryData.name}
+                  className="flex-1 btn-primary py-3 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? 'Création en cours...' : 'Terminer'}
+                </button>
+              </div>
+            </form>
+          </>
+        )}
 
         <div className="mt-6 text-center text-sm text-gray-500">
           <p>
