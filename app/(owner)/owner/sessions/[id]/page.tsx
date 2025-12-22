@@ -154,12 +154,12 @@ export default function SessionDetailPage() {
   }
 
   async function loadAvailableData() {
-    if (!selectedNursery?.id || !authSession?.enterprise?.id) return
+    if (!selectedNursery?.id) return
 
     try {
       const [tasks, users] = await Promise.all([
         sessionsService.getAssignedTasks(selectedNursery.id),
-        usersService.getActiveEmployees(authSession.enterprise.id)
+        usersService.getActiveEmployeesByNursery(selectedNursery.id)
       ])
 
       setAvailableTasks(tasks)

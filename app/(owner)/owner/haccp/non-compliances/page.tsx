@@ -54,7 +54,7 @@ export default function NonCompliancesPage() {
       setLoading(true)
       const [ncData, usersData] = await Promise.all([
         haccpService.getNonCompliances(selectedNursery.id),
-        usersService.getEmployees(selectedNursery.id)
+        usersService.getEmployeesByNursery(selectedNursery.id)
       ])
       setNonCompliances(ncData)
       setUsers(usersData)

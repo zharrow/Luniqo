@@ -66,7 +66,7 @@ export default function MealsPage() {
           format(weekStart, 'yyyy-MM-dd'),
           format(weekEnd, 'yyyy-MM-dd')
         ),
-        usersService.getEmployees(selectedNursery.id)
+        usersService.getEmployeesByNursery(selectedNursery.id)
       ])
 
       setMeals(mealsData)

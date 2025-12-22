@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
-import { useNursery } from '@/lib/contexts/NurseryContext'
 import { tasksService, type TaskTemplate, type CreateTaskInput } from '@/lib/services/tasks.service'
 import { taskCategoriesService, type TaskCategory } from '@/lib/services/task-categories.service'
 import { DEFAULT_TASK_CATEGORIES } from '@/lib/utils/default-categories'
@@ -30,7 +29,6 @@ import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
 export default function TasksPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
-  const { selectedNursery } = useNursery()
   const [tasks, setTasks] = useState<TaskTemplate[]>([])
   const [availableCategories, setAvailableCategories] = useState<TaskCategory[]>([])
   const [loading, setLoading] = useState(true)
@@ -54,21 +52,21 @@ export default function TasksPage() {
   })
 
   useEffect(() => {
-    if (selectedNursery?.id) {
+    if (session?.enterprise?.id) {
       loadData()
-    } else if (!authLoading && !selectedNursery) {
+    } else if (!authLoading && !session) {
       setLoading(false)
     }
-  }, [selectedNursery?.id, authLoading])
+  }, [session?.enterprise?.id, authLoading])
 
   async function loadData() {
-    if (!selectedNursery?.id) return
+    if (!session?.enterprise?.id) return
 
     try {
       setLoading(true)
       const [tasksData, categoriesData] = await Promise.all([
-        tasksService.getAll(selectedNursery.id),
-        taskCategoriesService.getAll(selectedNursery.id)
+        tasksService.getAll(session.enterprise.id),
+        taskCategoriesService.getAll(session.enterprise.id)
       ])
       setTasks(tasksData)
       setAvailableCategories(categoriesData)
@@ -103,14 +101,14 @@ export default function TasksPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!selectedNursery?.id) return
+    if (!session?.enterprise?.id) return
 
     try {
       setIsSubmitting(true)
       if (editingTask) {
-        await tasksService.update(editingTask.id, selectedNursery.id, formData)
+        await tasksService.update(editingTask.id, session.enterprise.id, formData)
       } else {
-        await tasksService.create(selectedNursery.id, formData)
+        await tasksService.create(session.enterprise.id, formData)
       }
 
       setShowModal(false)
@@ -128,11 +126,11 @@ export default function TasksPage() {
   }
 
   async function handleConfirmDelete() {
-    if (!selectedNursery?.id || !taskToDelete) return
+    if (!session?.enterprise?.id || !taskToDelete) return
 
     try {
       setIsDeleting(true)
-      await tasksService.delete(taskToDelete.id, selectedNursery.id)
+      await tasksService.delete(taskToDelete.id, session.enterprise.id)
       loadData()
     } catch (error) {
       console.error('Error deleting task:', error)
@@ -162,14 +160,14 @@ export default function TasksPage() {
 
   async function handleCategorySubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!selectedNursery?.id) return
+    if (!session?.enterprise?.id) return
 
     try {
       setIsSubmitting(true)
       if (editingCategory) {
-        await taskCategoriesService.update(editingCategory.id, selectedNursery.id, categoryFormData)
+        await taskCategoriesService.update(editingCategory.id, session.enterprise.id, categoryFormData)
       } else {
-        await taskCategoriesService.create(selectedNursery.id, categoryFormData)
+        await taskCategoriesService.create(session.enterprise.id, categoryFormData)
       }
       setShowCategoryModal(false)
       loadData()
@@ -182,11 +180,11 @@ export default function TasksPage() {
   }
 
   async function handleConfirmDeleteCategory() {
-    if (!selectedNursery?.id || !categoryToDelete) return
+    if (!session?.enterprise?.id || !categoryToDelete) return
 
     try {
       setIsDeleting(true)
-      await taskCategoriesService.hardDelete(categoryToDelete.id, selectedNursery.id)
+      await taskCategoriesService.hardDelete(categoryToDelete.id, session.enterprise.id)
       loadData()
     } catch (error) {
       console.error('Error deleting category:', error)
