@@ -43,7 +43,7 @@ export default function NurserySelector() {
           }
         }}
       >
-        <SelectTrigger className="h-8 w-[200px] border-0 bg-transparent shadow-none focus:ring-0 text-sm">
+        <SelectTrigger className="h-8 w-[280px] border-0 bg-transparent shadow-none focus:ring-0 text-sm">
           <SelectValue placeholder="Sélectionner une crèche" />
         </SelectTrigger>
         <SelectContent>
