@@ -13,11 +13,24 @@ import { useNursery } from '@/lib/contexts/NurseryContext'
 export default function NurserySelector() {
   const { selectedNursery, nurseries, setSelectedNursery, isLoading } = useNursery()
 
-  // Hide selector if only one nursery or loading
-  if (isLoading || nurseries.length <= 1) {
+  // Hide only if loading or no nurseries at all
+  if (isLoading || nurseries.length === 0) {
     return null
   }
 
+  // If only one nursery, show it as read-only label
+  if (nurseries.length === 1) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-1.5 bg-white/50 rounded-lg border border-border/50 backdrop-blur-sm">
+        <BuildingOffice2Icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+        <span className="text-sm text-foreground font-medium">
+          {selectedNursery?.name || nurseries[0].name}
+        </span>
+      </div>
+    )
+  }
+
+  // Multiple nurseries - show dropdown selector
   return (
     <div className="flex items-center gap-2 px-3 py-1.5 bg-white/50 rounded-lg border border-border/50 backdrop-blur-sm">
       <BuildingOffice2Icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
