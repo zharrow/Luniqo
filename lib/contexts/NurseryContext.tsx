@@ -68,15 +68,16 @@ export function NurseryProvider({ children }: { children: React.ReactNode }) {
         return
       }
 
-      setNurseries(data || [])
-      console.log('✅ Loaded', data?.length || 0, 'nurseries')
+      const nurseryList = (data || []) as Nursery[]
+      setNurseries(nurseryList)
+      console.log('✅ Loaded', nurseryList.length, 'nurseries')
 
       // Auto-select nursery
-      if (data && data.length > 0) {
+      if (nurseryList.length > 0) {
         // Try to restore saved nursery from localStorage
         const savedNurseryId = localStorage.getItem(SELECTED_NURSERY_KEY)
         if (savedNurseryId) {
-          const savedNursery = data.find(n => n.id === savedNurseryId)
+          const savedNursery = nurseryList.find(n => n.id === savedNurseryId)
           if (savedNursery) {
             setSelectedNurseryState(savedNursery)
             console.log('🏢 Restored selected nursery from localStorage:', savedNursery.name)
@@ -85,7 +86,7 @@ export function NurseryProvider({ children }: { children: React.ReactNode }) {
         }
 
         // Fallback to default nursery
-        const defaultNursery = data.find(n => n.is_default) || data[0]
+        const defaultNursery = nurseryList.find(n => n.is_default) || nurseryList[0]
         setSelectedNurseryState(defaultNursery)
         localStorage.setItem(SELECTED_NURSERY_KEY, defaultNursery.id)
         console.log('🏢 Auto-selected default nursery:', defaultNursery.name)

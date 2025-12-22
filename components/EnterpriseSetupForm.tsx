@@ -113,7 +113,7 @@ export default function EnterpriseSetupForm({ ownerId }: EnterpriseSetupFormProp
 
       const { error: nurseryError } = await supabase
         .from('nursery')
-        .insert(nurseryInsert)
+        .insert(nurseryInsert as any)
 
       if (nurseryError) {
         console.error('Error creating nursery:', nurseryError)

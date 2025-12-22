@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
+import { useNursery } from '@/lib/contexts/NurseryContext'
 import { roomsService, type Room, type CreateRoomInput } from '@/lib/services/rooms.service'
 import {
   PlusIcon,
@@ -23,6 +24,7 @@ import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 export default function RoomsPage() {
   const router = useRouter()
   const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
+  const { selectedNursery } = useNursery()
   const [rooms, setRooms] = useState<Room[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -36,19 +38,19 @@ export default function RoomsPage() {
   })
 
   useEffect(() => {
-    if (session?.enterprise?.id) {
+    if (selectedNursery?.id) {
       loadRooms()
-    } else if (!authLoading && session && !session.enterprise) {
+    } else if (!authLoading && !selectedNursery) {
       setLoading(false)
     }
-  }, [session?.enterprise?.id, authLoading])
+  }, [selectedNursery?.id, authLoading])
 
   async function loadRooms() {
-    if (!session?.enterprise?.id) return
+    if (!selectedNursery?.id) return
 
     try {
       setLoading(true)
-      const data = await roomsService.getAll(session.enterprise.id)
+      const data = await roomsService.getAll(selectedNursery.id)
       setRooms(data)
     } catch (error) {
       console.error('Error loading rooms:', error)
@@ -120,14 +122,14 @@ export default function RoomsPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!session?.enterprise?.id) return
+    if (!selectedNursery?.id) return
 
     try {
       setIsSubmitting(true)
       if (editingRoom) {
-        await roomsService.update(editingRoom.id, session.enterprise.id, formData)
+        await roomsService.update(editingRoom.id, selectedNursery.id, formData)
       } else {
-        await roomsService.create(session.enterprise.id, formData)
+        await roomsService.create(selectedNursery.id, formData)
       }
 
       setShowModal(false)
@@ -145,11 +147,11 @@ export default function RoomsPage() {
   }
 
   async function handleConfirmDelete() {
-    if (!session?.enterprise?.id || !roomToDelete) return
+    if (!selectedNursery?.id || !roomToDelete) return
 
     try {
       setIsDeleting(true)
-      await roomsService.delete(roomToDelete.id, session.enterprise.id)
+      await roomsService.delete(roomToDelete.id, selectedNursery.id)
       loadRooms()
     } catch (error) {
       console.error('Error deleting room:', error)
