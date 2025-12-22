@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
+import { useNursery } from '@/lib/contexts/NurseryContext'
 import { tasksService, type TaskTemplate, type CreateTaskInput } from '@/lib/services/tasks.service'
 import { taskCategoriesService, type TaskCategory } from '@/lib/services/task-categories.service'
 import { DEFAULT_TASK_CATEGORIES } from '@/lib/utils/default-categories'
@@ -29,6 +30,7 @@ import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
 export default function TasksPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
+  const { selectedNursery } = useNursery()
   const [tasks, setTasks] = useState<TaskTemplate[]>([])
   const [availableCategories, setAvailableCategories] = useState<TaskCategory[]>([])
   const [loading, setLoading] = useState(true)
@@ -52,19 +54,19 @@ export default function TasksPage() {
   })
 
   useEffect(() => {
-    if (session?.enterprise) {
+    if (selectedNursery) {
       loadData()
     }
   }, [session])
 
   async function loadData() {
-    if (!session?.enterprise?.id) return
+    if (!selectedNursery?.id) return
 
     try {
       setLoading(true)
       const [tasksData, categoriesData] = await Promise.all([
-        tasksService.getAll(session.enterprise.id),
-        taskCategoriesService.getAll(session.enterprise.id)
+        tasksService.getAll(selectedNursery.id),
+        taskCategoriesService.getAll(selectedNursery.id)
       ])
       setTasks(tasksData)
       setAvailableCategories(categoriesData)
@@ -99,14 +101,14 @@ export default function TasksPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!session?.enterprise?.id) return
+    if (!selectedNursery?.id) return
 
     try {
       setIsSubmitting(true)
       if (editingTask) {
-        await tasksService.update(editingTask.id, session.enterprise.id, formData)
+        await tasksService.update(editingTask.id, selectedNursery.id, formData)
       } else {
-        await tasksService.create(session.enterprise.id, formData)
+        await tasksService.create(selectedNursery.id, formData)
       }
 
       setShowModal(false)
@@ -124,11 +126,11 @@ export default function TasksPage() {
   }
 
   async function handleConfirmDelete() {
-    if (!session?.enterprise?.id || !taskToDelete) return
+    if (!selectedNursery?.id || !taskToDelete) return
 
     try {
       setIsDeleting(true)
-      await tasksService.delete(taskToDelete.id, session.enterprise.id)
+      await tasksService.delete(taskToDelete.id, selectedNursery.id)
       loadData()
     } catch (error) {
       console.error('Error deleting task:', error)
@@ -158,14 +160,14 @@ export default function TasksPage() {
 
   async function handleCategorySubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!session?.enterprise?.id) return
+    if (!selectedNursery?.id) return
 
     try {
       setIsSubmitting(true)
       if (editingCategory) {
-        await taskCategoriesService.update(editingCategory.id, session.enterprise.id, categoryFormData)
+        await taskCategoriesService.update(editingCategory.id, selectedNursery.id, categoryFormData)
       } else {
-        await taskCategoriesService.create(session.enterprise.id, categoryFormData)
+        await taskCategoriesService.create(selectedNursery.id, categoryFormData)
       }
       setShowCategoryModal(false)
       loadData()
@@ -178,11 +180,11 @@ export default function TasksPage() {
   }
 
   async function handleConfirmDeleteCategory() {
-    if (!session?.enterprise?.id || !categoryToDelete) return
+    if (!selectedNursery?.id || !categoryToDelete) return
 
     try {
       setIsDeleting(true)
-      await taskCategoriesService.hardDelete(categoryToDelete.id, session.enterprise.id)
+      await taskCategoriesService.hardDelete(categoryToDelete.id, selectedNursery.id)
       loadData()
     } catch (error) {
       console.error('Error deleting category:', error)

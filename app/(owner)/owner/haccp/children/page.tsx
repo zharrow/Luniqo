@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
+import { useNursery } from '@/lib/contexts/NurseryContext'
 import { haccpService, type Child, type CreateChildInput, type Section } from '@/lib/services/haccp.service'
 import {
   PlusIcon,
@@ -17,6 +18,7 @@ import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
 export default function ChildrenPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
+  const { selectedNursery } = useNursery()
   const [children, setChildren] = useState<Child[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -34,17 +36,17 @@ export default function ChildrenPage() {
   })
 
   useEffect(() => {
-    if (session?.enterprise) {
+    if (selectedNursery) {
       loadChildren()
     }
   }, [session])
 
   async function loadChildren() {
-    if (!session?.enterprise?.id) return
+    if (!selectedNursery?.id) return
 
     try {
       setLoading(true)
-      const data = await haccpService.getChildren(session.enterprise.id)
+      const data = await haccpService.getChildren(selectedNursery.id)
       setChildren(data)
     } catch (error) {
       console.error('Error loading children:', error)
@@ -81,14 +83,14 @@ export default function ChildrenPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!session?.enterprise?.id) return
+    if (!selectedNursery?.id) return
 
     try {
       setIsSubmitting(true)
       if (editingChild) {
-        await haccpService.updateChild(editingChild.id, session.enterprise.id, formData)
+        await haccpService.updateChild(editingChild.id, selectedNursery.id, formData)
       } else {
-        await haccpService.createChild(session.enterprise.id, formData)
+        await haccpService.createChild(selectedNursery.id, formData)
       }
 
       setShowModal(false)
@@ -106,11 +108,11 @@ export default function ChildrenPage() {
   }
 
   async function handleConfirmDelete() {
-    if (!session?.enterprise?.id || !childToDelete) return
+    if (!selectedNursery?.id || !childToDelete) return
 
     try {
       setIsDeleting(true)
-      await haccpService.deleteChild(childToDelete.id, session.enterprise.id)
+      await haccpService.deleteChild(childToDelete.id, selectedNursery.id)
       loadChildren()
     } catch (error) {
       console.error('Error deleting child:', error)

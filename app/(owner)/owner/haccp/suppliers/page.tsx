@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
+import { useNursery } from '@/lib/contexts/NurseryContext'
 import { haccpService, type Supplier, type CreateSupplierInput } from '@/lib/services/haccp.service'
 import {
   PlusIcon,
@@ -18,6 +19,7 @@ import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
 export default function SuppliersPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
+  const { selectedNursery } = useNursery()
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -34,17 +36,17 @@ export default function SuppliersPage() {
   })
 
   useEffect(() => {
-    if (session?.enterprise) {
+    if (selectedNursery) {
       loadSuppliers()
     }
   }, [session])
 
   async function loadSuppliers() {
-    if (!session?.enterprise?.id) return
+    if (!selectedNursery?.id) return
 
     try {
       setLoading(true)
-      const data = await haccpService.getSuppliers(session.enterprise.id)
+      const data = await haccpService.getSuppliers(selectedNursery.id)
       setSuppliers(data)
     } catch (error) {
       console.error('Error loading suppliers:', error)
@@ -79,14 +81,14 @@ export default function SuppliersPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!session?.enterprise?.id) return
+    if (!selectedNursery?.id) return
 
     try {
       setIsSubmitting(true)
       if (editingSupplier) {
-        await haccpService.updateSupplier(editingSupplier.id, session.enterprise.id, formData)
+        await haccpService.updateSupplier(editingSupplier.id, selectedNursery.id, formData)
       } else {
-        await haccpService.createSupplier(session.enterprise.id, formData)
+        await haccpService.createSupplier(selectedNursery.id, formData)
       }
 
       setShowModal(false)
@@ -104,11 +106,11 @@ export default function SuppliersPage() {
   }
 
   async function handleConfirmDelete() {
-    if (!session?.enterprise?.id || !supplierToDelete) return
+    if (!selectedNursery?.id || !supplierToDelete) return
 
     try {
       setIsDeleting(true)
-      await haccpService.deleteSupplier(supplierToDelete.id, session.enterprise.id)
+      await haccpService.deleteSupplier(supplierToDelete.id, selectedNursery.id)
       loadSuppliers()
     } catch (error) {
       console.error('Error deleting supplier:', error)

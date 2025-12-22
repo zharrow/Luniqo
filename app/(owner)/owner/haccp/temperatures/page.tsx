@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
+import { useNursery } from '@/lib/contexts/NurseryContext'
 import { haccpService } from '@/lib/services/haccp.service'
 import { ArrowLeftIcon } from '@heroicons/react/24/outline'
 import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
@@ -24,6 +25,7 @@ interface Temperature {
 
 export default function HaccpTemperaturesPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
+  const { selectedNursery } = useNursery()
   const router = useRouter()
   const [temperatures, setTemperatures] = useState<Temperature[]>([])
   const [filteredTemperatures, setFilteredTemperatures] = useState<Temperature[]>([])
@@ -33,7 +35,7 @@ export default function HaccpTemperaturesPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    if (session?.enterprise) {
+    if (selectedNursery) {
       loadTemperatures()
     }
   }, [session])
@@ -44,9 +46,9 @@ export default function HaccpTemperaturesPage() {
 
   async function loadTemperatures() {
     try {
-      if (!session?.enterprise?.id) return
+      if (!selectedNursery?.id) return
 
-      const data = await haccpService.getTemperatures(session.enterprise.id)
+      const data = await haccpService.getTemperatures(selectedNursery.id)
       setTemperatures(data as Temperature[])
     } catch (err: any) {
       console.error('Error loading temperatures:', err)

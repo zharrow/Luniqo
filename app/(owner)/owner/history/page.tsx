@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
+import { useNursery } from '@/lib/contexts/NurseryContext'
 import { sessionsService, type SessionWithStats } from '@/lib/services/sessions.service'
 import Link from 'next/link'
 import {
@@ -16,6 +17,7 @@ import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
 export default function HistoryPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
+  const { selectedNursery } = useNursery()
   const [sessions, setSessions] = useState<SessionWithStats[]>([])
   const [filteredSessions, setFilteredSessions] = useState<SessionWithStats[]>([])
   const [filterStatus, setFilterStatus] = useState<string>('all')
@@ -27,7 +29,7 @@ export default function HistoryPage() {
   const router = useRouter()
 
   useEffect(() => {
-    if (session?.enterprise?.id) {
+    if (selectedNursery?.id) {
       // Set default date range (last 30 days)
       const end = new Date()
       const start = new Date()
@@ -38,7 +40,7 @@ export default function HistoryPage() {
 
       loadSessions()
     }
-  }, [session?.enterprise?.id])
+  }, [selectedNursery?.id])
 
   useEffect(() => {
     applyFilters()
@@ -46,9 +48,9 @@ export default function HistoryPage() {
 
   async function loadSessions() {
     try {
-      if (!session?.enterprise?.id) return
+      if (!selectedNursery?.id) return
 
-      const data = await sessionsService.getAll(session.enterprise.id)
+      const data = await sessionsService.getAll(selectedNursery.id)
       setSessions(data)
     } catch (err: any) {
       console.error('Error loading sessions:', err)
