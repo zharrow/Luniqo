@@ -100,6 +100,42 @@ EOF
 - ❌ **NE PAS** ajouter `🤖 Generated with Claude Code`
 - ✅ Utiliser **uniquement** le gitmoji + message conventionnel
 
+### 3. Git Push vers Branche Feature
+
+**IMPORTANT : Toujours pusher vers une branche qui représente la feature/fix**
+
+```bash
+# Vérifier le nom de la branche actuelle
+git branch --show-current
+
+# Si besoin, créer une nouvelle branche feature
+git checkout -b feature/nom-descriptif
+# Exemples:
+# - feature/phase-1-dossier-enfant
+# - feature/phase-2-presences
+# - fix/session-status-bug
+# - refactor/auth-context
+
+# Pusher vers remote
+git push origin <nom-branche>
+
+# Ou pusher et créer upstream si première fois
+git push -u origin <nom-branche>
+```
+
+**Convention de nommage des branches :**
+- `feature/` - Nouvelles fonctionnalités (phase-X, module-Y)
+- `fix/` - Corrections de bugs
+- `refactor/` - Refactoring de code
+- `docs/` - Documentation uniquement
+- `perf/` - Optimisations de performance
+
+**Workflow recommandé :**
+1. Commit avec gitmoji ✅
+2. Push vers branche feature 🚀
+3. Créer Pull Request sur GitHub (si prêt pour review)
+4. Fusionner dans `main` après validation
+
 ---
 
 ## 🎨 Gitmoji à Utiliser
@@ -130,6 +166,7 @@ Avant de terminer une session :
 - [ ] Mettre à jour "Dernière mise à jour" avec la date du jour
 - [ ] Faire `git add .`
 - [ ] Faire `git commit` avec gitmoji (SANS Co-Authored-By)
+- [ ] Faire `git push origin <branche-feature>` pour pusher vers remote
 - [ ] Vérifier que CLAUDE.md est à jour si changement architectural
 
 ---
