@@ -33,7 +33,9 @@
       "Bash(wc:*)",
       "Bash(cat:*)",
       "Bash(node -c:*)",
-      "Bash(timeout 120 bash:*)"
+      "Bash(timeout 120 bash:*)",
+      "Bash(git checkout:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
