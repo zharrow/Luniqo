@@ -43,6 +43,9 @@ interface NavItem {
 const mainNavigation: NavItem[] = [
   { name: 'Tableau de bord', href: '/owner/dashboard', icon: HomeIcon, roles: ['Owner'], moduleColor: '#5a9dc9' },
   { name: 'Crèches', href: '/owner/nurseries', icon: BuildingOffice2Icon, roles: ['Owner'], moduleColor: '#5a9dc9' }, // Multi-site
+  { name: 'Enfants', href: '/owner/children', icon: UserGroupIcon, roles: ['Owner'], moduleColor: '#f4c2c2' }, // Children (Phase 1)
+  { name: 'Familles', href: '/owner/families', icon: UserGroupIcon, roles: ['Owner'], moduleColor: '#e8b4d4' }, // Families (Phase 1)
+  { name: 'Sections', href: '/owner/sections', icon: BuildingOfficeIcon, roles: ['Owner'], moduleColor: '#b3d4e8' }, // Sections (Phase 1)
   { name: 'Pièces', href: '/owner/rooms', icon: BuildingOfficeIcon, roles: ['Owner'], moduleColor: '#5a9dc9' }, // Clean
   { name: 'Tâches', href: '/owner/tasks', icon: ClipboardDocumentListIcon, roles: ['Owner'], moduleColor: '#aed581' }, // Tasks
   { name: 'Employés', href: '/owner/users', icon: UserGroupIcon, roles: ['Owner'], moduleColor: '#f4a5a5' }, // Users
