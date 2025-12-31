@@ -7,7 +7,12 @@ import {
   HomeIcon,
   CalendarIcon,
   ClockIcon,
-  UserCircleIcon
+  UserCircleIcon,
+  ChatBubbleLeftRightIcon,
+  ClipboardDocumentCheckIcon,
+  DocumentTextIcon,
+  PuzzlePieceIcon,
+  EyeIcon
 } from '@heroicons/react/24/outline'
 import {
   Sidebar,
@@ -34,6 +39,17 @@ const employeeNavigation: NavItem[] = [
   { name: 'Tableau de bord', href: '/employee/dashboard', icon: HomeIcon, moduleColor: '#5a9dc9' },
   { name: 'Mon Calendrier', href: '/employee/calendar', icon: CalendarIcon, moduleColor: '#aed581' },
   { name: 'Mon Historique', href: '/employee/history', icon: ClockIcon, moduleColor: '#f4c2c2' },
+]
+
+const dailyWorkNavigation: NavItem[] = [
+  { name: 'Présence', href: '/employee/attendance', icon: ClipboardDocumentCheckIcon, moduleColor: '#b5ead7' },
+  { name: 'Journal quotidien', href: '/employee/daily-logs', icon: DocumentTextIcon, moduleColor: '#c2f0d4' },
+  { name: 'Activités', href: '/employee/activities', icon: PuzzlePieceIcon, moduleColor: '#ffe5b4' },
+  { name: 'Observations', href: '/employee/observations', icon: EyeIcon, moduleColor: '#ffd4a3' },
+]
+
+const communicationNavigation: NavItem[] = [
+  { name: 'Messages', href: '/employee/messages', icon: ChatBubbleLeftRightIcon, moduleColor: '#64b5d1' },
 ]
 
 export function EmployeeSidebar() {
@@ -81,6 +97,70 @@ export function EmployeeSidebar() {
                       isActive={isActive}
                       tooltip={item.name}
                       className={isActive ? 'text-white' : ''}
+                      style={isActive && item.moduleColor ? {
+                        background: `linear-gradient(to right, ${item.moduleColor}, ${item.moduleColor}dd)`,
+                      } : {}}
+                    >
+                      <Link href={item.href} className="flex items-center relative group/item">
+                        <Icon className="w-5 h-5 transition-transform duration-300 group-hover/item:scale-110" />
+                        <span>{item.name}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Daily Work Navigation */}
+        <SidebarGroup className="px-2 mt-4">
+          <SidebarGroupLabel>Travail quotidien</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {dailyWorkNavigation.map((item) => {
+                const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
+                const Icon = item.icon
+
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      tooltip={item.name}
+                      className={isActive ? 'text-white rounded-md' : 'rounded-md'}
+                      style={isActive && item.moduleColor ? {
+                        background: `linear-gradient(to right, ${item.moduleColor}, ${item.moduleColor}dd)`,
+                      } : {}}
+                    >
+                      <Link href={item.href} className="flex items-center relative group/item">
+                        <Icon className="w-5 h-5 transition-transform duration-300 group-hover/item:scale-110" />
+                        <span>{item.name}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Communication Navigation */}
+        <SidebarGroup className="px-2 mt-4">
+          <SidebarGroupLabel>Communication</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {communicationNavigation.map((item) => {
+                const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
+                const Icon = item.icon
+
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      tooltip={item.name}
+                      className={isActive ? 'text-white rounded-md' : 'rounded-md'}
                       style={isActive && item.moduleColor ? {
                         background: `linear-gradient(to right, ${item.moduleColor}, ${item.moduleColor}dd)`,
                       } : {}}
