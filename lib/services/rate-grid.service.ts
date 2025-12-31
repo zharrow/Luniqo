@@ -388,7 +388,7 @@ export class RateGridService {
     const bracket = brackets.find(
       (b) =>
         familyAnnualIncome >= b.income_min &&
-        (b.income_max === null || familyAnnualIncome <= b.income_max)
+        (b.income_max === null || b.income_max === undefined || familyAnnualIncome <= b.income_max)
     )
 
     return {
