@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **IMPORTANT**: At the start of each new conversation, read these documents in order:
 
 1. **CLAUDE.md** (this file) - Project architecture and technical guidelines
-2. **TODO.md** - Current tasks, bugs, and roadmap
+2. **ROADMAP.md** - Current tasks, bugs, and roadmap
 3. **DESIGN-SYSTEM.md** - Complete design system, components catalog, and UI patterns
 
 ## Project Overview

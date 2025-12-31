@@ -27,7 +27,17 @@
       "Bash(\"app/\\(owner\\)/owner/tasks/page.tsx\" )",
       "Bash(\"app/\\(owner\\)/owner/history/page.tsx\" )",
       "Bash(\"app/\\(owner\\)/owner/rooms/[id]/page.tsx\")",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(ls:*)",
+      "Bash(npx shadcn@latest add tabs)",
+      "Bash(wc:*)",
+      "Bash(cat:*)",
+      "Bash(node -c:*)",
+      "Bash(timeout 120 bash:*)",
+      "Bash(git checkout:*)",
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": [],
     "ask": []

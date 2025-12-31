@@ -177,15 +177,54 @@ export class UsersService {
       throw error
     }
 
-    // Get room assignments
-    const { data: rooms } = await this.supabase
-      .from('employee_room_access')
-      .select('room_id')
-      .eq('employee_id', id)
+    // Get room and nursery assignments
+    const [roomsResult, nurseriesResult] = await Promise.all([
+      this.supabase
+        .from('employee_room_access')
+        .select('room_id')
+        .eq('employee_id', id),
+      this.supabase
+        .from('employee_nursery_access')
+        .select('nursery_id')
+        .eq('employee_id', id)
+    ])
 
     return {
       ...employee,
-      accessible_rooms: (rooms || []).map((r: any) => r.room_id)
+      accessible_rooms: (roomsResult.data || []).map((r: any) => r.room_id),
+      accessible_nurseries: (nurseriesResult.data || []).map((n: any) => n.nursery_id)
+    } as ProfileWithRooms
+  }
+
+  /**
+   * Get a single employee by ID (without enterprise check)
+   */
+  async getEmployee(id: string): Promise<ProfileWithRooms> {
+    const { data: employee, error } = await this.supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', id)
+      .eq('role', 'Employee')
+      .single()
+
+    if (error) throw error
+
+    // Get room and nursery assignments
+    const [roomsResult, nurseriesResult] = await Promise.all([
+      this.supabase
+        .from('employee_room_access')
+        .select('room_id')
+        .eq('employee_id', id),
+      this.supabase
+        .from('employee_nursery_access')
+        .select('nursery_id')
+        .eq('employee_id', id)
+    ])
+
+    return {
+      ...employee,
+      accessible_rooms: (roomsResult.data || []).map((r: any) => r.room_id),
+      accessible_nurseries: (nurseriesResult.data || []).map((n: any) => n.nursery_id)
     } as ProfileWithRooms
   }
 

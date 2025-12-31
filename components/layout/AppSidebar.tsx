@@ -14,7 +14,18 @@ import {
   BeakerIcon,
   ChatBubbleLeftRightIcon,
   ChartBarIcon,
-  Cog6ToothIcon
+  Cog6ToothIcon,
+  PuzzlePieceIcon,
+  EyeIcon,
+  BriefcaseIcon,
+  CalendarDaysIcon,
+  XCircleIcon,
+  ShieldCheckIcon,
+  ClipboardDocumentCheckIcon,
+  QueueListIcon,
+  UserPlusIcon,
+  DocumentTextIcon,
+  CurrencyEuroIcon
 } from '@heroicons/react/24/outline'
 import {
   Sidebar,
@@ -43,6 +54,9 @@ interface NavItem {
 const mainNavigation: NavItem[] = [
   { name: 'Tableau de bord', href: '/owner/dashboard', icon: HomeIcon, roles: ['Owner'], moduleColor: '#5a9dc9' },
   { name: 'Crèches', href: '/owner/nurseries', icon: BuildingOffice2Icon, roles: ['Owner'], moduleColor: '#5a9dc9' }, // Multi-site
+  { name: 'Enfants', href: '/owner/children', icon: UserGroupIcon, roles: ['Owner'], moduleColor: '#f4c2c2' }, // Children (Phase 1)
+  { name: 'Familles', href: '/owner/families', icon: UserGroupIcon, roles: ['Owner'], moduleColor: '#e8b4d4' }, // Families (Phase 1)
+  { name: 'Sections', href: '/owner/sections', icon: BuildingOfficeIcon, roles: ['Owner'], moduleColor: '#b3d4e8' }, // Sections (Phase 1)
   { name: 'Pièces', href: '/owner/rooms', icon: BuildingOfficeIcon, roles: ['Owner'], moduleColor: '#5a9dc9' }, // Clean
   { name: 'Tâches', href: '/owner/tasks', icon: ClipboardDocumentListIcon, roles: ['Owner'], moduleColor: '#aed581' }, // Tasks
   { name: 'Employés', href: '/owner/users', icon: UserGroupIcon, roles: ['Owner'], moduleColor: '#f4a5a5' }, // Users
@@ -52,6 +66,26 @@ const operationsNavigation: NavItem[] = [
   { name: 'Sessions', href: '/owner/sessions', icon: CalendarIcon, roles: ['Owner'], moduleColor: '#5a9dc9' }, // Clean
   { name: 'Historique', href: '/owner/history', icon: ClockIcon, roles: ['Owner'], moduleColor: '#5a9dc9' }, // Clean
   { name: 'HACCP', href: '/owner/haccp', icon: BeakerIcon, roles: ['Owner'], moduleColor: '#81c995' }, // HACCP
+]
+
+const dailyActivitiesNavigation: NavItem[] = [
+  { name: 'Activités', href: '/owner/activities', icon: PuzzlePieceIcon, roles: ['Owner'], moduleColor: '#ffe5b4' }, // Activities (Phase 2)
+  { name: 'Observations', href: '/owner/observations', icon: EyeIcon, roles: ['Owner'], moduleColor: '#ffd4a3' }, // Observations (Phase 2)
+]
+
+const staffPlanningNavigation: NavItem[] = [
+  { name: 'Personnel', href: '/owner/staff', icon: BriefcaseIcon, roles: ['Owner'], moduleColor: '#c8a8e9' }, // Staff (Phase 3)
+  { name: 'Planning', href: '/owner/planning', icon: CalendarDaysIcon, roles: ['Owner'], moduleColor: '#d4b5f0' }, // Planning (Phase 3)
+  { name: 'Absences', href: '/owner/absences', icon: XCircleIcon, roles: ['Owner'], moduleColor: '#e0c4f5' }, // Absences (Phase 3)
+  { name: 'Conformité', href: '/owner/compliance', icon: ShieldCheckIcon, roles: ['Owner'], moduleColor: '#b3a8e9' }, // Compliance (Phase 3)
+]
+
+const enrollmentNavigation: NavItem[] = [
+  { name: 'Candidatures', href: '/owner/applications', icon: ClipboardDocumentCheckIcon, roles: ['Owner'], moduleColor: '#a8d5ba' }, // Applications (Phase 4)
+  { name: 'Liste d\'attente', href: '/owner/waiting-list', icon: QueueListIcon, roles: ['Owner'], moduleColor: '#b5e7c7' }, // Waiting list (Phase 4)
+  { name: 'Admissions', href: '/owner/admissions', icon: UserPlusIcon, roles: ['Owner'], moduleColor: '#c2f0d4' }, // Admissions (Phase 4)
+  { name: 'Contrats', href: '/owner/contracts', icon: DocumentTextIcon, roles: ['Owner'], moduleColor: '#a8cba5' }, // Contracts (Phase 4)
+  { name: 'Grilles tarifaires', href: '/owner/rate-grids', icon: CurrencyEuroIcon, roles: ['Owner'], moduleColor: '#b8d9b5' }, // Rate grids (Phase 4)
 ]
 
 const communicationNavigation: NavItem[] = [
@@ -69,6 +103,9 @@ export function AppSidebar() {
 
   const filteredMainNav = filterNav(mainNavigation)
   const filteredOperationsNav = filterNav(operationsNavigation)
+  const filteredDailyActivitiesNav = filterNav(dailyActivitiesNavigation)
+  const filteredStaffPlanningNav = filterNav(staffPlanningNavigation)
+  const filteredEnrollmentNav = filterNav(enrollmentNavigation)
   const filteredCommunicationNav = filterNav(communicationNavigation)
 
   return (
@@ -173,6 +210,117 @@ export function AppSidebar() {
           </>
         )}
 
+        {/* Daily Activities Navigation (Phase 2) */}
+        {filteredDailyActivitiesNav.length > 0 && (
+          <>
+            <SidebarSeparator />
+            <SidebarGroup className="px-2">
+              <SidebarGroupLabel>Activités quotidiennes</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {filteredDailyActivitiesNav.map((item) => {
+                    const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
+                    const Icon = item.icon
+
+                    return (
+                      <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isActive}
+                          tooltip={item.name}
+                          className={isActive ? 'text-white rounded-md' : 'rounded-md'}
+                          style={isActive && item.moduleColor ? {
+                            background: `linear-gradient(to right, ${item.moduleColor}, ${item.moduleColor}dd)`,
+                          } : {}}
+                        >
+                          <Link href={item.href} className="flex items-center relative group/item">
+                            <Icon className="w-5 h-5 transition-transform duration-300 group-hover/item:scale-110" />
+                            <span>{item.name}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    )
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        )}
+
+        {/* Staff & Planning Navigation (Phase 3) */}
+        {filteredStaffPlanningNav.length > 0 && (
+          <>
+            <SidebarSeparator />
+            <SidebarGroup className="px-2">
+              <SidebarGroupLabel>Personnel & Planning</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {filteredStaffPlanningNav.map((item) => {
+                    const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
+                    const Icon = item.icon
+
+                    return (
+                      <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isActive}
+                          tooltip={item.name}
+                          className={isActive ? 'text-white rounded-md' : 'rounded-md'}
+                          style={isActive && item.moduleColor ? {
+                            background: `linear-gradient(to right, ${item.moduleColor}, ${item.moduleColor}dd)`,
+                          } : {}}
+                        >
+                          <Link href={item.href} className="flex items-center relative group/item">
+                            <Icon className="w-5 h-5 transition-transform duration-300 group-hover/item:scale-110" />
+                            <span>{item.name}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    )
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        )}
+
+        {/* Enrollment Navigation (Phase 4) */}
+        {filteredEnrollmentNav.length > 0 && (
+          <>
+            <SidebarSeparator />
+            <SidebarGroup className="px-2">
+              <SidebarGroupLabel>Inscriptions & Contrats</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {filteredEnrollmentNav.map((item) => {
+                    const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
+                    const Icon = item.icon
+
+                    return (
+                      <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isActive}
+                          tooltip={item.name}
+                          className={isActive ? 'text-white rounded-md' : 'rounded-md'}
+                          style={isActive && item.moduleColor ? {
+                            background: `linear-gradient(to right, ${item.moduleColor}, ${item.moduleColor}dd)`,
+                          } : {}}
+                        >
+                          <Link href={item.href} className="flex items-center relative group/item">
+                            <Icon className="w-5 h-5 transition-transform duration-300 group-hover/item:scale-110" />
+                            <span>{item.name}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    )
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        )}
+
         {/* Communication Navigation */}
         {filteredCommunicationNav.length > 0 && (
           <>
@@ -218,7 +366,7 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Mon Profil" className="rounded-md">
-              <Link href="/profil" className="group/footer">
+              <Link href="/owner/profile" className="group/footer">
                 <Cog6ToothIcon className="w-5 h-5 transition-transform duration-300 group-hover/footer:rotate-90" />
                 <span>Mon Profil</span>
               </Link>
