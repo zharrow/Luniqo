@@ -120,6 +120,13 @@ const enrollmentNavigation: NavItem[] = [
 ]
 
 // ============================================================================
+// MODULE FACTURATION (49€/mois) - Facturation & Finances
+// ============================================================================
+const invoicingNavigation: NavItem[] = [
+  { name: 'Facturation', href: '/owner/invoicing', icon: CurrencyEuroIcon, roles: ['Owner'], moduleColor: '#ffd4a3', moduleId: 'invoicing' },
+]
+
+// ============================================================================
 // DEVELOPER NAVIGATION
 // ============================================================================
 const developerNavigation: NavItem[] = [
@@ -149,6 +156,7 @@ export function AppSidebar() {
   const filteredAttendanceNav = filterNav(attendanceNavigation)
   const filteredStaffNav = filterNav(staffNavigation)
   const filteredEnrollmentNav = filterNav(enrollmentNavigation)
+  const filteredInvoicingNav = filterNav(invoicingNavigation)
   const filteredDeveloperNav = filterNav(developerNavigation)
 
   // Helper to render a navigation group
@@ -251,6 +259,9 @@ export function AppSidebar() {
 
         {/* ENROLLMENT MODULE - Inscriptions (39€/mois) */}
         {renderNavGroup(filteredEnrollmentNav, 'Inscriptions & Contrats')}
+
+        {/* INVOICING MODULE - Facturation (49€/mois) */}
+        {renderNavGroup(filteredInvoicingNav, 'Facturation & Finances')}
 
         {/* DEVELOPER NAVIGATION */}
         {renderNavGroup(filteredDeveloperNav, 'Administration', role === 'Developer')}

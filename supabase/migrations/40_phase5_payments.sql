@@ -226,25 +226,41 @@ DECLARE
   v_old_amount DECIMAL(10,2) := 0;
   v_new_amount DECIMAL(10,2) := 0;
 BEGIN
-  -- Déterminer les montants anciens et nouveaux
+  -- Ne traiter que les paiements validés
   IF TG_OP = 'INSERT' THEN
+    -- INSERT: vérifier que le paiement est validé
+    IF NEW.status != 'validated' OR NEW.invoice_id IS NULL THEN
+      RETURN NEW;
+    END IF;
     v_new_amount = NEW.amount;
   ELSIF TG_OP = 'UPDATE' THEN
+    -- UPDATE: vérifier que le paiement est validé
+    IF NEW.status != 'validated' OR (NEW.invoice_id IS NULL AND OLD.invoice_id IS NULL) THEN
+      RETURN NEW;
+    END IF;
     v_old_amount = OLD.amount;
     v_new_amount = NEW.amount;
   ELSIF TG_OP = 'DELETE' THEN
+    -- DELETE: vérifier que le paiement était validé
+    IF OLD.status != 'validated' OR OLD.invoice_id IS NULL THEN
+      RETURN OLD;
+    END IF;
     v_old_amount = OLD.amount;
   END IF;
 
-  -- Mettre à jour la facture associée (si elle existe)
-  IF (TG_OP = 'INSERT' OR TG_OP = 'UPDATE') AND NEW.invoice_id IS NOT NULL THEN
-    UPDATE invoice
-    SET paid_amount = paid_amount - v_old_amount + v_new_amount
-    WHERE id = NEW.invoice_id;
-  ELSIF TG_OP = 'DELETE' AND OLD.invoice_id IS NOT NULL THEN
-    UPDATE invoice
-    SET paid_amount = paid_amount - v_old_amount
-    WHERE id = OLD.invoice_id;
+  -- Mettre à jour la facture associée
+  IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
+    IF NEW.invoice_id IS NOT NULL THEN
+      UPDATE invoice
+      SET paid_amount = paid_amount - v_old_amount + v_new_amount
+      WHERE id = NEW.invoice_id;
+    END IF;
+  ELSIF TG_OP = 'DELETE' THEN
+    IF OLD.invoice_id IS NOT NULL THEN
+      UPDATE invoice
+      SET paid_amount = paid_amount - v_old_amount
+      WHERE id = OLD.invoice_id;
+    END IF;
   END IF;
 
   IF TG_OP = 'DELETE' THEN
@@ -258,11 +274,6 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER payment_update_invoice_trigger
   AFTER INSERT OR UPDATE OR DELETE ON payment
   FOR EACH ROW
-  WHEN (
-    (TG_OP = 'INSERT' AND NEW.invoice_id IS NOT NULL AND NEW.status = 'validated') OR
-    (TG_OP = 'UPDATE' AND (NEW.invoice_id IS NOT NULL OR OLD.invoice_id IS NOT NULL) AND NEW.status = 'validated') OR
-    (TG_OP = 'DELETE' AND OLD.invoice_id IS NOT NULL AND OLD.status = 'validated')
-  )
   EXECUTE FUNCTION update_invoice_on_payment();
 
 -- =============================================

@@ -102,7 +102,7 @@ CREATE OR REPLACE VIEW family_financial_status AS
 SELECT
   f.id AS family_id,
   f.family_name,
-  f.enterprise_id,
+  f.nursery_id,
 
   -- Factures
   COUNT(DISTINCT i.id) AS total_invoices,
@@ -150,7 +150,7 @@ FROM family f
 LEFT JOIN invoice i ON f.id = i.family_id
 LEFT JOIN payment p ON f.id = p.family_id
 LEFT JOIN debt_collection dc ON f.id = dc.family_id
-GROUP BY f.id, f.family_name, f.enterprise_id;
+GROUP BY f.id, f.family_name, f.nursery_id;
 
 COMMENT ON VIEW family_financial_status IS 'Statut financier global par famille (solde, impayés, historique)';
 
