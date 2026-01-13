@@ -13,7 +13,7 @@ Ce dossier contient la documentation détaillée de chaque phase d'implémentati
 | 2 | Présences & Activités | 🔴 HAUTE | **100% COMPLET** | 13 | - |
 | 3 | Personnel & Planning RH | 🔴 HAUTE | **100% COMPLET** | 9 | - |
 | 4 | Inscriptions & Contrats | 🟡 MOYENNE | **100% COMPLET** | 9 | - |
-| 5 | Facturation & Finances | 🟡 MOYENNE | **0% À FAIRE** | 9 | 15 jours |
+| 5 | Facturation & Finances | 🟡 MOYENNE | **🔄 EN COURS (0%)** | 9 | 25 jours |
 | 6 | Portail Parents | 🟡 MOYENNE | **0% À FAIRE** | 6 | 10 jours |
 | 7 | Statistiques & Analyses | 🟢 BASSE | **0% À FAIRE** | 4 | 8 jours |
 | 8 | Infrastructure Avancée | 🟢 BASSE | **0% À FAIRE** | 5 | 10 jours |
@@ -163,28 +163,56 @@ Gérer le parcours complet d'inscription : demandes de pré-inscription, liste d
 
 ---
 
-## 💼 Phases 5-9 (FUTURES)
+## 🔄 Phase 5 : Facturation & Finances (EN COURS)
+
+**Statut**: 🔄 EN COURS (0%)
+**Début**: 2026-01-13
+**Priorité**: 🟡 MOYENNE
+
+### Objectif
+Automatiser la facturation mensuelle, gérer les paiements, relances impayés, exports comptables et suivi financier.
+
+### Progression
+- ⏳ **Base de données** (0%) - 10 migrations, 9 tables
+- ⏳ **Services** (0%) - 7 services, ~80 méthodes
+- ⏳ **Pages UI** (0%) - 15+ pages Owner
+- ⏳ **Composants** (0%) - Composants réutilisables (optionnel)
+
+### Scope
+- 9 nouvelles tables (invoice, invoice_line, billing_period, payment, payment_method, credit_note, debt_collection, accounting_export, ledger_entry)
+- 7 services TypeScript (~2,000 lignes)
+- 15+ pages UI Owner
+- Génération automatique factures mensuelles
+- Export FEC (format fiscal français obligatoire)
+- Intégration Stripe pour paiements en ligne
+
+### Documentation
+📂 **[Phase 5 - Documentation Complète →](phase-5-facturation/README.md)**
+
+---
+
+## 💼 Phases 6-9 (FUTURES)
 
 Les phases suivantes sont planifiées mais non encore documentées :
 
-- **Phase 5** : Facturation & Finances
 - **Phase 6** : Portail Parents
 - **Phase 7** : Statistiques & Analyses
 - **Phase 8** : Infrastructure Avancée
 - **Phase 9** : Modules Premium
 
-Voir [ROADMAP-PHASES-1-3.md](../../ROADMAP-PHASES-1-3.md) pour le plan détaillé.
+Voir [ROADMAP-PHASES-3-5.md](../../ROADMAP-PHASES-3-5.md) et [ROADMAP-PHASES-6-9.md](../../ROADMAP-PHASES-6-9.md) pour les plans détaillés.
 
 ---
 
 ## 🎯 Prochaines Étapes
 
-### Après Phase 4 ✅
-1. ✅ Phase 4 complétée (Inscriptions & Contrats)
-2. ⏳ Tester le flux complet d'inscription
-3. ⏳ Démarrer Phase 5 (Facturation & Finances)
-4. ⏳ Intégrer la facturation basée sur les contrats
-5. ⏳ Créer les pages de gestion financière
+### Phase 5 - Session 1 (En cours)
+1. ⏳ Créer les 10 migrations SQL Phase 5
+2. ⏳ Implémenter les 7 services TypeScript
+3. ⏳ Créer les 15+ pages UI Owner
+4. ⏳ Générer templates PDF (factures, avoirs, relances)
+5. ⏳ Intégrer Stripe pour paiements en ligne
+6. ⏳ Implémenter export FEC (format fiscal français)
 
 ---
 
@@ -208,6 +236,6 @@ Voir [ROADMAP-PHASES-1-3.md](../../ROADMAP-PHASES-1-3.md) pour le plan détaill�
 
 ---
 
-**Dernière mise à jour**: 2025-12-30
-**Phase actuelle**: ✅ Phase 4 - Inscriptions & Contrats (100% COMPLÈTE)
-**Prochaine phase**: Phase 5 - Facturation & Finances
+**Dernière mise à jour**: 2026-01-13
+**Phase actuelle**: 🔄 Phase 5 - Facturation & Finances (0% - EN COURS)
+**Prochaine phase**: Phase 6 - Portail Parents
