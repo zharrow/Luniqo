@@ -282,8 +282,8 @@ DECLARE
 BEGIN
   -- Récupérer le code de la crèche
   SELECT COALESCE(
-    UPPER(SUBSTRING(name FROM 1 FOR 3)) || LPAD(id::TEXT FROM 1 FOR 3, 3, '0'),
-    'NUR' || LPAD(id::TEXT FROM 1 FOR 3, 3, '0')
+    UPPER(SUBSTRING(name FROM 1 FOR 3)) || LPAD(SUBSTRING(id::TEXT FROM 1 FOR 3), 3, '0'),
+    'NUR' || LPAD(SUBSTRING(id::TEXT FROM 1 FOR 3), 3, '0')
   )
   INTO v_nursery_code
   FROM nursery
