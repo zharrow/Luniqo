@@ -3,16 +3,7 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { XMarkIcon, BellIcon, CheckIcon } from '@heroicons/react/24/outline'
-import { messagingService } from '@/lib/services/messaging.service'
-
-interface Notification {
-  id: string
-  title: string
-  message: string
-  type: 'info' | 'success' | 'warning' | 'error'
-  created_at: string
-  read: boolean
-}
+import { messagingService, Notification as DBNotification } from '@/lib/services/messaging.service'
 
 interface NotificationModalProps {
   isOpen: boolean
@@ -29,7 +20,7 @@ export default function NotificationModal({
   userRole,
   enterpriseId
 }: NotificationModalProps) {
-  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [notifications, setNotifications] = useState<DBNotification[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -41,34 +32,15 @@ export default function NotificationModal({
   async function loadNotifications() {
     try {
       setIsLoading(true)
-      const count = await messagingService.getUnreadNotificationCount(
+
+      // Récupérer les vraies notifications depuis la base de données
+      const data = await messagingService.getNotifications(
         userRole,
         userId,
         enterpriseId
       )
 
-      // Pour le moment, on crée des notifications de démo
-      // TODO: Implémenter la vraie récupération depuis la BDD
-      const demoNotifications: Notification[] = count > 0 ? [
-        {
-          id: '1',
-          title: 'Nouvelle tâche assignée',
-          message: 'Une nouvelle tâche de nettoyage a été assignée à votre équipe.',
-          type: 'info',
-          created_at: new Date().toISOString(),
-          read: false
-        },
-        {
-          id: '2',
-          title: 'Température non conforme',
-          message: 'Alerte: température hors norme détectée pour le repas du midi.',
-          type: 'warning',
-          created_at: new Date(Date.now() - 3600000).toISOString(),
-          read: false
-        }
-      ] : []
-
-      setNotifications(demoNotifications)
+      setNotifications(data)
     } catch (error) {
       console.error('Error loading notifications:', error)
     } finally {
@@ -77,38 +49,56 @@ export default function NotificationModal({
   }
 
   async function markAsRead(notificationId: string) {
-    // TODO: Implémenter le marquage comme lu dans la BDD
-    setNotifications(prev =>
-      prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
-    )
-  }
+    try {
+      // Marquer comme lu dans la BDD
+      await messagingService.markNotificationAsRead(notificationId)
 
-  async function markAllAsRead() {
-    // TODO: Implémenter le marquage de toutes les notifications comme lues
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })))
-  }
-
-  function getNotificationIcon(type: string) {
-    switch (type) {
-      case 'success':
-        return '✅'
-      case 'warning':
-        return '⚠️'
-      case 'error':
-        return '❌'
-      default:
-        return '📢'
+      // Mettre à jour l'état local
+      setNotifications(prev =>
+        prev.map(n => n.id === notificationId ? { ...n, status: 'Read', read_at: new Date().toISOString() } : n)
+      )
+    } catch (error) {
+      console.error('Error marking notification as read:', error)
     }
   }
 
-  function getNotificationColor(type: string) {
-    switch (type) {
-      case 'success':
-        return 'bg-success-50 border-success-200 text-success-900'
-      case 'warning':
-        return 'bg-accent-50 border-accent-200 text-accent-900'
-      case 'error':
+  async function markAllAsRead() {
+    try {
+      // Marquer toutes les notifications comme lues dans la BDD
+      await messagingService.markAllNotificationsAsRead(userRole, userId)
+
+      // Mettre à jour l'état local
+      setNotifications(prev =>
+        prev.map(n => ({ ...n, status: 'Read' as const, read_at: new Date().toISOString() }))
+      )
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error)
+    }
+  }
+
+  function getNotificationIcon(type: string | null, priority: string) {
+    // Basé sur le type de notification
+    if (type === 'module_access_request') return '🔐'
+    if (type === 'task_assigned') return '📋'
+    if (type === 'temperature_alert') return '🌡️'
+    if (type === 'cleaning_reminder') return '🧹'
+    if (type === 'message_received') return '💬'
+
+    // Basé sur la priorité
+    if (priority === 'Critical') return '❌'
+    if (priority === 'Warning') return '⚠️'
+
+    return '📢'
+  }
+
+  function getNotificationColor(priority: string, isRead: boolean) {
+    if (isRead) return 'bg-neutral-50 border-neutral-200 text-neutral-900'
+
+    switch (priority) {
+      case 'Critical':
         return 'bg-danger-50 border-danger-200 text-danger-900'
+      case 'Warning':
+        return 'bg-accent-50 border-accent-200 text-accent-900'
       default:
         return 'bg-primary-50 border-primary-200 text-primary-900'
     }
@@ -160,13 +150,13 @@ export default function NotificationModal({
                 <div>
                   <h2 className="text-xl font-bold text-neutral-900">Notifications</h2>
                   <p className="text-sm text-neutral-600">
-                    {notifications.filter(n => !n.read).length} non lue{notifications.filter(n => !n.read).length > 1 ? 's' : ''}
+                    {notifications.filter(n => n.status === 'Unread').length} non lue{notifications.filter(n => n.status === 'Unread').length > 1 ? 's' : ''}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
-                {notifications.some(n => !n.read) && (
+                {notifications.some(n => n.status === 'Unread') && (
                   <button
                     onClick={markAllAsRead}
                     className="px-2 sm:px-3 py-1.5 text-sm font-medium text-primary-600 hover:bg-primary-100 rounded-lg transition-colors flex items-center gap-1"
@@ -204,41 +194,43 @@ export default function NotificationModal({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {notifications.map((notification) => (
-                    <motion.div
-                      key={notification.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
-                        notification.read
-                          ? 'bg-neutral-50 border-neutral-200 opacity-60'
-                          : getNotificationColor(notification.type)
-                      }`}
-                      onClick={() => !notification.read && markAsRead(notification.id)}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="text-2xl flex-shrink-0">
-                          {getNotificationIcon(notification.type)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2 mb-1">
-                            <h4 className="font-semibold text-sm">
-                              {notification.title}
-                            </h4>
-                            {!notification.read && (
-                              <div className="w-2 h-2 rounded-full bg-primary-500 flex-shrink-0 mt-1" />
-                            )}
+                  {notifications.map((notification) => {
+                    const isRead = notification.status === 'Read'
+
+                    return (
+                      <motion.div
+                        key={notification.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
+                          isRead ? 'opacity-60' : ''
+                        } ${getNotificationColor(notification.priority, isRead)}`}
+                        onClick={() => !isRead && markAsRead(notification.id)}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="text-2xl flex-shrink-0">
+                            {getNotificationIcon(notification.type, notification.priority)}
                           </div>
-                          <p className="text-sm mb-2">
-                            {notification.message}
-                          </p>
-                          <p className="text-xs opacity-60">
-                            {formatTimeAgo(notification.created_at)}
-                          </p>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2 mb-1">
+                              <h4 className="font-semibold text-sm">
+                                {notification.title}
+                              </h4>
+                              {!isRead && (
+                                <div className="w-2 h-2 rounded-full bg-primary-500 flex-shrink-0 mt-1" />
+                              )}
+                            </div>
+                            <p className="text-sm mb-2">
+                              {notification.content}
+                            </p>
+                            <p className="text-xs opacity-60">
+                              {formatTimeAgo(notification.created_at)}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    </motion.div>
-                  ))}
+                      </motion.div>
+                    )
+                  })}
                 </div>
               )}
             </div>
