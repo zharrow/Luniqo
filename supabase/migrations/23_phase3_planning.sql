@@ -213,8 +213,7 @@ CREATE INDEX idx_staff_availability_employee ON staff_availability(employee_id);
 CREATE INDEX idx_staff_availability_nursery ON staff_availability(nursery_id);
 CREATE INDEX idx_staff_availability_day ON staff_availability(day_of_week);
 CREATE INDEX idx_staff_availability_dates ON staff_availability(valid_from, valid_until);
-CREATE INDEX idx_staff_availability_active ON staff_availability(employee_id, nursery_id, day_of_week)
-  WHERE valid_until IS NULL OR valid_until >= CURRENT_DATE;
+CREATE INDEX idx_staff_availability_active ON staff_availability(employee_id, nursery_id, day_of_week, valid_from, valid_until);
 
 -- Comments
 COMMENT ON TABLE staff_availability IS 'Staff availability and scheduling preferences';

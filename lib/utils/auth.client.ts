@@ -112,6 +112,7 @@ export async function loginWithEmail(email: string, password: string): Promise<A
     // For Owner and Employee, fetch enterprise
     let enterprise = null
     let accessibleRooms: string[] = []
+    let accessibleModules: string[] = []
 
     if (profile.role === 'Owner') {
       const { data: ent } = await supabase
@@ -121,6 +122,18 @@ export async function loginWithEmail(email: string, password: string): Promise<A
         .single()
       enterprise = ent
       console.log('✅ Enterprise found:', enterprise?.id)
+
+      // Load accessible modules for this enterprise
+      if (enterprise?.id) {
+        const { data: modules } = await supabase
+          .from('enterprise_module_access')
+          .select('module_id')
+          .eq('enterprise_id', enterprise.id)
+          .eq('is_active', true)
+
+        accessibleModules = (modules || []).map((m: any) => m.module_id)
+        console.log('✅ Accessible modules loaded:', accessibleModules.length)
+      }
     } else if (profile.role === 'Employee') {
       if (profile.enterprise_id) {
         const { data: ent } = await supabase
@@ -144,7 +157,8 @@ export async function loginWithEmail(email: string, password: string): Promise<A
       data: profile as Profile,
       enterprise: enterprise || undefined,
       role: profile.role as UserRole,
-      accessibleRooms: profile.role === 'Employee' ? accessibleRooms : undefined
+      accessibleRooms: profile.role === 'Employee' ? accessibleRooms : undefined,
+      accessibleModules: profile.role === 'Owner' ? accessibleModules : undefined
     }
   } catch (error) {
     console.error('❌ Login error:', error)

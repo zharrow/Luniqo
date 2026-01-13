@@ -41,7 +41,7 @@ SELECT
   a.desired_start_date,
   a.desired_contract_type,
   n.name AS nursery_name,
-  EXTRACT(DAY FROM CURRENT_DATE - wl.added_to_list_date)::INTEGER AS days_on_list,
+  (CURRENT_DATE - wl.added_to_list_date)::INTEGER AS days_on_list,
   CASE
     WHEN wl.response_deadline IS NOT NULL AND CURRENT_DATE > wl.response_deadline THEN TRUE
     ELSE FALSE
@@ -67,13 +67,13 @@ SELECT
   g.first_name AS guardian_first_name,
   g.last_name AS guardian_last_name,
   g.email AS guardian_email,
-  g.phone_mobile AS guardian_phone,
+  g.phone_primary AS guardian_phone,
   n.name AS nursery_name,
   CASE
     WHEN c.end_date IS NOT NULL AND c.end_date <= CURRENT_DATE + INTERVAL '30 days' THEN TRUE
     ELSE FALSE
   END AS expiring_soon,
-  EXTRACT(DAY FROM c.end_date - CURRENT_DATE)::INTEGER AS days_until_end
+  (c.end_date - CURRENT_DATE)::INTEGER AS days_until_end
 FROM contract c
 JOIN family f ON f.id = c.family_id
 JOIN child ch ON ch.id = c.child_id
@@ -127,7 +127,7 @@ SELECT
   r.name AS room_name,
   p.first_name AS admitted_by_first_name,
   p.last_name AS admitted_by_last_name,
-  EXTRACT(DAY FROM ad.start_date - CURRENT_DATE)::INTEGER AS days_until_start,
+  (ad.start_date - CURRENT_DATE)::INTEGER AS days_until_start,
   CASE
     WHEN ad.start_date <= CURRENT_DATE THEN TRUE
     ELSE FALSE

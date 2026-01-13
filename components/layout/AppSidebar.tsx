@@ -25,7 +25,8 @@ import {
   QueueListIcon,
   UserPlusIcon,
   DocumentTextIcon,
-  CurrencyEuroIcon
+  CurrencyEuroIcon,
+  LockClosedIcon
 } from '@heroicons/react/24/outline'
 import {
   Sidebar,
@@ -41,6 +42,7 @@ import {
   SidebarSeparator,
   SidebarRail
 } from '@/components/ui/sidebar'
+import { Badge } from '@/components/ui/badge'
 
 interface NavItem {
   name: string
@@ -48,65 +50,169 @@ interface NavItem {
   icon: any
   roles?: ('Developer' | 'Owner')[]
   moduleColor?: string // Couleur du module pour l'indicateur visuel
+  moduleId?: string // ID du module requis pour accéder à cette route
 }
 
 
-const mainNavigation: NavItem[] = [
-  { name: 'Tableau de bord', href: '/owner/dashboard', icon: HomeIcon, roles: ['Owner'], moduleColor: '#5a9dc9' },
-  { name: 'Crèches', href: '/owner/nurseries', icon: BuildingOffice2Icon, roles: ['Owner'], moduleColor: '#5a9dc9' }, // Multi-site
-  { name: 'Enfants', href: '/owner/children', icon: UserGroupIcon, roles: ['Owner'], moduleColor: '#f4c2c2' }, // Children (Phase 1)
-  { name: 'Familles', href: '/owner/families', icon: UserGroupIcon, roles: ['Owner'], moduleColor: '#e8b4d4' }, // Families (Phase 1)
-  { name: 'Sections', href: '/owner/sections', icon: BuildingOfficeIcon, roles: ['Owner'], moduleColor: '#b3d4e8' }, // Sections (Phase 1)
-  { name: 'Pièces', href: '/owner/rooms', icon: BuildingOfficeIcon, roles: ['Owner'], moduleColor: '#5a9dc9' }, // Clean
-  { name: 'Tâches', href: '/owner/tasks', icon: ClipboardDocumentListIcon, roles: ['Owner'], moduleColor: '#aed581' }, // Tasks
-  { name: 'Employés', href: '/owner/users', icon: UserGroupIcon, roles: ['Owner'], moduleColor: '#f4a5a5' }, // Users
+// ============================================================================
+// MODULE BASE (gratuit) - Configuration & Données de Base
+// ============================================================================
+const baseNavigation: NavItem[] = [
+  { name: 'Tableau de bord', href: '/owner/dashboard', icon: HomeIcon, roles: ['Owner'], moduleColor: '#5a9dc9', moduleId: 'base' },
+  { name: 'Mes Crèches', href: '/owner/nurseries', icon: BuildingOffice2Icon, roles: ['Owner'], moduleColor: '#5a9dc9', moduleId: 'base' },
+  { name: 'Employés', href: '/owner/users', icon: UserGroupIcon, roles: ['Owner'], moduleColor: '#5a9dc9', moduleId: 'base' },
+  { name: 'Messages', href: '/owner/messages', icon: ChatBubbleLeftRightIcon, roles: ['Owner'], moduleColor: '#64b5d1', moduleId: 'base' },
 ]
 
-const operationsNavigation: NavItem[] = [
-  { name: 'Sessions', href: '/owner/sessions', icon: CalendarIcon, roles: ['Owner'], moduleColor: '#5a9dc9' }, // Clean
-  { name: 'Historique', href: '/owner/history', icon: ClockIcon, roles: ['Owner'], moduleColor: '#5a9dc9' }, // Clean
-  { name: 'HACCP', href: '/owner/haccp', icon: BeakerIcon, roles: ['Owner'], moduleColor: '#81c995' }, // HACCP
+// ============================================================================
+// MODULE NETTOYAGE (29€/mois) - Gestion du nettoyage complet
+// ============================================================================
+const cleaningNavigation: NavItem[] = [
+  { name: 'Pièces', href: '/owner/rooms', icon: BuildingOfficeIcon, roles: ['Owner'], moduleColor: '#81c784', moduleId: 'cleaning' },
+  { name: 'Tâches', href: '/owner/tasks', icon: ClipboardDocumentListIcon, roles: ['Owner'], moduleColor: '#aed581', moduleId: 'cleaning' },
+  { name: 'Sessions', href: '/owner/sessions', icon: CalendarIcon, roles: ['Owner'], moduleColor: '#9ccc65', moduleId: 'cleaning' },
+  { name: 'Historique', href: '/owner/history', icon: ClockIcon, roles: ['Owner'], moduleColor: '#c5e1a5', moduleId: 'cleaning' },
 ]
 
-const dailyActivitiesNavigation: NavItem[] = [
-  { name: 'Activités', href: '/owner/activities', icon: PuzzlePieceIcon, roles: ['Owner'], moduleColor: '#ffe5b4' }, // Activities (Phase 2)
-  { name: 'Observations', href: '/owner/observations', icon: EyeIcon, roles: ['Owner'], moduleColor: '#ffd4a3' }, // Observations (Phase 2)
+// ============================================================================
+// MODULE HACCP (39€/mois) - Traçabilité alimentaire
+// ============================================================================
+const haccpNavigation: NavItem[] = [
+  { name: 'HACCP', href: '/owner/haccp', icon: BeakerIcon, roles: ['Owner'], moduleColor: '#81c995', moduleId: 'haccp' },
 ]
 
-const staffPlanningNavigation: NavItem[] = [
-  { name: 'Personnel', href: '/owner/staff', icon: BriefcaseIcon, roles: ['Owner'], moduleColor: '#c8a8e9' }, // Staff (Phase 3)
-  { name: 'Planning', href: '/owner/planning', icon: CalendarDaysIcon, roles: ['Owner'], moduleColor: '#d4b5f0' }, // Planning (Phase 3)
-  { name: 'Absences', href: '/owner/absences', icon: XCircleIcon, roles: ['Owner'], moduleColor: '#e0c4f5' }, // Absences (Phase 3)
-  { name: 'Conformité', href: '/owner/compliance', icon: ShieldCheckIcon, roles: ['Owner'], moduleColor: '#b3a8e9' }, // Compliance (Phase 3)
+// ============================================================================
+// MODULE ENFANTS (29€/mois) - Gestion des enfants et familles
+// ============================================================================
+const childrenNavigation: NavItem[] = [
+  { name: 'Enfants', href: '/owner/children', icon: UserGroupIcon, roles: ['Owner'], moduleColor: '#f4c2c2', moduleId: 'children' },
+  { name: 'Familles', href: '/owner/families', icon: UserGroupIcon, roles: ['Owner'], moduleColor: '#e8b4d4', moduleId: 'children' },
+  { name: 'Sections', href: '/owner/sections', icon: BuildingOfficeIcon, roles: ['Owner'], moduleColor: '#d4a5d4', moduleId: 'children' },
 ]
 
+// ============================================================================
+// MODULE PRÉSENCES (39€/mois) - Activités quotidiennes
+// ============================================================================
+const attendanceNavigation: NavItem[] = [
+  { name: 'Activités', href: '/owner/activities', icon: PuzzlePieceIcon, roles: ['Owner'], moduleColor: '#ffe5b4', moduleId: 'attendance' },
+  { name: 'Observations', href: '/owner/observations', icon: EyeIcon, roles: ['Owner'], moduleColor: '#ffd4a3', moduleId: 'attendance' },
+]
+
+// ============================================================================
+// MODULE PERSONNEL (49€/mois) - RH & Planning
+// ============================================================================
+const staffNavigation: NavItem[] = [
+  { name: 'Personnel', href: '/owner/staff', icon: BriefcaseIcon, roles: ['Owner'], moduleColor: '#c8a8e9', moduleId: 'staff' },
+  { name: 'Planning', href: '/owner/planning', icon: CalendarDaysIcon, roles: ['Owner'], moduleColor: '#d4b5f0', moduleId: 'staff' },
+  { name: 'Absences', href: '/owner/absences', icon: XCircleIcon, roles: ['Owner'], moduleColor: '#e0c4f5', moduleId: 'staff' },
+  { name: 'Conformité', href: '/owner/compliance', icon: ShieldCheckIcon, roles: ['Owner'], moduleColor: '#b3a8e9', moduleId: 'staff' },
+]
+
+// ============================================================================
+// MODULE INSCRIPTIONS (39€/mois) - Inscriptions & Contrats
+// ============================================================================
 const enrollmentNavigation: NavItem[] = [
-  { name: 'Candidatures', href: '/owner/applications', icon: ClipboardDocumentCheckIcon, roles: ['Owner'], moduleColor: '#a8d5ba' }, // Applications (Phase 4)
-  { name: 'Liste d\'attente', href: '/owner/waiting-list', icon: QueueListIcon, roles: ['Owner'], moduleColor: '#b5e7c7' }, // Waiting list (Phase 4)
-  { name: 'Admissions', href: '/owner/admissions', icon: UserPlusIcon, roles: ['Owner'], moduleColor: '#c2f0d4' }, // Admissions (Phase 4)
-  { name: 'Contrats', href: '/owner/contracts', icon: DocumentTextIcon, roles: ['Owner'], moduleColor: '#a8cba5' }, // Contracts (Phase 4)
-  { name: 'Grilles tarifaires', href: '/owner/rate-grids', icon: CurrencyEuroIcon, roles: ['Owner'], moduleColor: '#b8d9b5' }, // Rate grids (Phase 4)
+  { name: 'Candidatures', href: '/owner/applications', icon: ClipboardDocumentCheckIcon, roles: ['Owner'], moduleColor: '#a8d5ba', moduleId: 'enrollment' },
+  { name: 'Liste d\'attente', href: '/owner/waiting-list', icon: QueueListIcon, roles: ['Owner'], moduleColor: '#b5e7c7', moduleId: 'enrollment' },
+  { name: 'Admissions', href: '/owner/admissions', icon: UserPlusIcon, roles: ['Owner'], moduleColor: '#c2f0d4', moduleId: 'enrollment' },
+  { name: 'Contrats', href: '/owner/contracts', icon: DocumentTextIcon, roles: ['Owner'], moduleColor: '#a8cba5', moduleId: 'enrollment' },
+  { name: 'Grilles tarifaires', href: '/owner/rate-grids', icon: CurrencyEuroIcon, roles: ['Owner'], moduleColor: '#b8d9b5', moduleId: 'enrollment' },
 ]
 
-const communicationNavigation: NavItem[] = [
-  { name: 'Messages', href: '/owner/messages', icon: ChatBubbleLeftRightIcon, roles: ['Owner', 'Developer'], moduleColor: '#64b5d1' }, // Communication
-  { name: 'Analytics', href: '/analytics', icon: ChartBarIcon, roles: ['Developer'], moduleColor: '#9fa8da' }, // Analytics
+// ============================================================================
+// MODULE FACTURATION (49€/mois) - Facturation & Finances
+// ============================================================================
+const invoicingNavigation: NavItem[] = [
+  { name: 'Facturation', href: '/owner/invoicing', icon: CurrencyEuroIcon, roles: ['Owner'], moduleColor: '#ffd4a3', moduleId: 'invoicing' },
+]
+
+// ============================================================================
+// DEVELOPER NAVIGATION
+// ============================================================================
+const developerNavigation: NavItem[] = [
+  { name: 'Analytics', href: '/developer/dashboard', icon: ChartBarIcon, roles: ['Developer'], moduleColor: '#9fa8da' },
+  { name: 'Permissions', href: '/developer/permissions', icon: LockClosedIcon, roles: ['Developer'], moduleColor: '#b39ddb' },
 ]
 
 export function AppSidebar() {
   const pathname = usePathname()
-  const { role, enterprise } = useAuth()
+  const { role, enterprise, session } = useAuth()
+
+  // Check if Owner has access to a module
+  const hasModuleAccess = (moduleId?: string) => {
+    if (!moduleId) return true // No module required
+    if (role !== 'Owner') return true // Only Owners are filtered
+    return session?.accessibleModules?.includes(moduleId) || false
+  }
 
   // Filter navigation based on role
   const filterNav = (items: NavItem[]) =>
     items.filter(item => !item.roles || item.roles.includes(role as any))
 
-  const filteredMainNav = filterNav(mainNavigation)
-  const filteredOperationsNav = filterNav(operationsNavigation)
-  const filteredDailyActivitiesNav = filterNav(dailyActivitiesNavigation)
-  const filteredStaffPlanningNav = filterNav(staffPlanningNavigation)
+  const filteredBaseNav = filterNav(baseNavigation)
+  const filteredCleaningNav = filterNav(cleaningNavigation)
+  const filteredHaccpNav = filterNav(haccpNavigation)
+  const filteredChildrenNav = filterNav(childrenNavigation)
+  const filteredAttendanceNav = filterNav(attendanceNavigation)
+  const filteredStaffNav = filterNav(staffNavigation)
   const filteredEnrollmentNav = filterNav(enrollmentNavigation)
-  const filteredCommunicationNav = filterNav(communicationNavigation)
+  const filteredInvoicingNav = filterNav(invoicingNavigation)
+  const filteredDeveloperNav = filterNav(developerNavigation)
+
+  // Helper to render a navigation group
+  const renderNavGroup = (items: NavItem[], label: string, showSeparator: boolean = true) => {
+    if (items.length === 0) return null
+
+    return (
+      <>
+        {showSeparator && <SidebarSeparator />}
+        <SidebarGroup className="px-2">
+          <SidebarGroupLabel>{label}</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {items.map((item) => {
+                const isLocked = !hasModuleAccess(item.moduleId)
+                const isActive = !isLocked && (item.href === '/owner/dashboard'
+                  ? pathname === '/owner/dashboard'
+                  : pathname === item.href || pathname?.startsWith(item.href + '/'))
+                const Icon = item.icon
+                const targetHref = isLocked ? `/owner/locked/${item.moduleId}` : item.href
+
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      tooltip={item.name}
+                      className={`
+                        rounded-md transition-all duration-300
+                        ${isActive ? 'text-white shadow-lg font-semibold' : isLocked ? 'opacity-60' : ''}
+                        ${!isActive && !isLocked ? 'hover:bg-neutral-50 hover:shadow-sm hover:scale-[1.02]' : ''}
+                      `}
+                      style={isActive && item.moduleColor ? {
+                        background: `linear-gradient(135deg, ${item.moduleColor}f0, ${item.moduleColor}cc)`,
+                        filter: 'brightness(0.85) saturate(1.2)',
+                      } : {}}
+                    >
+                      <Link href={targetHref} className="flex items-center gap-3 relative group/item">
+                        <Icon className="w-5 h-5 transition-all duration-300 group-hover/item:scale-110 group-hover/item:text-primary-600" />
+                        <span className="font-medium">{item.name}</span>
+                        {isLocked && (
+                          <Badge variant="outline" size="sm" className="ml-auto">
+                            <LockClosedIcon className="w-3 h-3" />
+                          </Badge>
+                        )}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </>
+    )
+  }
 
   return (
     <Sidebar collapsible="icon" className="border-r border-neutral-200">
@@ -133,233 +239,32 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {/* Main Navigation */}
-        {filteredMainNav.length > 0 && (
-          <SidebarGroup className="px-2">
-            <SidebarGroupLabel>Principal</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {filteredMainNav.map((item) => {
-                  // For /dashboard, only match exact path. For others, match path and subpaths
-                  const isActive = item.href === '/dashboard'
-                    ? pathname === '/dashboard'
-                    : pathname === item.href || pathname?.startsWith(item.href + '/')
-                  const Icon = item.icon
+        {/* BASE MODULE - Always first (gratuit) */}
+        {renderNavGroup(filteredBaseNav, 'Configuration de Base', false)}
 
-                  return (
-                    <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={isActive}
-                        tooltip={item.name}
-                        className={isActive ? 'text-white' : ''}
-                        style={isActive && item.moduleColor ? {
-                          background: `linear-gradient(to right, ${item.moduleColor}, ${item.moduleColor}dd)`,
-                        } : {}}
-                      >
-                        <Link href={item.href} className="flex items-center relative group/item">
-                          <Icon className="w-5 h-5 transition-transform duration-300 group-hover/item:scale-110" />
-                          <span>{item.name}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  )
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
+        {/* CLEANING MODULE - Nettoyage (29€/mois) */}
+        {renderNavGroup(filteredCleaningNav, 'Nettoyage')}
 
-        {/* Operations Navigation */}
-        {filteredOperationsNav.length > 0 && (
-          <>
-            <SidebarSeparator />
-            <SidebarGroup className="px-2">
-              <SidebarGroupLabel>Opérations</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {filteredOperationsNav.map((item) => {
-                    // For /dashboard, only match exact path. For others, match path and subpaths
-                    const isActive = item.href === '/dashboard'
-                      ? pathname === '/dashboard'
-                      : pathname === item.href || pathname?.startsWith(item.href + '/')
-                    const Icon = item.icon
+        {/* HACCP MODULE - Traçabilité (39€/mois) */}
+        {renderNavGroup(filteredHaccpNav, 'HACCP Traçabilité')}
 
-                    return (
-                      <SidebarMenuItem key={item.href}>
-                        <SidebarMenuButton
-                          asChild
-                          isActive={isActive}
-                          tooltip={item.name}
-                          className={isActive ? 'text-white rounded-md' : 'rounded-md'}
-                          style={isActive && item.moduleColor ? {
-                            background: `linear-gradient(to right, ${item.moduleColor}, ${item.moduleColor}dd)`,
-                          } : {}}
-                        >
-                          <Link href={item.href} className="flex items-center relative group/item">
-                            <Icon className="w-5 h-5 transition-transform duration-300 group-hover/item:scale-110" />
-                            <span>{item.name}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    )
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </>
-        )}
+        {/* CHILDREN MODULE - Enfants (29€/mois) */}
+        {renderNavGroup(filteredChildrenNav, 'Enfants & Familles')}
 
-        {/* Daily Activities Navigation (Phase 2) */}
-        {filteredDailyActivitiesNav.length > 0 && (
-          <>
-            <SidebarSeparator />
-            <SidebarGroup className="px-2">
-              <SidebarGroupLabel>Activités quotidiennes</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {filteredDailyActivitiesNav.map((item) => {
-                    const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
-                    const Icon = item.icon
+        {/* ATTENDANCE MODULE - Présences (39€/mois) */}
+        {renderNavGroup(filteredAttendanceNav, 'Présences & Activités')}
 
-                    return (
-                      <SidebarMenuItem key={item.href}>
-                        <SidebarMenuButton
-                          asChild
-                          isActive={isActive}
-                          tooltip={item.name}
-                          className={isActive ? 'text-white rounded-md' : 'rounded-md'}
-                          style={isActive && item.moduleColor ? {
-                            background: `linear-gradient(to right, ${item.moduleColor}, ${item.moduleColor}dd)`,
-                          } : {}}
-                        >
-                          <Link href={item.href} className="flex items-center relative group/item">
-                            <Icon className="w-5 h-5 transition-transform duration-300 group-hover/item:scale-110" />
-                            <span>{item.name}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    )
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </>
-        )}
+        {/* STAFF MODULE - Personnel (49€/mois) */}
+        {renderNavGroup(filteredStaffNav, 'Personnel & Planning')}
 
-        {/* Staff & Planning Navigation (Phase 3) */}
-        {filteredStaffPlanningNav.length > 0 && (
-          <>
-            <SidebarSeparator />
-            <SidebarGroup className="px-2">
-              <SidebarGroupLabel>Personnel & Planning</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {filteredStaffPlanningNav.map((item) => {
-                    const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
-                    const Icon = item.icon
+        {/* ENROLLMENT MODULE - Inscriptions (39€/mois) */}
+        {renderNavGroup(filteredEnrollmentNav, 'Inscriptions & Contrats')}
 
-                    return (
-                      <SidebarMenuItem key={item.href}>
-                        <SidebarMenuButton
-                          asChild
-                          isActive={isActive}
-                          tooltip={item.name}
-                          className={isActive ? 'text-white rounded-md' : 'rounded-md'}
-                          style={isActive && item.moduleColor ? {
-                            background: `linear-gradient(to right, ${item.moduleColor}, ${item.moduleColor}dd)`,
-                          } : {}}
-                        >
-                          <Link href={item.href} className="flex items-center relative group/item">
-                            <Icon className="w-5 h-5 transition-transform duration-300 group-hover/item:scale-110" />
-                            <span>{item.name}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    )
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </>
-        )}
+        {/* INVOICING MODULE - Facturation (49€/mois) */}
+        {renderNavGroup(filteredInvoicingNav, 'Facturation & Finances')}
 
-        {/* Enrollment Navigation (Phase 4) */}
-        {filteredEnrollmentNav.length > 0 && (
-          <>
-            <SidebarSeparator />
-            <SidebarGroup className="px-2">
-              <SidebarGroupLabel>Inscriptions & Contrats</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {filteredEnrollmentNav.map((item) => {
-                    const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
-                    const Icon = item.icon
-
-                    return (
-                      <SidebarMenuItem key={item.href}>
-                        <SidebarMenuButton
-                          asChild
-                          isActive={isActive}
-                          tooltip={item.name}
-                          className={isActive ? 'text-white rounded-md' : 'rounded-md'}
-                          style={isActive && item.moduleColor ? {
-                            background: `linear-gradient(to right, ${item.moduleColor}, ${item.moduleColor}dd)`,
-                          } : {}}
-                        >
-                          <Link href={item.href} className="flex items-center relative group/item">
-                            <Icon className="w-5 h-5 transition-transform duration-300 group-hover/item:scale-110" />
-                            <span>{item.name}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    )
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </>
-        )}
-
-        {/* Communication Navigation */}
-        {filteredCommunicationNav.length > 0 && (
-          <>
-            <SidebarSeparator />
-            <SidebarGroup className="px-2">
-              <SidebarGroupLabel>Communication</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {filteredCommunicationNav.map((item) => {
-                    // For /dashboard, only match exact path. For others, match path and subpaths
-                    const isActive = item.href === '/dashboard'
-                      ? pathname === '/dashboard'
-                      : pathname === item.href || pathname?.startsWith(item.href + '/')
-                    const Icon = item.icon
-
-                    return (
-                      <SidebarMenuItem key={item.href}>
-                        <SidebarMenuButton
-                          asChild
-                          isActive={isActive}
-                          tooltip={item.name}
-                          className={isActive ? 'text-white rounded-md' : 'rounded-md'}
-                          style={isActive && item.moduleColor ? {
-                            background: `linear-gradient(to right, ${item.moduleColor}, ${item.moduleColor}dd)`,
-                          } : {}}
-                        >
-                          <Link href={item.href} className="flex items-center relative group/item">
-                            <Icon className="w-5 h-5 transition-transform duration-300 group-hover/item:scale-110" />
-                            <span>{item.name}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    )
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </>
-        )}
+        {/* DEVELOPER NAVIGATION */}
+        {renderNavGroup(filteredDeveloperNav, 'Administration', role === 'Developer')}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-neutral-200 bg-gradient-to-br from-neutral-50 to-white px-2">

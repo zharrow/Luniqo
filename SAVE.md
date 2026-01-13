@@ -1,0 +1,1 @@
+Mets la documentation à jour pour savoir où nous en sommes. Si je te fais utiliser ce document, c'est que la conversation est sur le point de se compacter. Nous devons donc sauvegarder les progrès pour reprendre le travail au même point sur la prochaine conversation. Après avoir mis la documentation à jour, tu dois t'arrêter immédiatement.

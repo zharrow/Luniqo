@@ -47,7 +47,7 @@ The application has 3 distinct user roles with **unified architecture**:
 1. **Developer (Platform Developer)**
    - Auth: Supabase Auth (email/password)
    - Table: `profiles` (where role = 'Developer')
-   - Access: Analytics dashboard (`/analytics`)
+   - Access: Analytics dashboard (`/developer/dashboard`)
    - Can create owners and view global metrics
    - Login: `/login` with email/password
 
@@ -112,7 +112,7 @@ The app uses Next.js App Router with **role-based route groups** for clear separ
   - `/employee/history` - Personal task history
 
 - `(developer)/` - **Developer routes** (Protected - Developer only)
-  - `/analytics` - Platform analytics and metrics
+  - `/developer/dashboard` - Platform analytics and metrics
 
 - `(tablet)/` - **Tablet interface** for employees (PIN-based quick access)
   - `/tablet/login` - Employee username + PIN login
@@ -746,7 +746,7 @@ The app has been heavily optimized for fast page transitions and reduced latency
   - **Route structure**:
     - Owner: `/owner/dashboard`, `/owner/rooms`, `/owner/users`, `/owner/haccp`, `/owner/profil`, etc.
     - Employee: `/employee/dashboard`, `/employee/profile`, `/employee/calendar`, `/employee/history`
-    - Developer: `/analytics`
+    - Developer: `/developer/dashboard`
     - Tablet: `/tablet/*` (unchanged)
   - **Benefits**:
     - Clear URL namespace per role - no route conflicts

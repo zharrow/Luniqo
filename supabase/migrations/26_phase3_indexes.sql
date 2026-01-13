@@ -33,11 +33,10 @@ CREATE INDEX IF NOT EXISTS idx_staff_auth_active_type ON staff_authorization(nur
 
 -- Staff shifts: Upcoming shifts by employee
 CREATE INDEX IF NOT EXISTS idx_staff_shift_upcoming ON staff_shift(employee_id, shift_date, status)
-  WHERE status IN ('scheduled', 'confirmed') AND shift_date >= CURRENT_DATE;
+  WHERE status IN ('scheduled', 'confirmed');
 
 -- Staff shifts: Today's shifts by nursery
-CREATE INDEX IF NOT EXISTS idx_staff_shift_today ON staff_shift(nursery_id, shift_date, status)
-  WHERE shift_date = CURRENT_DATE;
+CREATE INDEX IF NOT EXISTS idx_staff_shift_today ON staff_shift(nursery_id, shift_date, status);
 
 -- Staff shifts: Find shifts needing confirmation
 CREATE INDEX IF NOT EXISTS idx_staff_shift_unconfirmed ON staff_shift(nursery_id, shift_date, status)
@@ -49,19 +48,18 @@ CREATE INDEX IF NOT EXISTS idx_staff_absence_approval ON staff_absence(nursery_i
 
 -- Staff absences: Current and future absences
 CREATE INDEX IF NOT EXISTS idx_staff_absence_upcoming ON staff_absence(employee_id, start_date, end_date, status)
-  WHERE status = 'approved' AND end_date >= CURRENT_DATE;
+  WHERE status = 'approved';
 
 -- Staff absences: Find absences needing replacement
 CREATE INDEX IF NOT EXISTS idx_staff_absence_replacement ON staff_absence(nursery_id, start_date, replaced_by_id, status)
   WHERE status = 'approved' AND replaced_by_id IS NULL;
 
 -- Staff availability: Current availability by employee
-CREATE INDEX IF NOT EXISTS idx_staff_avail_current ON staff_availability(employee_id, day_of_week, is_available)
-  WHERE valid_until IS NULL OR valid_until >= CURRENT_DATE;
+CREATE INDEX IF NOT EXISTS idx_staff_avail_current ON staff_availability(employee_id, day_of_week, is_available, valid_from, valid_until);
 
 -- Ratio logs: Recent non-compliant logs
 CREATE INDEX IF NOT EXISTS idx_ratio_log_recent_issues ON ratio_log(nursery_id, log_timestamp, non_compliance_severity)
-  WHERE NOT is_compliant AND log_timestamp >= NOW() - INTERVAL '7 days';
+  WHERE NOT is_compliant;
 
 -- Ratio logs: Daily summary
 CREATE INDEX IF NOT EXISTS idx_ratio_log_daily ON ratio_log(nursery_id, log_date, log_hour, is_compliant);
@@ -87,8 +85,8 @@ CREATE INDEX IF NOT EXISTS idx_staff_doc_filename_search ON staff_document
 
 -- Active staff with qualifications
 CREATE INDEX IF NOT EXISTS idx_active_staff_with_quals ON staff_qualification(employee_id)
-  WHERE is_active = TRUE
-  INCLUDE (qualification_type, qualification_level, expiry_date);
+  INCLUDE (qualification_type, qualification_level, expiry_date)
+  WHERE is_active = TRUE;
 
 -- Current shifts in progress
 CREATE INDEX IF NOT EXISTS idx_shifts_in_progress ON staff_shift(nursery_id, employee_id, actual_start_time)
@@ -96,7 +94,7 @@ CREATE INDEX IF NOT EXISTS idx_shifts_in_progress ON staff_shift(nursery_id, emp
 
 -- Approved absences without replacement
 CREATE INDEX IF NOT EXISTS idx_absences_need_replacement ON staff_absence(nursery_id, employee_id, start_date, end_date)
-  WHERE status = 'approved' AND replaced_by_id IS NULL AND end_date >= CURRENT_DATE;
+  WHERE status = 'approved' AND replaced_by_id IS NULL;
 
 -- =====================================================
 -- COVERING INDEXES (INCLUDE columns for index-only scans)
@@ -104,8 +102,7 @@ CREATE INDEX IF NOT EXISTS idx_absences_need_replacement ON staff_absence(nurser
 
 -- Staff shifts with employee details (for listing views)
 CREATE INDEX IF NOT EXISTS idx_staff_shift_list ON staff_shift(nursery_id, shift_date)
-  INCLUDE (employee_id, start_time, end_time, status, assigned_room_id)
-  WHERE shift_date >= CURRENT_DATE - INTERVAL '30 days';
+  INCLUDE (employee_id, start_time, end_time, status, assigned_room_id);
 
 -- Staff absences with details (for calendar views)
 CREATE INDEX IF NOT EXISTS idx_staff_absence_calendar ON staff_absence(nursery_id, start_date, end_date)

@@ -955,6 +955,118 @@ export interface Database {
           read_at?: string | null
         }
       }
+
+      // ========================================================================
+      // MODULE PERMISSIONS SYSTEM
+      // ========================================================================
+      module: {
+        Row: {
+          id: string
+          name: string
+          description: string
+          category: string | null
+          price_monthly: number
+          icon_name: string | null
+          is_free: boolean
+          is_active: boolean
+          display_order: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          name: string
+          description: string
+          category?: string | null
+          price_monthly: number
+          icon_name?: string | null
+          is_free?: boolean
+          is_active?: boolean
+          display_order?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string
+          category?: string | null
+          price_monthly?: number
+          icon_name?: string | null
+          is_free?: boolean
+          is_active?: boolean
+          display_order?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      enterprise_module_access: {
+        Row: {
+          id: string
+          enterprise_id: string
+          module_id: string
+          granted_at: string
+          granted_by_id: string | null
+          expires_at: string | null
+          is_active: boolean
+        }
+        Insert: {
+          id?: string
+          enterprise_id: string
+          module_id: string
+          granted_at?: string
+          granted_by_id?: string | null
+          expires_at?: string | null
+          is_active?: boolean
+        }
+        Update: {
+          id?: string
+          enterprise_id?: string
+          module_id?: string
+          granted_at?: string
+          granted_by_id?: string | null
+          expires_at?: string | null
+          is_active?: boolean
+        }
+      }
+      module_access_request: {
+        Row: {
+          id: string
+          enterprise_id: string
+          module_id: string
+          owner_id: string
+          status: 'pending' | 'approved' | 'rejected'
+          message: string | null
+          reviewed_by_id: string | null
+          reviewed_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          enterprise_id: string
+          module_id: string
+          owner_id: string
+          status?: 'pending' | 'approved' | 'rejected'
+          message?: string | null
+          reviewed_by_id?: string | null
+          reviewed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          enterprise_id?: string
+          module_id?: string
+          owner_id?: string
+          status?: 'pending' | 'approved' | 'rejected'
+          message?: string | null
+          reviewed_by_id?: string | null
+          reviewed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -1030,3 +1142,16 @@ export type Document = Database['public']['Tables']['document']['Row']
 export type SupportConversation = Database['public']['Tables']['support_conversation']['Row']
 export type Message = Database['public']['Tables']['message']['Row']
 export type Notification = Database['public']['Tables']['notification']['Row']
+
+// Module Permissions types
+export type Module = Database['public']['Tables']['module']['Row']
+export type ModuleInsert = Database['public']['Tables']['module']['Insert']
+export type ModuleUpdate = Database['public']['Tables']['module']['Update']
+
+export type EnterpriseModuleAccess = Database['public']['Tables']['enterprise_module_access']['Row']
+export type EnterpriseModuleAccessInsert = Database['public']['Tables']['enterprise_module_access']['Insert']
+export type EnterpriseModuleAccessUpdate = Database['public']['Tables']['enterprise_module_access']['Update']
+
+export type ModuleAccessRequest = Database['public']['Tables']['module_access_request']['Row']
+export type ModuleAccessRequestInsert = Database['public']['Tables']['module_access_request']['Insert']
+export type ModuleAccessRequestUpdate = Database['public']['Tables']['module_access_request']['Update']

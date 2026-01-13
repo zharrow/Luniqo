@@ -13,7 +13,7 @@ Ce dossier contient la documentation détaillée de chaque phase d'implémentati
 | 2 | Présences & Activités | 🔴 HAUTE | **100% COMPLET** | 13 | - |
 | 3 | Personnel & Planning RH | 🔴 HAUTE | **100% COMPLET** | 9 | - |
 | 4 | Inscriptions & Contrats | 🟡 MOYENNE | **100% COMPLET** | 9 | - |
-| 5 | Facturation & Finances | 🟡 MOYENNE | **0% À FAIRE** | 9 | 15 jours |
+| 5 | Facturation & Finances | 🟡 MOYENNE | **100% COMPLET** | 9 | - |
 | 6 | Portail Parents | 🟡 MOYENNE | **0% À FAIRE** | 6 | 10 jours |
 | 7 | Statistiques & Analyses | 🟢 BASSE | **0% À FAIRE** | 4 | 8 jours |
 | 8 | Infrastructure Avancée | 🟢 BASSE | **0% À FAIRE** | 5 | 10 jours |
@@ -163,28 +163,66 @@ Gérer le parcours complet d'inscription : demandes de pré-inscription, liste d
 
 ---
 
-## 💼 Phases 5-9 (FUTURES)
+## ✅ Phase 5 : Facturation & Finances (COMPLÉTÉE)
+
+**Statut**: 100% ✅
+**Début**: 2026-01-13
+**Date de complétion**: 2026-01-13
+**Priorité**: 🟡 MOYENNE
+
+### Objectif
+Automatiser la facturation mensuelle, gérer les paiements, relances impayés, exports comptables et suivi financier.
+
+### Progression
+- ✅ **Base de données** (100%) ✅ FAIT - 7 migrations, 9 tables
+- ✅ **Services** (100%) ✅ FAIT - 7 services, ~3,400 lignes
+- ✅ **Pages UI** (100%) ✅ FAIT - 15 pages Owner, ~4,500 lignes
+- ⏳ **Composants** (0%) - Composants réutilisables (optionnel - Phase ultérieure)
+
+### Accomplissements
+- ✅ 9 tables de base de données (invoice, payment, billing_period, credit_note, etc.)
+- ✅ 7 services TypeScript robustes avec gestion d'erreurs
+- ✅ 15 pages UI Owner complètes et responsive
+- ✅ Support complet workflow facturation (génération → envoi → paiement → relances)
+- ✅ Exports comptables (FEC, CSV, Excel) pour intégration logiciels externes
+- ✅ Gestion avoirs, périodes de facturation, et moyens de paiement
+- ✅ Build Next.js réussi sans erreurs TypeScript
+- ✅ Architecture multi-nursery respectée
+- ✅ Total développé: ~7,900 lignes de code
+
+### Documentation
+📂 **[Phase 5 - Documentation Complète →](phase-5-facturation/README.md)**
+
+---
+
+## 💼 Phases 6-9 (FUTURES)
 
 Les phases suivantes sont planifiées mais non encore documentées :
 
-- **Phase 5** : Facturation & Finances
 - **Phase 6** : Portail Parents
 - **Phase 7** : Statistiques & Analyses
 - **Phase 8** : Infrastructure Avancée
 - **Phase 9** : Modules Premium
 
-Voir [ROADMAP-PHASES-1-3.md](../../ROADMAP-PHASES-1-3.md) pour le plan détaillé.
+Voir [ROADMAP-PHASES-3-5.md](../../ROADMAP-PHASES-3-5.md) et [ROADMAP-PHASES-6-9.md](../../ROADMAP-PHASES-6-9.md) pour les plans détaillés.
 
 ---
 
 ## 🎯 Prochaines Étapes
 
-### Après Phase 4 ✅
-1. ✅ Phase 4 complétée (Inscriptions & Contrats)
-2. ⏳ Tester le flux complet d'inscription
-3. ⏳ Démarrer Phase 5 (Facturation & Finances)
-4. ⏳ Intégrer la facturation basée sur les contrats
-5. ⏳ Créer les pages de gestion financière
+### Phase 5 - Améliorations Optionnelles (Future)
+1. ⏳ Générer templates PDF (factures, avoirs, relances) avec React-PDF
+2. ⏳ Automatisation envoi emails de factures
+3. ⏳ Intégrer Stripe pour paiements en ligne (Checkout hébergé)
+4. ⏳ Relances automatiques (Cron job)
+5. ⏳ Génération mensuelle automatique (Cron job)
+
+### Phase 6 - Portail Parents (À venir)
+1. ⏳ Créer les migrations SQL Phase 6
+2. ⏳ Implémenter les services TypeScript
+3. ⏳ Créer les pages UI Parents
+4. ⏳ Système de messagerie Parent-Owner
+5. ⏳ Notifications push
 
 ---
 
@@ -194,7 +232,7 @@ Voir [ROADMAP-PHASES-1-3.md](../../ROADMAP-PHASES-1-3.md) pour le plan détaill�
 1. Consultez la phase en cours dans le tableau ci-dessus
 2. Ouvrez le dossier de la phase (`phase-X-nom/`)
 3. Lisez le `README.md` pour la vue d'ensemble
-4. Consultez les fichiers numérotés (01, 02, 03, 04) pour les détails
+4. Consultez les fichiers de détails selon le besoin
 
 ### Pour la Gestion de Projet
 - Suivez l'avancement dans le tableau ci-dessus
@@ -208,6 +246,6 @@ Voir [ROADMAP-PHASES-1-3.md](../../ROADMAP-PHASES-1-3.md) pour le plan détaill�
 
 ---
 
-**Dernière mise à jour**: 2025-12-30
-**Phase actuelle**: ✅ Phase 4 - Inscriptions & Contrats (100% COMPLÈTE)
-**Prochaine phase**: Phase 5 - Facturation & Finances
+**Dernière mise à jour**: 2026-01-13
+**Phase actuelle**: ✅ Phase 5 - Facturation & Finances (100% - TERMINÉE)
+**Prochaine phase**: Phase 6 - Portail Parents

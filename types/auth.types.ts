@@ -28,6 +28,7 @@ export interface AuthSession {
   role: UserRole
   enterprise?: Enterprise | null
   accessibleRooms?: string[]  // Room IDs for Employees
+  accessibleModules?: string[]  // Module IDs for Owners (permissions system)
 }
 
 // ============================================================================
@@ -62,6 +63,7 @@ export interface AuthResponse {
   enterprise?: Enterprise | null
   role?: UserRole
   accessibleRooms?: string[]
+  accessibleModules?: string[]  // Module IDs for Owners (permissions system)
   error?: string
 }
 

@@ -192,7 +192,7 @@ export default function Header() {
                   <div className="py-1">
                     <motion.a
                       whileHover={{ x: 4 }}
-                      href={session?.role === 'Owner' ? '/profil' : session?.role === 'Employee' ? '/employee/profile' : '/analytics'}
+                      href={session?.role === 'Owner' ? '/profil' : session?.role === 'Employee' ? '/employee/profile' : '/developer/dashboard'}
                       className="flex items-center gap-3 px-4 py-2.5 text-sm text-neutral-700 hover:bg-neutral-100 transition-colors"
                     >
                       <UserCircleIcon className="w-5 h-5 text-neutral-500" />

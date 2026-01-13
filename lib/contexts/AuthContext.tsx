@@ -174,6 +174,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               .single()
 
             authSession.enterprise = enterprise || null
+
+            // Load accessible modules for this enterprise
+            const enterpriseData = enterprise as any
+            if (enterpriseData?.id) {
+              const { data: modules } = await supabase
+                .from('enterprise_module_access')
+                .select('module_id')
+                .eq('enterprise_id', enterpriseData.id)
+                .eq('is_active', true)
+
+              authSession.accessibleModules = (modules || []).map((m: any) => m.module_id)
+            }
           }
 
           // For Employee, fetch their enterprise and accessible rooms
@@ -231,7 +243,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user: response.data,
         role: response.role!,
         enterprise: response.enterprise,
-        accessibleRooms: response.accessibleRooms
+        accessibleRooms: response.accessibleRooms,
+        accessibleModules: response.accessibleModules
       }
       setSession(newSession)
 
@@ -240,8 +253,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Owner without enterprise → setup
         setTimeout(() => router.push('/setup'), 100)
       } else if (response.role === 'Developer') {
-        // Developer → analytics
-        setTimeout(() => router.push('/analytics'), 100)
+        // Developer → dashboard
+        setTimeout(() => router.push('/developer/dashboard'), 100)
       } else if (response.role === 'Owner') {
         // Owner with enterprise → dashboard
         setTimeout(() => router.push('/owner/dashboard'), 100)
@@ -333,4 +346,15 @@ export function useEnterprise() {
 export function useRole() {
   const { role } = useAuth()
   return role
+}
+
+/**
+ * Hook to check if a specific module is accessible
+ * @param moduleId - The module ID to check (e.g., 'cleaning', 'haccp')
+ * @returns true if the module is accessible, false otherwise
+ */
+export function useModuleAccess(moduleId: string): boolean {
+  const { session } = useAuth()
+  if (!session?.accessibleModules) return false
+  return session.accessibleModules.includes(moduleId)
 }

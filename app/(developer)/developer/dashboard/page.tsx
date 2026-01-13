@@ -12,7 +12,6 @@ import { analyticsService } from '@/lib/services/analytics.service';
 import type { GlobalStats, EnterpriseStats } from '@/types/analytics.types';
 import KpiCard from '@/components/analytics/KpiCard';
 import EnterprisesList from '@/components/analytics/EnterprisesList';
-import DeveloperLayout from '@/components/layout/DeveloperLayout';
 import {
   BuildingOfficeIcon,
   UserGroupIcon,
@@ -73,30 +72,24 @@ export default function AnalyticsPage() {
   // Loading state
   if (authLoading || loading) {
     return (
-      <DeveloperLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Chargement des analytics...</p>
-          </div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Chargement des analytics...</p>
         </div>
-      </DeveloperLayout>
+      </div>
     );
   }
 
   // Error state
   if (error) {
     return (
-      <DeveloperLayout>
-        <div className="p-6">
-          <div className="card bg-red-50 border border-red-200 p-6 text-center">
-            <p className="text-red-600 font-medium">{error}</p>
-            <button onClick={loadData} className="btn-primary mt-4">
-              Réessayer
-            </button>
-          </div>
-        </div>
-      </DeveloperLayout>
+      <div className="card bg-red-50 border border-red-200 p-6 text-center max-w-2xl mx-auto">
+        <p className="text-red-600 font-medium">{error}</p>
+        <button onClick={loadData} className="btn-primary mt-4">
+          Réessayer
+        </button>
+      </div>
     );
   }
 
@@ -116,8 +109,7 @@ export default function AnalyticsPage() {
   ];
 
   return (
-    <DeveloperLayout>
-      <div className="p-6 max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">
@@ -238,7 +230,6 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
       </div>
-      </div>
-    </DeveloperLayout>
+    </div>
   );
 }
