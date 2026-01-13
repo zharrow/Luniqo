@@ -609,17 +609,19 @@ Exemple: LUN001-CN-20251101
 
 ---
 
-## 🎯 Phase Complétée - Prochaines Améliorations (Optionnelles)
+## 🎯 Phase Complétée - Améliorations à Faire Plus Tard
 
-### Fonctionnalités Avancées (Phase ultérieure)
-1. ⏳ **Templates PDF** - Génération PDF factures/avoirs avec React-PDF
-2. ⏳ **Envoi Email** - Automatisation envoi factures par email
-3. ⏳ **Intégration Stripe** - Paiements en ligne (Checkout hébergé)
-4. ⏳ **Relances automatiques** - Cron job pour envoi relances impayés
-5. ⏳ **Génération mensuelle auto** - Cron job création factures fin de mois
-6. ⏳ **Composants réutilisables** - Extraction composants partagés
-7. ⏳ **Tests unitaires** - Tests services et calculs facturation
-8. ⏳ **Validation comptable** - Vérification conformité fiscale française
+### Fonctionnalités Avancées (À implémenter après Phase 6)
+1. ⏳ **Templates PDF** - Génération PDF factures/avoirs avec React-PDF (REQUIS pour production)
+2. ⏳ **Envoi Email** - Automatisation envoi factures par email (REQUIS pour production)
+3. ⏳ **Intégration Stripe** - Paiements en ligne (Checkout hébergé) (REQUIS pour parents)
+4. ⏳ **Relances automatiques** - Cron job pour envoi relances impayés (REQUIS pour gestion)
+5. ⏳ **Génération mensuelle auto** - Cron job création factures fin de mois (REQUIS pour automatisation)
+6. ⏳ **Composants réutilisables** - Extraction composants partagés (Amélioration code)
+7. ⏳ **Tests unitaires** - Tests services et calculs facturation (Qualité)
+8. ⏳ **Validation comptable** - Vérification conformité fiscale française (CRITIQUE)
+
+**⚠️ IMPORTANT** : Ces améliorations ne sont PAS optionnelles. Elles sont nécessaires pour la mise en production mais seront implémentées après la Phase 6 pour avoir un portail parents fonctionnel d'abord.
 
 ### Notes Techniques
 - Les pages utilisent l'authentification unifiée (`session.user`)

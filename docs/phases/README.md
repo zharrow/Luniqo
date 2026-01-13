@@ -14,7 +14,7 @@ Ce dossier contient la documentation détaillée de chaque phase d'implémentati
 | 3 | Personnel & Planning RH | 🔴 HAUTE | **100% COMPLET** | 9 | - |
 | 4 | Inscriptions & Contrats | 🟡 MOYENNE | **100% COMPLET** | 9 | - |
 | 5 | Facturation & Finances | 🟡 MOYENNE | **100% COMPLET** | 9 | - |
-| 6 | Portail Parents | 🟡 MOYENNE | **0% À FAIRE** | 6 | 10 jours |
+| 6 | Portail Parents | 🟡 MOYENNE | **10% EN COURS** | 8 | 22 jours |
 | 7 | Statistiques & Analyses | 🟢 BASSE | **0% À FAIRE** | 4 | 8 jours |
 | 8 | Infrastructure Avancée | 🟢 BASSE | **0% À FAIRE** | 5 | 10 jours |
 | 9 | Modules Premium | 🟢 BASSE | **0% À FAIRE** | 3 | 8 jours |
@@ -195,34 +195,63 @@ Automatiser la facturation mensuelle, gérer les paiements, relances impayés, e
 
 ---
 
-## 💼 Phases 6-9 (FUTURES)
+## 🔄 Phase 6 : Portail Parents (EN COURS)
 
-Les phases suivantes sont planifiées mais non encore documentées :
+**Statut**: 10% ✅
+**Début**: 2026-01-13
+**Priorité**: 🟡 MOYENNE
 
-- **Phase 6** : Portail Parents
+### Résumé
+Application mobile/web pour les parents : cahier de vie quotidien, messagerie, documents partagés, notifications push, attestations fiscales.
+
+### Progression
+- ✅ **Base de données** (100%) ✅ FAIT - 8 migrations SQL (48-55)
+- ⏳ **Services** (0%) - 6 services TypeScript (~2,500 lignes)
+- ⏳ **Pages UI Owner** (0%) - 6 pages gestion portail
+- ⏳ **App Mobile Parents** (0%) - 14 pages PWA
+- ⏳ **Composants** (0%) - Composants réutilisables
+
+### Accomplissements (Session 1 - 2026-01-13)
+- ✅ 8 migrations SQL : timeline_post, parent_comment, parent_message, parent_notification, parent_document_share, document_acknowledgment, tax_certificate, caf_document
+- ✅ Extension guardian_user pour app mobile (tokens push, préférences)
+- ✅ 30+ index de performance (composites, partiels, GIN)
+- ✅ RLS policies strictes (sécurité CRITIQUE - parents voient uniquement leurs enfants)
+- ✅ 4 triggers auto-notifications (posts, messages, documents)
+- ✅ 15+ fonctions utilitaires (dashboard, stats, maintenance)
+
+### Documentation
+📂 **[Phase 6 - Documentation Complète →](phase-6-portail-parents/README.md)**
+
+---
+
+## 💼 Phases 7-9 (FUTURES)
+
+Les phases suivantes sont planifiées :
+
 - **Phase 7** : Statistiques & Analyses
 - **Phase 8** : Infrastructure Avancée
 - **Phase 9** : Modules Premium
 
-Voir [ROADMAP-PHASES-3-5.md](../../ROADMAP-PHASES-3-5.md) et [ROADMAP-PHASES-6-9.md](../../ROADMAP-PHASES-6-9.md) pour les plans détaillés.
+Voir [ROADMAP-PHASES-6-9.md](../../ROADMAP-PHASES-6-9.md) pour les plans détaillés.
 
 ---
 
 ## 🎯 Prochaines Étapes
 
-### Phase 5 - Améliorations Optionnelles (Future)
+### Phase 6 - Session 2 (Immédiat)
+1. ⏳ Créer 6 services TypeScript (~2,500 lignes)
+2. ⏳ Créer 6 pages UI Owner (gestion portail)
+3. ⏳ Créer 14 pages App Mobile Parents (PWA)
+4. ⏳ Intégrer notifications push (Firebase FCM/APNS)
+5. ⏳ Créer composants réutilisables
+
+### Phase 5 - Améliorations (Après Phase 6)
+⚠️ **IMPORTANT** : Ces améliorations sont REQUISES pour production (voir [phase-5-facturation/README.md](phase-5-facturation/README.md))
 1. ⏳ Générer templates PDF (factures, avoirs, relances) avec React-PDF
 2. ⏳ Automatisation envoi emails de factures
 3. ⏳ Intégrer Stripe pour paiements en ligne (Checkout hébergé)
 4. ⏳ Relances automatiques (Cron job)
 5. ⏳ Génération mensuelle automatique (Cron job)
-
-### Phase 6 - Portail Parents (À venir)
-1. ⏳ Créer les migrations SQL Phase 6
-2. ⏳ Implémenter les services TypeScript
-3. ⏳ Créer les pages UI Parents
-4. ⏳ Système de messagerie Parent-Owner
-5. ⏳ Notifications push
 
 ---
 
@@ -247,5 +276,5 @@ Voir [ROADMAP-PHASES-3-5.md](../../ROADMAP-PHASES-3-5.md) et [ROADMAP-PHASES-6-9
 ---
 
 **Dernière mise à jour**: 2026-01-13
-**Phase actuelle**: ✅ Phase 5 - Facturation & Finances (100% - TERMINÉE)
-**Prochaine phase**: Phase 6 - Portail Parents
+**Phase actuelle**: 🔄 Phase 6 - Portail Parents (10% - EN COURS)
+**Prochaine étape**: Créer 6 services TypeScript (timeline, messaging, documents, certificates)
