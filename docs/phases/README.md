@@ -15,7 +15,7 @@ Ce dossier contient la documentation détaillée de chaque phase d'implémentati
 | 4 | Inscriptions & Contrats | 🟡 MOYENNE | **100% COMPLET** | 9 | - |
 | 5 | Facturation & Finances | 🟡 MOYENNE | **100% COMPLET** | 9 | - |
 | 6 | Portail Parents | 🟡 MOYENNE | **100% COMPLET** | 8 | - |
-| 7 | Statistiques & Analyses | 🟢 BASSE | **0% À FAIRE** | 4 | 8 jours |
+| 7 | Statistiques & Analyses | 🟢 BASSE | **50% EN COURS** | 7 | 18 jours |
 | 8 | Infrastructure Avancée | 🟢 BASSE | **0% À FAIRE** | 5 | 10 jours |
 | 9 | Modules Premium | 🟢 BASSE | **0% À FAIRE** | 3 | 8 jours |
 
@@ -257,27 +257,89 @@ Application mobile/web pour les parents : cahier de vie quotidien, messagerie, d
 
 ---
 
-## 💼 Phases 7-9 (FUTURES)
+## 🔄 Phase 7 : Statistiques & Analyses (EN COURS)
+
+**Statut**: 50% 🔄
+**Début**: 2026-01-14
+**Priorité**: 🟢 BASSE
+
+### Résumé
+Tableaux de bord analytiques complets avec KPIs, graphiques interactifs, exports et insights automatiques sur occupation, finances, personnel, HACCP et engagement parents.
+
+### Progression
+- ✅ **Base de données** (100%) ✅ FAIT - 6 migrations, 7 tables, 20+ fonctions SQL, 70+ index
+- ✅ **Services** (100%) ✅ FAIT - 4 services TypeScript (~2,900 lignes)
+- ⏳ **Pages UI Owner** (0%) - 8 pages analytics + rapports
+- ⏳ **Composants** (0%) - Graphiques Recharts + composants réutilisables
+
+### Scope
+- 7 nouvelles tables + 20+ functions d'agrégation SQL + 70+ index de performance
+- 4 services TypeScript (metrics, analytics, reports, dashboard)
+- 8 pages UI Owner (dashboards spécialisés)
+- Graphiques interactifs avec Recharts
+- Exports PDF/Excel
+- Snapshots quotidiens automatiques (cron)
+- Insights automatiques avec détection d'anomalies
+
+### Accomplissements (Session 1 - 2026-01-14)
+- ✅ 6 migrations SQL créées (56-61)
+- ✅ 7 tables: metric_snapshot, custom_report, report_execution_log, dashboard_widget, dashboard_template, analytics_event
+- ✅ 8 enums: metric_type, metric_frequency, report_type, report_format, report_schedule_frequency, report_execution_status, widget_type, widget_size, widget_refresh_frequency, analytics_event_category, event_severity
+- ✅ 70+ index de performance (composites, partiels, GIN pour JSONB)
+- ✅ 20+ fonctions SQL d'agrégation (occupancy, financial, staff, HACCP, parent engagement, children)
+- ✅ 3 triggers automatiques pour event tracking
+- ✅ RLS policies strictes sur toutes les tables
+- ✅ Build Next.js réussi sans erreurs
+
+### Accomplissements (Session 2 - 2026-01-14)
+- ✅ 4 services TypeScript créés/étendus (~2,900 lignes)
+- ✅ MetricsService: 680 lignes - Calcul métriques, snapshots, anomalies, comparaisons
+- ✅ AnalyticsService: 705 lignes (extended) - Revenue trends, staff hours, insights, predictions
+- ✅ ReportsService: 830 lignes - Rapports prédéfinis/custom, scheduling, exports CSV/PDF/Excel
+- ✅ DashboardService: 680 lignes - Configuration widgets, drag & drop, caching
+- ✅ Support complet KPIs: Occupation, Finance, Staff, HACCP, Parent Engagement
+- ✅ Insights automatiques et détection d'anomalies
+- ✅ Prévisions avec moving average + confidence score
+- ✅ Build Next.js réussi sans erreurs TypeScript
+
+### Documentation
+📂 **[Phase 7 - Documentation Complète →](phase-7-statistiques/README.md)**
+
+---
+
+## 💼 Phases 8-9 (FUTURES)
 
 Les phases suivantes sont planifiées :
 
-- **Phase 7** : Statistiques & Analyses
 - **Phase 8** : Infrastructure Avancée
 - **Phase 9** : Modules Premium
-
-Voir [ROADMAP-PHASES-6-9.md](../../ROADMAP-PHASES-6-9.md) pour les plans détaillés.
 
 ---
 
 ## 🎯 Prochaines Étapes
 
+### Phase 7 - Session 3 (Immédiat)
+1. ⏳ Créer pages analytics (~3,000 lignes) - ~6 jours
+   - Dashboard principal avec widgets drag & drop
+   - Analytics financières (MRR, ARR, aging receivables)
+   - Analytics enfants (occupation par section, enrollment funnel)
+   - Analytics staff (absentéisme, heures, ratios)
+   - Analytics HACCP (conformité, incidents)
+   - Analytics parents (engagement, timeline, messages)
+   - Rapports personnalisés (création, scheduling, historique)
+2. ⏳ Créer composants graphiques (~1,500 lignes) - ~3 jours
+   - Composants Recharts (LineChart, BarChart, PieChart, GaugeChart, etc.)
+   - KPICard, MetricComparison, TrendIndicator
+   - DataTable, ExportButton, WidgetPicker
+   - DashboardGrid avec react-grid-layout
+
 ### Phase 6 - Améliorations Optionnelles (Futur)
-1. ⏳ Créer composants réutilisables (~1,200 lignes) - TimelinePostCard, MessageBubble, DocumentCard, etc.
-2. ⏳ Intégrer notifications push (Firebase FCM/APNS) - Configuration tokens, background handlers
-3. ⏳ Tests & validation finale avec données réelles
+1. ⏳ Créer composants réutilisables (~1,200 lignes)
+2. ⏳ Intégrer notifications push (Firebase FCM/APNS)
+3. ⏳ Tests & validation finale
 
 ### Phase 5 - Améliorations REQUISES pour Production
-⚠️ **IMPORTANT** : Ces améliorations sont REQUISES pour production (voir [phase-5-facturation/README.md](phase-5-facturation/README.md))
+⚠️ **IMPORTANT** : Ces améliorations sont REQUISES pour production
 1. ⏳ Générer templates PDF (factures, avoirs, relances) avec React-PDF
 2. ⏳ Automatisation envoi emails de factures
 3. ⏳ Intégrer Stripe pour paiements en ligne (Checkout hébergé)
@@ -307,5 +369,5 @@ Voir [ROADMAP-PHASES-6-9.md](../../ROADMAP-PHASES-6-9.md) pour les plans détail
 ---
 
 **Dernière mise à jour**: 2026-01-14
-**Phase actuelle**: ✅ Phase 6 - Portail Parents (100% - COMPLÉTÉE)
-**Prochaines phases**: Phase 7 (Statistiques & Analyses) ou améliorations production Phase 5 (PDF, Stripe, emails)
+**Phase actuelle**: 🔄 Phase 7 - Statistiques & Analyses (50% - EN COURS)
+**Prochaine étape**: Créer pages UI Owner (8 pages analytics avec graphiques Recharts)
