@@ -198,7 +198,77 @@ Avant de terminer une session :
 
 ---
 
-**Dernière mise à jour**: 2026-01-16
+**Dernière mise à jour**: 2026-01-20
 **Phase actuelle**: Phase 7 - Statistiques & Analyses (100% ✅ COMPLÉTÉE)
-**Dernière session**: Pages UI + Composants complétés - Phase 7 terminée (13,000 lignes de code)
 **Prochaine phase**: Phase 8 - Infrastructure Avancée
+
+---
+
+## 🔄 Session en Cours (2026-01-20)
+
+**Fonctionnalité**: Système de Permissions Granulaire par Crèche
+
+### Contexte
+Avant: Les modules étaient accordés au niveau **entreprise** (toutes les crèches d'une entreprise avaient les mêmes modules).
+Maintenant: Les modules peuvent être accordés au niveau **crèche** (chaque crèche peut avoir ses propres abonnements).
+
+### Travail Effectué
+1. ✅ **Migration SQL** (`62_nursery_module_access.sql`)
+   - Table `nursery_module_access` - Permissions par crèche
+   - Table `nursery_module_access_request` - Demandes d'accès par crèche
+   - Index de performance
+   - Migration des données existantes (enterprise → nursery)
+   - Module "analytics" ajouté au catalogue
+
+2. ✅ **Service** (`lib/services/modules.service.ts`)
+   - Nouvelles méthodes nursery-level:
+     - `getEnterprisesWithNurseries()` - Liste entreprises + crèches + modules
+     - `getNurseryModules()` - Modules d'une crèche
+     - `hasNurseryModuleAccess()` - Vérification accès
+     - `grantNurseryModuleAccess()` - Accorder accès
+     - `revokeNurseryModuleAccess()` - Révoquer accès
+     - `updateNurseryModules()` - Mise à jour bulk
+     - `getAllPendingNurseryRequests()` - Demandes en attente
+     - `approveNurseryRequest()` / `rejectNurseryRequest()`
+
+3. ✅ **Pages Developer**
+   - `/developer/permissions` - Gestion des permissions par crèche (refaite)
+     - Vue hiérarchique: Entreprise → Crèches → Modules
+     - Toggle switch pour activer/désactiver modules par crèche
+     - Calcul MRR par crèche et par entreprise
+     - Onglet demandes en attente
+   - `/developer/enterprises` - Page de gestion des entreprises (nouvelle)
+   - Sidebar Developer mise à jour avec liens
+
+4. ✅ **Composants**
+   - `components/ui/dialog.tsx` - Composant Dialog shadcn/ui ajouté
+
+### Fichiers Modifiés
+```
+app/(developer)/developer/permissions/page.tsx    # Refait - hiérarchie entreprise/crèche
+app/(developer)/developer/enterprises/page.tsx    # NOUVEAU
+app/(developer)/layout.tsx                        # Minor update
+app/(employee)/layout.tsx                         # Minor update
+app/(owner)/layout.tsx                            # Minor update
+components/layout/DeveloperSidebar.tsx            # Navigation mise à jour
+components/ui/dialog.tsx                          # NOUVEAU
+lib/services/modules.service.ts                   # +338 lignes méthodes nursery
+supabase/migrations/62_nursery_module_access.sql  # NOUVEAU
+```
+
+### Prochaines Étapes (À faire)
+1. ⏳ Appliquer la migration en base de données
+2. ⏳ Tester la page permissions avec données réelles
+3. ⏳ Vérifier les calculs MRR
+4. ⏳ Ajouter vérification permissions côté Owner (sidebar)
+5. ⏳ Commit et push vers branche feature
+
+### Architecture Clé
+```
+Enterprise (ex: "Crèches du Soleil")
+  └── Nursery 1 "Crèche Centre" → [base, cleaning, haccp]
+  └── Nursery 2 "Crèche Est"    → [base, cleaning]        # Pas haccp!
+  └── Nursery 3 "Crèche Ouest"  → [base, cleaning, analytics]
+```
+
+Chaque crèche peut avoir un ensemble différent de modules actifs.

@@ -1,0 +1,1 @@
+Il faudrait réfléchir à comment mettre en place le paiement (par Stripe), j'aimerai que les utilisateur puissent payer par CB, Paypal ou Apple Pay

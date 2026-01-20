@@ -1,5 +1,6 @@
 // Module Permissions Service
 // Manages modules, module access permissions, and access requests
+// Supports both enterprise-level (legacy) and nursery-level (new) granularity
 
 import { createClient } from '@/lib/supabase/client'
 import { messagingService } from '@/lib/services/messaging.service'
@@ -11,6 +12,50 @@ import type {
   ModuleAccessRequest,
   ModuleAccessRequestInsert,
 } from '@/types/database.types'
+
+// Types for nursery module access
+export interface NurseryModuleAccess {
+  id: string
+  nursery_id: string
+  module_id: string
+  granted_at: string
+  granted_by_id: string | null
+  expires_at: string | null
+  is_active: boolean
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface NurseryModuleAccessRequest {
+  id: string
+  nursery_id: string
+  module_id: string
+  requested_by_id: string
+  status: 'pending' | 'approved' | 'rejected'
+  message: string | null
+  reviewed_by_id: string | null
+  reviewed_at: string | null
+  rejection_reason: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface NurseryWithModules {
+  id: string
+  name: string
+  enterprise_id: string
+  is_active: boolean
+  modules: string[]
+}
+
+export interface EnterpriseWithNurseries {
+  id: string
+  name: string
+  owner_name: string
+  owner_email?: string
+  nurseries: NurseryWithModules[]
+}
 
 class ModulesService {
   // ============================================================================
@@ -437,6 +482,299 @@ class ModulesService {
     }
 
     return !!data
+  }
+
+  // ============================================================================
+  // NURSERY MODULE ACCESS (NEW - GRANULAR PERMISSIONS PER NURSERY)
+  // ============================================================================
+
+  /**
+   * Get all enterprises with their nurseries and module access
+   * Used for Developer permissions page
+   */
+  async getEnterprisesWithNurseries(): Promise<EnterpriseWithNurseries[]> {
+    const supabase = createClient()
+
+    // Get all enterprises with owner info
+    const { data: enterprises, error: entError } = await supabase
+      .from('enterprise')
+      .select(`
+        id,
+        name,
+        owner:profiles!enterprise_owner_id_fkey(first_name, last_name, email)
+      `)
+      .order('name')
+
+    if (entError) {
+      console.error('Error fetching enterprises:', entError)
+      throw new Error(`Failed to fetch enterprises: ${entError.message}`)
+    }
+
+    // Get all nurseries
+    const { data: nurseries, error: nursError } = await supabase
+      .from('nursery')
+      .select('id, name, enterprise_id, is_active')
+      .eq('is_active', true)
+      .order('name')
+
+    if (nursError) {
+      console.error('Error fetching nurseries:', nursError)
+      throw new Error(`Failed to fetch nurseries: ${nursError.message}`)
+    }
+
+    // Get all nursery module access
+    const { data: moduleAccess, error: accessError } = await supabase
+      .from('nursery_module_access')
+      .select('nursery_id, module_id')
+      .eq('is_active', true)
+
+    if (accessError) {
+      console.error('Error fetching module access:', accessError)
+      throw new Error(`Failed to fetch module access: ${accessError.message}`)
+    }
+
+    // Build module access map by nursery
+    const modulesByNursery: Record<string, string[]> = {}
+    ;(moduleAccess || []).forEach((access: any) => {
+      if (!modulesByNursery[access.nursery_id]) {
+        modulesByNursery[access.nursery_id] = []
+      }
+      modulesByNursery[access.nursery_id].push(access.module_id)
+    })
+
+    // Build result
+    return (enterprises || []).map((enterprise: any) => {
+      const owner = enterprise.owner
+      const ownerName = owner ? `${owner.first_name || ''} ${owner.last_name || ''}`.trim() : 'N/A'
+
+      const enterpriseNurseries = (nurseries || [])
+        .filter((n: any) => n.enterprise_id === enterprise.id)
+        .map((n: any) => ({
+          id: n.id,
+          name: n.name,
+          enterprise_id: n.enterprise_id,
+          is_active: n.is_active,
+          modules: modulesByNursery[n.id] || []
+        }))
+
+      return {
+        id: enterprise.id,
+        name: enterprise.name,
+        owner_name: ownerName,
+        owner_email: owner?.email || undefined,
+        nurseries: enterpriseNurseries
+      }
+    })
+  }
+
+  /**
+   * Get module IDs accessible by a specific nursery
+   */
+  async getNurseryModules(nurseryId: string): Promise<string[]> {
+    const supabase = createClient()
+
+    const { data, error } = await supabase
+      .from('nursery_module_access')
+      .select('module_id')
+      .eq('nursery_id', nurseryId)
+      .eq('is_active', true)
+
+    if (error) {
+      console.error('Error fetching nursery modules:', error)
+      throw new Error(`Failed to fetch nursery modules: ${error.message}`)
+    }
+
+    return (data || []).map((row: any) => row.module_id)
+  }
+
+  /**
+   * Check if a nursery has access to a specific module
+   */
+  async hasNurseryModuleAccess(nurseryId: string, moduleId: string): Promise<boolean> {
+    const supabase = createClient()
+
+    const { data, error } = await supabase
+      .from('nursery_module_access')
+      .select('id')
+      .eq('nursery_id', nurseryId)
+      .eq('module_id', moduleId)
+      .eq('is_active', true)
+      .maybeSingle()
+
+    if (error) {
+      console.error('Error checking nursery module access:', error)
+      return false
+    }
+
+    return !!data
+  }
+
+  /**
+   * Grant module access to a nursery (Developer only)
+   */
+  async grantNurseryModuleAccess(
+    nurseryId: string,
+    moduleId: string,
+    grantedById: string,
+    notes?: string
+  ): Promise<void> {
+    const supabase = createClient()
+
+    const { error } = await supabase
+      .from('nursery_module_access')
+      .upsert({
+        nursery_id: nurseryId,
+        module_id: moduleId,
+        granted_by_id: grantedById,
+        is_active: true,
+        notes: notes || null
+      } as any, {
+        onConflict: 'nursery_id,module_id',
+      })
+
+    if (error) {
+      console.error('Error granting nursery module access:', error)
+      throw new Error(`Failed to grant module access: ${error.message}`)
+    }
+  }
+
+  /**
+   * Revoke module access from a nursery (Developer only)
+   */
+  async revokeNurseryModuleAccess(nurseryId: string, moduleId: string): Promise<void> {
+    const supabase = createClient()
+
+    const { error } = await supabase
+      .from('nursery_module_access')
+      .delete()
+      .eq('nursery_id', nurseryId)
+      .eq('module_id', moduleId)
+
+    if (error) {
+      console.error('Error revoking nursery module access:', error)
+      throw new Error(`Failed to revoke module access: ${error.message}`)
+    }
+  }
+
+  /**
+   * Bulk update modules for a nursery
+   * @param nurseryId The nursery to update
+   * @param moduleIds Array of module IDs that should be active
+   * @param grantedById The developer granting access
+   */
+  async updateNurseryModules(
+    nurseryId: string,
+    moduleIds: string[],
+    grantedById: string
+  ): Promise<void> {
+    // Get current modules
+    const currentModules = await this.getNurseryModules(nurseryId)
+
+    // Modules to add
+    const toAdd = moduleIds.filter(m => !currentModules.includes(m))
+
+    // Modules to remove (except 'base' which is always free)
+    const toRemove = currentModules.filter(m => !moduleIds.includes(m) && m !== 'base')
+
+    // Add new modules
+    for (const moduleId of toAdd) {
+      await this.grantNurseryModuleAccess(nurseryId, moduleId, grantedById)
+    }
+
+    // Remove revoked modules
+    for (const moduleId of toRemove) {
+      await this.revokeNurseryModuleAccess(nurseryId, moduleId)
+    }
+  }
+
+  // ============================================================================
+  // NURSERY MODULE ACCESS REQUESTS
+  // ============================================================================
+
+  /**
+   * Get all pending nursery module access requests (Developer)
+   */
+  async getAllPendingNurseryRequests(): Promise<NurseryModuleAccessRequest[]> {
+    const supabase = createClient()
+
+    const { data, error } = await supabase
+      .from('nursery_module_access_request')
+      .select('*')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching pending nursery requests:', error)
+      throw new Error(`Failed to fetch pending requests: ${error.message}`)
+    }
+
+    return (data || []) as NurseryModuleAccessRequest[]
+  }
+
+  /**
+   * Approve a nursery module access request (Developer)
+   */
+  async approveNurseryRequest(requestId: string, reviewedById: string): Promise<void> {
+    const supabase = createClient()
+
+    // Get request details
+    const { data: request, error: fetchError } = await supabase
+      .from('nursery_module_access_request')
+      .select('*')
+      .eq('id', requestId)
+      .single()
+
+    if (fetchError || !request) {
+      throw new Error('Demande introuvable')
+    }
+
+    const requestData = request as any
+
+    // Grant module access
+    await this.grantNurseryModuleAccess(
+      requestData.nursery_id,
+      requestData.module_id,
+      reviewedById
+    )
+
+    // Update request status
+    const { error: updateError } = await supabase
+      .from('nursery_module_access_request')
+      // @ts-ignore - Type issue with Supabase client after migration
+      .update({
+        status: 'approved',
+        reviewed_by_id: reviewedById,
+        reviewed_at: new Date().toISOString(),
+      })
+      .eq('id', requestId)
+
+    if (updateError) {
+      console.error('Error updating request status:', updateError)
+      throw new Error(`Failed to update request: ${updateError.message}`)
+    }
+  }
+
+  /**
+   * Reject a nursery module access request (Developer)
+   */
+  async rejectNurseryRequest(requestId: string, reviewedById: string, reason?: string): Promise<void> {
+    const supabase = createClient()
+
+    const { error } = await supabase
+      .from('nursery_module_access_request')
+      // @ts-ignore - Type issue with Supabase client after migration
+      .update({
+        status: 'rejected',
+        reviewed_by_id: reviewedById,
+        reviewed_at: new Date().toISOString(),
+        rejection_reason: reason || null,
+      })
+      .eq('id', requestId)
+
+    if (error) {
+      console.error('Error rejecting nursery request:', error)
+      throw new Error(`Failed to reject request: ${error.message}`)
+    }
   }
 }
 
