@@ -28,7 +28,7 @@ export default function DeveloperRouteLayout({
   }
 
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider defaultOpen={true}>
       <DeveloperSidebar />
       <SidebarInset className="bg-neutral-50">
         <Header />

@@ -343,6 +343,24 @@ Les phases suivantes sont planifiées :
 
 ## 🎯 Prochaines Étapes
 
+### 🔄 En Cours: Permissions Modules par Crèche (2026-01-20)
+
+**Objectif**: Permettre une granularité fine des permissions de modules par crèche (pas juste par entreprise).
+
+**Travail effectué**:
+- ✅ Migration `62_nursery_module_access.sql` - Tables pour permissions par crèche
+- ✅ Service `modules.service.ts` étendu - Méthodes nursery-level
+- ✅ Page `/developer/permissions` - Vue hiérarchique entreprise → crèches → modules
+- ✅ Page `/developer/enterprises` - Gestion des entreprises
+- ⏳ Tests et validation
+
+**Prochaines étapes**:
+1. ⏳ Appliquer migration en base
+2. ⏳ Vérification permissions côté Owner (cacher modules non autorisés)
+3. ⏳ Commit et push
+
+---
+
 ### Phase 8 : Infrastructure Avancée (À venir)
 1. ⏳ Tables système (5 tables)
 2. ⏳ Services avancés
@@ -384,6 +402,6 @@ Les phases suivantes sont planifiées :
 
 ---
 
-**Dernière mise à jour**: 2026-01-15
+**Dernière mise à jour**: 2026-01-20
 **Phase actuelle**: ✅ Phase 7 - Statistiques & Analyses (100% - COMPLÉTÉE)
 **Prochaine phase**: Phase 8 - Infrastructure Avancée

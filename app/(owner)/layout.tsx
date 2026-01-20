@@ -28,7 +28,7 @@ export default function OwnerLayout({
   }
 
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider defaultOpen={true}>
       <AppSidebar />
       <SidebarInset className="bg-neutral-50">
         <Header />

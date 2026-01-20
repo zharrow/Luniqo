@@ -598,6 +598,46 @@ The app has been heavily optimized for fast page transitions and reduced latency
 
 ## Recent Updates
 
+- 🔐 **NURSERY MODULE ACCESS SYSTEM** (2026-01-20) - Granular module permissions per nursery 🔄 **IN PROGRESS**
+  - **Feature**: Each nursery can now have its own module subscriptions (not just enterprise-level)
+  - **Architecture**:
+    - Before: Enterprise → [modules] (all nurseries same modules)
+    - After: Nursery → [modules] (each nursery can have different modules)
+  - **Database** (`62_nursery_module_access.sql`):
+    - New table `nursery_module_access` - Per-nursery module permissions
+    - New table `nursery_module_access_request` - Per-nursery access requests
+    - Migration from `enterprise_module_access` to `nursery_module_access`
+    - Added "analytics" module to catalog
+    - Performance indexes and triggers
+  - **Service** (`lib/services/modules.service.ts`):
+    - `getEnterprisesWithNurseries()` - Hierarchical view for Developer
+    - `getNurseryModules(nurseryId)` - Get modules for a nursery
+    - `hasNurseryModuleAccess(nurseryId, moduleId)` - Check access
+    - `grantNurseryModuleAccess()` / `revokeNurseryModuleAccess()`
+    - `updateNurseryModules()` - Bulk update
+    - Request management methods for nursery-level
+  - **Developer Portal**:
+    - `/developer/permissions` - Hierarchical UI: Enterprise → Nurseries → Modules
+      - Toggle switches per module per nursery
+      - MRR calculation per nursery and enterprise
+      - Pending requests tab
+    - `/developer/enterprises` - Enterprise management page
+    - Updated `DeveloperSidebar.tsx` navigation
+  - **New Components**:
+    - `components/ui/dialog.tsx` - shadcn Dialog component
+  - **Files modified**:
+    - ✅ `supabase/migrations/62_nursery_module_access.sql`
+    - ✅ `lib/services/modules.service.ts` (+338 lines)
+    - ✅ `app/(developer)/developer/permissions/page.tsx` (refactored)
+    - ✅ `app/(developer)/developer/enterprises/page.tsx` (new)
+    - ✅ `components/layout/DeveloperSidebar.tsx`
+    - ✅ `components/ui/dialog.tsx` (new)
+  - **Prochaines étapes**:
+    - ⏳ Appliquer migration en base de données
+    - ⏳ Tester avec données réelles
+    - ⏳ Ajouter vérification permissions côté Owner sidebar
+  - **Status**: 🔄 **In Progress** - Migration ready, UI complete, needs testing
+
 - 🐛 **EMPLOYEE-NURSERY FILTERING & BUG FIXES** (2025-12-22) - Multi-nursery assignments and proper data filtering ✅ **COMPLETED**
   - **Problem**: Multiple bugs related to employee-nursery relationships and data filtering
     1. SQL constraint blocked creating multiple non-default nurseries
@@ -839,4 +879,4 @@ The app has been heavily optimized for fast page transitions and reduced latency
 
 ---
 
-**Last updated**: 2025-12-22 (Employee-Nursery Filtering & Multi-Site Bug Fixes - Migration 09 applied)
+**Last updated**: 2026-01-20 (Nursery Module Access System - Migration 62 ready, UI complete)
