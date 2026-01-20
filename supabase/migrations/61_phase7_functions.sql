@@ -130,7 +130,7 @@ CREATE OR REPLACE FUNCTION get_revenue_by_contract_type(
   p_end_date DATE
 )
 RETURNS TABLE (
-  contract_type contract_type,
+  contract_type VARCHAR,
   total_revenue DECIMAL,
   contract_count BIGINT,
   avg_monthly_amount DECIMAL

@@ -26,6 +26,24 @@ Ce document te guide pour reprendre le travail sur Luniqo de manière efficace.
 
 ---
 
+## 🎨 Bonnes Pratiques de Développement
+
+### Frontend & Design
+
+**IMPORTANT** : Lors de la création de pages UI (`page.tsx`), tu DOIS :
+
+1. **Utiliser le skill frontend-design** : Toujours invoquer le skill `.claude/skills/frontend-design/SKILL.md` pour garantir la cohérence avec le design system "Modernité Organique"
+2. **Éviter les stats cards génériques** : Les cartes de statistiques trop basiques (3-4 cartes avec icône + nombre + label) sont un cliché d'IA générique. Privilégier des interfaces organiques et variées avec :
+   - Grilles asymétriques (12 colonnes Bento)
+   - Variation de couleurs (3-4 couleurs minimum par page)
+   - Ombres colorées et micro-interactions
+   - Layouts créatifs et mémorables
+   - Visualisations de données riches (graphiques, timelines, etc.)
+
+**Référence** : Voir `.claude/skills/frontend-design/SKILL.md` pour les patterns exacts et la checklist chirurgicale.
+
+---
+
 ## ✅ Workflow de Fin de Phase
 
 Quand tu termines une phase ou une étape importante :
@@ -180,7 +198,7 @@ Avant de terminer une session :
 
 ---
 
-**Dernière mise à jour**: 2026-01-15
+**Dernière mise à jour**: 2026-01-16
 **Phase actuelle**: Phase 7 - Statistiques & Analyses (100% ✅ COMPLÉTÉE)
 **Dernière session**: Pages UI + Composants complétés - Phase 7 terminée (13,000 lignes de code)
 **Prochaine phase**: Phase 8 - Infrastructure Avancée

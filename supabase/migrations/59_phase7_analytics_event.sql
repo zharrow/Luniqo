@@ -388,8 +388,8 @@ EXECUTE FUNCTION track_new_contract_event();
 CREATE OR REPLACE FUNCTION track_overdue_invoice_event()
 RETURNS TRIGGER AS $$
 BEGIN
-  -- Only trigger if status changed to OVERDUE
-  IF NEW.status = 'OVERDUE' AND (OLD.status IS NULL OR OLD.status != 'OVERDUE') THEN
+  -- Only trigger if status changed to overdue
+  IF NEW.status = 'overdue' AND (OLD.status IS NULL OR OLD.status != 'overdue') THEN
     PERFORM create_analytics_event(
       (SELECT c.nursery_id FROM contract c WHERE c.id = NEW.contract_id),
       'FINANCIAL'::analytics_event_category,
@@ -419,7 +419,7 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER trigger_track_overdue_invoice
 AFTER UPDATE ON invoice
 FOR EACH ROW
-WHEN (NEW.status = 'OVERDUE')
+WHEN (NEW.status = 'overdue')
 EXECUTE FUNCTION track_overdue_invoice_event();
 
 -- Auto-create event for HACCP incidents

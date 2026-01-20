@@ -90,10 +90,9 @@ CREATE INDEX IF NOT EXISTS idx_document_share_requires_ack
 ON parent_document_share(nursery_id, requires_acknowledgment, published_at DESC)
 WHERE requires_acknowledgment = TRUE;
 
--- Documents expirés
+-- Documents expirés (index simple - filtrage fait en query)
 CREATE INDEX IF NOT EXISTS idx_document_share_expired
-ON parent_document_share(valid_until)
-WHERE valid_until < CURRENT_DATE;
+ON parent_document_share(valid_until);
 
 -- Documents par famille (via array family_ids)
 -- Note: Utilise l'index GIN déjà créé dans migration 50
@@ -149,21 +148,9 @@ WHERE status = 'generated';
 -- =============================================
 -- INDEX PARTITIONNÉS PAR DATE (Performance pour archives)
 -- =============================================
-
--- Timeline posts - Partiel sur l'année en cours
-CREATE INDEX IF NOT EXISTS idx_timeline_post_current_year
-ON timeline_post(child_id, post_date DESC)
-WHERE post_date >= DATE_TRUNC('year', CURRENT_DATE);
-
--- Messages - Partiel sur les 3 derniers mois
-CREATE INDEX IF NOT EXISTS idx_parent_message_recent
-ON parent_message(family_id, created_at DESC)
-WHERE created_at >= CURRENT_DATE - INTERVAL '3 months';
-
--- Notifications - Partiel sur le dernier mois
-CREATE INDEX IF NOT EXISTS idx_parent_notification_recent
-ON parent_notification(guardian_id, created_at DESC)
-WHERE created_at >= CURRENT_DATE - INTERVAL '1 month';
+-- NOTE: Index temporels avec CURRENT_DATE non supportés (fonctions non-immuables)
+-- Utiliser les index normaux existants avec filtrage en query
+-- Ou créer manuellement des index partiels avec dates fixes si besoin
 
 -- =============================================
 -- INDEX POUR STATISTIQUES & ANALYTICS
@@ -171,8 +158,7 @@ WHERE created_at >= CURRENT_DATE - INTERVAL '1 month';
 
 -- Activité des parents (pour analytics)
 CREATE INDEX IF NOT EXISTS idx_guardian_user_activity
-ON guardian_user(last_app_access DESC, push_notifications_enabled)
-WHERE is_active = TRUE;
+ON guardian_user(last_app_access DESC, push_notifications_enabled);
 
 -- Engagement timeline (posts avec réactions)
 CREATE INDEX IF NOT EXISTS idx_timeline_post_engagement
@@ -207,4 +193,3 @@ COMMENT ON INDEX idx_timeline_post_child_date IS 'Index composite pour query tim
 COMMENT ON INDEX idx_parent_message_unread_guardian IS 'Index partiel pour messages non lus (réduit taille index)';
 COMMENT ON INDEX idx_parent_notification_unread IS 'Index partiel pour notifications non lues (query la plus fréquente)';
 COMMENT ON INDEX idx_document_share_requires_ack IS 'Index partiel pour documents nécessitant confirmation';
-COMMENT ON INDEX idx_timeline_post_current_year IS 'Index partitionné - Année en cours uniquement (améliore performance)';

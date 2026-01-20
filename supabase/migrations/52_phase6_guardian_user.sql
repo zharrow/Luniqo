@@ -147,31 +147,52 @@ $$ LANGUAGE plpgsql;
 -- =============================================
 
 -- Contrainte : Langue valide
-ALTER TABLE guardian_user
-ADD CONSTRAINT IF NOT EXISTS check_app_language_valid
-CHECK (app_language IN ('fr', 'en', 'es', 'de', 'it', 'pt'));
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'check_app_language_valid'
+  ) THEN
+    ALTER TABLE guardian_user
+    ADD CONSTRAINT check_app_language_valid
+    CHECK (app_language IN ('fr', 'en', 'es', 'de', 'it', 'pt'));
+  END IF;
+END $$;
 
 -- Contrainte : Theme valide
-ALTER TABLE guardian_user
-ADD CONSTRAINT IF NOT EXISTS check_theme_valid
-CHECK (theme_preference IN ('light', 'dark', 'auto'));
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'check_theme_valid'
+  ) THEN
+    ALTER TABLE guardian_user
+    ADD CONSTRAINT check_theme_valid
+    CHECK (theme_preference IN ('light', 'dark', 'auto'));
+  END IF;
+END $$;
 
 -- Contrainte : Device type valide
-ALTER TABLE guardian_user
-ADD CONSTRAINT IF NOT EXISTS check_device_type_valid
-CHECK (device_type IS NULL OR device_type IN ('ios', 'android', 'web'));
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'check_device_type_valid'
+  ) THEN
+    ALTER TABLE guardian_user
+    ADD CONSTRAINT check_device_type_valid
+    CHECK (device_type IS NULL OR device_type IN ('ios', 'android', 'web'));
+  END IF;
+END $$;
 
 -- =============================================
 -- COMMENTAIRES
 -- =============================================
 
-COMMENT ON COLUMN guardian_user.app_language IS 'Langue de l\'application (fr, en, es, de, it, pt)';
+COMMENT ON COLUMN guardian_user.app_language IS 'Langue de l''application (fr, en, es, de, it, pt)';
 COMMENT ON COLUMN guardian_user.push_notifications_enabled IS 'Activer/désactiver notifications push';
 COMMENT ON COLUMN guardian_user.fcm_token IS 'Firebase Cloud Messaging token (Android)';
 COMMENT ON COLUMN guardian_user.apns_token IS 'Apple Push Notification Service token (iOS)';
-COMMENT ON COLUMN guardian_user.last_app_access IS 'Dernière connexion à l\'app mobile';
-COMMENT ON COLUMN guardian_user.app_version IS 'Version de l\'app installée (ex: 1.0.5)';
-COMMENT ON COLUMN guardian_user.device_type IS 'Type d\'appareil (ios, android, web)';
+COMMENT ON COLUMN guardian_user.last_app_access IS 'Dernière connexion à l''app mobile';
+COMMENT ON COLUMN guardian_user.app_version IS 'Version de l''app installée (ex: 1.0.5)';
+COMMENT ON COLUMN guardian_user.device_type IS 'Type d''appareil (ios, android, web)';
 COMMENT ON COLUMN guardian_user.theme_preference IS 'Thème préféré (light, dark, auto)';
 
 -- =============================================

@@ -110,7 +110,7 @@ CREATE TABLE parent_notification (
   related_post_id UUID REFERENCES timeline_post(id) ON DELETE SET NULL,
   related_message_id UUID REFERENCES parent_message(id) ON DELETE SET NULL,
   related_invoice_id UUID REFERENCES invoice(id) ON DELETE SET NULL,
-  related_document_id UUID REFERENCES parent_document_share(id) ON DELETE SET NULL,
+  related_document_id UUID, -- REFERENCES parent_document_share(id) ON DELETE SET NULL (sera ajouté après création de la table),
 
   -- Statut lecture
   is_read BOOLEAN DEFAULT FALSE,
@@ -217,12 +217,19 @@ CHECK (
 -- =============================================
 
 COMMENT ON TABLE parent_message IS 'Messages privés entre parents et crèche (bidirectionnel)';
-COMMENT ON TABLE parent_notification IS 'Notifications push pour l\'application mobile parents';
+COMMENT ON TABLE parent_notification IS 'Notifications push pour l''application mobile parents';
 
 COMMENT ON COLUMN parent_message.sender_guardian_id IS 'Si rempli, message envoyé par un parent';
 COMMENT ON COLUMN parent_message.sender_employee_id IS 'Si rempli, message envoyé par un employé';
 COMMENT ON COLUMN parent_message.reply_to_message_id IS 'Si rempli, ce message est une réponse à un autre';
 
-COMMENT ON COLUMN parent_notification.action_url IS 'Deeplink pour navigation dans l\'app (ex: /portal/timeline/123)';
+COMMENT ON COLUMN parent_notification.action_url IS 'Deeplink pour navigation dans l''app (ex: /portal/timeline/123)';
 COMMENT ON COLUMN parent_notification.push_sent IS 'TRUE si notification push envoyée (FCM/APNS)';
-COMMENT ON COLUMN parent_notification.push_error IS 'Message d\'erreur si envoi push échoué';
+COMMENT ON COLUMN parent_notification.push_error IS 'Message d''erreur si envoi push échoué';
+
+-- =============================================
+-- NOTE: FOREIGN KEY À AJOUTER PLUS TARD
+-- =============================================
+-- Une fois que parent_document_share sera créée (migration 50), ajouter :
+-- ALTER TABLE parent_notification ADD CONSTRAINT fk_parent_notification_document
+--   FOREIGN KEY (related_document_id) REFERENCES parent_document_share(id) ON DELETE SET NULL;

@@ -24,7 +24,7 @@ ALTER TABLE caf_document ENABLE ROW LEVEL SECURITY;
 -- =============================================
 
 -- Fonction : Obtenir guardian_id de l'utilisateur connecté
-CREATE OR REPLACE FUNCTION auth.guardian_id()
+CREATE OR REPLACE FUNCTION public.guardian_id()
 RETURNS UUID AS $$
 BEGIN
   -- Récupérer guardian_id depuis guardian_user via auth.uid()
@@ -38,7 +38,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Fonction : Vérifier si l'utilisateur est un employé de la crèche
-CREATE OR REPLACE FUNCTION auth.is_employee_of_nursery(p_nursery_id UUID)
+CREATE OR REPLACE FUNCTION public.is_employee_of_nursery(p_nursery_id UUID)
 RETURNS BOOLEAN AS $$
 BEGIN
   RETURN EXISTS (
@@ -57,7 +57,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Fonction : Vérifier si l'utilisateur est owner de la crèche
-CREATE OR REPLACE FUNCTION auth.is_owner_of_nursery(p_nursery_id UUID)
+CREATE OR REPLACE FUNCTION public.is_owner_of_nursery(p_nursery_id UUID)
 RETURNS BOOLEAN AS $$
 BEGIN
   RETURN EXISTS (
@@ -74,27 +74,27 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Fonction : Vérifier si le guardian a accès à un enfant
-CREATE OR REPLACE FUNCTION auth.has_access_to_child(p_child_id UUID)
+CREATE OR REPLACE FUNCTION public.has_access_to_child(p_child_id UUID)
 RETURNS BOOLEAN AS $$
 BEGIN
   RETURN EXISTS (
     SELECT 1
     FROM guardian_child gc
     WHERE gc.child_id = p_child_id
-      AND gc.guardian_id = auth.guardian_id()
+      AND gc.guardian_id = public.guardian_id()
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Fonction : Vérifier si le guardian a accès à une famille
-CREATE OR REPLACE FUNCTION auth.has_access_to_family(p_family_id UUID)
+CREATE OR REPLACE FUNCTION public.has_access_to_family(p_family_id UUID)
 RETURNS BOOLEAN AS $$
 BEGIN
   RETURN EXISTS (
     SELECT 1
     FROM guardian g
     WHERE g.family_id = p_family_id
-      AND g.id = auth.guardian_id()
+      AND g.id = public.guardian_id()
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -110,7 +110,7 @@ FOR SELECT
 TO authenticated
 USING (
   is_visible_to_parents = TRUE
-  AND auth.has_access_to_child(child_id)
+  AND public.has_access_to_child(child_id)
 );
 
 -- Employees: Voir tous les posts de leur crèche
@@ -118,22 +118,22 @@ CREATE POLICY "Employees can view all posts in their nursery"
 ON timeline_post
 FOR SELECT
 TO authenticated
-USING (auth.is_employee_of_nursery(nursery_id));
+USING (public.is_employee_of_nursery(nursery_id));
 
 -- Employees: Créer/modifier posts
 CREATE POLICY "Employees can create posts"
 ON timeline_post
 FOR INSERT
 TO authenticated
-WITH CHECK (auth.is_employee_of_nursery(nursery_id));
+WITH CHECK (public.is_employee_of_nursery(nursery_id));
 
 CREATE POLICY "Employees can update their posts"
 ON timeline_post
 FOR UPDATE
 TO authenticated
 USING (
-  auth.is_employee_of_nursery(nursery_id)
-  AND (created_by_id = auth.uid() OR auth.is_owner_of_nursery(nursery_id))
+  public.is_employee_of_nursery(nursery_id)
+  AND (created_by_id = auth.uid() OR public.is_owner_of_nursery(nursery_id))
 );
 
 -- Employees: Supprimer posts
@@ -142,8 +142,8 @@ ON timeline_post
 FOR DELETE
 TO authenticated
 USING (
-  auth.is_employee_of_nursery(nursery_id)
-  AND (created_by_id = auth.uid() OR auth.is_owner_of_nursery(nursery_id))
+  public.is_employee_of_nursery(nursery_id)
+  AND (created_by_id = auth.uid() OR public.is_owner_of_nursery(nursery_id))
 );
 
 -- =============================================
@@ -159,7 +159,7 @@ USING (
   EXISTS (
     SELECT 1 FROM timeline_post tp
     WHERE tp.id = timeline_post_id
-      AND auth.has_access_to_child(tp.child_id)
+      AND public.has_access_to_child(tp.child_id)
   )
 );
 
@@ -169,11 +169,11 @@ ON parent_comment
 FOR INSERT
 TO authenticated
 WITH CHECK (
-  guardian_id = auth.guardian_id()
+  guardian_id = public.guardian_id()
   AND EXISTS (
     SELECT 1 FROM timeline_post tp
     WHERE tp.id = timeline_post_id
-      AND auth.has_access_to_child(tp.child_id)
+      AND public.has_access_to_child(tp.child_id)
       AND tp.is_visible_to_parents = TRUE
   )
 );
@@ -183,13 +183,13 @@ CREATE POLICY "Guardians can update their own comments"
 ON parent_comment
 FOR UPDATE
 TO authenticated
-USING (guardian_id = auth.guardian_id());
+USING (guardian_id = public.guardian_id());
 
 CREATE POLICY "Guardians can delete their own comments"
 ON parent_comment
 FOR DELETE
 TO authenticated
-USING (guardian_id = auth.guardian_id());
+USING (guardian_id = public.guardian_id());
 
 -- Employees: Voir/modérer tous les commentaires
 CREATE POLICY "Employees can view all comments in their nursery"
@@ -200,7 +200,7 @@ USING (
   EXISTS (
     SELECT 1 FROM timeline_post tp
     WHERE tp.id = timeline_post_id
-      AND auth.is_employee_of_nursery(tp.nursery_id)
+      AND public.is_employee_of_nursery(tp.nursery_id)
   )
 );
 
@@ -212,7 +212,7 @@ USING (
   EXISTS (
     SELECT 1 FROM timeline_post tp
     WHERE tp.id = timeline_post_id
-      AND auth.is_employee_of_nursery(tp.nursery_id)
+      AND public.is_employee_of_nursery(tp.nursery_id)
   )
 );
 
@@ -226,8 +226,8 @@ ON parent_message
 FOR SELECT
 TO authenticated
 USING (
-  (sender_guardian_id = auth.guardian_id() OR recipient_guardian_id = auth.guardian_id())
-  AND auth.has_access_to_family(family_id)
+  (sender_guardian_id = public.guardian_id() OR recipient_guardian_id = public.guardian_id())
+  AND public.has_access_to_family(family_id)
 );
 
 -- Guardians: Envoyer messages
@@ -236,8 +236,8 @@ ON parent_message
 FOR INSERT
 TO authenticated
 WITH CHECK (
-  sender_guardian_id = auth.guardian_id()
-  AND auth.has_access_to_family(family_id)
+  sender_guardian_id = public.guardian_id()
+  AND public.has_access_to_family(family_id)
 );
 
 -- Employees: Voir messages de leur crèche
@@ -245,7 +245,7 @@ CREATE POLICY "Employees can view messages in their nursery"
 ON parent_message
 FOR SELECT
 TO authenticated
-USING (auth.is_employee_of_nursery(nursery_id));
+USING (public.is_employee_of_nursery(nursery_id));
 
 -- Employees: Envoyer messages
 CREATE POLICY "Employees can send messages"
@@ -254,7 +254,7 @@ FOR INSERT
 TO authenticated
 WITH CHECK (
   sender_employee_id = auth.uid()
-  AND auth.is_employee_of_nursery(nursery_id)
+  AND public.is_employee_of_nursery(nursery_id)
 );
 
 -- Marquer comme lu
@@ -263,8 +263,8 @@ ON parent_message
 FOR UPDATE
 TO authenticated
 USING (
-  (recipient_guardian_id = auth.guardian_id() AND auth.has_access_to_family(family_id))
-  OR (recipient_employee_id = auth.uid() AND auth.is_employee_of_nursery(nursery_id))
+  (recipient_guardian_id = public.guardian_id() AND public.has_access_to_family(family_id))
+  OR (recipient_employee_id = auth.uid() AND public.is_employee_of_nursery(nursery_id))
 );
 
 -- =============================================
@@ -276,7 +276,7 @@ CREATE POLICY "Guardians can view their own notifications"
 ON parent_notification
 FOR SELECT
 TO authenticated
-USING (guardian_id = auth.guardian_id());
+USING (guardian_id = public.guardian_id());
 
 -- System/Employees: Créer notifications
 CREATE POLICY "Employees can create notifications"
@@ -301,7 +301,7 @@ CREATE POLICY "Guardians can update their notifications"
 ON parent_notification
 FOR UPDATE
 TO authenticated
-USING (guardian_id = auth.guardian_id());
+USING (guardian_id = public.guardian_id());
 
 -- =============================================
 -- RLS POLICIES: parent_document_share
@@ -316,10 +316,10 @@ USING (
   is_published = TRUE
   AND (
     share_scope = 'all_families'
-    OR (share_scope = 'specific_families' AND auth.guardian_id() IN (
+    OR (share_scope = 'specific_families' AND public.guardian_id() IN (
       SELECT g.id FROM guardian g WHERE g.family_id = ANY(family_ids)
     ))
-    OR (share_scope = 'specific_child' AND auth.has_access_to_child(child_id))
+    OR (share_scope = 'specific_child' AND public.has_access_to_child(child_id))
   )
 );
 
@@ -328,8 +328,8 @@ CREATE POLICY "Employees can manage documents in their nursery"
 ON parent_document_share
 FOR ALL
 TO authenticated
-USING (auth.is_employee_of_nursery(nursery_id))
-WITH CHECK (auth.is_employee_of_nursery(nursery_id));
+USING (public.is_employee_of_nursery(nursery_id))
+WITH CHECK (public.is_employee_of_nursery(nursery_id));
 
 -- =============================================
 -- RLS POLICIES: document_acknowledgment
@@ -340,8 +340,8 @@ CREATE POLICY "Guardians can manage their acknowledgments"
 ON document_acknowledgment
 FOR ALL
 TO authenticated
-USING (guardian_id = auth.guardian_id())
-WITH CHECK (guardian_id = auth.guardian_id());
+USING (guardian_id = public.guardian_id())
+WITH CHECK (guardian_id = public.guardian_id());
 
 -- Employees: Voir tous les acknowledgments
 CREATE POLICY "Employees can view all acknowledgments in their nursery"
@@ -352,7 +352,7 @@ USING (
   EXISTS (
     SELECT 1 FROM parent_document_share pds
     WHERE pds.id = document_share_id
-      AND auth.is_employee_of_nursery(pds.nursery_id)
+      AND public.is_employee_of_nursery(pds.nursery_id)
   )
 );
 
@@ -366,7 +366,7 @@ ON tax_certificate
 FOR SELECT
 TO authenticated
 USING (
-  auth.has_access_to_family(family_id)
+  public.has_access_to_family(family_id)
   AND status IN ('issued', 'sent', 'downloaded')
 );
 
@@ -375,8 +375,8 @@ CREATE POLICY "Employees can manage tax certificates in their nursery"
 ON tax_certificate
 FOR ALL
 TO authenticated
-USING (auth.is_employee_of_nursery(nursery_id))
-WITH CHECK (auth.is_employee_of_nursery(nursery_id));
+USING (public.is_employee_of_nursery(nursery_id))
+WITH CHECK (public.is_employee_of_nursery(nursery_id));
 
 -- =============================================
 -- RLS POLICIES: caf_document
@@ -388,7 +388,7 @@ ON caf_document
 FOR SELECT
 TO authenticated
 USING (
-  auth.has_access_to_family(family_id)
+  public.has_access_to_family(family_id)
   AND status IN ('sent_to_family', 'sent_to_caf', 'validated')
 );
 
@@ -397,8 +397,8 @@ CREATE POLICY "Employees can manage CAF documents in their nursery"
 ON caf_document
 FOR ALL
 TO authenticated
-USING (auth.is_employee_of_nursery(nursery_id))
-WITH CHECK (auth.is_employee_of_nursery(nursery_id));
+USING (public.is_employee_of_nursery(nursery_id))
+WITH CHECK (public.is_employee_of_nursery(nursery_id));
 
 -- =============================================
 -- COMMENTAIRES
