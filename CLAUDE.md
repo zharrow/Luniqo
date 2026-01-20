@@ -9,6 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 1. **CLAUDE.md** (this file) - Project architecture and technical guidelines
 2. **ROADMAP.md** - Current tasks, bugs, and roadmap
 3. **DESIGN-SYSTEM.md** - Complete design system, components catalog, and UI patterns
+4. **COMPONENT.md** - List of all reusable components
 
 ## Project Overview
 

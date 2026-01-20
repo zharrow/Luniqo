@@ -26,7 +26,9 @@ import {
   UserPlusIcon,
   DocumentTextIcon,
   CurrencyEuroIcon,
-  LockClosedIcon
+  LockClosedIcon,
+  SparklesIcon,
+  ChartPieIcon
 } from '@heroicons/react/24/outline'
 import {
   Sidebar,
@@ -127,6 +129,20 @@ const invoicingNavigation: NavItem[] = [
 ]
 
 // ============================================================================
+// MODULE PORTAIL PARENTS (39€/mois) - Communication avec les familles
+// ============================================================================
+const parentPortalNavigation: NavItem[] = [
+  { name: 'Portail Parents', href: '/owner/portal', icon: SparklesIcon, roles: ['Owner'], moduleColor: '#e8b4d4', moduleId: 'parent_portal' },
+]
+
+// ============================================================================
+// MODULE STATISTIQUES (29€/mois) - Analytics & Rapports
+// ============================================================================
+const analyticsNavigation: NavItem[] = [
+  { name: 'Statistiques', href: '/owner/analytics', icon: ChartPieIcon, roles: ['Owner'], moduleColor: '#9fa8da', moduleId: 'analytics' },
+]
+
+// ============================================================================
 // DEVELOPER NAVIGATION
 // ============================================================================
 const developerNavigation: NavItem[] = [
@@ -157,6 +173,8 @@ export function AppSidebar() {
   const filteredStaffNav = filterNav(staffNavigation)
   const filteredEnrollmentNav = filterNav(enrollmentNavigation)
   const filteredInvoicingNav = filterNav(invoicingNavigation)
+  const filteredParentPortalNav = filterNav(parentPortalNavigation)
+  const filteredAnalyticsNav = filterNav(analyticsNavigation)
   const filteredDeveloperNav = filterNav(developerNavigation)
 
   // Helper to render a navigation group
@@ -262,6 +280,12 @@ export function AppSidebar() {
 
         {/* INVOICING MODULE - Facturation (49€/mois) */}
         {renderNavGroup(filteredInvoicingNav, 'Facturation & Finances')}
+
+        {/* PARENT PORTAL MODULE - Portail Parents (39€/mois) */}
+        {renderNavGroup(filteredParentPortalNav, 'Portail Parents')}
+
+        {/* ANALYTICS MODULE - Statistiques (29€/mois) */}
+        {renderNavGroup(filteredAnalyticsNav, 'Statistiques & Rapports')}
 
         {/* DEVELOPER NAVIGATION */}
         {renderNavGroup(filteredDeveloperNav, 'Administration', role === 'Developer')}
