@@ -59,20 +59,16 @@ export default function MessagesPage() {
     if (!session?.user?.id || session.role !== 'Owner') return
 
     try {
-      // For demo, use a fixed developer ID
-      // In production, you'd have a list of developers to choose from
-      const developerId = prompt('Developer ID:')
-      if (!developerId) return
-
-      const conversation = await messagingService.getOrCreateConversation(
-        session.user.id,
-        developerId
+      // Automatically creates a conversation with an available developer
+      // No developer ID needed from the owner
+      const conversation = await messagingService.getOrCreateSupportConversation(
+        session.user.id
       )
 
       router.push(`/owner/messages/${conversation.id}`)
     } catch (err: any) {
       console.error('Error creating conversation:', err)
-      setError('Erreur lors de la création de la conversation')
+      setError(err.message || 'Erreur lors de la création de la conversation')
     }
   }
 

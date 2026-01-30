@@ -26,6 +26,10 @@ export interface Guardian {
   updated_at: string
 }
 
+export interface GuardianWithPortalStatus extends Guardian {
+  has_portal_account: boolean
+}
+
 export interface GuardianChild {
   guardian_id: string
   child_id: string
@@ -98,6 +102,38 @@ export class GuardianService {
 
     if (error) throw error
     return (data as any[]) || []
+  }
+
+  /**
+   * Get guardians for a family with portal registration status
+   */
+  async getGuardiansWithPortalStatus(familyId: string): Promise<GuardianWithPortalStatus[]> {
+    const supabase = this.getClient()
+
+    // Get all active guardians for this family
+    const { data: guardians, error: guardianError } = await supabase
+      .from('guardian')
+      .select('*')
+      .eq('family_id', familyId)
+      .eq('is_active', true)
+      .order('created_at', { ascending: true })
+
+    if (guardianError) throw guardianError
+    if (!guardians || guardians.length === 0) return []
+
+    // Get guardian_user records to check portal registration
+    const guardianIds = guardians.map((g: any) => g.id)
+    const { data: portalUsers } = await supabase
+      .from('guardian_user')
+      .select('guardian_id')
+      .in('guardian_id', guardianIds)
+
+    const registeredIds = new Set((portalUsers || []).map((u: any) => u.guardian_id))
+
+    return guardians.map((g: any) => ({
+      ...g,
+      has_portal_account: registeredIds.has(g.id),
+    }))
   }
 
   /**

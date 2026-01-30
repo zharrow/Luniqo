@@ -179,6 +179,10 @@ export class SessionsService {
    * Create a new session
    */
   async create(nurseryId: string, input: CreateSessionInput): Promise<CleaningSession> {
+    console.log('📝 SessionsService.create called')
+    console.log('   nurseryId:', nurseryId)
+    console.log('   input:', input)
+
     const { data, error } = await this.supabase
       .from('daily_cleaning_session')
       .insert({
@@ -190,7 +194,14 @@ export class SessionsService {
       .select()
       .single()
 
-    if (error) throw error
+    console.log('📊 Supabase response:')
+    console.log('   data:', data)
+    console.log('   error:', error)
+
+    if (error) {
+      console.error('❌ Insert error:', error)
+      throw error
+    }
     return data as any
   }
 
@@ -231,12 +242,16 @@ export class SessionsService {
     completed_tasks: number
     completion_percentage: number
   }> {
+    console.log('📊 getSessionStats called for sessionId:', sessionId)
+
     // Get session to find nursery_id and date
-    const { data: session } = await this.supabase
+    const { data: session, error: sessionError } = await this.supabase
       .from('daily_cleaning_session')
       .select('nursery_id, date')
       .eq('id', sessionId)
       .single()
+
+    console.log('   session:', session, 'error:', sessionError)
 
     if (!session) {
       return {
@@ -247,25 +262,44 @@ export class SessionsService {
     }
 
     // Count total assigned tasks for this nursery (active tasks)
-    const { data: assignedTasks } = await this.supabase
+    // Use a simpler query that doesn't rely on filtering through joins
+    const { data: rooms, error: roomsError } = await this.supabase
+      .from('room')
+      .select('id')
+      .eq('nursery_id', (session as any).nursery_id)
+
+    console.log('   rooms:', rooms, 'error:', roomsError)
+
+    const roomIds = (rooms as any[] || []).map((r: any) => r.id)
+
+    const { data: assignedTasks, error: tasksError } = await this.supabase
       .from('assigned_task')
-      .select('id, room:room_id!inner(nursery_id)')
-      .eq('room.nursery_id', (session as any).nursery_id)
+      .select('id')
+      .in('room_id', roomIds.length > 0 ? roomIds : ['00000000-0000-0000-0000-000000000000'])
       .eq('is_active', true)
+
+    console.log('   assignedTasks:', assignedTasks, 'error:', tasksError)
 
     const totalTaskIds = (assignedTasks as any[] || []).map((t: any) => t.id)
     const total = totalTaskIds.length
 
     // Count completed tasks (status = FAIT) for these assigned tasks in this session
-    const { count: completedCount } = await this.supabase
-      .from('task_completion')
-      .select('*', { count: 'exact', head: true })
-      .eq('session_id', sessionId)
-      .eq('status', 'FAIT')
-      .in('assigned_task_id', totalTaskIds)
+    let completed = 0
+    if (totalTaskIds.length > 0) {
+      const { count: completedCount, error: countError } = await this.supabase
+        .from('task_completion')
+        .select('*', { count: 'exact', head: true })
+        .eq('session_id', sessionId)
+        .eq('status', 'FAIT')
+        .in('assigned_task_id', totalTaskIds)
 
-    const completed = completedCount || 0
+      console.log('   completedCount:', completedCount, 'error:', countError)
+      completed = completedCount || 0
+    }
+
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 0
+
+    console.log('   ✅ Stats:', { total, completed, percentage })
 
     return {
       total_tasks: total,

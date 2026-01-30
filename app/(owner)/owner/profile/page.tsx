@@ -16,8 +16,19 @@ import {
   ShieldCheckIcon,
   CheckCircleIcon,
   XCircleIcon,
-  PencilIcon
+  PencilIcon,
+  ExclamationTriangleIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { deleteOwnerAccount } from '@/lib/actions/account.actions'
 import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
 interface EnterpriseData {
@@ -26,6 +37,11 @@ interface EnterpriseData {
   legal_form: string | null
   siret: string | null
   logo_url: string | null
+  address: string | null
+  city: string | null
+  postal_code: string | null
+  phone: string | null
+  email: string | null
 }
 
 interface OwnerData {
@@ -37,7 +53,7 @@ interface OwnerData {
 }
 
 export default function ProfilPage() {
-  const { session, isLoading, role, refreshSession } = useAuth()
+  const { session, isLoading, role, refreshSession, logout } = useAuth()
   const router = useRouter()
   const [ownerData, setOwnerData] = useState<OwnerData | null>(null)
   const [enterpriseData, setEnterpriseData] = useState<EnterpriseData | null>(null)
@@ -51,8 +67,16 @@ export default function ProfilPage() {
     avatar: '',
     enterprise_name: '',
     legal_form: '',
-    siret: ''
+    siret: '',
+    address: '',
+    city: '',
+    postal_code: '',
+    phone: '',
+    email: ''
   })
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [deleteConfirmation, setDeleteConfirmation] = useState('')
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     if (!isLoading) {
@@ -101,7 +125,12 @@ export default function ProfilPage() {
         ...prev,
         enterprise_name: (enterprise as any).name || '',
         legal_form: (enterprise as any).legal_form || '',
-        siret: (enterprise as any).siret || ''
+        siret: (enterprise as any).siret || '',
+        address: (enterprise as any).address || '',
+        city: (enterprise as any).city || '',
+        postal_code: (enterprise as any).postal_code || '',
+        phone: (enterprise as any).phone || '',
+        email: (enterprise as any).email || ''
       }))
     }
   }
@@ -135,7 +164,12 @@ export default function ProfilPage() {
           .update({
             name: formData.enterprise_name,
             legal_form: formData.legal_form || null,
-            siret: formData.siret || null
+            siret: formData.siret || null,
+            address: formData.address || null,
+            city: formData.city || null,
+            postal_code: formData.postal_code || null,
+            phone: formData.phone || null,
+            email: formData.email || null
           })
           .eq('id', enterpriseData.id)
 
@@ -172,7 +206,12 @@ export default function ProfilPage() {
         ...prev,
         enterprise_name: enterpriseData.name || '',
         legal_form: enterpriseData.legal_form || '',
-        siret: enterpriseData.siret || ''
+        siret: enterpriseData.siret || '',
+        address: enterpriseData.address || '',
+        city: enterpriseData.city || '',
+        postal_code: enterpriseData.postal_code || '',
+        phone: enterpriseData.phone || '',
+        email: enterpriseData.email || ''
       }))
     }
     setIsEditing(false)
@@ -183,6 +222,35 @@ export default function ProfilPage() {
   const getInitials = (firstName?: string, lastName?: string) => {
     return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase() || 'OW'
   }
+
+  const handleDeleteAccount = async () => {
+    if (!session?.user?.id) return
+
+    setIsDeleting(true)
+    setError(null)
+
+    try {
+      const result = await deleteOwnerAccount(session.user.id)
+
+      if (!result.success) {
+        setError(result.error || 'Erreur lors de la suppression du compte')
+        setIsDeleting(false)
+        setShowDeleteDialog(false)
+        return
+      }
+
+      // Déconnecter et rediriger vers la page de connexion
+      await logout()
+      router.push('/login?deleted=true')
+    } catch (err: any) {
+      setError(err.message || 'Une erreur est survenue')
+      setIsDeleting(false)
+      setShowDeleteDialog(false)
+    }
+  }
+
+  const confirmationText = 'SUPPRIMER'
+  const isDeleteConfirmed = deleteConfirmation === confirmationText
 
   if (isLoading || !session) {
     return (
@@ -475,6 +543,106 @@ export default function ProfilPage() {
                   )}
                 </div>
               </div>
+
+              {/* Séparateur */}
+              <div className="h-px bg-gradient-to-r from-transparent via-purple-200 to-transparent my-4" />
+
+              {/* Adresse du siège social */}
+              <div className="space-y-2">
+                <label htmlFor="address" className="text-sm font-medium text-gray-700">
+                  Adresse du siège social
+                </label>
+                {isEditing ? (
+                  <Input
+                    id="address"
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    placeholder="ex: 123 Rue de la République"
+                    className="rounded-xl border-gray-200 focus:border-purple-300 focus:ring-purple-200"
+                  />
+                ) : (
+                  <p className="text-lg font-medium text-gray-900">{enterpriseData.address || '-'}</p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label htmlFor="city" className="text-sm font-medium text-gray-700">
+                    Ville
+                  </label>
+                  {isEditing ? (
+                    <Input
+                      id="city"
+                      value={formData.city}
+                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                      placeholder="ex: Paris"
+                      className="rounded-xl border-gray-200 focus:border-purple-300 focus:ring-purple-200"
+                    />
+                  ) : (
+                    <p className="text-lg font-medium text-gray-900">{enterpriseData.city || '-'}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="postal_code" className="text-sm font-medium text-gray-700">
+                    Code postal
+                  </label>
+                  {isEditing ? (
+                    <Input
+                      id="postal_code"
+                      value={formData.postal_code}
+                      onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
+                      placeholder="ex: 75001"
+                      maxLength={5}
+                      className="rounded-xl border-gray-200 focus:border-purple-300 focus:ring-purple-200"
+                    />
+                  ) : (
+                    <p className="text-lg font-medium text-gray-900">{enterpriseData.postal_code || '-'}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Séparateur */}
+              <div className="h-px bg-gradient-to-r from-transparent via-purple-200 to-transparent my-4" />
+
+              {/* Contact */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label htmlFor="phone" className="text-sm font-medium text-gray-700">
+                    Téléphone
+                  </label>
+                  {isEditing ? (
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      placeholder="ex: 01 23 45 67 89"
+                      className="rounded-xl border-gray-200 focus:border-purple-300 focus:ring-purple-200"
+                    />
+                  ) : (
+                    <p className="text-lg font-medium text-gray-900">{enterpriseData.phone || '-'}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="email" className="text-sm font-medium text-gray-700">
+                    Email de contact
+                  </label>
+                  {isEditing ? (
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="ex: contact@entreprise.fr"
+                      className="rounded-xl border-gray-200 focus:border-purple-300 focus:ring-purple-200"
+                    />
+                  ) : (
+                    <p className="text-lg font-medium text-gray-900">{enterpriseData.email || '-'}</p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -540,6 +708,101 @@ export default function ProfilPage() {
             </p>
           </div>
         </div>
+
+        {/* Section Zone de danger - Style organique */}
+        <div
+          className="relative rounded-3xl p-6 bg-white overflow-hidden hover:shadow-lg transition-all duration-300"
+          style={{
+            border: '1px solid #f8717150',
+            background: 'linear-gradient(to bottom right, #fef2f2, white)'
+          }}
+        >
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div
+                className="inline-flex items-center justify-center w-10 h-10 rounded-2xl"
+                style={{ background: 'linear-gradient(to bottom right, #f871711A, #f871710D)' }}
+              >
+                <ExclamationTriangleIcon className="w-5 h-5 text-red-600" strokeWidth={1.5} />
+              </div>
+              <h3 className="text-xl font-bold text-red-900">Zone de danger</h3>
+            </div>
+            <p className="text-sm text-red-700/70 ml-12">
+              Actions irréversibles sur votre compte
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="p-4 rounded-2xl bg-red-50/50 border border-red-100">
+              <h4 className="font-semibold text-red-900 mb-2">Supprimer mon compte</h4>
+              <p className="text-sm text-red-700/80 mb-4">
+                Cette action est irréversible. Toutes vos données seront définitivement supprimées :
+              </p>
+              <ul className="text-sm text-red-700/80 space-y-1 mb-4 ml-4 list-disc">
+                <li>Votre profil et informations personnelles</li>
+                <li>Votre entreprise et toutes ses crèches</li>
+                <li>Tous les employés, salles, sessions et données HACCP</li>
+                <li>Tous les messages et notifications</li>
+              </ul>
+              <Button
+                variant="destructive"
+                onClick={() => setShowDeleteDialog(true)}
+                className="gap-2 bg-red-600 hover:bg-red-700"
+              >
+                <TrashIcon className="w-4 h-4" />
+                Supprimer mon compte
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Dialog de confirmation de suppression */}
+        <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-red-900">
+                <ExclamationTriangleIcon className="w-5 h-5 text-red-600" />
+                Confirmer la suppression
+              </DialogTitle>
+              <DialogDescription className="text-left">
+                Cette action est définitive et irréversible. Toutes vos données seront supprimées.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="p-3 rounded-xl bg-red-50 border border-red-100">
+                <p className="text-sm text-red-800">
+                  Pour confirmer, tapez <strong>{confirmationText}</strong> ci-dessous :
+                </p>
+              </div>
+              <Input
+                value={deleteConfirmation}
+                onChange={(e) => setDeleteConfirmation(e.target.value)}
+                placeholder={confirmationText}
+                className="border-red-200 focus:border-red-300 focus:ring-red-200"
+              />
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowDeleteDialog(false)
+                  setDeleteConfirmation('')
+                }}
+                disabled={isDeleting}
+              >
+                Annuler
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteAccount}
+                disabled={!isDeleteConfirmed || isDeleting}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {isDeleting ? 'Suppression...' : 'Supprimer définitivement'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )

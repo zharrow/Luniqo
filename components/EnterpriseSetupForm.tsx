@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/contexts/AuthContext'
 import { NurseryInsert } from '@/types/database.types'
+import { modulesService } from '@/lib/services/modules.service'
 
 interface EnterpriseSetupFormProps {
   ownerId: string
@@ -28,9 +29,51 @@ export default function EnterpriseSetupForm({ ownerId }: EnterpriseSetupFormProp
   })
   const [createdEnterpriseId, setCreatedEnterpriseId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isCheckingEnterprise, setIsCheckingEnterprise] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const { refreshSession } = useAuth()
+
+  // Check if enterprise already exists on mount (handles page refresh during step 2)
+  useEffect(() => {
+    async function checkExistingEnterprise() {
+      try {
+        const supabase = createClient()
+        const { data: existingEnterprise } = await supabase
+          .from('enterprise')
+          .select('id, name')
+          .eq('owner_id', ownerId)
+          .single()
+
+        if (existingEnterprise) {
+          // Enterprise exists - check if it has a nursery
+          const { data: existingNursery } = await supabase
+            .from('nursery')
+            .select('id')
+            .eq('enterprise_id', (existingEnterprise as any).id)
+            .limit(1)
+            .maybeSingle()
+
+          if (existingNursery) {
+            // Both exist - redirect to dashboard
+            router.push('/owner/dashboard')
+          } else {
+            // Enterprise exists but no nursery - go to step 2
+            setCreatedEnterpriseId((existingEnterprise as any).id)
+            setEnterpriseData(prev => ({ ...prev, name: (existingEnterprise as any).name }))
+            setStep(2)
+          }
+        }
+      } catch (err) {
+        // No enterprise found - stay on step 1
+        console.log('No existing enterprise found')
+      } finally {
+        setIsCheckingEnterprise(false)
+      }
+    }
+
+    checkExistingEnterprise()
+  }, [ownerId, router])
 
   const handleEnterpriseSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -40,15 +83,17 @@ export default function EnterpriseSetupForm({ ownerId }: EnterpriseSetupFormProp
     try {
       const supabase = createClient()
 
-      // Vérifier qu'aucune entreprise n'existe déjà pour cet owner
+      // Vérifier si une entreprise existe déjà pour cet owner
       const { data: existingEnterprise } = await supabase
         .from('enterprise')
         .select('id')
         .eq('owner_id', ownerId)
-        .single()
+        .maybeSingle()
 
       if (existingEnterprise) {
-        setError('Une entreprise existe déjà pour ce compte.')
+        // Enterprise already exists - just go to step 2
+        setCreatedEnterpriseId((existingEnterprise as any).id)
+        setStep(2)
         setIsLoading(false)
         return
       }
@@ -111,15 +156,30 @@ export default function EnterpriseSetupForm({ ownerId }: EnterpriseSetupFormProp
         is_active: true
       }
 
-      const { error: nurseryError } = await supabase
+      const { data: newNursery, error: nurseryError } = await supabase
         .from('nursery')
         .insert(nurseryInsert as any)
+        .select('id')
+        .single()
 
       if (nurseryError) {
         console.error('Error creating nursery:', nurseryError)
         setError('Erreur lors de la création de la crèche. Veuillez réessayer.')
         setIsLoading(false)
         return
+      }
+
+      // Activer le module de base pour la nouvelle crèche
+      try {
+        await modulesService.grantNurseryModuleAccess(
+          (newNursery as any).id,
+          'base',
+          ownerId,
+          'Module de base activé automatiquement à la création'
+        )
+      } catch (moduleError) {
+        console.error('Error activating base module:', moduleError)
+        // Ne pas bloquer si l'activation du module échoue
       }
 
       // Rafraîchir la session pour inclure l'entreprise
@@ -132,6 +192,18 @@ export default function EnterpriseSetupForm({ ownerId }: EnterpriseSetupFormProp
       setError('Une erreur est survenue. Veuillez réessayer.')
       setIsLoading(false)
     }
+  }
+
+  // Show loading while checking for existing enterprise
+  if (isCheckingEnterprise) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10 p-4">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
+          <p className="mt-4 text-gray-600">Vérification en cours...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -371,23 +443,13 @@ export default function EnterpriseSetupForm({ ownerId }: EnterpriseSetupFormProp
                 />
               </div>
 
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setStep(1)}
-                  disabled={isLoading}
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                >
-                  ← Retour
-                </button>
-                <button
-                  type="submit"
-                  disabled={isLoading || !nurseryData.name}
-                  className="flex-1 btn-primary py-3 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isLoading ? 'Création en cours...' : 'Terminer'}
-                </button>
-              </div>
+              <button
+                type="submit"
+                disabled={isLoading || !nurseryData.name}
+                className="w-full btn-primary py-3 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? 'Création en cours...' : 'Terminer la configuration'}
+              </button>
             </form>
           </>
         )}

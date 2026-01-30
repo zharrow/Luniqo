@@ -2,18 +2,19 @@
 
 import { useEffect, useState } from 'react'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
+import { useNursery } from '@/lib/contexts/NurseryContext'
 import { nurseryService, type NurseryStats } from '@/lib/services/nursery.service'
 import type { Nursery } from '@/types/database.types'
 import {
   PlusIcon,
   PencilIcon,
-  TrashIcon,
   BuildingOffice2Icon,
   UserGroupIcon,
   HomeIcon,
   UserIcon,
   StarIcon,
-  CheckCircleIcon
+  NoSymbolIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline'
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid'
 import { Button } from '@/components/ui/button'
@@ -40,12 +41,13 @@ interface NurseryFormData {
 
 export default function NurseriesPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
+  const { refreshNurseries: refreshNurseryContext } = useNursery()
   const [nurseries, setNurseries] = useState<NurseryWithStats[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingNursery, setEditingNursery] = useState<Nursery | null>(null)
-  const [nurseryToDelete, setNurseryToDelete] = useState<Nursery | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
+  const [nurseryToDeactivate, setNurseryToDeactivate] = useState<Nursery | null>(null)
+  const [isDeactivating, setIsDeactivating] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState<NurseryFormData>({
@@ -184,6 +186,8 @@ export default function NurseriesPage() {
 
       setShowModal(false)
       await loadNurseries()
+      // Refresh context to update header selector
+      await refreshNurseryContext()
     } catch (error) {
       console.error('Error saving nursery:', error)
       setError('Erreur lors de la sauvegarde')
@@ -192,25 +196,41 @@ export default function NurseriesPage() {
     }
   }
 
-  function openDeleteDialog(nursery: Nursery) {
-    setNurseryToDelete(nursery)
+  function openDeactivateDialog(nursery: Nursery) {
+    setNurseryToDeactivate(nursery)
   }
 
-  async function handleConfirmDelete() {
-    if (!session?.enterprise?.id || !nurseryToDelete) return
+  async function handleConfirmDeactivate() {
+    if (!session?.enterprise?.id || !nurseryToDeactivate) return
 
     try {
-      setIsDeleting(true)
+      setIsDeactivating(true)
       setError(null)
-      await nurseryService.delete(nurseryToDelete.id, session.enterprise.id)
+      await nurseryService.deactivate(nurseryToDeactivate.id, session.enterprise.id)
       await loadNurseries()
+      // Refresh context to update header selector
+      await refreshNurseryContext()
     } catch (error: any) {
-      console.error('Error deleting nursery:', error)
-      setError(error.message || 'Erreur lors de la suppression')
-      alert(error.message || 'Erreur lors de la suppression')
+      console.error('Error deactivating nursery:', error)
+      setError(error.message || 'Erreur lors de la désactivation')
     } finally {
-      setIsDeleting(false)
-      setNurseryToDelete(null)
+      setIsDeactivating(false)
+      setNurseryToDeactivate(null)
+    }
+  }
+
+  async function handleReactivate(nursery: Nursery) {
+    if (!session?.enterprise?.id) return
+
+    try {
+      setError(null)
+      await nurseryService.reactivate(nursery.id, session.enterprise.id)
+      await loadNurseries()
+      // Refresh context to update header selector
+      await refreshNurseryContext()
+    } catch (error: any) {
+      console.error('Error reactivating nursery:', error)
+      setError(error.message || 'Erreur lors de la réactivation')
     }
   }
 
@@ -221,6 +241,8 @@ export default function NurseriesPage() {
       setError(null)
       await nurseryService.setDefault(nursery.id, session.enterprise.id)
       await loadNurseries()
+      // Refresh context to update header selector
+      await refreshNurseryContext()
     } catch (error) {
       console.error('Error setting default nursery:', error)
       setError('Erreur lors de la modification')
@@ -383,6 +405,20 @@ export default function NurseriesPage() {
                       </div>
 
                       <div className="shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        {/* Réactiver - only for deactivated nurseries */}
+                        {!nursery.is_active && (
+                          <button
+                            className="inline-flex items-center justify-center size-8 rounded-lg hover:bg-green-50 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleReactivate(nursery)
+                            }}
+                            title="Réactiver"
+                          >
+                            <ArrowPathIcon className="w-4 h-4 text-green-600" />
+                          </button>
+                        )}
+                        {/* Définir par défaut - only for active non-default nurseries */}
                         {!nursery.is_default && nursery.is_active && (
                           <button
                             className="inline-flex items-center justify-center size-8 rounded-lg hover:bg-yellow-50 transition-colors"
@@ -395,6 +431,7 @@ export default function NurseriesPage() {
                             <StarIcon className="w-4 h-4 text-yellow-600" />
                           </button>
                         )}
+                        {/* Modifier */}
                         <button
                           className="inline-flex items-center justify-center size-8 rounded-lg hover:bg-gray-100 transition-colors"
                           onClick={(e) => {
@@ -405,16 +442,19 @@ export default function NurseriesPage() {
                         >
                           <PencilIcon className="w-4 h-4 text-gray-600" />
                         </button>
-                        <button
-                          className="inline-flex items-center justify-center size-8 rounded-lg hover:bg-red-50 transition-colors"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            openDeleteDialog(nursery)
-                          }}
-                          title="Désactiver"
-                        >
-                          <TrashIcon className="w-4 h-4 text-red-600" />
-                        </button>
+                        {/* Désactiver - only for active non-default nurseries */}
+                        {nursery.is_active && !nursery.is_default && (
+                          <button
+                            className="inline-flex items-center justify-center size-8 rounded-lg hover:bg-orange-50 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              openDeactivateDialog(nursery)
+                            }}
+                            title="Désactiver"
+                          >
+                            <NoSymbolIcon className="w-4 h-4 text-orange-600" />
+                          </button>
+                        )}
                       </div>
                     </div>
 
@@ -619,15 +659,15 @@ export default function NurseriesPage() {
           </div>
         </FormDialog>
 
-        {/* Delete Confirmation Dialog */}
+        {/* Deactivate Confirmation Dialog */}
         <DeleteConfirmationDialog
-          isOpen={!!nurseryToDelete}
-          onClose={() => setNurseryToDelete(null)}
-          onConfirm={handleConfirmDelete}
-          itemName={nurseryToDelete?.name}
-          isDeleting={isDeleting}
+          isOpen={!!nurseryToDeactivate}
+          onClose={() => setNurseryToDeactivate(null)}
+          onConfirm={handleConfirmDeactivate}
+          itemName={nurseryToDeactivate?.name}
+          isDeleting={isDeactivating}
           title="Désactiver cette crèche ?"
-          description="Cette crèche sera désactivée et ne sera plus visible dans la liste. Les données seront conservées."
+          description="Cette crèche sera désactivée et ne sera plus visible dans la sélection. Les données seront conservées et vous pourrez la réactiver à tout moment."
         />
       </div>
     </div>

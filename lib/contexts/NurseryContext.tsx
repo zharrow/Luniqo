@@ -11,6 +11,8 @@ interface NurseryContextType {
   setSelectedNursery: (nursery: Nursery) => void
   isLoading: boolean
   refreshNurseries: () => Promise<void>
+  accessibleModules: string[]
+  isLoadingModules: boolean
 }
 
 const NurseryContext = createContext<NurseryContextType | undefined>(undefined)
@@ -38,6 +40,8 @@ export function NurseryProvider({ children }: { children: React.ReactNode }) {
 
   const [nurseries, setNurseries] = useState<Nursery[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [accessibleModules, setAccessibleModules] = useState<string[]>([])
+  const [isLoadingModules, setIsLoadingModules] = useState(false)
   const [supabase] = useState(() => createClient())
   const { session } = useAuth()
   const hasInitialized = useRef(false)
@@ -98,6 +102,35 @@ export function NurseryProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  // Load accessible modules for a nursery
+  const loadModules = async (nurseryId: string) => {
+    try {
+      setIsLoadingModules(true)
+      console.log('🔄 Loading modules for nursery:', nurseryId)
+
+      const { data, error } = await supabase
+        .from('nursery_module_access')
+        .select('module_id')
+        .eq('nursery_id', nurseryId)
+        .eq('is_active', true)
+
+      if (error) {
+        console.error('Failed to load nursery modules:', error)
+        setAccessibleModules([])
+        return
+      }
+
+      const modules = (data || []).map((row: any) => row.module_id)
+      setAccessibleModules(modules)
+      console.log('✅ Loaded', modules.length, 'modules:', modules)
+    } catch (error) {
+      console.error('Failed to load nursery modules:', error)
+      setAccessibleModules([])
+    } finally {
+      setIsLoadingModules(false)
+    }
+  }
+
   // Refresh nurseries (useful after creating a new nursery)
   const refreshNurseries = async () => {
     if (session?.enterprise?.id) {
@@ -111,6 +144,7 @@ export function NurseryProvider({ children }: { children: React.ReactNode }) {
     if (!session?.enterprise?.id) {
       setNurseries([])
       setSelectedNurseryState(null)
+      setAccessibleModules([])
       setIsLoading(false)
       return
     }
@@ -124,12 +158,23 @@ export function NurseryProvider({ children }: { children: React.ReactNode }) {
     loadNurseries(session.enterprise.id)
   }, [session?.enterprise?.id])
 
+  // Load modules when selected nursery changes
+  useEffect(() => {
+    if (selectedNursery?.id) {
+      loadModules(selectedNursery.id)
+    } else {
+      setAccessibleModules([])
+    }
+  }, [selectedNursery?.id])
+
   const value: NurseryContextType = {
     selectedNursery,
     nurseries,
     setSelectedNursery,
     isLoading,
-    refreshNurseries
+    refreshNurseries,
+    accessibleModules,
+    isLoadingModules
   }
 
   return (

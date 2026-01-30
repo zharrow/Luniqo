@@ -427,9 +427,21 @@ export class UsersService {
 
   /**
    * Hard delete an employee (permanent deletion)
-   * WARNING: This will delete all associated data (room access, tasks, etc.)
+   * WARNING: This will delete all associated data including:
+   * - Room access assignments (employee_room_access)
+   * - Nursery access assignments (employee_nursery_access)
+   * - Task completions and other related records (via DB cascades)
+   *
+   * Note: While employee_nursery_access has ON DELETE CASCADE from profiles,
+   * we explicitly delete it here for clarity and to ensure clean deletion order.
    */
   async hardDeleteEmployee(id: string, enterpriseId: string): Promise<void> {
+    // Delete nursery access assignments
+    await this.supabase
+      .from('employee_nursery_access')
+      .delete()
+      .eq('employee_id', id)
+
     // Delete room access assignments
     await this.supabase
       .from('employee_room_access')
@@ -550,6 +562,22 @@ export class UsersService {
   // ==========================================================================
   // DEVELOPER METHODS (profiles where role='Developer')
   // ==========================================================================
+
+  /**
+   * Get all developers (active only)
+   * Used for support conversation auto-assignment
+   */
+  async getDevelopers(): Promise<Profile[]> {
+    const { data, error } = await this.supabase
+      .from('profiles')
+      .select('*')
+      .eq('role', 'Developer')
+      .eq('is_active', true)
+      .order('last_name', { ascending: true })
+
+    if (error) throw error
+    return data || []
+  }
 
   /**
    * Get developer by ID

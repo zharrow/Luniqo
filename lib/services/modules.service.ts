@@ -41,12 +41,20 @@ export interface NurseryModuleAccessRequest {
   updated_at: string
 }
 
+export interface ModuleAccessInfo {
+  module_id: string
+  granted_by_id: string | null  // NULL = Stripe, non-NULL = Manual
+  expires_at: string | null
+  notes: string | null
+}
+
 export interface NurseryWithModules {
   id: string
   name: string
   enterprise_id: string
   is_active: boolean
-  modules: string[]
+  modules: string[]  // For backwards compatibility
+  moduleDetails: ModuleAccessInfo[]  // Detailed access info
 }
 
 export interface EnterpriseWithNurseries {
@@ -522,10 +530,10 @@ class ModulesService {
       throw new Error(`Failed to fetch nurseries: ${nursError.message}`)
     }
 
-    // Get all nursery module access
+    // Get all nursery module access with details
     const { data: moduleAccess, error: accessError } = await supabase
       .from('nursery_module_access')
-      .select('nursery_id, module_id')
+      .select('nursery_id, module_id, granted_by_id, expires_at, notes')
       .eq('is_active', true)
 
     if (accessError) {
@@ -533,13 +541,21 @@ class ModulesService {
       throw new Error(`Failed to fetch module access: ${accessError.message}`)
     }
 
-    // Build module access map by nursery
+    // Build module access maps by nursery
     const modulesByNursery: Record<string, string[]> = {}
+    const moduleDetailsByNursery: Record<string, ModuleAccessInfo[]> = {}
     ;(moduleAccess || []).forEach((access: any) => {
       if (!modulesByNursery[access.nursery_id]) {
         modulesByNursery[access.nursery_id] = []
+        moduleDetailsByNursery[access.nursery_id] = []
       }
       modulesByNursery[access.nursery_id].push(access.module_id)
+      moduleDetailsByNursery[access.nursery_id].push({
+        module_id: access.module_id,
+        granted_by_id: access.granted_by_id,
+        expires_at: access.expires_at,
+        notes: access.notes
+      })
     })
 
     // Build result
@@ -554,7 +570,8 @@ class ModulesService {
           name: n.name,
           enterprise_id: n.enterprise_id,
           is_active: n.is_active,
-          modules: modulesByNursery[n.id] || []
+          modules: modulesByNursery[n.id] || [],
+          moduleDetails: moduleDetailsByNursery[n.id] || []
         }))
 
       return {
@@ -616,7 +633,8 @@ class ModulesService {
     nurseryId: string,
     moduleId: string,
     grantedById: string,
-    notes?: string
+    notes?: string,
+    expiresAt?: string | null
   ): Promise<void> {
     const supabase = createClient()
 
@@ -627,7 +645,8 @@ class ModulesService {
         module_id: moduleId,
         granted_by_id: grantedById,
         is_active: true,
-        notes: notes || null
+        notes: notes || null,
+        expires_at: expiresAt || null
       } as any, {
         onConflict: 'nursery_id,module_id',
       })

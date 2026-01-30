@@ -3,13 +3,16 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/contexts/AuthContext'
-import { modulesService, type EnterpriseWithNurseries, type NurseryWithModules } from '@/lib/services/modules.service'
+import { modulesService, type EnterpriseWithNurseries, type NurseryWithModules, type ModuleAccessInfo } from '@/lib/services/modules.service'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import {
   CheckCircleIcon,
   XCircleIcon,
@@ -19,7 +22,10 @@ import {
   BuildingOffice2Icon,
   ChevronDownIcon,
   ChevronRightIcon,
-  HomeIcon
+  HomeIcon,
+  SparklesIcon,
+  CreditCardIcon,
+  CalendarIcon
 } from '@heroicons/react/24/outline'
 import type { Module, ModuleAccessRequest } from '@/types/database.types'
 
@@ -35,6 +41,13 @@ export default function PermissionsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+
+  // Modal state for manual access
+  const [showManualAccessModal, setShowManualAccessModal] = useState(false)
+  const [modalNurseryId, setModalNurseryId] = useState<string | null>(null)
+  const [modalModuleId, setModalModuleId] = useState<string | null>(null)
+  const [expiresAt, setExpiresAt] = useState<string>('')
+  const [accessNotes, setAccessNotes] = useState<string>('')
 
   useEffect(() => {
     if (!authLoading && session) {
@@ -78,10 +91,43 @@ export default function PermissionsPage() {
       if (currentlyHasAccess) {
         await modulesService.revokeNurseryModuleAccess(nurseryId, moduleId)
         setSuccess('Accès révoqué avec succès')
+
+        // Refresh data
+        await loadData()
+
+        // Clear success message after 3 seconds
+        setTimeout(() => setSuccess(null), 3000)
       } else {
-        await modulesService.grantNurseryModuleAccess(nurseryId, moduleId, session.user.id)
-        setSuccess('Accès accordé avec succès')
+        // Open modal for manual access configuration
+        setModalNurseryId(nurseryId)
+        setModalModuleId(moduleId)
+        setExpiresAt('')
+        setAccessNotes('Offert pour démo')
+        setShowManualAccessModal(true)
       }
+    } catch (err: any) {
+      console.error('Error toggling module access:', err)
+      setError(err.message || 'Erreur lors de la modification des permissions')
+    }
+  }
+
+  async function handleGrantManualAccess() {
+    if (!session?.user?.id || !modalNurseryId || !modalModuleId) return
+
+    try {
+      setError(null)
+      setSuccess(null)
+
+      await modulesService.grantNurseryModuleAccess(
+        modalNurseryId,
+        modalModuleId,
+        session.user.id,
+        accessNotes || undefined,
+        expiresAt || null
+      )
+
+      setSuccess('Accès manuel accordé avec succès')
+      setShowManualAccessModal(false)
 
       // Refresh data
       await loadData()
@@ -89,8 +135,8 @@ export default function PermissionsPage() {
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(null), 3000)
     } catch (err: any) {
-      console.error('Error toggling module access:', err)
-      setError(err.message || 'Erreur lors de la modification des permissions')
+      console.error('Error granting manual access:', err)
+      setError(err.message || 'Erreur lors de l\'octroi de l\'accès')
     }
   }
 
@@ -139,17 +185,30 @@ export default function PermissionsPage() {
     return enterprise.nurseries.reduce((total, nursery) => total + nursery.modules.length, 0)
   }
 
-  // Calculate monthly revenue for a nursery
+  // Calculate monthly revenue for a nursery (ONLY Stripe-managed modules)
   function getNurseryMonthlyRevenue(nursery: NurseryWithModules): number {
-    return nursery.modules.reduce((total, moduleId) => {
-      const module = modules.find(m => m.id === moduleId)
+    return nursery.moduleDetails.reduce((total, accessInfo) => {
+      // Only count Stripe-managed access (granted_by_id = null)
+      if (accessInfo.granted_by_id !== null) return total
+
+      const module = modules.find(m => m.id === accessInfo.module_id)
       return total + (module?.price_monthly || 0)
     }, 0)
+  }
+
+  // Calculate manual (free) modules count for a nursery
+  function getNurseryManualModulesCount(nursery: NurseryWithModules): number {
+    return nursery.moduleDetails.filter(access => access.granted_by_id !== null).length
   }
 
   // Calculate monthly revenue for an enterprise (sum of all nurseries)
   function getEnterpriseMonthlyRevenue(enterprise: EnterpriseWithNurseries): number {
     return enterprise.nurseries.reduce((total, nursery) => total + getNurseryMonthlyRevenue(nursery), 0)
+  }
+
+  // Get module access info for a nursery/module
+  function getModuleAccessInfo(nursery: NurseryWithModules, moduleId: string): ModuleAccessInfo | undefined {
+    return nursery.moduleDetails.find(access => access.module_id === moduleId)
   }
 
   if (authLoading || loading) {
@@ -195,12 +254,15 @@ export default function PermissionsPage() {
             <div className="text-sm text-purple-600">Modules disponibles</div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200">
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-amber-700">
-              {enterprises.reduce((sum, e) => sum + getEnterpriseMonthlyRevenue(e), 0).toFixed(0)}€
+            <div className="flex items-center gap-2">
+              <CreditCardIcon className="w-5 h-5 text-green-600" />
+              <div className="text-2xl font-bold text-green-700">
+                {enterprises.reduce((sum, e) => sum + getEnterpriseMonthlyRevenue(e), 0).toFixed(0)}€
+              </div>
             </div>
-            <div className="text-sm text-amber-600">MRR Total</div>
+            <div className="text-sm text-green-600">MRR Stripe (revenus réels)</div>
           </CardContent>
         </Card>
       </div>
@@ -315,8 +377,15 @@ export default function PermissionsPage() {
                                     <Badge variant="outline" className="text-xs">
                                       {nursery.modules.length} / {modules.length} modules
                                     </Badge>
-                                    <Badge variant="secondary" className="text-xs bg-amber-50 text-amber-700">
-                                      {nurseryRevenue.toFixed(0)}€/mois
+                                    {getNurseryManualModulesCount(nursery) > 0 && (
+                                      <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+                                        <SparklesIcon className="w-3 h-3 mr-1" />
+                                        {getNurseryManualModulesCount(nursery)} offert{getNurseryManualModulesCount(nursery) > 1 ? 's' : ''}
+                                      </Badge>
+                                    )}
+                                    <Badge variant="secondary" className="text-xs bg-green-50 text-green-700 border-green-200">
+                                      <CreditCardIcon className="w-3 h-3 mr-1" />
+                                      {nurseryRevenue.toFixed(0)}€/mois Stripe
                                     </Badge>
                                   </div>
                                 </div>
@@ -327,14 +396,20 @@ export default function PermissionsPage() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                       {modules.map((module) => {
                                         const hasAccess = nursery.modules.includes(module.id)
+                                        const accessInfo = getModuleAccessInfo(nursery, module.id)
+                                        const isManual = accessInfo?.granted_by_id !== null
+                                        const isStripe = accessInfo?.granted_by_id === null
                                         const isBase = module.id === 'base'
+                                        const expiresDate = accessInfo?.expires_at ? new Date(accessInfo.expires_at) : null
 
                                         return (
                                           <div
                                             key={module.id}
                                             className={`p-3 border rounded-lg transition-all ${
                                               hasAccess
-                                                ? 'bg-green-50 border-green-200'
+                                                ? isManual
+                                                  ? 'bg-purple-50 border-purple-200'
+                                                  : 'bg-green-50 border-green-200'
                                                 : 'bg-gray-50 border-gray-200'
                                             }`}
                                           >
@@ -342,7 +417,11 @@ export default function PermissionsPage() {
                                               <div className="flex-1">
                                                 <div className="flex items-center gap-2 mb-1">
                                                   {hasAccess ? (
-                                                    <LockOpenIcon className="w-4 h-4 text-green-600" />
+                                                    isManual ? (
+                                                      <SparklesIcon className="w-4 h-4 text-purple-600" />
+                                                    ) : (
+                                                      <CreditCardIcon className="w-4 h-4 text-green-600" />
+                                                    )
                                                   ) : (
                                                     <LockClosedIcon className="w-4 h-4 text-gray-400" />
                                                   )}
@@ -354,6 +433,28 @@ export default function PermissionsPage() {
                                                 <p className="text-xs font-semibold text-gray-700">
                                                   {module.is_free ? 'Gratuit' : `${module.price_monthly}€/mois`}
                                                 </p>
+                                                {hasAccess && (
+                                                  <div className="mt-2">
+                                                    {isManual && (
+                                                      <Badge variant="outline" className="text-xs bg-purple-100 text-purple-700 border-purple-200">
+                                                        <SparklesIcon className="w-3 h-3 mr-1" />
+                                                        Offert
+                                                      </Badge>
+                                                    )}
+                                                    {isStripe && (
+                                                      <Badge variant="outline" className="text-xs bg-green-100 text-green-700 border-green-200">
+                                                        <CreditCardIcon className="w-3 h-3 mr-1" />
+                                                        Stripe
+                                                      </Badge>
+                                                    )}
+                                                  </div>
+                                                )}
+                                                {expiresDate && (
+                                                  <div className="mt-1 flex items-center gap-1 text-xs text-purple-600">
+                                                    <CalendarIcon className="w-3 h-3" />
+                                                    Expire le {expiresDate.toLocaleDateString('fr-FR')}
+                                                  </div>
+                                                )}
                                               </div>
                                             </div>
 
@@ -362,7 +463,7 @@ export default function PermissionsPage() {
                                                 htmlFor={`${nursery.id}-${module.id}`}
                                                 className={`text-xs ${isBase ? 'text-gray-400' : 'cursor-pointer'}`}
                                               >
-                                                {hasAccess ? 'Activé' : 'Désactivé'}
+                                                {hasAccess ? (isManual ? 'Manuel' : 'Stripe') : 'Désactivé'}
                                               </Label>
                                               <Switch
                                                 id={`${nursery.id}-${module.id}`}
@@ -462,6 +563,72 @@ export default function PermissionsPage() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Manual Access Modal */}
+      <Dialog open={showManualAccessModal} onOpenChange={setShowManualAccessModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Accorder un accès manuel</DialogTitle>
+            <DialogDescription>
+              Configurez l'accès manuel pour ce module (gratuit, pour démo/test)
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Module name display */}
+            {modalModuleId && (
+              <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                <p className="text-sm font-medium text-purple-900">
+                  {modules.find(m => m.id === modalModuleId)?.name || modalModuleId}
+                </p>
+              </div>
+            )}
+
+            {/* Expiration date */}
+            <div className="space-y-2">
+              <Label htmlFor="expires_at">Date d'expiration (optionnelle)</Label>
+              <Input
+                id="expires_at"
+                type="date"
+                value={expiresAt}
+                onChange={(e) => setExpiresAt(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+              />
+              <p className="text-xs text-gray-500">
+                Laissez vide pour un accès permanent
+              </p>
+            </div>
+
+            {/* Notes */}
+            <div className="space-y-2">
+              <Label htmlFor="access_notes">Notes (optionnelles)</Label>
+              <Textarea
+                id="access_notes"
+                value={accessNotes}
+                onChange={(e) => setAccessNotes(e.target.value)}
+                placeholder="Ex: Offert pour démo, Accès test, etc."
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowManualAccessModal(false)}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={handleGrantManualAccess}
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              <SparklesIcon className="w-4 h-4 mr-2" />
+              Accorder l'accès
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

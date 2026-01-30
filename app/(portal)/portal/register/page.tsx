@@ -3,7 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { EyeIcon, EyeSlashIcon, EnvelopeIcon, UserIcon, KeyIcon } from '@heroicons/react/24/outline'
+import { validateInvitationToken, markInvitationUsed } from '@/lib/actions/invitation.actions'
+import { EyeIcon, EyeSlashIcon, EnvelopeIcon, KeyIcon, ExclamationTriangleIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
+
+type TokenStatus = 'loading' | 'valid' | 'invalid' | 'missing'
 
 export default function PortalRegisterPage() {
   const [email, setEmail] = useState('')
@@ -14,40 +17,64 @@ export default function PortalRegisterPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [guardianId, setGuardianId] = useState('')
+  const [token, setToken] = useState('')
+  const [tokenStatus, setTokenStatus] = useState<TokenStatus>('loading')
+  const [tokenError, setTokenError] = useState('')
+  const [guardianName, setGuardianName] = useState('')
 
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
 
   useEffect(() => {
-    // Get invitation token from URL
-    const token = searchParams.get('token')
-    const guardian_id = searchParams.get('guardian_id')
+    const tokenParam = searchParams.get('token')
+    const guardianIdParam = searchParams.get('guardian_id')
 
-    if (guardian_id) {
-      setGuardianId(guardian_id)
+    // No token or guardian_id → block access
+    if (!tokenParam || !guardianIdParam) {
+      setTokenStatus('missing')
+      return
     }
 
-    // TODO: Validate token and pre-fill email if available
+    setGuardianId(guardianIdParam)
+    setToken(tokenParam)
+
+    // Validate the invitation token
+    async function validate() {
+      const result = await validateInvitationToken({
+        token: tokenParam!,
+        guardianId: guardianIdParam!,
+      })
+
+      if (result.valid && result.email) {
+        setEmail(result.email)
+        setGuardianName(result.guardianName || '')
+        setTokenStatus('valid')
+      } else {
+        setTokenError(result.error || 'Lien d\'invitation invalide')
+        setTokenStatus('invalid')
+      }
+    }
+
+    validate()
   }, [searchParams])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
 
-    // Validation
     if (password !== confirmPassword) {
       setError('Les mots de passe ne correspondent pas')
       return
     }
 
     if (password.length < 8) {
-      setError('Le mot de passe doit contenir au moins 8 caractères')
+      setError('Le mot de passe doit contenir au moins 8 caracteres')
       return
     }
 
-    if (!guardianId) {
-      setError('Lien d\'invitation invalide. Veuillez contacter votre crèche.')
+    if (!guardianId || !token) {
+      setError('Lien d\'invitation invalide. Veuillez contacter votre creche.')
       return
     }
 
@@ -62,7 +89,7 @@ export default function PortalRegisterPage() {
 
       if (authError) {
         if (authError.message.includes('already registered')) {
-          setError('Un compte existe déjà avec cet email')
+          setError('Un compte existe deja avec cet email')
         } else {
           setError(authError.message)
         }
@@ -71,7 +98,7 @@ export default function PortalRegisterPage() {
       }
 
       if (!authData.user) {
-        setError('Échec de la création du compte')
+        setError('Echec de la creation du compte')
         setIsLoading(false)
         return
       }
@@ -91,14 +118,17 @@ export default function PortalRegisterPage() {
 
       if (guardianUserError) {
         console.error('Guardian user creation error:', guardianUserError)
-        setError('Erreur lors de la création du profil')
+        setError('Erreur lors de la creation du profil')
         // Clean up auth user
         await supabase.auth.admin.deleteUser(authData.user.id)
         setIsLoading(false)
         return
       }
 
-      // Success - redirect to login or home
+      // Mark invitation token as used
+      await markInvitationUsed(token)
+
+      // Success - redirect to portal home
       router.push('/portal/home')
     } catch (err) {
       console.error('Registration error:', err)
@@ -107,6 +137,80 @@ export default function PortalRegisterPage() {
     }
   }
 
+  // Loading state while validating token
+  if (tokenStatus === 'loading') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#f8fbfd] to-white p-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5a9dc9]"></div>
+        <p className="mt-4 text-gray-500">Verification de votre invitation...</p>
+      </div>
+    )
+  }
+
+  // No token provided — block access
+  if (tokenStatus === 'missing') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#f8fbfd] to-white p-4">
+        <div className="w-full max-w-md text-center">
+          <div className="flex flex-col items-center gap-3 mb-8">
+            <img src="/luniqo.png" alt="Luniqo" className="w-16 h-16 object-contain" />
+            <span className="text-2xl font-bold bg-gradient-to-r from-[#5a9dc9] to-[#2c5f7f] bg-clip-text text-transparent">
+              Portail Parents
+            </span>
+          </div>
+
+          <div className="p-6 bg-[#ffe5b4]/30 border border-[#ffe5b4] rounded-2xl mb-6">
+            <ExclamationTriangleIcon className="w-12 h-12 text-[#c9915a] mx-auto mb-3" />
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">Invitation requise</h2>
+            <p className="text-sm text-gray-600">
+              Pour creer un compte sur le portail parents, vous devez recevoir une invitation
+              de votre creche. Contactez la direction de votre creche pour obtenir votre lien d'inscription.
+            </p>
+          </div>
+
+          <a
+            href="/portal/login"
+            className="text-[#5a9dc9] hover:text-[#2c5f7f] font-medium text-sm transition-colors"
+          >
+            Vous avez deja un compte ? Se connecter
+          </a>
+        </div>
+      </div>
+    )
+  }
+
+  // Invalid or expired token
+  if (tokenStatus === 'invalid') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#f8fbfd] to-white p-4">
+        <div className="w-full max-w-md text-center">
+          <div className="flex flex-col items-center gap-3 mb-8">
+            <img src="/luniqo.png" alt="Luniqo" className="w-16 h-16 object-contain" />
+            <span className="text-2xl font-bold bg-gradient-to-r from-[#5a9dc9] to-[#2c5f7f] bg-clip-text text-transparent">
+              Portail Parents
+            </span>
+          </div>
+
+          <div className="p-6 bg-red-50 border border-red-200/50 rounded-2xl mb-6">
+            <ExclamationTriangleIcon className="w-12 h-12 text-red-400 mx-auto mb-3" />
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">Invitation invalide</h2>
+            <p className="text-sm text-gray-600">
+              {tokenError}
+            </p>
+          </div>
+
+          <a
+            href="/portal/login"
+            className="text-[#5a9dc9] hover:text-[#2c5f7f] font-medium text-sm transition-colors"
+          >
+            Vous avez deja un compte ? Se connecter
+          </a>
+        </div>
+      </div>
+    )
+  }
+
+  // Valid token — show registration form
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#f8fbfd] to-white p-4">
       <div className="w-full max-w-md">
@@ -123,16 +227,19 @@ export default function PortalRegisterPage() {
         </div>
 
         {/* Welcome */}
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Créer mon compte</h1>
-          <p className="text-sm text-gray-600">
-            Rejoignez le portail parents de votre crèche
-          </p>
+        <div className="mb-6 text-center">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Creer mon compte</h1>
+          {guardianName && (
+            <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
+              <CheckCircleIcon className="w-4 h-4 text-green-500" />
+              <span>Invitation pour <strong>{guardianName}</strong></span>
+            </div>
+          )}
         </div>
 
         {/* Register Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Email Input */}
+          {/* Email Input (pre-filled, read-only) */}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
               Adresse email
@@ -142,14 +249,14 @@ export default function PortalRegisterPage() {
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 pl-11 border border-[#5a9dc9]/20 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#5a9dc9]/20 focus:border-[#5a9dc9] transition-all duration-300 bg-white"
-                placeholder="votre@email.com"
-                required
-                disabled={isLoading}
+                readOnly
+                className="w-full px-4 py-3 pl-11 border border-[#5a9dc9]/20 rounded-2xl bg-gray-50 text-gray-600 cursor-not-allowed"
               />
               <EnvelopeIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             </div>
+            <p className="mt-1 text-xs text-gray-500">
+              L'email est lie a votre invitation et ne peut pas etre modifie
+            </p>
           </div>
 
           {/* Password Input */}
@@ -164,7 +271,7 @@ export default function PortalRegisterPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3 pl-11 pr-11 border border-[#5a9dc9]/20 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#5a9dc9]/20 focus:border-[#5a9dc9] transition-all duration-300 bg-white"
-                placeholder="Min. 8 caractères"
+                placeholder="Min. 8 caracteres"
                 required
                 disabled={isLoading}
                 minLength={8}
@@ -196,7 +303,7 @@ export default function PortalRegisterPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="w-full px-4 py-3 pl-11 pr-11 border border-[#5a9dc9]/20 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#5a9dc9]/20 focus:border-[#5a9dc9] transition-all duration-300 bg-white"
-                placeholder="Répétez votre mot de passe"
+                placeholder="Repetez votre mot de passe"
                 required
                 disabled={isLoading}
               />
@@ -218,10 +325,10 @@ export default function PortalRegisterPage() {
           {/* Terms */}
           <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200">
             <p className="text-xs text-gray-600">
-              En créant un compte, vous acceptez les{' '}
+              En creant un compte, vous acceptez les{' '}
               <a href="#" className="text-[#5a9dc9] hover:underline">conditions d'utilisation</a>
               {' '}et la{' '}
-              <a href="#" className="text-[#5a9dc9] hover:underline">politique de confidentialité</a>.
+              <a href="#" className="text-[#5a9dc9] hover:underline">politique de confidentialite</a>.
             </p>
           </div>
 
@@ -244,10 +351,10 @@ export default function PortalRegisterPage() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Création...
+                Creation...
               </span>
             ) : (
-              'Créer mon compte'
+              'Creer mon compte'
             )}
           </button>
         </form>
@@ -255,7 +362,7 @@ export default function PortalRegisterPage() {
         {/* Login Link */}
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-600">
-            Vous avez déjà un compte ?{' '}
+            Vous avez deja un compte ?{' '}
             <a href="/portal/login" className="text-[#5a9dc9] hover:text-[#2c5f7f] font-medium transition-colors">
               Se connecter
             </a>
