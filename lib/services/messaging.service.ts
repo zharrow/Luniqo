@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
+import { usersService } from '@/lib/services/users.service'
 
 const supabase: any = createClient()
 
@@ -142,6 +143,61 @@ class MessagingService {
     if (error) {
       console.error('Error fetching conversation:', error)
       return null
+    }
+
+    return data as unknown as Conversation
+  }
+
+  /**
+   * Get or create a support conversation automatically
+   * - If owner already has a conversation, returns it
+   * - If not, creates one with the first available developer
+   * - No developer ID needed from the owner
+   */
+  async getOrCreateSupportConversation(ownerId: string): Promise<Conversation> {
+    // Check if owner already has any conversation
+    const { data: existingConversations, error: findError } = await supabase
+      .from('support_conversation')
+      .select(`
+        *,
+        owner:profiles!owner_id(id, email, first_name, last_name),
+        developer:profiles!developer_id(id, email, first_name, last_name)
+      `)
+      .eq('owner_id', ownerId)
+      .order('last_message_at', { ascending: false, nullsFirst: false })
+      .limit(1)
+
+    if (!findError && existingConversations && existingConversations.length > 0) {
+      return existingConversations[0] as unknown as Conversation
+    }
+
+    // No existing conversation - find an available developer
+    const developers = await usersService.getDevelopers()
+
+    if (developers.length === 0) {
+      throw new Error('Aucun développeur disponible pour le support')
+    }
+
+    // Use the first available developer
+    const developer = developers[0]
+
+    // Create the conversation
+    const { data, error } = await supabase
+      .from('support_conversation')
+      .insert({
+        owner_id: ownerId,
+        developer_id: developer.id
+      })
+      .select(`
+        *,
+        owner:profiles!owner_id(id, email, first_name, last_name),
+        developer:profiles!developer_id(id, email, first_name, last_name)
+      `)
+      .single()
+
+    if (error) {
+      console.error('Error creating support conversation:', error)
+      throw error
     }
 
     return data as unknown as Conversation

@@ -39,7 +39,10 @@ export async function updateSession(request: NextRequest) {
   const isTabletRoute = request.nextUrl.pathname.startsWith('/tablet')
   const isPublicRoute =
     request.nextUrl.pathname.startsWith('/login') ||
-    request.nextUrl.pathname.startsWith('/auth')
+    request.nextUrl.pathname.startsWith('/register') ||
+    request.nextUrl.pathname.startsWith('/auth') ||
+    request.nextUrl.pathname.startsWith('/portal/login') ||
+    request.nextUrl.pathname.startsWith('/portal/register')
 
   // Allow tablet routes to proceed without Supabase Auth
   // (employees use PIN stored in localStorage)

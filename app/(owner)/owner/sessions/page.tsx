@@ -45,21 +45,32 @@ export default function SessionsPage() {
   }
 
   async function createTodaySession() {
-    if (!selectedNursery?.id) return
+    console.log('🚀 createTodaySession called')
+    console.log('📍 selectedNursery:', selectedNursery)
+
+    if (!selectedNursery?.id) {
+      console.log('❌ No selectedNursery.id, returning early')
+      return
+    }
 
     try {
       setCreating(true)
       const { getTodayLocal } = await import('@/lib/utils/date')
       const today = getTodayLocal()
 
-      await sessionsService.create(selectedNursery.id, {
+      console.log('📅 Creating session for date:', today)
+      console.log('🏢 Nursery ID:', selectedNursery.id)
+
+      const result = await sessionsService.create(selectedNursery.id, {
         date: today
       })
 
+      console.log('✅ Session created:', result)
+
       loadSessions()
     } catch (error) {
-      console.error('Error creating session:', error)
-      alert('Erreur lors de la création de la session')
+      console.error('❌ Error creating session:', error)
+      alert('Erreur lors de la création de la session: ' + (error as any)?.message)
     } finally {
       setCreating(false)
     }

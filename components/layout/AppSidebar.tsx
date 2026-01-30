@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/lib/contexts/AuthContext'
+import { useNursery } from '@/lib/contexts/NurseryContext'
 import {
   HomeIcon,
   BuildingOfficeIcon,
@@ -28,7 +29,8 @@ import {
   CurrencyEuroIcon,
   LockClosedIcon,
   SparklesIcon,
-  ChartPieIcon
+  ChartPieIcon,
+  CreditCardIcon,
 } from '@heroicons/react/24/outline'
 import {
   Sidebar,
@@ -64,6 +66,7 @@ const baseNavigation: NavItem[] = [
   { name: 'Mes Crèches', href: '/owner/nurseries', icon: BuildingOffice2Icon, roles: ['Owner'], moduleColor: '#5a9dc9', moduleId: 'base' },
   { name: 'Employés', href: '/owner/users', icon: UserGroupIcon, roles: ['Owner'], moduleColor: '#5a9dc9', moduleId: 'base' },
   { name: 'Messages', href: '/owner/messages', icon: ChatBubbleLeftRightIcon, roles: ['Owner'], moduleColor: '#64b5d1', moduleId: 'base' },
+  { name: 'Abonnements', href: '/owner/billing', icon: CreditCardIcon, roles: ['Owner'], moduleColor: '#f0b775', moduleId: 'base' },
 ]
 
 // ============================================================================
@@ -122,10 +125,10 @@ const enrollmentNavigation: NavItem[] = [
 ]
 
 // ============================================================================
-// MODULE FACTURATION (49€/mois) - Facturation & Finances
+// MODULE FACTURATION (59€/mois) - Facturation & Finances
 // ============================================================================
 const invoicingNavigation: NavItem[] = [
-  { name: 'Facturation', href: '/owner/invoicing', icon: CurrencyEuroIcon, roles: ['Owner'], moduleColor: '#ffd4a3', moduleId: 'invoicing' },
+  { name: 'Facturation', href: '/owner/invoicing', icon: CurrencyEuroIcon, roles: ['Owner'], moduleColor: '#ffd4a3', moduleId: 'billing' },
 ]
 
 // ============================================================================
@@ -152,13 +155,14 @@ const developerNavigation: NavItem[] = [
 
 export function AppSidebar() {
   const pathname = usePathname()
-  const { role, enterprise, session } = useAuth()
+  const { role, enterprise } = useAuth()
+  const { accessibleModules } = useNursery()
 
-  // Check if Owner has access to a module
+  // Check if Owner has access to a module (now per-nursery)
   const hasModuleAccess = (moduleId?: string) => {
     if (!moduleId) return true // No module required
     if (role !== 'Owner') return true // Only Owners are filtered
-    return session?.accessibleModules?.includes(moduleId) || false
+    return accessibleModules.includes(moduleId)
   }
 
   // Filter navigation based on role

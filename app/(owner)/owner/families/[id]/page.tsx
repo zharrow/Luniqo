@@ -2,13 +2,15 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeftIcon, PencilIcon, TrashIcon, UserGroupIcon, UserCircleIcon } from '@heroicons/react/24/outline'
+import { ArrowLeftIcon, PencilIcon, TrashIcon, UserGroupIcon, EnvelopeIcon, CheckCircleIcon, ClockIcon } from '@heroicons/react/24/outline'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useNursery } from '@/lib/contexts/NurseryContext'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
 import { familyService } from '@/lib/services/family.service'
+import { guardianService, type GuardianWithPortalStatus } from '@/lib/services/guardian.service'
+import { inviteGuardianToPortal } from '@/lib/actions/invitation.actions'
 
 interface FamilyDetail {
   id: string
@@ -33,7 +35,11 @@ export default function FamilyDetailPage() {
   const { selectedNursery, isLoading: nurseryLoading } = useNursery()
 
   const [family, setFamily] = useState<FamilyDetail | null>(null)
+  const [guardians, setGuardians] = useState<GuardianWithPortalStatus[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [invitingId, setInvitingId] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState('')
+  const [errorMessage, setErrorMessage] = useState('')
 
   useEffect(() => {
     if (authLoading || nurseryLoading || !selectedNursery?.id) return
@@ -43,8 +49,12 @@ export default function FamilyDetailPage() {
   async function loadFamilyData() {
     try {
       setIsLoading(true)
-      const data = await familyService.getById(familyId)
-      setFamily(data)
+      const [familyData, guardiansData] = await Promise.all([
+        familyService.getById(familyId),
+        guardianService.getGuardiansWithPortalStatus(familyId),
+      ])
+      setFamily(familyData)
+      setGuardians(guardiansData)
     } catch (error) {
       console.error('Error loading family:', error)
     } finally {
@@ -52,8 +62,40 @@ export default function FamilyDetailPage() {
     }
   }
 
+  async function handleInvite(guardian: GuardianWithPortalStatus) {
+    if (!session?.user?.id || !selectedNursery?.id) return
+
+    setInvitingId(guardian.id)
+    setSuccessMessage('')
+    setErrorMessage('')
+
+    try {
+      const result = await inviteGuardianToPortal({
+        guardianId: guardian.id,
+        invitedById: session.user.id,
+        nurseryId: selectedNursery.id,
+      })
+
+      if (result.success) {
+        if (result.error) {
+          // Success but with warning (e.g. email not sent)
+          setSuccessMessage(`Invitation creee pour ${guardian.first_name}. ${result.error}`)
+        } else {
+          setSuccessMessage(`Invitation envoyee a ${guardian.email}`)
+        }
+      } else {
+        setErrorMessage(result.error || 'Erreur lors de l\'envoi')
+      }
+    } catch (error) {
+      console.error('Error inviting guardian:', error)
+      setErrorMessage('Erreur inattendue')
+    } finally {
+      setInvitingId(null)
+    }
+  }
+
   async function handleDelete() {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette famille ? Cette action est irréversible.')) {
+    if (!confirm('Etes-vous sur de vouloir supprimer cette famille ? Cette action est irreversible.')) {
       return
     }
 
@@ -102,7 +144,7 @@ export default function FamilyDetailPage() {
           className="mb-4"
         >
           <ArrowLeftIcon className="h-4 w-4 mr-2" />
-          Retour à la liste
+          Retour a la liste
         </Button>
 
         <div className="flex items-start justify-between">
@@ -144,11 +186,24 @@ export default function FamilyDetailPage() {
         </div>
       </div>
 
+      {/* Success/Error Messages */}
+      {successMessage && (
+        <div className="mb-6 p-4 rounded-2xl bg-[#b5ead7]/30 border border-[#b5ead7] text-green-800 text-sm flex items-center gap-2">
+          <CheckCircleIcon className="w-5 h-5 flex-shrink-0" />
+          {successMessage}
+        </div>
+      )}
+      {errorMessage && (
+        <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200/50 text-red-700 text-sm">
+          {errorMessage}
+        </div>
+      )}
+
       {/* Content */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Informations générales */}
+        {/* Informations generales */}
         <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Informations générales</h3>
+          <h3 className="text-lg font-semibold mb-4">Informations generales</h3>
           <dl className="space-y-3">
             <div>
               <dt className="text-sm text-gray-500">Nom de famille</dt>
@@ -156,16 +211,16 @@ export default function FamilyDetailPage() {
             </div>
             {family.caf_number && (
               <div>
-                <dt className="text-sm text-gray-500">Numéro CAF</dt>
+                <dt className="text-sm text-gray-500">Numero CAF</dt>
                 <dd className="text-gray-900 font-mono">{family.caf_number}</dd>
               </div>
             )}
           </dl>
         </Card>
 
-        {/* Coordonnées */}
+        {/* Coordonnees */}
         <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Coordonnées</h3>
+          <h3 className="text-lg font-semibold mb-4">Coordonnees</h3>
           <dl className="space-y-3">
             {family.address && (
               <div>
@@ -179,13 +234,13 @@ export default function FamilyDetailPage() {
             )}
             {family.phone_primary && (
               <div>
-                <dt className="text-sm text-gray-500">Téléphone principal</dt>
+                <dt className="text-sm text-gray-500">Telephone principal</dt>
                 <dd className="text-gray-900">{family.phone_primary}</dd>
               </div>
             )}
             {family.phone_secondary && (
               <div>
-                <dt className="text-sm text-gray-500">Téléphone secondaire</dt>
+                <dt className="text-sm text-gray-500">Telephone secondaire</dt>
                 <dd className="text-gray-900">{family.phone_secondary}</dd>
               </div>
             )}
@@ -199,14 +254,88 @@ export default function FamilyDetailPage() {
         </Card>
       </div>
 
-      {/* Tuteurs et enfants sections à venir */}
+      {/* Tuteurs */}
       <div className="mt-8">
         <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Tuteurs et enfants</h3>
-          <p className="text-gray-500">
-            Cette fonctionnalité sera disponible prochainement.
-            Vous pouvez consulter les tuteurs et enfants depuis leurs pages respectives.
-          </p>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold">Tuteurs</h3>
+            <Badge variant="outline">{guardians.length} tuteur{guardians.length !== 1 ? 's' : ''}</Badge>
+          </div>
+
+          {guardians.length === 0 ? (
+            <p className="text-gray-500 text-sm">Aucun tuteur enregistre pour cette famille.</p>
+          ) : (
+            <div className="space-y-4">
+              {guardians.map((guardian) => (
+                <div
+                  key={guardian.id}
+                  className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-1">
+                      <span className="font-medium text-gray-900">
+                        {guardian.first_name} {guardian.last_name}
+                      </span>
+                      <Badge variant="outline" className="text-xs">
+                        {guardian.legal_responsibility === 'parent' ? 'Parent' :
+                         guardian.legal_responsibility === 'legal_guardian' ? 'Tuteur legal' :
+                         'Contact d\'urgence'}
+                      </Badge>
+                      {guardian.relationship_to_child && (
+                        <span className="text-xs text-gray-500 capitalize">
+                          ({guardian.relationship_to_child})
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                      {guardian.email && (
+                        <span className="flex items-center gap-1">
+                          <EnvelopeIcon className="w-3.5 h-3.5" />
+                          {guardian.email}
+                        </span>
+                      )}
+                      {guardian.phone_primary && (
+                        <span>{guardian.phone_primary}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 ml-4">
+                    {guardian.has_portal_account ? (
+                      <Badge className="bg-[#b5ead7]/30 text-green-800 border-[#b5ead7]">
+                        <CheckCircleIcon className="w-3.5 h-3.5 mr-1" />
+                        Portail actif
+                      </Badge>
+                    ) : guardian.email ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleInvite(guardian)}
+                        disabled={invitingId === guardian.id}
+                        className="text-[#5a9dc9] border-[#5a9dc9]/30 hover:bg-[#5a9dc9]/5"
+                      >
+                        {invitingId === guardian.id ? (
+                          <span className="flex items-center gap-2">
+                            <ClockIcon className="w-4 h-4 animate-spin" />
+                            Envoi...
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-2">
+                            <EnvelopeIcon className="w-4 h-4" />
+                            Inviter au portail
+                          </span>
+                        )}
+                      </Button>
+                    ) : (
+                      <Badge variant="secondary" className="text-xs">
+                        Pas d'email
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </Card>
       </div>
     </div>

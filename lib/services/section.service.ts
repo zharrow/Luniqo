@@ -1,7 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
 
-const supabase: any = createClient()
-
 export interface Section {
   id: string
   nursery_id: string
@@ -111,27 +109,40 @@ export class SectionService {
    */
   async getWithStats(nurseryId: string): Promise<any[]> {
     const supabase = this.getClient()
-    const { data, error } = await supabase
+
+    // First, get all sections (without inner join to include empty sections)
+    const { data: sections, error: sectionsError } = await supabase
       .from('section')
-      .select(`
-        *,
-        child_section!inner(
-          child_id
-        )
-      `)
+      .select('*')
       .eq('nursery_id', nurseryId)
-      .is('child_section.end_date', null) // Only current assignments
       .order('display_order', { ascending: true })
 
-    if (error) throw error
+    if (sectionsError) throw sectionsError
 
-    // Count children per section
-    const sections = (data as any[]) || []
-    return sections.map((section: any) => ({
-      ...section,
-      current_children: section.child_section?.length || 0,
-      child_section: undefined // Remove nested data
-    }))
+    // Then, get child counts for each section
+    const sectionsWithStats = await Promise.all(
+      ((sections as any[]) || []).map(async (section: any) => {
+        const { count } = await supabase
+          .from('child_section')
+          .select('*', { count: 'exact', head: true })
+          .eq('section_id', section.id)
+          .is('end_date', null)
+
+        return {
+          ...section,
+          // Map database fields to page expected fields
+          section_name: section.name,
+          age_group: section.age_min_months != null && section.age_max_months != null
+            ? `${section.age_min_months}-${section.age_max_months} mois`
+            : null,
+          color_code: section.color_hex,
+          room_number: section.code,
+          current_children: count || 0
+        }
+      })
+    )
+
+    return sectionsWithStats
   }
 
   /**

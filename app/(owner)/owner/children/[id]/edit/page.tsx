@@ -2,13 +2,18 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { ArrowLeftIcon } from '@heroicons/react/24/outline'
+import { ArrowLeftIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { useNursery } from '@/lib/contexts/NurseryContext'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
 import { childService, type Child } from '@/lib/services/child.service'
+import {
+  allergiesDietaryService,
+  type Allergy,
+  type DietaryRequirement
+} from '@/lib/services/allergies-dietary.service'
 
 interface ChildFormData {
   first_name: string
@@ -32,7 +37,7 @@ export default function EditChildPage() {
   const router = useRouter()
   const params = useParams()
   const childId = params.id as string
-  const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
+  const { isLoading: authLoading } = useRequireAuth(['Owner'])
   const { selectedNursery, isLoading: nurseryLoading } = useNursery()
 
   const [child, setChild] = useState<Child | null>(null)
@@ -58,11 +63,35 @@ export default function EditChildPage() {
   const [error, setError] = useState<string | null>(null)
   const [isLoadingData, setIsLoadingData] = useState(true)
 
+  // Allergies & Dietary requirements
+  const [allAllergies, setAllAllergies] = useState<Allergy[]>([])
+  const [allDietaryRequirements, setAllDietaryRequirements] = useState<DietaryRequirement[]>([])
+  const [selectedAllergyIds, setSelectedAllergyIds] = useState<string[]>([])
+  const [selectedDietaryIds, setSelectedDietaryIds] = useState<string[]>([])
+  const [showLegacyFields, setShowLegacyFields] = useState(false)
+
+  useEffect(() => {
+    loadReferenceData()
+  }, [])
+
   useEffect(() => {
     if (childId && selectedNursery?.id) {
       loadChild()
     }
   }, [childId, selectedNursery?.id])
+
+  async function loadReferenceData() {
+    try {
+      const [allergies, dietary] = await Promise.all([
+        allergiesDietaryService.getAllAllergies(),
+        allergiesDietaryService.getAllDietaryRequirements()
+      ])
+      setAllAllergies(allergies)
+      setAllDietaryRequirements(dietary)
+    } catch (error) {
+      console.error('Error loading reference data:', error)
+    }
+  }
 
   async function loadChild() {
     try {
@@ -92,6 +121,23 @@ export default function EditChildPage() {
         specific_diet: data.specific_diet || '',
         notes: data.notes || ''
       })
+
+      // Load current allergies and dietary requirements
+      try {
+        const [allergyIds, dietaryIds] = await Promise.all([
+          allergiesDietaryService.getChildAllergyIds(childId),
+          allergiesDietaryService.getChildDietaryRequirementIds(childId)
+        ])
+        setSelectedAllergyIds(allergyIds)
+        setSelectedDietaryIds(dietaryIds)
+
+        // Show legacy fields if there's text data but no structured data
+        if ((data.allergies && allergyIds.length === 0) || (data.specific_diet && dietaryIds.length === 0)) {
+          setShowLegacyFields(true)
+        }
+      } catch (err) {
+        console.error('Error loading child allergies/dietary:', err)
+      }
     } catch (err: any) {
       console.error('Error loading child:', err)
       setError(err.message || 'Erreur lors du chargement')
@@ -143,6 +189,12 @@ export default function EditChildPage() {
         specific_diet: formData.specific_diet || undefined,
         notes: formData.notes || undefined
       })
+
+      // Save allergies and dietary requirements (M2M)
+      await Promise.all([
+        allergiesDietaryService.setChildAllergies(childId, selectedAllergyIds),
+        allergiesDietaryService.setChildDietaryRequirements(childId, selectedDietaryIds)
+      ])
 
       // Redirection vers la fiche enfant
       router.push(`/owner/children/${childId}`)
@@ -368,37 +420,124 @@ export default function EditChildPage() {
             </div>
           </Card>
 
-          {/* Santé */}
+          {/* Santé - Allergies */}
           <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Informations de santé</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Allergies
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <ExclamationTriangleIcon className="w-5 h-5 text-red-500" />
+              Allergies
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3 rounded-lg border border-red-200 bg-red-50/50 max-h-64 overflow-y-auto">
+              {allAllergies.map((allergy) => (
+                <label
+                  key={allergy.id}
+                  className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all ${
+                    selectedAllergyIds.includes(allergy.id)
+                      ? 'bg-red-100 border border-red-300'
+                      : 'bg-white border border-transparent hover:bg-red-50'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedAllergyIds.includes(allergy.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedAllergyIds([...selectedAllergyIds, allergy.id])
+                      } else {
+                        setSelectedAllergyIds(selectedAllergyIds.filter(id => id !== allergy.id))
+                      }
+                    }}
+                    className="w-4 h-4 rounded border-red-300 text-red-600 focus:ring-red-500"
+                  />
+                  <span className="text-sm">
+                    {allergy.icon} {allergy.name}
+                  </span>
+                  {allergy.severity === 'severe' && (
+                    <span className="text-xs text-red-600 font-medium">!</span>
+                  )}
                 </label>
-                <textarea
-                  value={formData.allergies}
-                  onChange={(e) => handleChange('allergies', e.target.value)}
-                  rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#5a9dc9] focus:border-[#5a9dc9]"
-                  placeholder="Lait de vache, arachides..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Régime alimentaire spécifique
-                </label>
-                <textarea
-                  value={formData.specific_diet}
-                  onChange={(e) => handleChange('specific_diet', e.target.value)}
-                  rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#5a9dc9] focus:border-[#5a9dc9]"
-                  placeholder="Végétarien, sans gluten..."
-                />
-              </div>
+              ))}
             </div>
+            {selectedAllergyIds.length > 0 && (
+              <p className="text-xs text-red-600 mt-2 font-medium">
+                {selectedAllergyIds.length} allergie{selectedAllergyIds.length > 1 ? 's' : ''} selectionnee{selectedAllergyIds.length > 1 ? 's' : ''}
+              </p>
+            )}
           </Card>
+
+          {/* Santé - Régimes alimentaires */}
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold mb-4">Regimes alimentaires</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3 rounded-lg border border-amber-200 bg-amber-50/50 max-h-64 overflow-y-auto">
+              {allDietaryRequirements.map((diet) => (
+                <label
+                  key={diet.id}
+                  className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all ${
+                    selectedDietaryIds.includes(diet.id)
+                      ? 'bg-amber-100 border border-amber-300'
+                      : 'bg-white border border-transparent hover:bg-amber-50'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedDietaryIds.includes(diet.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedDietaryIds([...selectedDietaryIds, diet.id])
+                      } else {
+                        setSelectedDietaryIds(selectedDietaryIds.filter(id => id !== diet.id))
+                      }
+                    }}
+                    className="w-4 h-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+                  />
+                  <span className="text-sm">
+                    {diet.icon} {diet.name}
+                  </span>
+                </label>
+              ))}
+            </div>
+            {selectedDietaryIds.length > 0 && (
+              <p className="text-xs text-amber-700 mt-2">
+                {selectedDietaryIds.length} regime{selectedDietaryIds.length > 1 ? 's' : ''} selectionne{selectedDietaryIds.length > 1 ? 's' : ''}
+              </p>
+            )}
+          </Card>
+
+          {/* Legacy text fields (collapsible) */}
+          {(showLegacyFields || formData.allergies || formData.specific_diet) && (
+            <Card className="p-6 border-dashed">
+              <details open={showLegacyFields}>
+                <summary className="text-sm text-gray-500 cursor-pointer hover:text-gray-700 font-medium">
+                  Champs texte (ancienne methode)
+                </summary>
+                <div className="mt-4 space-y-4 pl-4 border-l-2 border-gray-200">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">
+                      Allergies (texte libre)
+                    </label>
+                    <textarea
+                      value={formData.allergies}
+                      onChange={(e) => handleChange('allergies', e.target.value)}
+                      rows={2}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-[#5a9dc9] focus:border-[#5a9dc9]"
+                      placeholder="Lait de vache, arachides..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">
+                      Regime alimentaire (texte libre)
+                    </label>
+                    <textarea
+                      value={formData.specific_diet}
+                      onChange={(e) => handleChange('specific_diet', e.target.value)}
+                      rows={2}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-[#5a9dc9] focus:border-[#5a9dc9]"
+                      placeholder="Vegetarien, sans gluten..."
+                    />
+                  </div>
+                </div>
+              </details>
+            </Card>
+          )}
 
           {/* Notes */}
           <Card className="p-6">

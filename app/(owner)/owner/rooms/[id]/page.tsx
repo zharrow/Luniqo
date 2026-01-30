@@ -52,10 +52,10 @@ export default function RoomTasksPage() {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    if (selectedNursery && id) {
+    if (selectedNursery?.id && session?.enterprise?.id && id) {
       loadData()
     }
-  }, [session, id])
+  }, [selectedNursery?.id, session?.enterprise?.id, id])
 
   // Auto-fill estimated duration from selected task template
   useEffect(() => {
@@ -68,7 +68,7 @@ export default function RoomTasksPage() {
   }, [selectedTaskId, availableTasks])
 
   async function loadData() {
-    if (!selectedNursery?.id || !id) return
+    if (!selectedNursery?.id || !session?.enterprise?.id || !id) return
 
     try {
       setLoading(true)
@@ -82,8 +82,8 @@ export default function RoomTasksPage() {
       }
       setRoom(roomData)
 
-      // Load all active tasks
-      const tasksData = await tasksService.getActive(selectedNursery.id)
+      // Load all active tasks (enterprise-level, not nursery-level)
+      const tasksData = await tasksService.getActive(session.enterprise.id)
       setAvailableTasks(tasksData)
 
       // Load assigned tasks for this room

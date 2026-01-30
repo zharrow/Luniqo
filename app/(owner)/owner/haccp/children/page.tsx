@@ -5,6 +5,11 @@ import { useRequireAuth } from '@/lib/contexts/AuthContext'
 import { useNursery } from '@/lib/contexts/NurseryContext'
 import { haccpService, type Child, type CreateChildInput, type Section } from '@/lib/services/haccp.service'
 import {
+  allergiesDietaryService,
+  type Allergy,
+  type DietaryRequirement
+} from '@/lib/services/allergies-dietary.service'
+import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
@@ -12,20 +17,33 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
 import { FormDialog } from '@/components/shared/FormDialog'
 import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
+// Extended child with allergies and dietary requirements
+interface ChildWithDetails extends Child {
+  childAllergies?: Allergy[]
+  childDietaryRequirements?: DietaryRequirement[]
+}
+
 export default function ChildrenPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
   const { selectedNursery } = useNursery()
-  const [children, setChildren] = useState<Child[]>([])
+  const [children, setChildren] = useState<ChildWithDetails[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
-  const [editingChild, setEditingChild] = useState<Child | null>(null)
+  const [editingChild, setEditingChild] = useState<ChildWithDetails | null>(null)
   const [childToDelete, setChildToDelete] = useState<Child | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Reference data
+  const [allAllergies, setAllAllergies] = useState<Allergy[]>([])
+  const [allDietaryRequirements, setAllDietaryRequirements] = useState<DietaryRequirement[]>([])
+
+  // Form state
   const [formData, setFormData] = useState<CreateChildInput>({
     first_name: '',
     last_name: '',
@@ -34,6 +52,12 @@ export default function ChildrenPage() {
     allergies: '',
     specific_diet: ''
   })
+  const [selectedAllergyIds, setSelectedAllergyIds] = useState<string[]>([])
+  const [selectedDietaryIds, setSelectedDietaryIds] = useState<string[]>([])
+
+  useEffect(() => {
+    loadReferenceData()
+  }, [])
 
   useEffect(() => {
     if (selectedNursery?.id) {
@@ -43,13 +67,46 @@ export default function ChildrenPage() {
     }
   }, [selectedNursery?.id, authLoading])
 
+  async function loadReferenceData() {
+    try {
+      const [allergies, dietary] = await Promise.all([
+        allergiesDietaryService.getAllAllergies(),
+        allergiesDietaryService.getAllDietaryRequirements()
+      ])
+      setAllAllergies(allergies)
+      setAllDietaryRequirements(dietary)
+    } catch (error) {
+      console.error('Error loading reference data:', error)
+    }
+  }
+
   async function loadChildren() {
     if (!selectedNursery?.id) return
 
     try {
       setLoading(true)
       const data = await haccpService.getChildren(selectedNursery.id)
-      setChildren(data)
+
+      // Load allergies and dietary requirements for each child
+      const childrenWithDetails = await Promise.all(
+        data.map(async (child) => {
+          try {
+            const [allergies, dietary] = await Promise.all([
+              allergiesDietaryService.getChildAllergies(child.id),
+              allergiesDietaryService.getChildDietaryRequirements(child.id)
+            ])
+            return {
+              ...child,
+              childAllergies: allergies.map(ca => ca.allergy).filter(Boolean) as Allergy[],
+              childDietaryRequirements: dietary.map(cd => cd.dietary_requirement).filter(Boolean) as DietaryRequirement[]
+            }
+          } catch {
+            return child
+          }
+        })
+      )
+
+      setChildren(childrenWithDetails)
     } catch (error) {
       console.error('Error loading children:', error)
     } finally {
@@ -67,10 +124,12 @@ export default function ChildrenPage() {
       allergies: '',
       specific_diet: ''
     })
+    setSelectedAllergyIds([])
+    setSelectedDietaryIds([])
     setShowModal(true)
   }
 
-  function openEditModal(child: Child) {
+  async function openEditModal(child: ChildWithDetails) {
     setEditingChild(child)
     setFormData({
       first_name: child.first_name,
@@ -80,6 +139,21 @@ export default function ChildrenPage() {
       allergies: child.allergies || '',
       specific_diet: child.specific_diet || ''
     })
+
+    // Load current allergies and dietary requirements
+    try {
+      const [allergyIds, dietaryIds] = await Promise.all([
+        allergiesDietaryService.getChildAllergyIds(child.id),
+        allergiesDietaryService.getChildDietaryRequirementIds(child.id)
+      ])
+      setSelectedAllergyIds(allergyIds)
+      setSelectedDietaryIds(dietaryIds)
+    } catch (error) {
+      console.error('Error loading child allergies/dietary:', error)
+      setSelectedAllergyIds([])
+      setSelectedDietaryIds([])
+    }
+
     setShowModal(true)
   }
 
@@ -89,11 +163,22 @@ export default function ChildrenPage() {
 
     try {
       setIsSubmitting(true)
+
+      let childId: string
+
       if (editingChild) {
         await haccpService.updateChild(editingChild.id, selectedNursery.id, formData)
+        childId = editingChild.id
       } else {
-        await haccpService.createChild(selectedNursery.id, formData)
+        const newChild = await haccpService.createChild(selectedNursery.id, formData)
+        childId = newChild.id
       }
+
+      // Save allergies and dietary requirements (M2M)
+      await Promise.all([
+        allergiesDietaryService.setChildAllergies(childId, selectedAllergyIds),
+        allergiesDietaryService.setChildDietaryRequirements(childId, selectedDietaryIds)
+      ])
 
       setShowModal(false)
       loadChildren()
@@ -307,21 +392,66 @@ export default function ChildrenPage() {
                       </span>
                     </div>
 
-                    {child.allergies && (
+                    {/* Allergies as badges */}
+                    {(child.childAllergies && child.childAllergies.length > 0) && (
+                      <div className="p-3 rounded-lg bg-danger-50 border border-danger-200">
+                        <div className="flex items-start gap-2">
+                          <ExclamationTriangleIcon className="w-5 h-5 text-danger-600 flex-shrink-0 mt-0.5" />
+                          <div className="flex-1">
+                            <p className="text-xs font-medium text-danger-900 mb-2">Allergies</p>
+                            <div className="flex flex-wrap gap-1">
+                              {child.childAllergies.map((allergy) => (
+                                <Badge
+                                  key={allergy.id}
+                                  variant="danger"
+                                  size="sm"
+                                  className="text-xs"
+                                >
+                                  {allergy.icon} {allergy.name}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Legacy text allergies (fallback) */}
+                    {child.allergies && (!child.childAllergies || child.childAllergies.length === 0) && (
                       <div className="p-3 rounded-lg bg-danger-50 border border-danger-200">
                         <div className="flex items-start gap-2">
                           <ExclamationTriangleIcon className="w-5 h-5 text-danger-600 flex-shrink-0 mt-0.5" />
                           <div>
-                            <p className="text-xs font-medium text-danger-900 mb-1">Allergies</p>
+                            <p className="text-xs font-medium text-danger-900 mb-1">Allergies (texte)</p>
                             <p className="text-sm text-danger-700">{child.allergies}</p>
                           </div>
                         </div>
                       </div>
                     )}
 
-                    {child.specific_diet && (
+                    {/* Dietary requirements as badges */}
+                    {(child.childDietaryRequirements && child.childDietaryRequirements.length > 0) && (
                       <div className="p-3 rounded-lg bg-accent-50 border border-accent-200">
-                        <p className="text-xs font-medium text-accent-900 mb-1">Régime alimentaire</p>
+                        <p className="text-xs font-medium text-accent-900 mb-2">Régime alimentaire</p>
+                        <div className="flex flex-wrap gap-1">
+                          {child.childDietaryRequirements.map((diet) => (
+                            <Badge
+                              key={diet.id}
+                              variant="warning"
+                              size="sm"
+                              className="text-xs"
+                            >
+                              {diet.icon} {diet.name}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Legacy text dietary (fallback) */}
+                    {child.specific_diet && (!child.childDietaryRequirements || child.childDietaryRequirements.length === 0) && (
+                      <div className="p-3 rounded-lg bg-accent-50 border border-accent-200">
+                        <p className="text-xs font-medium text-accent-900 mb-1">Régime (texte)</p>
                         <p className="text-sm text-accent-700">{child.specific_diet}</p>
                       </div>
                     )}
@@ -404,34 +534,122 @@ export default function ChildrenPage() {
             </select>
           </div>
 
+          {/* Allergies checkboxes */}
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium mb-2">
+              <ExclamationTriangleIcon className="w-4 h-4 inline mr-1 text-danger-600" />
               Allergies
             </label>
-            <input
-              type="text"
-              value={formData.allergies}
-              onChange={(e) => setFormData({ ...formData, allergies: e.target.value })}
-              className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="ex: Arachides, Lactose, Oeufs"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Séparez les allergies par des virgules
-            </p>
+            <div className="grid grid-cols-2 gap-2 p-3 rounded-lg border border-danger-200 bg-danger-50/50 max-h-48 overflow-y-auto">
+              {allAllergies.map((allergy) => (
+                <label
+                  key={allergy.id}
+                  className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all ${
+                    selectedAllergyIds.includes(allergy.id)
+                      ? 'bg-danger-100 border border-danger-300'
+                      : 'bg-white border border-transparent hover:bg-danger-50'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedAllergyIds.includes(allergy.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedAllergyIds([...selectedAllergyIds, allergy.id])
+                      } else {
+                        setSelectedAllergyIds(selectedAllergyIds.filter(id => id !== allergy.id))
+                      }
+                    }}
+                    className="w-4 h-4 rounded border-danger-300 text-danger-600 focus:ring-danger-500"
+                  />
+                  <span className="text-sm">
+                    {allergy.icon} {allergy.name}
+                  </span>
+                  {allergy.severity === 'severe' && (
+                    <span className="text-xs text-danger-600 font-medium">!</span>
+                  )}
+                </label>
+              ))}
+            </div>
+            {selectedAllergyIds.length > 0 && (
+              <p className="text-xs text-danger-600 mt-1 font-medium">
+                {selectedAllergyIds.length} allergie{selectedAllergyIds.length > 1 ? 's' : ''} sélectionnée{selectedAllergyIds.length > 1 ? 's' : ''}
+              </p>
+            )}
           </div>
 
+          {/* Dietary requirements checkboxes */}
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Restrictions alimentaires
+            <label className="block text-sm font-medium mb-2">
+              Régimes alimentaires
             </label>
-            <textarea
-              value={formData.specific_diet}
-              onChange={(e) => setFormData({ ...formData, specific_diet: e.target.value })}
-              className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="ex: Végétarien, Sans gluten"
-              rows={2}
-            />
+            <div className="grid grid-cols-2 gap-2 p-3 rounded-lg border border-accent-200 bg-accent-50/50 max-h-48 overflow-y-auto">
+              {allDietaryRequirements.map((diet) => (
+                <label
+                  key={diet.id}
+                  className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all ${
+                    selectedDietaryIds.includes(diet.id)
+                      ? 'bg-accent-100 border border-accent-300'
+                      : 'bg-white border border-transparent hover:bg-accent-50'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedDietaryIds.includes(diet.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedDietaryIds([...selectedDietaryIds, diet.id])
+                      } else {
+                        setSelectedDietaryIds(selectedDietaryIds.filter(id => id !== diet.id))
+                      }
+                    }}
+                    className="w-4 h-4 rounded border-accent-300 text-accent-600 focus:ring-accent-500"
+                  />
+                  <span className="text-sm">
+                    {diet.icon} {diet.name}
+                  </span>
+                </label>
+              ))}
+            </div>
+            {selectedDietaryIds.length > 0 && (
+              <p className="text-xs text-accent-700 mt-1">
+                {selectedDietaryIds.length} régime{selectedDietaryIds.length > 1 ? 's' : ''} sélectionné{selectedDietaryIds.length > 1 ? 's' : ''}
+              </p>
+            )}
           </div>
+
+          {/* Legacy text fields (collapsed) */}
+          <details className="text-sm">
+            <summary className="text-muted-foreground cursor-pointer hover:text-foreground">
+              Champs texte (ancienne méthode)
+            </summary>
+            <div className="mt-2 space-y-3 pl-4 border-l-2 border-muted">
+              <div>
+                <label className="block text-xs font-medium mb-1 text-muted-foreground">
+                  Allergies (texte libre)
+                </label>
+                <input
+                  type="text"
+                  value={formData.allergies}
+                  onChange={(e) => setFormData({ ...formData, allergies: e.target.value })}
+                  className="w-full px-3 py-1.5 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                  placeholder="ex: Arachides, Lactose"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1 text-muted-foreground">
+                  Régime (texte libre)
+                </label>
+                <input
+                  type="text"
+                  value={formData.specific_diet}
+                  onChange={(e) => setFormData({ ...formData, specific_diet: e.target.value })}
+                  className="w-full px-3 py-1.5 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                  placeholder="ex: Végétarien"
+                />
+              </div>
+            </div>
+          </details>
         </FormDialog>
 
         {/* Delete Confirmation Dialog */}

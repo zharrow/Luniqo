@@ -163,21 +163,21 @@ export class NurseryService {
   }
 
   /**
-   * Soft delete a nursery (set is_active = false)
+   * Deactivate a nursery (set is_active = false)
    */
-  async delete(id: string, enterpriseId: string): Promise<void> {
+  async deactivate(id: string, enterpriseId: string): Promise<void> {
     const supabase = this.getClient()
 
-    // Don't allow deleting the last active nursery
+    // Don't allow deactivating the last active nursery
     const activeNurseries = await this.getActive(enterpriseId)
     if (activeNurseries.length === 1 && activeNurseries[0].id === id) {
-      throw new Error('Cannot delete the last active nursery')
+      throw new Error('Impossible de désactiver la dernière crèche active')
     }
 
-    // Don't allow deleting the default nursery
+    // Don't allow deactivating the default nursery
     const nursery = await this.getById(id, enterpriseId)
     if (nursery?.is_default) {
-      throw new Error('Cannot delete the default nursery. Please set another nursery as default first.')
+      throw new Error('Impossible de désactiver la crèche par défaut. Veuillez d\'abord définir une autre crèche par défaut.')
     }
 
     const { error } = await supabase
@@ -187,6 +187,28 @@ export class NurseryService {
       .eq('enterprise_id', enterpriseId)
 
     if (error) throw error
+  }
+
+  /**
+   * Reactivate a nursery (set is_active = true)
+   */
+  async reactivate(id: string, enterpriseId: string): Promise<void> {
+    const supabase = this.getClient()
+
+    const { error } = await supabase
+      .from('nursery')
+      .update({ is_active: true, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('enterprise_id', enterpriseId)
+
+    if (error) throw error
+  }
+
+  /**
+   * @deprecated Use deactivate() instead
+   */
+  async delete(id: string, enterpriseId: string): Promise<void> {
+    return this.deactivate(id, enterpriseId)
   }
 
   /**

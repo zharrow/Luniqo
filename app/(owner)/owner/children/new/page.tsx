@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeftIcon, ArrowRightIcon, CheckIcon } from '@heroicons/react/24/outline'
+import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -11,8 +11,13 @@ import { useNursery } from '@/lib/contexts/NurseryContext'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
 import { childService } from '@/lib/services/child.service'
 import { familyService, type Family as FamilyType } from '@/lib/services/family.service'
-import { sectionService, type Section as SectionType } from '@/lib/services/section.service'
+import { sectionService } from '@/lib/services/section.service'
 import { guardianService } from '@/lib/services/guardian.service'
+import {
+  allergiesDietaryService,
+  type Allergy,
+  type DietaryRequirement
+} from '@/lib/services/allergies-dietary.service'
 
 interface ChildFormData {
   // Famille
@@ -70,8 +75,6 @@ const STEPS = [
 ]
 
 const RELATION_TYPES = ['mother', 'father', 'legal_guardian', 'other']
-const SEVERITIES = ['mild', 'moderate', 'severe', 'critical']
-const DIET_TYPES = ['vegetarian', 'vegan', 'halal', 'kosher', 'gluten_free', 'lactose_free', 'texture_modified', 'other']
 
 export default function NewChildPage() {
   const router = useRouter()
@@ -100,6 +103,12 @@ export default function NewChildPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Allergies & Dietary requirements (new checkbox system)
+  const [allAllergies, setAllAllergies] = useState<Allergy[]>([])
+  const [allDietaryRequirements, setAllDietaryRequirements] = useState<DietaryRequirement[]>([])
+  const [selectedAllergyIds, setSelectedAllergyIds] = useState<string[]>([])
+  const [selectedDietaryIds, setSelectedDietaryIds] = useState<string[]>([])
+
   useEffect(() => {
     if (authLoading || nurseryLoading || !selectedNursery?.id) return
     loadData()
@@ -109,13 +118,17 @@ export default function NewChildPage() {
     if (!selectedNursery?.id) return
 
     try {
-      const [familiesData, sectionsData] = await Promise.all([
+      const [familiesData, sectionsData, allergiesData, dietaryData] = await Promise.all([
         familyService.getAll(selectedNursery.id),
-        sectionService.getByNursery(selectedNursery.id)
+        sectionService.getByNursery(selectedNursery.id),
+        allergiesDietaryService.getAllAllergies(),
+        allergiesDietaryService.getAllDietaryRequirements()
       ])
 
       setFamilies(familiesData)
       setSections(sectionsData)
+      setAllAllergies(allergiesData)
+      setAllDietaryRequirements(dietaryData)
     } catch (error) {
       console.error('Error loading data:', error)
     }
@@ -129,48 +142,6 @@ export default function NewChildPage() {
     setFormData(prev => ({
       ...prev,
       [parent]: { ...(prev[parent] as any), [field]: value }
-    }))
-  }
-
-  function addAllergy() {
-    setFormData(prev => ({
-      ...prev,
-      allergies: [...(prev.allergies || []), { allergen_name: '', severity: 'moderate' }]
-    }))
-  }
-
-  function updateAllergy(index: number, field: string, value: string) {
-    setFormData(prev => ({
-      ...prev,
-      allergies: prev.allergies?.map((a, i) => i === index ? { ...a, [field]: value } : a) || []
-    }))
-  }
-
-  function removeAllergy(index: number) {
-    setFormData(prev => ({
-      ...prev,
-      allergies: prev.allergies?.filter((_, i) => i !== index) || []
-    }))
-  }
-
-  function addDiet() {
-    setFormData(prev => ({
-      ...prev,
-      diets: [...(prev.diets || []), { diet_type: 'vegetarian', diet_name: '' }]
-    }))
-  }
-
-  function updateDiet(index: number, field: string, value: string) {
-    setFormData(prev => ({
-      ...prev,
-      diets: prev.diets?.map((d, i) => i === index ? { ...d, [field]: value } : d) || []
-    }))
-  }
-
-  function removeDiet(index: number) {
-    setFormData(prev => ({
-      ...prev,
-      diets: prev.diets?.filter((_, i) => i !== index) || []
     }))
   }
 
@@ -242,6 +213,8 @@ export default function NewChildPage() {
       }
 
       // Créer l'enfant
+      // Note: Le champ 'section' est un enum legacy ('Babies', 'Toddlers', 'Preschoolers')
+      // On utilise 'Babies' par défaut, la vraie affectation se fait via child_section (M2M)
       const newChild = await childService.create(
         selectedNursery.id,
         {
@@ -257,7 +230,7 @@ export default function NewChildPage() {
           caf_number: formData.caf_number || undefined,
           admission_date: formData.admission_date || undefined,
           notes: formData.notes || undefined,
-          section: formData.section_id || ''
+          section: 'Babies' // Legacy enum field - actual section via child_section M2M
         }
       )
 
@@ -292,31 +265,11 @@ export default function NewChildPage() {
         })
       }
 
-      // Ajouter les allergies
-      if (formData.allergies && formData.allergies.length > 0) {
-        for (const allergy of formData.allergies) {
-          if (allergy.allergen_name) {
-            await childService.addAllergy(newChild.id, {
-              allergy_type: 'food',
-              allergen_name: allergy.allergen_name,
-              severity: allergy.severity
-            })
-          }
-        }
-      }
-
-      // Ajouter les régimes
-      if (formData.diets && formData.diets.length > 0) {
-        for (const diet of formData.diets) {
-          if (diet.diet_name) {
-            await childService.addDiet(newChild.id, {
-              diet_type: diet.diet_type,
-              diet_name: diet.diet_name,
-              start_date: new Date().toISOString().split('T')[0]
-            })
-          }
-        }
-      }
+      // Ajouter les allergies et régimes alimentaires (nouveau système M2M)
+      await Promise.all([
+        allergiesDietaryService.setChildAllergies(newChild.id, selectedAllergyIds),
+        allergiesDietaryService.setChildDietaryRequirements(newChild.id, selectedDietaryIds)
+      ])
 
       // Redirection vers la fiche enfant
       router.push(`/owner/children/${newChild.id}`)
@@ -805,130 +758,107 @@ export default function NewChildPage() {
         {/* Step 5: Santé basique */}
         {currentStep === 5 && (
           <div className="space-y-6">
+            {/* Allergies checkboxes */}
             <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Allergies</h3>
-                <Button type="button" size="sm" onClick={addAllergy}>
-                  Ajouter une allergie
-                </Button>
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <ExclamationTriangleIcon className="w-5 h-5 text-red-500" />
+                Allergies
+              </h3>
+              <p className="text-sm text-gray-500 mb-4">
+                Selectionnez les allergies connues de l'enfant
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3 rounded-lg border border-red-200 bg-red-50/50 max-h-64 overflow-y-auto">
+                {allAllergies.map((allergy) => (
+                  <label
+                    key={allergy.id}
+                    className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all ${
+                      selectedAllergyIds.includes(allergy.id)
+                        ? 'bg-red-100 border border-red-300'
+                        : 'bg-white border border-transparent hover:bg-red-50'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedAllergyIds.includes(allergy.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedAllergyIds([...selectedAllergyIds, allergy.id])
+                        } else {
+                          setSelectedAllergyIds(selectedAllergyIds.filter(id => id !== allergy.id))
+                        }
+                      }}
+                      className="w-4 h-4 rounded border-red-300 text-red-600 focus:ring-red-500"
+                    />
+                    <span className="text-sm">
+                      {allergy.icon} {allergy.name}
+                    </span>
+                    {allergy.severity === 'severe' && (
+                      <span className="text-xs text-red-600 font-medium">!</span>
+                    )}
+                  </label>
+                ))}
               </div>
-
-              {formData.allergies && formData.allergies.length > 0 ? (
-                <div className="space-y-3">
-                  {formData.allergies.map((allergy, index) => (
-                    <div key={index} className="flex items-end space-x-3">
-                      <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Allergène
-                        </label>
-                        <Input
-                          type="text"
-                          value={allergy.allergen_name}
-                          onChange={(e) => updateAllergy(index, 'allergen_name', e.target.value)}
-                          placeholder="Arachides, lait, etc."
-                        />
-                      </div>
-                      <div className="w-40">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Sévérité
-                        </label>
-                        <select
-                          value={allergy.severity}
-                          onChange={(e) => updateAllergy(index, 'severity', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#5a9dc9] focus:border-[#5a9dc9]"
-                        >
-                          <option value="mild">Légère</option>
-                          <option value="moderate">Modérée</option>
-                          <option value="severe">Sévère</option>
-                          <option value="critical">Critique</option>
-                        </select>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => removeAllergy(index)}
-                      >
-                        Retirer
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-sm">Aucune allergie connue</p>
+              {selectedAllergyIds.length > 0 && (
+                <p className="text-xs text-red-600 mt-2 font-medium">
+                  {selectedAllergyIds.length} allergie{selectedAllergyIds.length > 1 ? 's' : ''} selectionnee{selectedAllergyIds.length > 1 ? 's' : ''}
+                </p>
               )}
             </Card>
 
+            {/* Dietary requirements checkboxes */}
             <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Régimes alimentaires</h3>
-                <Button type="button" size="sm" onClick={addDiet}>
-                  Ajouter un régime
-                </Button>
+              <h3 className="text-lg font-semibold mb-4">Regimes alimentaires</h3>
+              <p className="text-sm text-gray-500 mb-4">
+                Selectionnez les regimes alimentaires applicables
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3 rounded-lg border border-amber-200 bg-amber-50/50 max-h-64 overflow-y-auto">
+                {allDietaryRequirements.map((diet) => (
+                  <label
+                    key={diet.id}
+                    className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all ${
+                      selectedDietaryIds.includes(diet.id)
+                        ? 'bg-amber-100 border border-amber-300'
+                        : 'bg-white border border-transparent hover:bg-amber-50'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedDietaryIds.includes(diet.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedDietaryIds([...selectedDietaryIds, diet.id])
+                        } else {
+                          setSelectedDietaryIds(selectedDietaryIds.filter(id => id !== diet.id))
+                        }
+                      }}
+                      className="w-4 h-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+                    />
+                    <span className="text-sm">
+                      {diet.icon} {diet.name}
+                    </span>
+                  </label>
+                ))}
               </div>
-
-              {formData.diets && formData.diets.length > 0 ? (
-                <div className="space-y-3">
-                  {formData.diets.map((diet, index) => (
-                    <div key={index} className="flex items-end space-x-3">
-                      <div className="w-48">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Type de régime
-                        </label>
-                        <select
-                          value={diet.diet_type}
-                          onChange={(e) => updateDiet(index, 'diet_type', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#5a9dc9] focus:border-[#5a9dc9]"
-                        >
-                          <option value="vegetarian">Végétarien</option>
-                          <option value="vegan">Vegan</option>
-                          <option value="halal">Halal</option>
-                          <option value="kosher">Casher</option>
-                          <option value="gluten_free">Sans gluten</option>
-                          <option value="lactose_free">Sans lactose</option>
-                          <option value="texture_modified">Textures modifiées</option>
-                          <option value="other">Autre</option>
-                        </select>
-                      </div>
-                      <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Description
-                        </label>
-                        <Input
-                          type="text"
-                          value={diet.diet_name}
-                          onChange={(e) => updateDiet(index, 'diet_name', e.target.value)}
-                          placeholder="Précisions sur le régime"
-                        />
-                      </div>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => removeDiet(index)}
-                      >
-                        Retirer
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-sm">Aucun régime alimentaire spécifique</p>
+              {selectedDietaryIds.length > 0 && (
+                <p className="text-xs text-amber-700 mt-2">
+                  {selectedDietaryIds.length} regime{selectedDietaryIds.length > 1 ? 's' : ''} selectionne{selectedDietaryIds.length > 1 ? 's' : ''}
+                </p>
               )}
             </Card>
 
+            {/* Notes */}
             <Card className="p-6">
               <h3 className="text-lg font-semibold mb-4">Notes importantes</h3>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Notes de santé ou observations
+                  Notes de sante ou observations
                 </label>
                 <textarea
                   value={formData.notes || ''}
                   onChange={(e) => handleChange('notes', e.target.value)}
                   rows={4}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#5a9dc9] focus:border-[#5a9dc9]"
-                  placeholder="Informations importantes à connaître sur l'enfant..."
+                  placeholder="Informations importantes a connaitre sur l'enfant..."
                 />
               </div>
             </Card>
@@ -1000,32 +930,34 @@ export default function NewChildPage() {
                   </div>
                 )}
 
-                {formData.allergies && formData.allergies.length > 0 && (
+                {selectedAllergyIds.length > 0 && (
                   <div>
                     <h4 className="font-medium text-gray-900 mb-2">Allergies</h4>
                     <div className="flex flex-wrap gap-2">
-                      {formData.allergies.map((allergy, index) => (
-                        allergy.allergen_name && (
-                          <Badge key={index} variant="danger">
-                            {allergy.allergen_name} ({allergy.severity})
+                      {selectedAllergyIds.map((id) => {
+                        const allergy = allAllergies.find(a => a.id === id)
+                        return allergy ? (
+                          <Badge key={id} variant="danger">
+                            {allergy.icon} {allergy.name}
                           </Badge>
-                        )
-                      ))}
+                        ) : null
+                      })}
                     </div>
                   </div>
                 )}
 
-                {formData.diets && formData.diets.length > 0 && (
+                {selectedDietaryIds.length > 0 && (
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Régimes alimentaires</h4>
+                    <h4 className="font-medium text-gray-900 mb-2">Regimes alimentaires</h4>
                     <div className="flex flex-wrap gap-2">
-                      {formData.diets.map((diet, index) => (
-                        diet.diet_name && (
-                          <Badge key={index} variant="default">
-                            {diet.diet_name}
+                      {selectedDietaryIds.map((id) => {
+                        const diet = allDietaryRequirements.find(d => d.id === id)
+                        return diet ? (
+                          <Badge key={id} variant="warning">
+                            {diet.icon} {diet.name}
                           </Badge>
-                        )
-                      ))}
+                        ) : null
+                      })}
                     </div>
                   </div>
                 )}
