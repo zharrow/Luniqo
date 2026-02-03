@@ -14,9 +14,15 @@ interface BarcodeScannerProps {
 export function BarcodeScanner({ isOpen, onClose, onScan }: BarcodeScannerProps) {
   const scannerRef = useRef<any>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const onScanRef = useRef(onScan)
   const [manualCode, setManualCode] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isInitializing, setIsInitializing] = useState(true)
+
+  // Keep ref in sync without triggering re-initialization
+  useEffect(() => {
+    onScanRef.current = onScan
+  }, [onScan])
 
   const stopScanner = useCallback(async () => {
     if (scannerRef.current) {
@@ -39,32 +45,50 @@ export function BarcodeScanner({ isOpen, onClose, onScan }: BarcodeScannerProps)
       setIsInitializing(true)
 
       try {
-        const { Html5Qrcode } = await import('html5-qrcode')
+        const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import('html5-qrcode')
 
         if (!mounted || !containerRef.current) return
 
         const scannerId = 'barcode-scanner-region'
 
-        // Ensure the container element exists
-        let el = document.getElementById(scannerId)
-        if (!el && containerRef.current) {
-          el = document.createElement('div')
-          el.id = scannerId
-          containerRef.current.appendChild(el)
+        // Clean up any previous scanner container
+        const existingEl = document.getElementById(scannerId)
+        if (existingEl) {
+          existingEl.remove()
         }
 
-        const scanner = new Html5Qrcode(scannerId)
+        const el = document.createElement('div')
+        el.id = scannerId
+        el.style.width = '100%'
+        containerRef.current.appendChild(el)
+
+        const scanner = new Html5Qrcode(scannerId, {
+          formatsToSupport: [
+            Html5QrcodeSupportedFormats.EAN_13,
+            Html5QrcodeSupportedFormats.EAN_8,
+            Html5QrcodeSupportedFormats.UPC_A,
+            Html5QrcodeSupportedFormats.UPC_E,
+            Html5QrcodeSupportedFormats.CODE_128,
+            Html5QrcodeSupportedFormats.CODE_39,
+            Html5QrcodeSupportedFormats.QR_CODE,
+          ],
+          verbose: false,
+        })
         scannerRef.current = scanner
+
+        // Use container width to calculate a responsive scan region
+        const containerWidth = containerRef.current.offsetWidth - 32 // padding
+        const qrboxWidth = Math.min(containerWidth, 300)
+        const qrboxHeight = Math.round(qrboxWidth * 0.4)
 
         await scanner.start(
           { facingMode: 'environment' },
           {
-            fps: 10,
-            qrbox: { width: 280, height: 150 },
-            aspectRatio: 1.777,
+            fps: 15,
+            qrbox: { width: qrboxWidth, height: qrboxHeight },
           },
           (decodedText: string) => {
-            onScan(decodedText)
+            onScanRef.current(decodedText)
             stopScanner()
           },
           () => {
@@ -92,7 +116,7 @@ export function BarcodeScanner({ isOpen, onClose, onScan }: BarcodeScannerProps)
       mounted = false
       stopScanner()
     }
-  }, [isOpen, onScan, stopScanner])
+  }, [isOpen, stopScanner])
 
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -125,19 +149,21 @@ export function BarcodeScanner({ isOpen, onClose, onScan }: BarcodeScannerProps)
 
           {/* Camera viewfinder */}
           <div className="p-4">
-            <div
-              ref={containerRef}
-              className="rounded-2xl overflow-hidden bg-gray-900 min-h-[220px] flex items-center justify-center"
-            >
+            <div className="relative rounded-2xl overflow-hidden bg-gray-900 min-h-[220px]">
+              <div ref={containerRef} className="w-full" />
               {isInitializing && !error && (
-                <div className="text-white text-sm flex flex-col items-center gap-3">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white" />
-                  <span>Initialisation de la caméra...</span>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-white text-sm flex flex-col items-center gap-3">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white" />
+                    <span>Initialisation de la caméra...</span>
+                  </div>
                 </div>
               )}
               {error && (
-                <div className="text-white text-sm text-center p-6">
-                  <p className="text-amber-300 mb-2">{error}</p>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-white text-sm text-center p-6">
+                    <p className="text-amber-300 mb-2">{error}</p>
+                  </div>
                 </div>
               )}
             </div>
