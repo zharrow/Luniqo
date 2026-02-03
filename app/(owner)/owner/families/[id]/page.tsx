@@ -10,7 +10,7 @@ import { useNursery } from '@/lib/contexts/NurseryContext'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
 import { familyService } from '@/lib/services/family.service'
 import { guardianService, type GuardianWithPortalStatus } from '@/lib/services/guardian.service'
-import { inviteGuardianToPortal } from '@/lib/actions/invitation.actions'
+import { inviteGuardianToPortal, repairGuardianChildLinks, debugGuardianChildData } from '@/lib/actions/invitation.actions'
 
 interface FamilyDetail {
   id: string
@@ -40,6 +40,7 @@ export default function FamilyDetailPage() {
   const [invitingId, setInvitingId] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
+  const [isRepairing, setIsRepairing] = useState(false)
 
   useEffect(() => {
     if (authLoading || nurseryLoading || !selectedNursery?.id) return
@@ -108,6 +109,43 @@ export default function FamilyDetailPage() {
     }
   }
 
+  async function handleRepairLinks() {
+    if (!selectedNursery?.id) return
+
+    setIsRepairing(true)
+    setSuccessMessage('')
+    setErrorMessage('')
+
+    try {
+      const result = await repairGuardianChildLinks(selectedNursery.id)
+
+      if (result.success) {
+        if (result.linksCreated > 0) {
+          setSuccessMessage(`${result.linksCreated} lien(s) tuteur-enfant cree(s) avec succes`)
+        } else {
+          setSuccessMessage('Tous les liens sont deja en place')
+        }
+      } else {
+        setErrorMessage(result.error || 'Erreur lors de la reparation')
+      }
+    } catch (error) {
+      console.error('Error repairing links:', error)
+      setErrorMessage('Erreur inattendue')
+    } finally {
+      setIsRepairing(false)
+    }
+  }
+
+  async function handleDebugGuardian(guardianId: string) {
+    try {
+      const data = await debugGuardianChildData(guardianId)
+      console.log('🔍 Debug Guardian Data:', data)
+      alert(`Debug info (voir console):\n\nTuteur: ${data.guardian?.first_name} ${data.guardian?.last_name}\nFamille: ${data.family?.family_name || 'AUCUNE'}\nEnfants dans famille: ${data.childrenInFamily.length}\nLiens guardian_child: ${data.guardianChildLinks.length}\nCompte portail: ${data.guardianUser ? 'OUI' : 'NON'}`)
+    } catch (error) {
+      console.error('Debug error:', error)
+    }
+  }
+
   if (authLoading || nurseryLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -168,6 +206,14 @@ export default function FamilyDetailPage() {
           </div>
 
           <div className="flex space-x-2">
+            <Button
+              variant="outline"
+              onClick={handleRepairLinks}
+              disabled={isRepairing}
+              className="text-[#5a9dc9] border-[#5a9dc9]/30"
+            >
+              {isRepairing ? 'Reparation...' : 'Reparer liens portail'}
+            </Button>
             <Button
               variant="outline"
               onClick={() => router.push(`/owner/families/${familyId}/edit`)}
@@ -301,6 +347,14 @@ export default function FamilyDetailPage() {
                   </div>
 
                   <div className="flex items-center gap-3 ml-4">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDebugGuardian(guardian.id)}
+                      className="text-gray-400 hover:text-gray-600 text-xs"
+                    >
+                      Debug
+                    </Button>
                     {guardian.has_portal_account ? (
                       <Badge className="bg-[#b5ead7]/30 text-green-800 border-[#b5ead7]">
                         <CheckCircleIcon className="w-3.5 h-3.5 mr-1" />

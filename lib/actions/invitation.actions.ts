@@ -5,7 +5,7 @@ import crypto from 'crypto'
 import { sendGuardianInvitation } from '@/lib/services/email.service'
 
 // ============================================================================
-// SERVER ACTIONS FOR GUARDIAN INVITATION
+// SERVER ACTIONS FOR GUARDIAN INVITATION & DATA REPAIR
 // These actions require admin privileges and use the service role
 // ============================================================================
 
@@ -182,6 +182,109 @@ export async function validateInvitationToken(input: {
 }
 
 /**
+ * Register a guardian user account (admin-created, email auto-confirmed)
+ * This skips email verification since the user proved email access via invitation link
+ */
+export async function registerGuardianUser(input: {
+  email: string
+  password: string
+  guardianId: string
+  token: string
+}): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = getAdminClient()
+    const { email, password, guardianId, token } = input
+
+    // 1. Validate the invitation token first
+    const validation = await validateInvitationToken({ token, guardianId })
+    if (!validation.valid) {
+      return { success: false, error: validation.error || 'Invitation invalide' }
+    }
+
+    // 2. Check if user already exists with this email
+    const { data: existingUsers } = await supabase.auth.admin.listUsers()
+    const existingUser = existingUsers?.users?.find(u => u.email === email)
+
+    if (existingUser) {
+      // Check if they already have guardian_user record
+      const { data: existingGuardianUser } = await supabase
+        .from('guardian_user')
+        .select('id')
+        .eq('user_id', existingUser.id)
+        .maybeSingle()
+
+      if (existingGuardianUser) {
+        return { success: false, error: 'Un compte existe deja avec cet email' }
+      }
+
+      // User exists but no guardian_user record - link them
+      const { error: linkError } = await supabase
+        .from('guardian_user')
+        .insert({
+          guardian_id: guardianId,
+          user_id: existingUser.id,
+          can_view_photos: true,
+          can_receive_messages: true,
+          can_update_info: false,
+          terms_accepted_at: new Date().toISOString(),
+          privacy_policy_accepted_at: new Date().toISOString(),
+        })
+
+      if (linkError) {
+        console.error('Error linking existing user to guardian:', linkError)
+        return { success: false, error: 'Erreur lors de la liaison du compte' }
+      }
+
+      await markInvitationUsed(token)
+      return { success: true }
+    }
+
+    // 3. Create new user with admin API (email auto-confirmed)
+    const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true, // Auto-confirm email since they proved access via invitation
+      user_metadata: {
+        role: 'Guardian',
+      },
+    })
+
+    if (createError || !newUser.user) {
+      console.error('Error creating user:', createError)
+      return { success: false, error: 'Erreur lors de la creation du compte' }
+    }
+
+    // 4. Create guardian_user record
+    const { error: guardianUserError } = await supabase
+      .from('guardian_user')
+      .insert({
+        guardian_id: guardianId,
+        user_id: newUser.user.id,
+        can_view_photos: true,
+        can_receive_messages: true,
+        can_update_info: false,
+        terms_accepted_at: new Date().toISOString(),
+        privacy_policy_accepted_at: new Date().toISOString(),
+      })
+
+    if (guardianUserError) {
+      console.error('Error creating guardian_user:', guardianUserError)
+      // Clean up auth user on failure
+      await supabase.auth.admin.deleteUser(newUser.user.id)
+      return { success: false, error: 'Erreur lors de la creation du profil' }
+    }
+
+    // 5. Mark invitation as used
+    await markInvitationUsed(token)
+
+    return { success: true }
+  } catch (error) {
+    console.error('Unexpected error in registerGuardianUser:', error)
+    return { success: false, error: 'Erreur inattendue' }
+  }
+}
+
+/**
  * Mark an invitation token as used after successful registration
  */
 export async function markInvitationUsed(token: string): Promise<{ success: boolean }> {
@@ -202,5 +305,167 @@ export async function markInvitationUsed(token: string): Promise<{ success: bool
   } catch (error) {
     console.error('Unexpected error in markInvitationUsed:', error)
     return { success: false }
+  }
+}
+
+/**
+ * Debug function to check guardian-child data for a specific guardian
+ */
+export async function debugGuardianChildData(guardianId: string): Promise<{
+  guardian: any
+  family: any
+  childrenInFamily: any[]
+  guardianChildLinks: any[]
+  guardianUser: any
+}> {
+  const supabase = getAdminClient()
+
+  // Get guardian info
+  const { data: guardian } = await supabase
+    .from('guardian')
+    .select('*')
+    .eq('id', guardianId)
+    .single()
+
+  // Get family info if guardian exists
+  let family = null
+  let childrenInFamily: any[] = []
+  if (guardian?.family_id) {
+    const { data: familyData } = await supabase
+      .from('family')
+      .select('*')
+      .eq('id', guardian.family_id)
+      .single()
+    family = familyData
+
+    // Get children in this family
+    const { data: children } = await supabase
+      .from('child')
+      .select('id, first_name, last_name, family_id, nursery_id')
+      .eq('family_id', guardian.family_id)
+    childrenInFamily = children || []
+  }
+
+  // Get guardian_child links
+  const { data: links } = await supabase
+    .from('guardian_child')
+    .select('*, child:child_id(id, first_name, last_name)')
+    .eq('guardian_id', guardianId)
+
+  // Get guardian_user record
+  const { data: guardianUser } = await supabase
+    .from('guardian_user')
+    .select('*')
+    .eq('guardian_id', guardianId)
+    .maybeSingle()
+
+  return {
+    guardian,
+    family,
+    childrenInFamily,
+    guardianChildLinks: links || [],
+    guardianUser
+  }
+}
+
+/**
+ * Repair missing guardian-child links for a nursery
+ * Links all guardians to children in the same family where links don't exist
+ */
+export async function repairGuardianChildLinks(nurseryId: string): Promise<{
+  success: boolean
+  linksCreated: number
+  error?: string
+}> {
+  try {
+    const supabase = getAdminClient()
+
+    // Get all children in this nursery with their family_id
+    const { data: children, error: childrenError } = await supabase
+      .from('child')
+      .select('id, family_id, first_name, last_name')
+      .eq('nursery_id', nurseryId)
+      .not('family_id', 'is', null)
+
+    if (childrenError) {
+      console.error('Error fetching children:', childrenError)
+      return { success: false, linksCreated: 0, error: 'Erreur lors de la récupération des enfants' }
+    }
+
+    if (!children || children.length === 0) {
+      return { success: true, linksCreated: 0 }
+    }
+
+    // Get unique family IDs
+    const familyIds = [...new Set(children.map(c => c.family_id).filter(Boolean))]
+
+    // Get all guardians for these families
+    const { data: guardians, error: guardiansError } = await supabase
+      .from('guardian')
+      .select('id, family_id, first_name, last_name, relationship_to_child, has_custody')
+      .in('family_id', familyIds)
+      .eq('is_active', true)
+
+    if (guardiansError) {
+      console.error('Error fetching guardians:', guardiansError)
+      return { success: false, linksCreated: 0, error: 'Erreur lors de la récupération des tuteurs' }
+    }
+
+    if (!guardians || guardians.length === 0) {
+      return { success: true, linksCreated: 0 }
+    }
+
+    // Get existing guardian_child links
+    const childIds = children.map(c => c.id)
+    const { data: existingLinks } = await supabase
+      .from('guardian_child')
+      .select('guardian_id, child_id')
+      .in('child_id', childIds)
+
+    const existingLinkSet = new Set(
+      (existingLinks || []).map(l => `${l.guardian_id}-${l.child_id}`)
+    )
+
+    // Build new links
+    const newLinks: any[] = []
+
+    for (const child of children) {
+      const familyGuardians = guardians.filter(g => g.family_id === child.family_id)
+
+      for (let i = 0; i < familyGuardians.length; i++) {
+        const guardian = familyGuardians[i]
+        const linkKey = `${guardian.id}-${child.id}`
+
+        if (!existingLinkSet.has(linkKey)) {
+          newLinks.push({
+            guardian_id: guardian.id,
+            child_id: child.id,
+            relationship: guardian.relationship_to_child || null,
+            is_primary_contact: i === 0, // First guardian is primary
+            can_authorize_medical: guardian.has_custody ?? false
+          })
+        }
+      }
+    }
+
+    if (newLinks.length === 0) {
+      return { success: true, linksCreated: 0 }
+    }
+
+    // Insert new links
+    const { error: insertError } = await supabase
+      .from('guardian_child')
+      .insert(newLinks)
+
+    if (insertError) {
+      console.error('Error inserting guardian_child links:', insertError)
+      return { success: false, linksCreated: 0, error: 'Erreur lors de la création des liens' }
+    }
+
+    console.log(`Created ${newLinks.length} guardian-child links for nursery ${nurseryId}`)
+    return { success: true, linksCreated: newLinks.length }
+  } catch (error) {
+    console.error('Unexpected error in repairGuardianChildLinks:', error)
+    return { success: false, linksCreated: 0, error: 'Erreur inattendue' }
   }
 }

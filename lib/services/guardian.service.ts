@@ -385,6 +385,49 @@ export class GuardianService {
   }
 
   /**
+   * Link all guardians of a family to a child
+   * This is called when a child is added to an existing family
+   */
+  async linkFamilyGuardiansToChild(familyId: string, childId: string): Promise<void> {
+    const supabase = this.getClient()
+
+    // Get all active guardians for this family
+    const guardians = await this.getActiveByFamily(familyId)
+
+    if (guardians.length === 0) return
+
+    // Check which guardians are already linked
+    const { data: existingLinks } = await supabase
+      .from('guardian_child')
+      .select('guardian_id')
+      .eq('child_id', childId)
+
+    const linkedGuardianIds = new Set((existingLinks || []).map((l: any) => l.guardian_id))
+
+    // Link guardians that aren't already linked
+    const newLinks = guardians
+      .filter(g => !linkedGuardianIds.has(g.id))
+      .map((guardian, index) => ({
+        guardian_id: guardian.id,
+        child_id: childId,
+        relationship: guardian.relationship_to_child || null,
+        is_primary_contact: index === 0, // First guardian is primary
+        can_authorize_medical: guardian.has_custody ?? false
+      }))
+
+    if (newLinks.length > 0) {
+      const { error } = await supabase
+        .from('guardian_child')
+        .insert(newLinks)
+
+      if (error) {
+        console.error('Error linking family guardians to child:', error)
+        throw error
+      }
+    }
+  }
+
+  /**
    * Search guardians by name or email
    */
   async search(familyId: string, searchTerm: string): Promise<Guardian[]> {

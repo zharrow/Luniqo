@@ -27,18 +27,18 @@ export function AvatarSelector({ selectedAvatar, onSelect, className = '' }: Ava
       <label className="block text-sm font-medium text-gray-700">
         Photo de profil
       </label>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="flex gap-3 justify-start">
         {avatars.map((avatar) => (
           <button
             key={avatar.id}
             type="button"
             onClick={() => onSelect(avatar.id)}
             className={`
-              relative rounded-2xl overflow-hidden border-2 transition-all duration-300
-              hover:scale-105 hover:shadow-lg
+              relative rounded-xl overflow-hidden border-2 transition-all duration-300
+              hover:scale-105 hover:shadow-md w-20
               ${
                 selectedAvatar === avatar.id
-                  ? 'border-[#5a9dc9] ring-4 ring-[#5a9dc9]/20'
+                  ? 'border-[#5a9dc9] ring-2 ring-[#5a9dc9]/20'
                   : 'border-gray-200 hover:border-[#5a9dc9]/50'
               }
             `}
@@ -56,16 +56,16 @@ export function AvatarSelector({ selectedAvatar, onSelect, className = '' }: Ava
             </div>
 
             {/* Label */}
-            <div className="py-2 px-3 bg-white">
-              <p className="text-sm font-medium text-gray-700 text-center">
+            <div className="py-1.5 px-2 bg-white">
+              <p className="text-xs font-medium text-gray-700 text-center">
                 {avatar.label}
               </p>
             </div>
 
             {/* Checkmark si sélectionné */}
             {selectedAvatar === avatar.id && (
-              <div className="absolute top-2 right-2 bg-[#5a9dc9] rounded-full p-1 shadow-lg">
-                <CheckCircleIcon className="w-6 h-6 text-white" />
+              <div className="absolute top-1 right-1 bg-[#5a9dc9] rounded-full p-0.5 shadow-md">
+                <CheckCircleIcon className="w-4 h-4 text-white" />
               </div>
             )}
           </button>

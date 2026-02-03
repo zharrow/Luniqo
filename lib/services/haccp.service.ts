@@ -101,6 +101,9 @@ export interface Product {
   allergens: string | null
   shelf_life_days: number | null
   storage_conditions: string | null
+  barcode: string | null
+  brand: string | null
+  image_url: string | null
   is_active: boolean
   created_at: string
   updated_at: string
@@ -114,6 +117,9 @@ export interface CreateProductInput {
   allergens?: string
   shelf_life_days?: number
   storage_conditions?: string
+  barcode?: string
+  brand?: string
+  image_url?: string
 }
 
 export interface UpdateProductInput {
@@ -123,6 +129,9 @@ export interface UpdateProductInput {
   allergens?: string
   shelf_life_days?: number
   storage_conditions?: string
+  barcode?: string
+  brand?: string
+  image_url?: string
   is_active?: boolean
 }
 
@@ -158,6 +167,8 @@ export interface UpdateMealInput {
 }
 
 // Batches
+export type BatchStatus = 'sealed' | 'opened' | 'consumed' | 'expired' | 'discarded'
+
 export interface Batch {
   id: string
   nursery_id: string
@@ -165,6 +176,8 @@ export interface Batch {
   batch_number: string | null
   reception_date: string
   expiry_date: string | null
+  opened_at: string | null
+  status: BatchStatus
   quantity: number | null
   received_by_id: string
   created_at: string
@@ -369,10 +382,20 @@ export class HaccpService {
     return data as any
   }
 
-  async deleteChild(id: string, nurseryId: string): Promise<void> {
+  async deactivateChild(id: string, nurseryId: string): Promise<void> {
     const { error } = await this.supabase
       .from('child')
       .update({ is_active: false })
+      .eq('id', id)
+      .eq('nursery_id', nurseryId)
+
+    if (error) throw error
+  }
+
+  async deleteChild(id: string, nurseryId: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('child')
+      .delete()
       .eq('id', id)
       .eq('nursery_id', nurseryId)
 
@@ -502,11 +525,26 @@ export class HaccpService {
   async deleteProduct(id: string, nurseryId: string): Promise<void> {
     const { error } = await this.supabase
       .from('product')
-      .update({ is_active: false })
+      .delete()
       .eq('id', id)
       .eq('nursery_id', nurseryId)
 
     if (error) throw error
+  }
+
+  async getProductByBarcode(nurseryId: string, barcode: string): Promise<Product | null> {
+    const { data, error } = await this.supabase
+      .from('product')
+      .select('*, supplier(*)')
+      .eq('nursery_id', nurseryId)
+      .eq('barcode', barcode)
+      .single()
+
+    if (error) {
+      if (error.code === 'PGRST116') return null
+      throw error
+    }
+    return data as any
   }
 
   // ==========================================================================
@@ -643,13 +681,100 @@ export class HaccpService {
       .from('batch')
       .insert({
         nursery_id: nurseryId,
-        ...input
+        ...input,
+        status: 'sealed'
       })
       .select()
       .single()
 
     if (error) throw error
     return data as any
+  }
+
+  async getBatchesByProduct(nurseryId: string, productId: string): Promise<Batch[]> {
+    const { data, error } = await this.supabase
+      .from('batch')
+      .select('*, product(*, supplier(*))')
+      .eq('nursery_id', nurseryId)
+      .eq('product_id', productId)
+      .order('reception_date', { ascending: false })
+
+    if (error) throw error
+    return (data as any[]) || []
+  }
+
+  async getActiveBatches(nurseryId: string): Promise<Batch[]> {
+    const { data, error } = await this.supabase
+      .from('batch')
+      .select('*, product(*, supplier(*))')
+      .eq('nursery_id', nurseryId)
+      .in('status', ['sealed', 'opened'])
+      .order('expiry_date', { ascending: true })
+
+    if (error) throw error
+    return (data as any[]) || []
+  }
+
+  async getExpiringBatches(nurseryId: string, daysAhead: number = 3): Promise<Batch[]> {
+    const today = new Date()
+    const futureDate = new Date()
+    futureDate.setDate(today.getDate() + daysAhead)
+    const futureDateStr = futureDate.toISOString().split('T')[0]
+
+    const { data, error } = await this.supabase
+      .from('batch')
+      .select('*, product(*, supplier(*))')
+      .eq('nursery_id', nurseryId)
+      .in('status', ['sealed', 'opened'])
+      .not('expiry_date', 'is', null)
+      .lte('expiry_date', futureDateStr)
+      .order('expiry_date', { ascending: true })
+
+    if (error) throw error
+    return (data as any[]) || []
+  }
+
+  async markBatchOpened(id: string, nurseryId: string): Promise<Batch> {
+    const { data, error } = await this.supabase
+      .from('batch')
+      .update({
+        opened_at: new Date().toISOString(),
+        status: 'opened',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .eq('nursery_id', nurseryId)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data as any
+  }
+
+  async updateBatchStatus(id: string, nurseryId: string, status: BatchStatus): Promise<Batch> {
+    const { data, error } = await this.supabase
+      .from('batch')
+      .update({
+        status,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .eq('nursery_id', nurseryId)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data as any
+  }
+
+  async deleteBatch(id: string, nurseryId: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('batch')
+      .delete()
+      .eq('id', id)
+      .eq('nursery_id', nurseryId)
+
+    if (error) throw error
   }
 
   // ==========================================================================

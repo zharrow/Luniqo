@@ -74,14 +74,12 @@ export class PDFExportService {
         log.performed_at ? new Date(log.performed_at).toLocaleTimeString('fr-FR', {
           hour: '2-digit',
           minute: '2-digit'
-        }) : '-',
-        log.note || '-',
-        log.photo_urls && log.photo_urls.length > 0 ? `${log.photo_urls.length} photo(s)` : '-'
+        }) : '-'
       ])
 
       autoTable(doc, {
         startY: currentY,
-        head: [['Pièce', 'Tâche', 'Statut', 'Effectué par', 'Heure', 'Note', 'Photos']],
+        head: [['Pièce', 'Tâche', 'Statut', 'Effectué par', 'Heure']],
         body: tableData,
         theme: 'striped',
         headStyles: {
@@ -94,13 +92,11 @@ export class PDFExportService {
           fontSize: 8
         },
         columnStyles: {
-          0: { cellWidth: 25 },
-          1: { cellWidth: 30 },
-          2: { cellWidth: 18 },
-          3: { cellWidth: 28 },
-          4: { cellWidth: 15 },
-          5: { cellWidth: 40 },
-          6: { cellWidth: 18 }
+          0: { cellWidth: 35 },
+          1: { cellWidth: 50 },
+          2: { cellWidth: 25 },
+          3: { cellWidth: 40 },
+          4: { cellWidth: 25 }
         },
         margin: { left: 14, right: 14 }
       })

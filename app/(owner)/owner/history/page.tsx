@@ -324,7 +324,7 @@ export default function HistoryPage() {
           {filteredSessions.map((session) => (
             <Link
               key={session.id}
-              href={`/dashboard/sessions/${session.id}`}
+              href={`/owner/sessions/${session.id}`}
             >
               <div
                 className="relative rounded-3xl p-6 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden cursor-pointer"
