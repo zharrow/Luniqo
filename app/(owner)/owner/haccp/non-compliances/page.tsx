@@ -193,46 +193,26 @@ export default function NonCompliancesPage() {
           ]}
         />
 
-        {/* Header - Style organique rose pastel (users) */}
-        <div
-          className="relative rounded-3xl p-6 mb-8 bg-white overflow-hidden hover:-translate-y-1 transition-all duration-300"
-          style={{
-            border: '1px solid #f4a5a533',
-            background: 'linear-gradient(to bottom right, #fef6f7, white)',
-            boxShadow: '0 0 0 0 rgba(244,165,165,0.25)'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(244,165,165,0.25)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow = '0 0 0 0 rgba(244,165,165,0.25)'
-          }}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div
-                className="inline-flex items-center justify-center w-14 h-14 rounded-2xl"
-                style={{ background: 'linear-gradient(to bottom right, #f4a5a51A, #f4a5a50D)' }}
-              >
-                <ExclamationTriangleIcon className="w-7 h-7" style={{ color: '#c66b6b' }} strokeWidth={1.5} />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-rose-500 to-pink-600 bg-clip-text text-transparent">
-                  Non-conformités
-                </h1>
-                <p className="text-muted-foreground">
-                  Suivi des incidents et actions correctives
-                </p>
-              </div>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-rose-100">
+              <ExclamationTriangleIcon className="w-6 h-6 text-rose-600" strokeWidth={1.5} />
             </div>
-            <button
-              onClick={openCreateModal}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-rose-400 to-pink-500 hover:from-rose-500 hover:to-pink-600 text-white font-medium shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
-            >
-              <PlusIcon className="w-5 h-5" />
-              Déclarer un incident
-            </button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Non-conformités</h1>
+              <p className="text-sm text-muted-foreground">
+                Suivi des incidents et actions correctives
+              </p>
+            </div>
           </div>
+          <button
+            onClick={openCreateModal}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-medium transition-colors"
+          >
+            <PlusIcon className="w-5 h-5" />
+            Déclarer un incident
+          </button>
         </div>
 
         {/* Stats - Couleurs variées */}

@@ -198,35 +198,30 @@ export default function HaccpDocumentsPage() {
         ]}
       />
 
-      {/* Header with Gradient - Module Analytics (Indigo) */}
-      <div className="relative mb-8 p-8 rounded-3xl bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 border border-indigo-200/50 overflow-hidden">
-        <div className="absolute inset-0 bg-[url('/patterns/dots.svg')] opacity-5"></div>
-        <div className="relative flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-400 to-blue-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-              <span className="text-3xl">📄</span>
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent" style={{ fontFamily: 'Quicksand, sans-serif' }}>
-                Documents HACCP
-              </h1>
-              <p className="text-indigo-700/70">Gestion des documents de conformité</p>
-            </div>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-indigo-100">
+            <span className="text-2xl">📄</span>
           </div>
-          <div className="flex gap-3">
-            <button
-              onClick={handleAdd}
-              className="px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-500 to-blue-500 text-white font-medium shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 hover:scale-105 transition-all duration-200"
-            >
-              + Ajouter un document
-            </button>
-            <button
-              onClick={() => router.push('/owner/haccp')}
-              className="px-6 py-3 rounded-2xl bg-white/80 hover:bg-white border border-indigo-200 text-indigo-700 font-medium hover:scale-105 transition-all duration-200"
-            >
-              ← Retour
-            </button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Documents HACCP</h1>
+            <p className="text-sm text-muted-foreground">Gestion des documents de conformité</p>
           </div>
+        </div>
+        <div className="flex gap-3">
+          <button
+            onClick={handleAdd}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-medium transition-colors"
+          >
+            + Ajouter un document
+          </button>
+          <button
+            onClick={() => router.push('/owner/haccp')}
+            className="px-4 py-2 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium transition-colors"
+          >
+            ← Retour
+          </button>
         </div>
       </div>
 

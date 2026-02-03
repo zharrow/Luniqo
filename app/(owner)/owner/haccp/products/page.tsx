@@ -437,50 +437,34 @@ export default function ProductsPage() {
         />
 
         {/* Header */}
-        <div
-          className="relative rounded-3xl p-6 mb-8 bg-white overflow-hidden hover:-translate-y-1 transition-all duration-300"
-          style={{
-            border: '1px solid #aed58133',
-            background: 'linear-gradient(to bottom right, #f9fcf5, white)',
-            boxShadow: '0 0 0 0 rgba(174,213,129,0.25)'
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(174,213,129,0.25)' }}
-          onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 0 0 0 rgba(174,213,129,0.25)' }}
-        >
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-4">
-              <div
-                className="inline-flex items-center justify-center w-14 h-14 rounded-2xl"
-                style={{ background: 'linear-gradient(to bottom right, #aed5811A, #aed5810D)' }}
-              >
-                <ShoppingBagIcon className="w-7 h-7" style={{ color: '#7da453' }} strokeWidth={1.5} />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-lime-600 to-green-600 bg-clip-text text-transparent">
-                  Produits
-                </h1>
-                <p className="text-muted-foreground">
-                  Gestion des produits alimentaires et allergènes
-                </p>
-              </div>
+        <div className="flex items-center justify-between flex-wrap gap-4 mb-8">
+          <div className="flex items-center gap-4">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-lime-100">
+              <ShoppingBagIcon className="w-6 h-6 text-lime-600" strokeWidth={1.5} />
             </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowScanner(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border-2 border-lime-400 hover:bg-lime-50 text-lime-700 font-medium shadow hover:shadow-lg hover:scale-105 transition-all duration-300"
-              >
-                <QrCodeIcon className="w-5 h-5" />
-                Scanner
-              </button>
-              <button
-                onClick={openCreateModal}
-                disabled={suppliers.length === 0}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-lime-500 to-green-600 hover:from-lime-600 hover:to-green-700 text-white font-medium shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <PlusIcon className="w-5 h-5" />
-                Nouveau produit
-              </button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Produits</h1>
+              <p className="text-sm text-muted-foreground">
+                Gestion des produits alimentaires et allergènes
+              </p>
             </div>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowScanner(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-lime-300 hover:bg-lime-50 text-lime-700 font-medium transition-colors"
+            >
+              <QrCodeIcon className="w-5 h-5" />
+              Scanner
+            </button>
+            <button
+              onClick={openCreateModal}
+              disabled={suppliers.length === 0}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-lime-600 hover:bg-lime-700 text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <PlusIcon className="w-5 h-5" />
+              Nouveau produit
+            </button>
           </div>
         </div>
 

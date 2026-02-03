@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
 import { useNursery } from '@/lib/contexts/NurseryContext'
 import { haccpService, type Supplier, type CreateSupplierInput } from '@/lib/services/haccp.service'
@@ -11,11 +11,22 @@ import {
   TruckIcon,
   PhoneIcon,
   EnvelopeIcon,
-  MapPinIcon
+  MapPinIcon,
+  MagnifyingGlassIcon,
+  SparklesIcon,
+  PencilSquareIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline'
 import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
 import { FormDialog } from '@/components/shared/FormDialog'
 import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
+import {
+  SUGGESTED_SUPPLIERS,
+  SUPPLIER_CATEGORIES,
+  type SuggestedSupplier,
+  type SupplierCategory
+} from '@/lib/data/suggested-suppliers'
+import { Card, CardContent } from '@/components/ui/card'
 
 export default function SuppliersPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
@@ -23,6 +34,9 @@ export default function SuppliersPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [suggestionSearch, setSuggestionSearch] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState<SupplierCategory | 'all'>('all')
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null)
   const [supplierToDelete, setSupplierToDelete] = useState<Supplier | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -34,6 +48,27 @@ export default function SuppliersPage() {
     email: '',
     address: ''
   })
+
+  // Filter suggested suppliers based on search and category
+  const filteredSuggestions = useMemo(() => {
+    let results = SUGGESTED_SUPPLIERS
+
+    // Filter out suppliers that already exist (by name, case-insensitive)
+    const existingNames = new Set(suppliers.map(s => s.name.toLowerCase()))
+    results = results.filter(s => !existingNames.has(s.name.toLowerCase()))
+
+    if (selectedCategory !== 'all') {
+      results = results.filter(s => s.category === selectedCategory)
+    }
+    if (suggestionSearch.trim()) {
+      const search = suggestionSearch.toLowerCase()
+      results = results.filter(s =>
+        s.name.toLowerCase().includes(search) ||
+        s.description.toLowerCase().includes(search)
+      )
+    }
+    return results
+  }, [suggestionSearch, selectedCategory, suppliers])
 
   useEffect(() => {
     if (selectedNursery?.id) {
@@ -66,6 +101,32 @@ export default function SuppliersPage() {
       email: '',
       address: ''
     })
+    setSuggestionSearch('')
+    setSelectedCategory('all')
+    setShowSuggestions(true)
+  }
+
+  function selectSuggestion(suggestion: SuggestedSupplier) {
+    setFormData({
+      name: suggestion.name,
+      contact_name: '',
+      phone: suggestion.phone || '',
+      email: suggestion.email || '',
+      address: ''
+    })
+    setShowSuggestions(false)
+    setShowModal(true)
+  }
+
+  function openManualCreate() {
+    setFormData({
+      name: '',
+      contact_name: '',
+      phone: '',
+      email: '',
+      address: ''
+    })
+    setShowSuggestions(false)
     setShowModal(true)
   }
 
@@ -145,46 +206,26 @@ export default function SuppliersPage() {
           ]}
         />
 
-        {/* Header - Style organique turquoise pastel (communication) */}
-        <div
-          className="relative rounded-3xl p-6 mb-8 bg-white overflow-hidden hover:-translate-y-1 transition-all duration-300"
-          style={{
-            border: '1px solid #64b5d133',
-            background: 'linear-gradient(to bottom right, #e0f7fa, white)',
-            boxShadow: '0 0 0 0 rgba(100,181,209,0.25)'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(100,181,209,0.25)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow = '0 0 0 0 rgba(100,181,209,0.25)'
-          }}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div
-                className="inline-flex items-center justify-center w-14 h-14 rounded-2xl"
-                style={{ background: 'linear-gradient(to bottom right, #64b5d11A, #64b5d10D)' }}
-              >
-                <TruckIcon className="w-7 h-7" style={{ color: '#3a7a8f' }} strokeWidth={1.5} />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-cyan-600 to-teal-600 bg-clip-text text-transparent">
-                  Fournisseurs
-                </h1>
-                <p className="text-muted-foreground">
-                  Gestion des fournisseurs de produits alimentaires
-                </p>
-              </div>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-cyan-100">
+              <TruckIcon className="w-6 h-6 text-cyan-600" strokeWidth={1.5} />
             </div>
-            <button
-              onClick={openCreateModal}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600 text-white font-medium shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
-            >
-              <PlusIcon className="w-5 h-5" />
-              Nouveau fournisseur
-            </button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Fournisseurs</h1>
+              <p className="text-sm text-muted-foreground">
+                Gestion des fournisseurs de produits alimentaires
+              </p>
+            </div>
           </div>
+          <button
+            onClick={openCreateModal}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white font-medium transition-colors"
+          >
+            <PlusIcon className="w-5 h-5" />
+            Nouveau fournisseur
+          </button>
         </div>
 
         {/* Suppliers grid */}
@@ -195,10 +236,11 @@ export default function SuppliersPage() {
               Aucun fournisseur
             </h3>
             <p className="text-muted-foreground mb-4">
-              Commencez par ajouter votre premier fournisseur
+              Commencez par ajouter votre premier fournisseur parmi nos suggestions ou créez-en un manuellement
             </p>
-            <button onClick={openCreateModal} className="btn btn-primary">
-              Créer un fournisseur
+            <button onClick={openCreateModal} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600 text-white font-medium shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300">
+              <PlusIcon className="w-5 h-5" />
+              Ajouter un fournisseur
             </button>
           </div>
         ) : (
@@ -233,7 +275,7 @@ export default function SuppliersPage() {
                     <button
                       onClick={() => openDeleteDialog(supplier)}
                       className="p-2 rounded-lg hover:bg-danger-50 transition-colors"
-                      title="Désactiver"
+                      title="Supprimer"
                     >
                       <TrashIcon className="w-4 h-4 text-danger-600" />
                     </button>
@@ -276,6 +318,135 @@ export default function SuppliersPage() {
               </div>
             ))}
           </div>
+        )}
+
+        {/* Suggestions Picker Modal */}
+        {showSuggestions && (
+          <>
+            <div
+              className="fixed inset-0 bg-black/50 z-40 animate-fade-in"
+              onClick={() => setShowSuggestions(false)}
+            />
+            <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+              <Card className="w-full max-w-2xl animate-slide-up max-h-[85vh] flex flex-col">
+                <CardContent className="p-6 flex flex-col min-h-0">
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-100 to-teal-100 flex items-center justify-center">
+                        <SparklesIcon className="w-5 h-5 text-cyan-600" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-bold">Ajouter un fournisseur</h2>
+                        <p className="text-sm text-muted-foreground">Choisissez un fournisseur connu ou créez manuellement</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setShowSuggestions(false)}
+                      className="p-2 rounded-lg hover:bg-muted transition-colors"
+                    >
+                      <XMarkIcon className="w-5 h-5 text-muted-foreground" />
+                    </button>
+                  </div>
+
+                  {/* Search */}
+                  <div className="relative mb-4">
+                    <MagnifyingGlassIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      type="text"
+                      value={suggestionSearch}
+                      onChange={(e) => setSuggestionSearch(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-cyan-500/50 bg-background text-sm"
+                      placeholder="Rechercher un fournisseur..."
+                      autoFocus
+                    />
+                  </div>
+
+                  {/* Category filters */}
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    <button
+                      onClick={() => setSelectedCategory('all')}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        selectedCategory === 'all'
+                          ? 'bg-gray-800 text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      Tous
+                    </button>
+                    {(Object.entries(SUPPLIER_CATEGORIES) as [SupplierCategory, typeof SUPPLIER_CATEGORIES[SupplierCategory]][]).map(([key, cat]) => (
+                      <button
+                        key={key}
+                        onClick={() => setSelectedCategory(key)}
+                        className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+                        style={{
+                          backgroundColor: selectedCategory === key ? cat.color : cat.bgColor,
+                          color: selectedCategory === key ? 'white' : cat.color,
+                        }}
+                      >
+                        {cat.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Suggestions list */}
+                  <div className="overflow-y-auto flex-1 min-h-0 -mx-2 px-2 space-y-2">
+                    {filteredSuggestions.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <MagnifyingGlassIcon className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                        <p className="text-sm">Aucun fournisseur trouvé</p>
+                        <p className="text-xs mt-1">Essayez une autre recherche ou créez manuellement</p>
+                      </div>
+                    ) : (
+                      filteredSuggestions.map((suggestion) => {
+                        const cat = SUPPLIER_CATEGORIES[suggestion.category]
+                        return (
+                          <button
+                            key={suggestion.name}
+                            onClick={() => selectSuggestion(suggestion)}
+                            className="w-full text-left p-3 rounded-xl border border-transparent hover:border-cyan-200 hover:bg-gradient-to-r hover:from-cyan-50/50 hover:to-teal-50/50 transition-all duration-200 group flex items-center gap-3"
+                          >
+                            <div
+                              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-bold transition-transform group-hover:scale-110"
+                              style={{ backgroundColor: cat.bgColor, color: cat.color }}
+                            >
+                              {suggestion.name.charAt(0)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-sm truncate">{suggestion.name}</span>
+                                <span
+                                  className="text-[10px] px-2 py-0.5 rounded-full flex-shrink-0"
+                                  style={{ backgroundColor: cat.bgColor, color: cat.color }}
+                                >
+                                  {cat.label}
+                                </span>
+                              </div>
+                              <p className="text-xs text-muted-foreground truncate mt-0.5">
+                                {suggestion.description}
+                              </p>
+                            </div>
+                            <PlusIcon className="w-4 h-4 text-muted-foreground/40 group-hover:text-cyan-500 flex-shrink-0 transition-colors" />
+                          </button>
+                        )
+                      })
+                    )}
+                  </div>
+
+                  {/* Manual create button */}
+                  <div className="pt-4 mt-4 border-t border-border">
+                    <button
+                      onClick={openManualCreate}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-gray-300 hover:border-cyan-400 text-muted-foreground hover:text-cyan-600 transition-all duration-200 text-sm font-medium"
+                    >
+                      <PencilSquareIcon className="w-4 h-4" />
+                      Créer un fournisseur manuellement
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </>
         )}
 
         {/* Form Dialog */}
@@ -351,7 +522,7 @@ export default function SuppliersPage() {
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary-500 bg-background"
-              placeholder="Adresse complète"
+              placeholder="Adresse complète du fournisseur ou du magasin local"
               rows={2}
             />
           </div>
@@ -362,8 +533,8 @@ export default function SuppliersPage() {
           isOpen={!!supplierToDelete}
           onClose={() => setSupplierToDelete(null)}
           onConfirm={handleConfirmDelete}
-          title="Confirmer la désactivation"
-          description="Êtes-vous sûr de vouloir désactiver le fournisseur"
+          title="Supprimer le fournisseur"
+          description="Êtes-vous sûr de vouloir supprimer définitivement le fournisseur"
           itemName={supplierToDelete ? supplierToDelete.name : ''}
           isDeleting={isDeleting}
         />
