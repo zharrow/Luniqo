@@ -681,7 +681,12 @@ export class HaccpService {
       .from('batch')
       .insert({
         nursery_id: nurseryId,
-        ...input,
+        product_id: input.product_id,
+        batch_code: input.batch_number || null,
+        reception_date: input.reception_date,
+        expiry_date: input.expiry_date || null,
+        received_quantity: input.quantity ?? null,
+        received_by_id: input.received_by_id || null,
         status: 'sealed'
       })
       .select()
