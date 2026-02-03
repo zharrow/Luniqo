@@ -170,44 +170,24 @@ export default function HaccpEquipmentPage() {
         ]}
       />
 
-      {/* Header - Style organique violet lavande pastel (settings) */}
-      <div
-        className="relative rounded-3xl p-6 mb-8 bg-white overflow-hidden hover:-translate-y-1 transition-all duration-300"
-        style={{
-          border: '1px solid #b39ddb33',
-          background: 'linear-gradient(to bottom right, #faf8fc, white)',
-          boxShadow: '0 0 0 0 rgba(179,157,219,0.25)'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(179,157,219,0.25)'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.boxShadow = '0 0 0 0 rgba(179,157,219,0.25)'
-        }}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div
-              className="inline-flex items-center justify-center w-14 h-14 rounded-2xl"
-              style={{ background: 'linear-gradient(to bottom right, #b39ddb1A, #b39ddb0D)' }}
-            >
-              <span className="text-3xl">🔧</span>
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">
-                Équipements
-              </h1>
-              <p className="text-muted-foreground">Gestion de la maintenance des équipements</p>
-            </div>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-purple-100">
+            <span className="text-2xl">🔧</span>
           </div>
-          <button
-            onClick={handleAdd}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600 text-white font-medium shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
-          >
-            <PlusIcon className="w-5 h-5" />
-            Ajouter un équipement
-          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Équipements</h1>
+            <p className="text-sm text-muted-foreground">Gestion de la maintenance des équipements</p>
+          </div>
         </div>
+        <button
+          onClick={handleAdd}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-500 hover:bg-purple-600 text-white font-medium transition-colors"
+        >
+          <PlusIcon className="w-5 h-5" />
+          Ajouter un équipement
+        </button>
       </div>
 
       {/* Error Message */}

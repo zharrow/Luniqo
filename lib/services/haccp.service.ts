@@ -457,10 +457,20 @@ export class HaccpService {
     return data as any
   }
 
-  async deleteSupplier(id: string, nurseryId: string): Promise<void> {
+  async deactivateSupplier(id: string, nurseryId: string): Promise<void> {
     const { error } = await this.supabase
       .from('supplier')
       .update({ is_active: false })
+      .eq('id', id)
+      .eq('nursery_id', nurseryId)
+
+    if (error) throw error
+  }
+
+  async deleteSupplier(id: string, nurseryId: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('supplier')
+      .delete()
       .eq('id', id)
       .eq('nursery_id', nurseryId)
 

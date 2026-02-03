@@ -73,6 +73,9 @@ export function BarcodeScanner({ isOpen, onClose, onScan }: BarcodeScannerProps)
             Html5QrcodeSupportedFormats.QR_CODE,
           ],
           verbose: false,
+          experimentalFeatures: {
+            useBarCodeDetectorIfSupported: true,
+          },
         })
         scannerRef.current = scanner
 
@@ -82,10 +85,15 @@ export function BarcodeScanner({ isOpen, onClose, onScan }: BarcodeScannerProps)
         const qrboxHeight = Math.round(qrboxWidth * 0.4)
 
         await scanner.start(
-          { facingMode: 'environment' },
           {
-            fps: 15,
+            facingMode: 'environment',
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          } as any,
+          {
+            fps: 10,
             qrbox: { width: qrboxWidth, height: qrboxHeight },
+            aspectRatio: 1.7778,
           },
           (decodedText: string) => {
             onScanRef.current(decodedText)
@@ -95,6 +103,24 @@ export function BarcodeScanner({ isOpen, onClose, onScan }: BarcodeScannerProps)
             // Scan failure (no barcode found in frame) - ignore
           }
         )
+
+        // Try to enable continuous autofocus on the video track (mobile)
+        try {
+          const videoEl = document.querySelector(`#${scannerId} video`) as HTMLVideoElement
+          if (videoEl?.srcObject) {
+            const track = (videoEl.srcObject as MediaStream).getVideoTracks()[0]
+            if (track) {
+              const capabilities = track.getCapabilities?.() as any
+              if (capabilities?.focusMode?.includes('continuous')) {
+                await track.applyConstraints({
+                  advanced: [{ focusMode: 'continuous' } as any],
+                })
+              }
+            }
+          }
+        } catch {
+          // Focus mode not supported - continue without it
+        }
 
         if (mounted) setIsInitializing(false)
       } catch (err: any) {

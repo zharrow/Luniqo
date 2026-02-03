@@ -115,34 +115,14 @@ export default function HaccpTemperaturesPage() {
           ]}
         />
 
-        {/* Header - Style organique vert menthe pastel (haccp) */}
-        <div
-          className="relative rounded-3xl p-6 mb-8 bg-white overflow-hidden hover:-translate-y-1 transition-all duration-300"
-          style={{
-            border: '1px solid #81c99533',
-            background: 'linear-gradient(to bottom right, #f1f9f3, white)',
-            boxShadow: '0 0 0 0 rgba(129,201,149,0.25)'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(129,201,149,0.25)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow = '0 0 0 0 rgba(129,201,149,0.25)'
-          }}
-        >
-          <div className="flex items-center gap-4">
-            <div
-              className="inline-flex items-center justify-center w-14 h-14 rounded-2xl"
-              style={{ background: 'linear-gradient(to bottom right, #81c9951A, #81c9950D)' }}
-            >
-              <span className="text-3xl">🌡️</span>
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                Contrôle des Températures
-              </h1>
-              <p className="text-muted-foreground">Suivi des températures HACCP</p>
-            </div>
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-8">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-100">
+            <span className="text-2xl">🌡️</span>
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Contrôle des Températures</h1>
+            <p className="text-sm text-muted-foreground">Suivi des températures HACCP</p>
           </div>
         </div>
 
