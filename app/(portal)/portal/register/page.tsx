@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { validateInvitationToken, markInvitationUsed } from '@/lib/actions/invitation.actions'
+import { validateInvitationToken, registerGuardianUser } from '@/lib/actions/invitation.actions'
 import { EyeIcon, EyeSlashIcon, EnvelopeIcon, KeyIcon, ExclamationTriangleIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
 
 type TokenStatus = 'loading' | 'valid' | 'invalid' | 'missing'
@@ -81,52 +81,31 @@ export default function PortalRegisterPage() {
     setIsLoading(true)
 
     try {
-      // Create auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // Use server action to create user (email auto-confirmed)
+      const result = await registerGuardianUser({
+        email,
+        password,
+        guardianId,
+        token,
+      })
+
+      if (!result.success) {
+        setError(result.error || 'Erreur lors de la creation du compte')
+        setIsLoading(false)
+        return
+      }
+
+      // Sign in the user after successful registration
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      if (authError) {
-        if (authError.message.includes('already registered')) {
-          setError('Un compte existe deja avec cet email')
-        } else {
-          setError(authError.message)
-        }
-        setIsLoading(false)
+      if (signInError) {
+        // Account created but sign-in failed - redirect to login
+        router.push('/portal/login?registered=true')
         return
       }
-
-      if (!authData.user) {
-        setError('Echec de la creation du compte')
-        setIsLoading(false)
-        return
-      }
-
-      // Create guardian_user record
-      const { error: guardianUserError } = await (supabase as any)
-        .from('guardian_user')
-        .insert({
-          guardian_id: guardianId,
-          user_id: authData.user.id,
-          can_view_photos: true,
-          can_receive_messages: true,
-          can_update_info: false,
-          terms_accepted_at: new Date().toISOString(),
-          privacy_policy_accepted_at: new Date().toISOString(),
-        })
-
-      if (guardianUserError) {
-        console.error('Guardian user creation error:', guardianUserError)
-        setError('Erreur lors de la creation du profil')
-        // Clean up auth user
-        await supabase.auth.admin.deleteUser(authData.user.id)
-        setIsLoading(false)
-        return
-      }
-
-      // Mark invitation token as used
-      await markInvitationUsed(token)
 
       // Success - redirect to portal home
       router.push('/portal/home')

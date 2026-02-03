@@ -7,7 +7,11 @@ import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-const FROM_EMAIL = 'Luniqo <noreply@luniqo.fr>'
+// In development, use Resend's test address (no domain verification needed)
+// In production, use verified domain
+const FROM_EMAIL = process.env.NODE_ENV === 'production'
+  ? 'Luniqo <noreply@luniqo.fr>'
+  : 'Luniqo <onboarding@resend.dev>'
 
 /**
  * Send a portal invitation email to a guardian (parent)
@@ -22,6 +26,14 @@ export async function sendGuardianInvitation(input: {
   try {
     const { to, guardianFirstName, guardianLastName, nurseryName, invitationUrl } = input
 
+    // Check if API key is configured
+    if (!process.env.RESEND_API_KEY) {
+      console.error('RESEND_API_KEY is not configured')
+      return { success: false, error: 'Service email non configure' }
+    }
+
+    console.log(`📧 Sending invitation email to ${to} from ${FROM_EMAIL}`)
+
     const { error } = await resend.emails.send({
       from: FROM_EMAIL,
       to,
@@ -35,7 +47,12 @@ export async function sendGuardianInvitation(input: {
     })
 
     if (error) {
-      console.error('Resend error:', error)
+      console.error('Resend error details:', {
+        message: error.message,
+        name: error.name,
+        from: FROM_EMAIL,
+        to,
+      })
       return { success: false, error: error.message }
     }
 

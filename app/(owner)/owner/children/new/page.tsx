@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { DatePicker } from '@/components/ui/date-picker'
+import { formatDateLocal } from '@/lib/utils/date'
 import { useNursery } from '@/lib/contexts/NurseryContext'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
 import { childService } from '@/lib/services/child.service'
@@ -119,7 +121,7 @@ export default function NewChildPage() {
 
     try {
       const [familiesData, sectionsData, allergiesData, dietaryData] = await Promise.all([
-        familyService.getAll(selectedNursery.id),
+        familyService.getActive(selectedNursery.id),
         sectionService.getByNursery(selectedNursery.id),
         allergiesDietaryService.getAllAllergies(),
         allergiesDietaryService.getAllDietaryRequirements()
@@ -244,7 +246,12 @@ export default function NewChildPage() {
         )
       }
 
-      // Créer le tuteur principal si renseigné
+      // Si famille existante, lier automatiquement tous les tuteurs de la famille à l'enfant
+      if (useExistingFamily && finalFamilyId) {
+        await guardianService.linkFamilyGuardiansToChild(finalFamilyId, newChild.id)
+      }
+
+      // Créer le tuteur principal si renseigné (pour nouvelle famille)
       if (formData.guardian?.first_name && formData.guardian?.last_name && finalFamilyId) {
         const guardian = await guardianService.create(
           finalFamilyId,
@@ -505,10 +512,11 @@ export default function NewChildPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Date de naissance <span className="text-red-500">*</span>
                   </label>
-                  <Input
-                    type="date"
+                  <DatePicker
                     value={formData.birth_date}
-                    onChange={(e) => handleChange('birth_date', e.target.value)}
+                    onChange={(date) => handleChange('birth_date', date ? formatDateLocal(date) : '')}
+                    placeholder="Sélectionner la date de naissance"
+                    mode="birthdate"
                   />
                 </div>
 
@@ -640,10 +648,10 @@ export default function NewChildPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Date d'admission
                   </label>
-                  <Input
-                    type="date"
-                    value={formData.admission_date || ''}
-                    onChange={(e) => handleChange('admission_date', e.target.value)}
+                  <DatePicker
+                    value={formData.admission_date}
+                    onChange={(date) => handleChange('admission_date', date ? formatDateLocal(date) : '')}
+                    placeholder="Sélectionner la date"
                   />
                 </div>
 
@@ -651,10 +659,10 @@ export default function NewChildPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Date de fin d'adaptation
                   </label>
-                  <Input
-                    type="date"
-                    value={formData.adaptation_end_date || ''}
-                    onChange={(e) => handleChange('adaptation_end_date', e.target.value)}
+                  <DatePicker
+                    value={formData.adaptation_end_date}
+                    onChange={(date) => handleChange('adaptation_end_date', date ? formatDateLocal(date) : '')}
+                    placeholder="Sélectionner la date"
                   />
                 </div>
               </div>

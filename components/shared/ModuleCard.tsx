@@ -1,4 +1,5 @@
 import { ReactNode } from 'react'
+import Link from 'next/link'
 
 interface ModuleCardProps {
   module: 'clean' | 'haccp' | 'users' | 'tasks' | 'calendar' | 'settings' | 'communication' | 'analytics'
@@ -40,7 +41,7 @@ export function ModuleCard({
   const descriptionSize = size === 'lg' ? 'text-sm' : 'text-xs'
 
   return (
-    <a
+    <Link
       href={href}
       className={`relative rounded-3xl ${padding} bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden block`}
       style={{
@@ -108,6 +109,6 @@ export function ModuleCard({
           <span className="text-xs text-gray-500 font-medium">{status.label}</span>
         </div>
       )}
-    </a>
+    </Link>
   )
 }

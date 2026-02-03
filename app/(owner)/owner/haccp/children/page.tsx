@@ -377,7 +377,7 @@ export default function ChildrenPage() {
                       <button
                         onClick={() => openDeleteDialog(child)}
                         className="p-2 rounded-xl hover:bg-red-50 transition-all duration-300 hover:scale-110"
-                        title="Désactiver"
+                        title="Supprimer"
                       >
                         <TrashIcon className="w-4 h-4 text-red-600" />
                       </button>
@@ -657,8 +657,8 @@ export default function ChildrenPage() {
           isOpen={!!childToDelete}
           onClose={() => setChildToDelete(null)}
           onConfirm={handleConfirmDelete}
-          title="Confirmer la désactivation"
-          description="Êtes-vous sûr de vouloir désactiver l'enfant"
+          title="Confirmer la suppression"
+          description="Êtes-vous sûr de vouloir supprimer définitivement l'enfant"
           itemName={childToDelete ? `${childToDelete.first_name} ${childToDelete.last_name}` : ''}
           isDeleting={isDeleting}
         />

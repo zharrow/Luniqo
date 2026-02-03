@@ -56,7 +56,9 @@ export default function PortalHomePage() {
       setDashboard(dashboardData)
 
       // Load children
-      const { data: childrenData } = await supabase
+      console.log('🔍 Loading children for guardian_id:', (guardianUser as any).guardian_id)
+
+      const { data: childrenData, error: childrenError } = await supabase
         .from('guardian_child')
         .select(`
           child:child_id (
@@ -70,8 +72,12 @@ export default function PortalHomePage() {
         `)
         .eq('guardian_id', (guardianUser as any).guardian_id)
 
+      console.log('🔍 Children query result:', { childrenData, childrenError })
+
       if (childrenData) {
-        setChildren(childrenData.map((gc: any) => gc.child).filter(Boolean))
+        const mappedChildren = childrenData.map((gc: any) => gc.child).filter(Boolean)
+        console.log('🔍 Mapped children:', mappedChildren)
+        setChildren(mappedChildren)
       }
 
       // Load recent timeline posts (last 3)

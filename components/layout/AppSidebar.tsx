@@ -5,33 +5,42 @@ import { usePathname } from 'next/navigation'
 import { useAuth } from '@/lib/contexts/AuthContext'
 import { useNursery } from '@/lib/contexts/NurseryContext'
 import {
-  HomeIcon,
   BuildingOfficeIcon,
   BuildingOffice2Icon,
   ClipboardDocumentListIcon,
   UserGroupIcon,
   CalendarIcon,
-  ClockIcon,
   BeakerIcon,
   ChatBubbleLeftRightIcon,
   ChartBarIcon,
-  Cog6ToothIcon,
   PuzzlePieceIcon,
-  EyeIcon,
   BriefcaseIcon,
-  CalendarDaysIcon,
   XCircleIcon,
-  ShieldCheckIcon,
   ClipboardDocumentCheckIcon,
   QueueListIcon,
   UserPlusIcon,
-  DocumentTextIcon,
   CurrencyEuroIcon,
   LockClosedIcon,
-  SparklesIcon,
   ChartPieIcon,
-  CreditCardIcon,
+  DocumentTextIcon,
+  ShoppingBagIcon,
+  TruckIcon,
+  ExclamationTriangleIcon,
+  WrenchIcon,
 } from '@heroicons/react/24/outline'
+
+// Animated icons from lucide-animated
+import {
+  AnimatedIconWrapper,
+  HomeIcon,
+  ClockIcon,
+  SettingsIcon,
+  SparklesIcon,
+  EyeIcon,
+  ShieldCheckIcon,
+  EuroIcon,
+  CalendarDaysIcon,
+} from '@/components/ui/lucide-animated'
 import {
   Sidebar,
   SidebarContent,
@@ -55,6 +64,7 @@ interface NavItem {
   roles?: ('Developer' | 'Owner')[]
   moduleColor?: string // Couleur du module pour l'indicateur visuel
   moduleId?: string // ID du module requis pour accéder à cette route
+  isAnimated?: boolean // Pour les icônes lucide-animated
 }
 
 
@@ -62,11 +72,10 @@ interface NavItem {
 // MODULE BASE (gratuit) - Configuration & Données de Base
 // ============================================================================
 const baseNavigation: NavItem[] = [
-  { name: 'Tableau de bord', href: '/owner/dashboard', icon: HomeIcon, roles: ['Owner'], moduleColor: '#5a9dc9', moduleId: 'base' },
+  { name: 'Tableau de bord', href: '/owner/dashboard', icon: HomeIcon, roles: ['Owner'], moduleColor: '#5a9dc9', moduleId: 'base', isAnimated: true },
   { name: 'Mes Crèches', href: '/owner/nurseries', icon: BuildingOffice2Icon, roles: ['Owner'], moduleColor: '#5a9dc9', moduleId: 'base' },
   { name: 'Employés', href: '/owner/users', icon: UserGroupIcon, roles: ['Owner'], moduleColor: '#5a9dc9', moduleId: 'base' },
   { name: 'Messages', href: '/owner/messages', icon: ChatBubbleLeftRightIcon, roles: ['Owner'], moduleColor: '#64b5d1', moduleId: 'base' },
-  { name: 'Abonnements', href: '/owner/billing', icon: CreditCardIcon, roles: ['Owner'], moduleColor: '#f0b775', moduleId: 'base' },
 ]
 
 // ============================================================================
@@ -76,14 +85,21 @@ const cleaningNavigation: NavItem[] = [
   { name: 'Pièces', href: '/owner/rooms', icon: BuildingOfficeIcon, roles: ['Owner'], moduleColor: '#81c784', moduleId: 'cleaning' },
   { name: 'Tâches', href: '/owner/tasks', icon: ClipboardDocumentListIcon, roles: ['Owner'], moduleColor: '#aed581', moduleId: 'cleaning' },
   { name: 'Sessions', href: '/owner/sessions', icon: CalendarIcon, roles: ['Owner'], moduleColor: '#9ccc65', moduleId: 'cleaning' },
-  { name: 'Historique', href: '/owner/history', icon: ClockIcon, roles: ['Owner'], moduleColor: '#c5e1a5', moduleId: 'cleaning' },
+  { name: 'Historique', href: '/owner/history', icon: ClockIcon, roles: ['Owner'], moduleColor: '#c5e1a5', moduleId: 'cleaning', isAnimated: true },
 ]
 
 // ============================================================================
 // MODULE HACCP (39€/mois) - Traçabilité alimentaire
 // ============================================================================
 const haccpNavigation: NavItem[] = [
-  { name: 'HACCP', href: '/owner/haccp', icon: BeakerIcon, roles: ['Owner'], moduleColor: '#81c995', moduleId: 'haccp' },
+  { name: 'Enfants', href: '/owner/haccp/children', icon: UserGroupIcon, roles: ['Owner'], moduleColor: '#f4c2c2', moduleId: 'haccp' },
+  { name: 'Repas', href: '/owner/haccp/meals', icon: ClipboardDocumentCheckIcon, roles: ['Owner'], moduleColor: '#ffcba4', moduleId: 'haccp' },
+  { name: 'Produits', href: '/owner/haccp/products', icon: ShoppingBagIcon, roles: ['Owner'], moduleColor: '#c5e1a5', moduleId: 'haccp' },
+  { name: 'Fournisseurs', href: '/owner/haccp/suppliers', icon: TruckIcon, roles: ['Owner'], moduleColor: '#80cbc4', moduleId: 'haccp' },
+  { name: 'Températures', href: '/owner/haccp/temperatures', icon: BeakerIcon, roles: ['Owner'], moduleColor: '#81c995', moduleId: 'haccp' },
+  { name: 'Équipements', href: '/owner/haccp/equipment', icon: WrenchIcon, roles: ['Owner'], moduleColor: '#b39ddb', moduleId: 'haccp' },
+  { name: 'Documents', href: '/owner/haccp/documents', icon: DocumentTextIcon, roles: ['Owner'], moduleColor: '#9fa8da', moduleId: 'haccp' },
+  { name: 'Non-conformités', href: '/owner/haccp/non-compliances', icon: ExclamationTriangleIcon, roles: ['Owner'], moduleColor: '#f4c2c2', moduleId: 'haccp' },
 ]
 
 // ============================================================================
@@ -100,7 +116,7 @@ const childrenNavigation: NavItem[] = [
 // ============================================================================
 const attendanceNavigation: NavItem[] = [
   { name: 'Activités', href: '/owner/activities', icon: PuzzlePieceIcon, roles: ['Owner'], moduleColor: '#ffe5b4', moduleId: 'attendance' },
-  { name: 'Observations', href: '/owner/observations', icon: EyeIcon, roles: ['Owner'], moduleColor: '#ffd4a3', moduleId: 'attendance' },
+  { name: 'Observations', href: '/owner/observations', icon: EyeIcon, roles: ['Owner'], moduleColor: '#ffd4a3', moduleId: 'attendance', isAnimated: true },
 ]
 
 // ============================================================================
@@ -108,9 +124,9 @@ const attendanceNavigation: NavItem[] = [
 // ============================================================================
 const staffNavigation: NavItem[] = [
   { name: 'Personnel', href: '/owner/staff', icon: BriefcaseIcon, roles: ['Owner'], moduleColor: '#c8a8e9', moduleId: 'staff' },
-  { name: 'Planning', href: '/owner/planning', icon: CalendarDaysIcon, roles: ['Owner'], moduleColor: '#d4b5f0', moduleId: 'staff' },
+  { name: 'Planning', href: '/owner/planning', icon: CalendarDaysIcon, roles: ['Owner'], moduleColor: '#d4b5f0', moduleId: 'staff', isAnimated: true },
   { name: 'Absences', href: '/owner/absences', icon: XCircleIcon, roles: ['Owner'], moduleColor: '#e0c4f5', moduleId: 'staff' },
-  { name: 'Conformité', href: '/owner/compliance', icon: ShieldCheckIcon, roles: ['Owner'], moduleColor: '#b3a8e9', moduleId: 'staff' },
+  { name: 'Conformité', href: '/owner/compliance', icon: ShieldCheckIcon, roles: ['Owner'], moduleColor: '#b3a8e9', moduleId: 'staff', isAnimated: true },
 ]
 
 // ============================================================================
@@ -135,7 +151,7 @@ const invoicingNavigation: NavItem[] = [
 // MODULE PORTAIL PARENTS (39€/mois) - Communication avec les familles
 // ============================================================================
 const parentPortalNavigation: NavItem[] = [
-  { name: 'Portail Parents', href: '/owner/portal', icon: SparklesIcon, roles: ['Owner'], moduleColor: '#e8b4d4', moduleId: 'parent_portal' },
+  { name: 'Portail Parents', href: '/owner/portal', icon: SparklesIcon, roles: ['Owner'], moduleColor: '#e8b4d4', moduleId: 'parent_portal', isAnimated: true },
 ]
 
 // ============================================================================
@@ -217,7 +233,11 @@ export function AppSidebar() {
                       } : {}}
                     >
                       <Link href={targetHref} className="flex items-center gap-3 relative group/item">
-                        <Icon className="w-5 h-5 transition-all duration-300 group-hover/item:scale-110 group-hover/item:text-primary-600" />
+                        {item.isAnimated ? (
+                          <AnimatedIconWrapper icon={<Icon />} size={20} />
+                        ) : (
+                          <Icon className="w-5 h-5 transition-all duration-300 group-hover/item:scale-110 group-hover/item:text-primary-600" />
+                        )}
                         <span className="font-medium">{item.name}</span>
                         {isLocked && (
                           <Badge variant="outline" size="sm" className="ml-auto">
@@ -297,10 +317,20 @@ export function AppSidebar() {
 
       <SidebarFooter className="border-t border-neutral-200 bg-gradient-to-br from-neutral-50 to-white px-2">
         <SidebarMenu>
+          {role === 'Owner' && (
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Abonnements" className="rounded-md">
+                <Link href="/owner/billing" className="flex items-center gap-2">
+                  <AnimatedIconWrapper icon={<EuroIcon />} size={20} />
+                  <span>Abonnements</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Mon Profil" className="rounded-md">
-              <Link href="/owner/profile" className="group/footer">
-                <Cog6ToothIcon className="w-5 h-5 transition-transform duration-300 group-hover/footer:rotate-90" />
+              <Link href="/owner/profile" className="flex items-center gap-2">
+                <AnimatedIconWrapper icon={<SettingsIcon />} size={20} />
                 <span>Mon Profil</span>
               </Link>
             </SidebarMenuButton>
