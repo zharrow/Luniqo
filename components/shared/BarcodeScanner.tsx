@@ -11,7 +11,7 @@ interface BarcodeScannerProps {
   onScan: (barcode: string) => void
 }
 
-const BARCODE_FORMATS = [
+const NATIVE_FORMATS = [
   'ean_13',
   'ean_8',
   'upc_a',
@@ -24,7 +24,7 @@ const BARCODE_FORMATS = [
 export function BarcodeScanner({ isOpen, onClose, onScan }: BarcodeScannerProps) {
   const scannerRef = useRef<any>(null)
   const streamRef = useRef<MediaStream | null>(null)
-  const rafRef = useRef<number | null>(null)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const onScanRef = useRef(onScan)
@@ -37,17 +37,14 @@ export function BarcodeScanner({ isOpen, onClose, onScan }: BarcodeScannerProps)
   }, [onScan])
 
   const stopScanner = useCallback(async () => {
-    // Stop native detection loop
-    if (rafRef.current) {
-      cancelAnimationFrame(rafRef.current)
-      rafRef.current = null
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
     }
-    // Stop camera stream (native path)
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop())
       streamRef.current = null
     }
-    // Stop html5-qrcode (fallback path)
     if (scannerRef.current) {
       try {
         await scannerRef.current.stop()
@@ -79,8 +76,13 @@ export function BarcodeScanner({ isOpen, onClose, onScan }: BarcodeScannerProps)
 
     async function initNativeScanner(isMounted: boolean) {
       try {
+        // Request HD resolution for better barcode readability on mobile
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment' },
+          video: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+          },
         })
 
         if (!isMounted || !containerRef.current) {
@@ -90,11 +92,25 @@ export function BarcodeScanner({ isOpen, onClose, onScan }: BarcodeScannerProps)
 
         streamRef.current = stream
 
+        // Try to enable continuous autofocus (important for close-up barcode scanning)
+        try {
+          const track = stream.getVideoTracks()[0]
+          const capabilities = (track as any).getCapabilities?.()
+          if (capabilities?.focusMode?.includes('continuous')) {
+            await track.applyConstraints({
+              advanced: [{ focusMode: 'continuous' } as any],
+            })
+          }
+        } catch {
+          // Focus control not supported on this device
+        }
+
         // Create video element
         const video = document.createElement('video')
         video.srcObject = stream
         video.setAttribute('playsinline', 'true')
         video.setAttribute('autoplay', 'true')
+        video.setAttribute('muted', 'true')
         video.style.width = '100%'
         video.style.borderRadius = '0.75rem'
         containerRef.current.innerHTML = ''
@@ -105,28 +121,37 @@ export function BarcodeScanner({ isOpen, onClose, onScan }: BarcodeScannerProps)
 
         // Create native BarcodeDetector
         const BarcodeDetector = (window as any).BarcodeDetector
-        const detector = new BarcodeDetector({ formats: BARCODE_FORMATS })
+        const detector = new BarcodeDetector({ formats: NATIVE_FORMATS })
 
-        // Detection loop
+        // Canvas for frame capture (more reliable than passing video directly)
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')!
+
+        // Throttled detection loop — one detect() at a time, every 250ms
         const detect = async () => {
-          if (!isMounted || !videoRef.current || videoRef.current.readyState < 2) {
-            rafRef.current = requestAnimationFrame(detect)
-            return
-          }
-          try {
-            const barcodes = await detector.detect(videoRef.current)
-            if (barcodes.length > 0) {
-              onScanRef.current(barcodes[0].rawValue)
-              stopScanner()
-              return
+          if (!isMounted || !videoRef.current) return
+          if (videoRef.current.readyState >= 2) {
+            try {
+              canvas.width = videoRef.current.videoWidth
+              canvas.height = videoRef.current.videoHeight
+              ctx.drawImage(videoRef.current, 0, 0)
+              const barcodes = await detector.detect(canvas)
+              if (barcodes.length > 0) {
+                onScanRef.current(barcodes[0].rawValue)
+                stopScanner()
+                return
+              }
+            } catch {
+              // Detection failed on this frame
             }
-          } catch {
-            // Detection failed on this frame - continue
           }
-          rafRef.current = requestAnimationFrame(detect)
+          if (isMounted) {
+            timerRef.current = setTimeout(detect, 250)
+          }
         }
 
-        rafRef.current = requestAnimationFrame(detect)
+        // Small delay to let the camera warm up and autofocus
+        timerRef.current = setTimeout(detect, 500)
         if (isMounted) setIsInitializing(false)
       } catch (err: any) {
         if (!isMounted) return
@@ -167,12 +192,28 @@ export function BarcodeScanner({ isOpen, onClose, onScan }: BarcodeScannerProps)
         })
         scannerRef.current = scanner
 
+        // Try to find back camera by device ID (more reliable on iOS Safari)
+        let cameraConfig: any = { facingMode: 'environment' }
+        try {
+          const cameras = await Html5Qrcode.getCameras()
+          if (cameras.length > 0) {
+            const backCamera = cameras.find((c) =>
+              /back|rear|arrière|environment/i.test(c.label)
+            )
+            if (backCamera) {
+              cameraConfig = backCamera.id
+            }
+          }
+        } catch {
+          // Camera enumeration failed, use facingMode fallback
+        }
+
         const containerWidth = containerRef.current.offsetWidth - 32
         const qrboxWidth = Math.min(containerWidth, 300)
         const qrboxHeight = Math.round(qrboxWidth * 0.4)
 
         await scanner.start(
-          { facingMode: 'environment' },
+          cameraConfig,
           {
             fps: 15,
             qrbox: { width: qrboxWidth, height: qrboxHeight },
