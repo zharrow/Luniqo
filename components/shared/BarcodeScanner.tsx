@@ -85,15 +85,10 @@ export function BarcodeScanner({ isOpen, onClose, onScan }: BarcodeScannerProps)
         const qrboxHeight = Math.round(qrboxWidth * 0.4)
 
         await scanner.start(
-          {
-            facingMode: 'environment',
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-          } as any,
+          { facingMode: 'environment' },
           {
             fps: 10,
             qrbox: { width: qrboxWidth, height: qrboxHeight },
-            aspectRatio: 1.7778,
           },
           (decodedText: string) => {
             onScanRef.current(decodedText)
