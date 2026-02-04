@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { XMarkIcon, CameraIcon } from '@heroicons/react/24/outline'
@@ -12,232 +12,189 @@ interface BarcodeScannerProps {
 }
 
 export function BarcodeScanner({ isOpen, onClose, onScan }: BarcodeScannerProps) {
-  const streamRef = useRef<MediaStream | null>(null)
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const decoderRef = useRef<any>(null)
+  const streamRef = useRef<MediaStream | null>(null)
+  const codeReaderRef = useRef<any>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const onScanRef = useRef(onScan)
+
   const [manualCode, setManualCode] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [photoError, setPhotoError] = useState<string | null>(null)
   const [isInitializing, setIsInitializing] = useState(true)
   const [cameraFailed, setCameraFailed] = useState(false)
 
-  useEffect(() => {
-    onScanRef.current = onScan
-  }, [onScan])
-
-  const stopScanner = useCallback(async () => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current)
-      timerRef.current = null
-    }
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop())
-      streamRef.current = null
-    }
-    const el = document.getElementById('barcode-decoder-hidden')
-    if (el) el.remove()
-    decoderRef.current = null
-  }, [])
-
-  const getDecoder = useCallback(async () => {
-    if (decoderRef.current) return decoderRef.current
-
-    const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import(
-      'html5-qrcode'
-    )
-
-    let hiddenEl = document.getElementById('barcode-decoder-hidden')
-    if (!hiddenEl) {
-      hiddenEl = document.createElement('div')
-      hiddenEl.id = 'barcode-decoder-hidden'
-      hiddenEl.style.display = 'none'
-      document.body.appendChild(hiddenEl)
-    }
-
-    const decoder = new Html5Qrcode('barcode-decoder-hidden', {
-      formatsToSupport: [
-        Html5QrcodeSupportedFormats.EAN_13,
-        Html5QrcodeSupportedFormats.EAN_8,
-        Html5QrcodeSupportedFormats.UPC_A,
-        Html5QrcodeSupportedFormats.UPC_E,
-        Html5QrcodeSupportedFormats.CODE_128,
-        Html5QrcodeSupportedFormats.CODE_39,
-        Html5QrcodeSupportedFormats.QR_CODE,
-      ],
-      verbose: false,
-    })
-
-    decoderRef.current = decoder
-    return decoder
-  }, [])
-
+  // Initialize ZXing scanner
   useEffect(() => {
     if (!isOpen) return
-    let mounted = true
 
-    async function init() {
+    let mounted = true
+    let activeReader: any = null
+
+    async function initScanner() {
       setError(null)
       setPhotoError(null)
       setIsInitializing(true)
       setCameraFailed(false)
 
-      // 1. Initialize decoder (html5-qrcode in file-scan mode only)
-      let decoder: any
       try {
-        decoder = await getDecoder()
-      } catch {
+        // Import ZXing
+        const { BrowserMultiFormatReader, DecodeHintType } = await import('@zxing/library')
+
         if (!mounted) return
-        setIsInitializing(false)
-        setCameraFailed(true)
-        return
-      }
 
-      // 2. Open camera via getUserMedia (bypasses html5-qrcode camera management)
-      let stream: MediaStream
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: 'environment',
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-          },
-        })
-      } catch {
-        // Retry with minimal constraints
-        try {
-          stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'environment' },
-          })
-        } catch (err: any) {
-          if (!mounted) return
-          setIsInitializing(false)
-          setCameraFailed(true)
-          if (err?.name === 'NotAllowedError') {
-            setError(
-              "Accès caméra refusé. Utilisez la capture photo ci-dessous."
-            )
+        // Create reader with hints for better performance
+        const hints = new Map()
+        hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+          'EAN_13',
+          'EAN_8',
+          'UPC_A',
+          'UPC_E',
+          'CODE_128',
+          'CODE_39',
+          'QR_CODE',
+        ])
+        hints.set(DecodeHintType.TRY_HARDER, true)
+
+        const reader = new BrowserMultiFormatReader(hints)
+        codeReaderRef.current = reader
+        activeReader = reader
+
+        // Get video input devices
+        const videoInputDevices = await reader.listVideoInputDevices()
+        if (!videoInputDevices || videoInputDevices.length === 0) {
+          throw new Error('No camera found')
+        }
+
+        // Try to find back camera (environment facing)
+        const backCamera = videoInputDevices.find((device) =>
+          /back|rear|environment/i.test(device.label)
+        )
+        const selectedDeviceId = backCamera?.deviceId || videoInputDevices[0].deviceId
+
+        if (!mounted || !videoRef.current) return
+
+        // Start continuous decode from video device
+        await reader.decodeFromVideoDevice(
+          selectedDeviceId,
+          videoRef.current,
+          (result) => {
+            if (result && mounted) {
+              const barcodeText = result.getText()
+              if (barcodeText) {
+                onScan(barcodeText)
+                cleanup()
+              }
+            }
+            // Ignore decode errors - they're normal when no barcode is visible
           }
-          return
-        }
-      }
-
-      if (!mounted) {
-        stream.getTracks().forEach((t) => t.stop())
-        return
-      }
-      streamRef.current = stream
-
-      // 3. Enable continuous autofocus (critical for close-up barcode scanning)
-      try {
-        const track = stream.getVideoTracks()[0]
-        const caps = (track as any).getCapabilities?.()
-        if (caps?.focusMode?.includes('continuous')) {
-          await track.applyConstraints({
-            advanced: [{ focusMode: 'continuous' } as any],
-          })
-        }
-      } catch {}
-
-      // 4. Attach stream to video element
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-        await videoRef.current.play()
-      }
-
-      // 5. Create offscreen canvas for frame capture
-      const canvas = document.createElement('canvas')
-      const ctx = canvas.getContext('2d')!
-      canvasRef.current = canvas
-
-      // 6. Frame-by-frame detection loop using html5-qrcode's decoder
-      const detect = async () => {
-        if (!mounted || !videoRef.current || videoRef.current.readyState < 2) {
-          if (mounted) timerRef.current = setTimeout(detect, 300)
-          return
-        }
-
-        try {
-          const video = videoRef.current
-          canvas.width = video.videoWidth
-          canvas.height = video.videoHeight
-          ctx.drawImage(video, 0, 0)
-
-          // Convert canvas frame to JPEG blob then File for html5-qrcode decoder
-          const blob = await new Promise<Blob | null>((resolve) =>
-            canvas.toBlob(resolve, 'image/jpeg', 0.85)
-          )
-
-          if (!blob || !mounted) {
-            if (mounted) timerRef.current = setTimeout(detect, 300)
-            return
-          }
-
-          const file = new File([blob], 'frame.jpg', { type: 'image/jpeg' })
-          const result = await decoder.scanFile(file, false)
-
-          if (result && mounted) {
-            onScanRef.current(result)
-            stopScanner()
-            return
-          }
-        } catch {
-          // No barcode detected in this frame — continue
-        }
+        )
 
         if (mounted) {
-          timerRef.current = setTimeout(detect, 300)
+          setIsInitializing(false)
+        }
+      } catch (err: any) {
+        console.error('ZXing initialization error:', err)
+        if (!mounted) return
+
+        setIsInitializing(false)
+        setCameraFailed(true)
+
+        if (err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError') {
+          setError('Accès caméra refusé. Utilisez la capture photo ci-dessous.')
+        } else {
+          setError('Impossible d\'initialiser la caméra. Utilisez la capture photo.')
         }
       }
-
-      // Initial delay: let camera warm up + autofocus stabilize
-      timerRef.current = setTimeout(detect, 800)
-      if (mounted) setIsInitializing(false)
     }
 
-    init()
+    function cleanup() {
+      if (activeReader) {
+        activeReader.reset()
+        activeReader = null
+      }
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop())
+        streamRef.current = null
+      }
+      codeReaderRef.current = null
+    }
+
+    initScanner()
 
     return () => {
       mounted = false
-      stopScanner()
+      cleanup()
     }
-  }, [isOpen, stopScanner, getDecoder])
+  }, [isOpen, onScan])
 
-  // Photo capture: opens native camera app on mobile, takes a photo, decodes it
+  // Photo capture fallback using ZXing
   async function handlePhotoCapture(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
     setPhotoError(null)
 
     try {
-      const decoder = await getDecoder()
-      const result = await decoder.scanFile(file, false)
-      if (result) {
-        onScanRef.current(result)
-        stopScanner()
+      const { BrowserMultiFormatReader, DecodeHintType } = await import('@zxing/library')
+
+      const hints = new Map()
+      hints.set(DecodeHintType.TRY_HARDER, true)
+
+      const reader = new BrowserMultiFormatReader(hints)
+
+      // Create image element from file
+      const imageUrl = URL.createObjectURL(file)
+      const img = new Image()
+
+      await new Promise((resolve, reject) => {
+        img.onload = resolve
+        img.onerror = reject
+        img.src = imageUrl
+      })
+
+      // Decode from image
+      const result = await reader.decodeFromImageElement(img)
+      const barcodeText = result.getText()
+
+      if (barcodeText) {
+        onScan(barcodeText)
         onClose()
       }
-    } catch {
+
+      URL.revokeObjectURL(imageUrl)
+    } catch (err) {
+      console.error('Photo decode error:', err)
       setPhotoError('Aucun code-barres détecté. Rapprochez-vous et réessayez.')
     }
 
-    if (fileInputRef.current) fileInputRef.current.value = ''
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
   }
 
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const code = manualCode.trim()
-    if (code) onScan(code)
+    if (code) {
+      onScan(code)
+      onClose()
+    }
+  }
+
+  const handleClose = () => {
+    if (codeReaderRef.current) {
+      codeReaderRef.current.reset()
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop())
+    }
+    onClose()
   }
 
   if (!isOpen) return null
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/60 z-40" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/60 z-40" onClick={handleClose} />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
           {/* Header */}
@@ -246,26 +203,24 @@ export function BarcodeScanner({ isOpen, onClose, onScan }: BarcodeScannerProps)
               Scanner un produit
             </h2>
             <button
-              onClick={() => {
-                stopScanner()
-                onClose()
-              }}
+              onClick={handleClose}
               className="p-1 rounded-full hover:bg-white/30 transition-colors"
             >
               <XMarkIcon className="w-6 h-6 text-[#33691e]" />
             </button>
           </div>
 
-          {/* Camera viewfinder (hidden if camera unavailable) */}
+          {/* ZXing camera viewfinder */}
           {!cameraFailed && (
             <div className="p-4 pb-2">
-              <div className="relative rounded-2xl overflow-hidden bg-gray-900 min-h-[220px]">
+              <div className="relative rounded-2xl overflow-hidden bg-gray-900 min-h-[280px]">
                 <video
                   ref={videoRef}
                   playsInline
                   autoPlay
                   muted
                   className="w-full block"
+                  style={{ objectFit: 'cover' }}
                 />
                 {/* Scanning guide overlay */}
                 {!isInitializing && !error && (
@@ -284,7 +239,7 @@ export function BarcodeScanner({ isOpen, onClose, onScan }: BarcodeScannerProps)
                   <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
                     <div className="text-white text-sm flex flex-col items-center gap-3">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white" />
-                      <span>Initialisation de la caméra...</span>
+                      <span>Initialisation du scanner...</span>
                     </div>
                   </div>
                 )}
@@ -304,7 +259,7 @@ export function BarcodeScanner({ isOpen, onClose, onScan }: BarcodeScannerProps)
             </div>
           )}
 
-          {/* Photo capture — reliable fallback for iOS */}
+          {/* Photo capture — reliable fallback */}
           <div className="px-4 py-3">
             <input
               ref={fileInputRef}
