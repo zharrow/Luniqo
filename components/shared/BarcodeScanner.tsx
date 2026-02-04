@@ -73,21 +73,86 @@ export function BarcodeScanner({ isOpen, onClose, onScan }: BarcodeScannerProps)
 
         if (!mounted || !videoRef.current) return
 
-        // Start continuous decode from video device
-        await reader.decodeFromVideoDevice(
-          selectedDeviceId,
-          videoRef.current,
-          (result) => {
-            if (result && mounted) {
-              const barcodeText = result.getText()
-              if (barcodeText) {
-                onScan(barcodeText)
-                cleanup()
-              }
-            }
-            // Ignore decode errors - they're normal when no barcode is visible
+        // Configure advanced camera constraints for better focus and resolution
+        const constraints: MediaStreamConstraints = {
+          video: {
+            deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined,
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1920, min: 1280 },
+            height: { ideal: 1080, min: 720 },
+            // @ts-ignore - Advanced constraints not in TS types but supported by browsers
+            focusMode: 'continuous',
+            // @ts-ignore
+            focusDistance: { ideal: 0 }, // Allow close-up focus
+            // @ts-ignore
+            zoom: { ideal: 1.0 },
+          },
+        }
+
+        // Get media stream with advanced constraints
+        const stream = await navigator.mediaDevices.getUserMedia(constraints)
+        streamRef.current = stream
+
+        // Apply advanced focus settings to video track
+        const videoTrack = stream.getVideoTracks()[0]
+        if (videoTrack) {
+          const capabilities = videoTrack.getCapabilities()
+          const settings: any = {}
+
+          // Enable continuous autofocus if supported
+          if ('focusMode' in capabilities) {
+            settings.focusMode = 'continuous'
           }
-        )
+
+          // Set focus distance to allow macro/close-up if supported
+          if ('focusDistance' in capabilities) {
+            settings.focusDistance = 0 // Allows close focus
+          }
+
+          // Apply settings
+          if (Object.keys(settings).length > 0) {
+            try {
+              await videoTrack.applyConstraints({ advanced: [settings] })
+            } catch (e) {
+              console.log('Some focus settings not supported:', e)
+            }
+          }
+        }
+
+        // Attach stream to video element
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream
+
+          // Wait for video to be ready
+          await new Promise<void>((resolve) => {
+            if (videoRef.current) {
+              videoRef.current.onloadedmetadata = () => resolve()
+            }
+          })
+        }
+
+        // Start continuous decode loop
+        const decodeLoop = async () => {
+          while (mounted && videoRef.current) {
+            try {
+              const result = await reader.decodeFromVideoElement(videoRef.current)
+              if (result && mounted) {
+                const barcodeText = result.getText()
+                if (barcodeText) {
+                  onScan(barcodeText)
+                  cleanup()
+                  break
+                }
+              }
+            } catch {
+              // No barcode found, continue loop
+            }
+            // Small delay to prevent CPU overuse
+            await new Promise((resolve) => setTimeout(resolve, 100))
+          }
+        }
+
+        decodeLoop()
 
         if (mounted) {
           setIsInitializing(false)
