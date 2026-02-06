@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeftIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
-import { UserCircleIcon, UserGroupIcon, HeartIcon, DocumentTextIcon, ShieldCheckIcon, ClockIcon } from '@heroicons/react/24/solid'
+import { ArrowLeftIcon, PencilIcon, TrashIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
+import { UserCircleIcon, UserGroupIcon, HeartIcon, DocumentTextIcon, ShieldCheckIcon, ClockIcon, BeakerIcon } from '@heroicons/react/24/solid'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -162,7 +162,12 @@ export default function ChildDetailPage() {
   const childId = params.id as string
 
   const { session, isLoading: authLoading } = useRequireAuth(['Owner'])
-  const { selectedNursery, isLoading: nurseryLoading } = useNursery()
+  const { selectedNursery, isLoading: nurseryLoading, accessibleModules } = useNursery()
+
+  // Helper to check module access
+  const hasModule = (moduleId: string) => accessibleModules.includes(moduleId)
+  const hasChildrenModule = hasModule('children')
+  const hasAttendanceModule = hasModule('attendance')
 
   const [child, setChild] = useState<ChildFullProfile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -324,31 +329,50 @@ export default function ChildDetailPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-6">
+        <TabsList className="mb-6 flex-wrap">
+          {/* Core tabs - always visible */}
           <TabsTrigger value="overview">
             <UserCircleIcon className="h-4 w-4 mr-2" />
             Vue d'ensemble
           </TabsTrigger>
-          <TabsTrigger value="family">
-            <UserGroupIcon className="h-4 w-4 mr-2" />
-            Famille
+          <TabsTrigger value="allergies-diets">
+            <ExclamationTriangleIcon className="h-4 w-4 mr-2" />
+            Allergies & Régimes
           </TabsTrigger>
-          <TabsTrigger value="health">
-            <HeartIcon className="h-4 w-4 mr-2" />
-            Santé
-          </TabsTrigger>
-          <TabsTrigger value="documents">
-            <DocumentTextIcon className="h-4 w-4 mr-2" />
-            Documents
-          </TabsTrigger>
-          <TabsTrigger value="authorizations">
-            <ShieldCheckIcon className="h-4 w-4 mr-2" />
-            Autorisations
-          </TabsTrigger>
-          <TabsTrigger value="history">
-            <ClockIcon className="h-4 w-4 mr-2" />
-            Historique
-          </TabsTrigger>
+
+          {/* Module 'children' tabs - conditional */}
+          {hasChildrenModule && (
+            <TabsTrigger value="family">
+              <UserGroupIcon className="h-4 w-4 mr-2" />
+              Famille
+            </TabsTrigger>
+          )}
+          {hasChildrenModule && (
+            <TabsTrigger value="health">
+              <HeartIcon className="h-4 w-4 mr-2" />
+              Santé
+            </TabsTrigger>
+          )}
+          {hasChildrenModule && (
+            <TabsTrigger value="documents">
+              <DocumentTextIcon className="h-4 w-4 mr-2" />
+              Documents
+            </TabsTrigger>
+          )}
+          {hasChildrenModule && (
+            <TabsTrigger value="authorizations">
+              <ShieldCheckIcon className="h-4 w-4 mr-2" />
+              Autorisations
+            </TabsTrigger>
+          )}
+
+          {/* Module 'attendance' tab - conditional (future) */}
+          {hasAttendanceModule && (
+            <TabsTrigger value="history">
+              <ClockIcon className="h-4 w-4 mr-2" />
+              Historique
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* Vue d'ensemble */}
@@ -444,8 +468,88 @@ export default function ChildDetailPage() {
           </div>
         </TabsContent>
 
-        {/* Famille */}
-        <TabsContent value="family">
+        {/* Allergies & Régimes - Core module (toujours visible) */}
+        <TabsContent value="allergies-diets">
+          <div className="space-y-6">
+            {/* Allergies */}
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Allergies</h3>
+                <Button size="sm">Ajouter une allergie</Button>
+              </div>
+              {child.allergies && child.allergies.length > 0 ? (
+                <div className="space-y-3">
+                  {child.allergies.map((allergy) => (
+                    <div
+                      key={allergy.id}
+                      className="p-4 border rounded-lg"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="font-medium text-gray-900">{allergy.allergen_name}</p>
+                          <p className="text-sm text-gray-500 capitalize">{allergy.allergy_type}</p>
+                          {allergy.reaction_description && (
+                            <p className="text-sm text-gray-600 mt-1">{allergy.reaction_description}</p>
+                          )}
+                          {allergy.diagnosed_date && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              Diagnostiquée le {new Date(allergy.diagnosed_date).toLocaleDateString('fr-FR')}
+                            </p>
+                          )}
+                        </div>
+                        <Badge
+                          variant={
+                            allergy.severity === 'critical' ? 'danger' :
+                            allergy.severity === 'severe' ? 'warning' : 'default'
+                          }
+                        >
+                          {allergy.severity === 'critical' ? 'Critique' :
+                           allergy.severity === 'severe' ? 'Sévère' :
+                           allergy.severity === 'moderate' ? 'Modérée' : 'Légère'}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500">Aucune allergie connue</p>
+              )}
+            </Card>
+
+            {/* Régimes alimentaires */}
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Régimes alimentaires</h3>
+                <Button size="sm">Ajouter un régime</Button>
+              </div>
+              {child.diets && child.diets.length > 0 ? (
+                <div className="space-y-3">
+                  {child.diets.map((diet) => (
+                    <div
+                      key={diet.id}
+                      className="p-4 border rounded-lg"
+                    >
+                      <p className="font-medium text-gray-900">{diet.diet_name}</p>
+                      <p className="text-sm text-gray-500 capitalize">{diet.diet_type}</p>
+                      {diet.reason && (
+                        <p className="text-sm text-gray-600 mt-1">{diet.reason}</p>
+                      )}
+                      <p className="text-xs text-gray-500 mt-1">
+                        Depuis le {new Date(diet.start_date).toLocaleDateString('fr-FR')}
+                        {diet.end_date && ` jusqu'au ${new Date(diet.end_date).toLocaleDateString('fr-FR')}`}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500">Aucun régime alimentaire spécifique</p>
+              )}
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Famille - Module 'children' */}
+        {hasChildrenModule && <TabsContent value="family">
           <div className="space-y-6">
             {/* Tuteurs */}
             <Card className="p-6">
@@ -528,10 +632,10 @@ export default function ChildDetailPage() {
               )}
             </Card>
           </div>
-        </TabsContent>
+        </TabsContent>}
 
-        {/* Santé */}
-        <TabsContent value="health">
+        {/* Santé - Module 'children' */}
+        {hasChildrenModule && <TabsContent value="health">
           <div className="space-y-6">
             {/* Informations médicales */}
             <Card className="p-6">
@@ -613,81 +717,6 @@ export default function ChildDetailPage() {
               </Card>
             )}
 
-            {/* Allergies */}
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Allergies</h3>
-                <Button size="sm">Ajouter une allergie</Button>
-              </div>
-              {child.allergies && child.allergies.length > 0 ? (
-                <div className="space-y-3">
-                  {child.allergies.map((allergy) => (
-                    <div
-                      key={allergy.id}
-                      className="p-4 border rounded-lg"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="font-medium text-gray-900">{allergy.allergen_name}</p>
-                          <p className="text-sm text-gray-500 capitalize">{allergy.allergy_type}</p>
-                          {allergy.reaction_description && (
-                            <p className="text-sm text-gray-600 mt-1">{allergy.reaction_description}</p>
-                          )}
-                          {allergy.diagnosed_date && (
-                            <p className="text-xs text-gray-500 mt-1">
-                              Diagnostiquée le {new Date(allergy.diagnosed_date).toLocaleDateString('fr-FR')}
-                            </p>
-                          )}
-                        </div>
-                        <Badge
-                          variant={
-                            allergy.severity === 'critical' ? 'danger' :
-                            allergy.severity === 'severe' ? 'warning' : 'default'
-                          }
-                        >
-                          {allergy.severity === 'critical' ? 'Critique' :
-                           allergy.severity === 'severe' ? 'Sévère' :
-                           allergy.severity === 'moderate' ? 'Modérée' : 'Légère'}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500">Aucune allergie connue</p>
-              )}
-            </Card>
-
-            {/* Régimes alimentaires */}
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Régimes alimentaires</h3>
-                <Button size="sm">Ajouter un régime</Button>
-              </div>
-              {child.diets && child.diets.length > 0 ? (
-                <div className="space-y-3">
-                  {child.diets.map((diet) => (
-                    <div
-                      key={diet.id}
-                      className="p-4 border rounded-lg"
-                    >
-                      <p className="font-medium text-gray-900">{diet.diet_name}</p>
-                      <p className="text-sm text-gray-500 capitalize">{diet.diet_type}</p>
-                      {diet.reason && (
-                        <p className="text-sm text-gray-600 mt-1">{diet.reason}</p>
-                      )}
-                      <p className="text-xs text-gray-500 mt-1">
-                        Depuis le {new Date(diet.start_date).toLocaleDateString('fr-FR')}
-                        {diet.end_date && ` jusqu'au ${new Date(diet.end_date).toLocaleDateString('fr-FR')}`}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500">Aucun régime alimentaire spécifique</p>
-              )}
-            </Card>
-
             {/* Vaccinations */}
             <Card className="p-6">
               <div className="flex items-center justify-between mb-4">
@@ -728,10 +757,10 @@ export default function ChildDetailPage() {
               )}
             </Card>
           </div>
-        </TabsContent>
+        </TabsContent>}
 
-        {/* Documents */}
-        <TabsContent value="documents">
+        {/* Documents - Module 'children' */}
+        {hasChildrenModule && <TabsContent value="documents">
           <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">Documents</h3>
@@ -776,10 +805,10 @@ export default function ChildDetailPage() {
               <p className="text-gray-500">Aucun document</p>
             )}
           </Card>
-        </TabsContent>
+        </TabsContent>}
 
-        {/* Autorisations */}
-        <TabsContent value="authorizations">
+        {/* Autorisations - Module 'children' */}
+        {hasChildrenModule && <TabsContent value="authorizations">
           <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">Autorisations</h3>
@@ -814,15 +843,15 @@ export default function ChildDetailPage() {
               <p className="text-gray-500">Aucune autorisation</p>
             )}
           </Card>
-        </TabsContent>
+        </TabsContent>}
 
-        {/* Historique */}
-        <TabsContent value="history">
+        {/* Historique - Module 'attendance' */}
+        {hasAttendanceModule && <TabsContent value="history">
           <Card className="p-6">
             <h3 className="text-lg font-semibold mb-4">Historique</h3>
             <p className="text-gray-500">Historique des présences et activités (à venir)</p>
           </Card>
-        </TabsContent>
+        </TabsContent>}
       </Tabs>
     </div>
   )

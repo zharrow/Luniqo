@@ -1,4 +1,9 @@
 import { createClient } from '@/lib/supabase/client'
+import {
+  allergiesDietaryService,
+  type Allergy,
+  type DietaryRequirement
+} from './allergies-dietary.service'
 
 const supabase: any = createClient()
 
@@ -67,6 +72,15 @@ export interface UpdateChildInput {
   specific_diet?: string
   notes?: string
   is_active?: boolean
+}
+
+/**
+ * Child with structured allergies and dietary requirements
+ * Used for the Core children list with allergy badges
+ */
+export interface ChildWithAllergies extends Child {
+  childAllergies: Allergy[]
+  childDietaryRequirements: DietaryRequirement[]
 }
 
 export class ChildService {
@@ -757,6 +771,80 @@ export class ChildService {
 
     if (error) throw error
     return (data as any[]) || []
+  }
+
+  // ============================================================
+  // ALLERGIES & DIETARY INTEGRATION (Core module)
+  // ============================================================
+
+  /**
+   * Get a single child with structured allergies and dietary requirements
+   */
+  async getWithAllergies(childId: string, nurseryId: string): Promise<ChildWithAllergies | null> {
+    const supabase = this.getClient()
+    const { data: child, error } = await supabase
+      .from('child')
+      .select('*')
+      .eq('id', childId)
+      .eq('nursery_id', nurseryId)
+      .single()
+
+    if (error) {
+      if (error.code === 'PGRST116') return null
+      throw error
+    }
+
+    try {
+      const [allergies, dietary] = await Promise.all([
+        allergiesDietaryService.getChildAllergies(childId),
+        allergiesDietaryService.getChildDietaryRequirements(childId)
+      ])
+
+      return {
+        ...child,
+        childAllergies: allergies.map(ca => ca.allergy).filter(Boolean) as Allergy[],
+        childDietaryRequirements: dietary.map(cd => cd.dietary_requirement).filter(Boolean) as DietaryRequirement[]
+      } as ChildWithAllergies
+    } catch (err) {
+      console.error('Error loading allergies/dietary for child:', err)
+      return {
+        ...child,
+        childAllergies: [],
+        childDietaryRequirements: []
+      } as ChildWithAllergies
+    }
+  }
+
+  /**
+   * Get all active children with their structured allergies and dietary requirements
+   * Used for the Core children list page
+   */
+  async getAllWithAllergies(nurseryId: string): Promise<ChildWithAllergies[]> {
+    const children = await this.getActive(nurseryId)
+
+    return Promise.all(
+      children.map(async (child) => {
+        try {
+          const [allergies, dietary] = await Promise.all([
+            allergiesDietaryService.getChildAllergies(child.id),
+            allergiesDietaryService.getChildDietaryRequirements(child.id)
+          ])
+
+          return {
+            ...child,
+            childAllergies: allergies.map(ca => ca.allergy).filter(Boolean) as Allergy[],
+            childDietaryRequirements: dietary.map(cd => cd.dietary_requirement).filter(Boolean) as DietaryRequirement[]
+          } as ChildWithAllergies
+        } catch (err) {
+          console.error('Error loading allergies for child:', child.id, err)
+          return {
+            ...child,
+            childAllergies: [],
+            childDietaryRequirements: []
+          } as ChildWithAllergies
+        }
+      })
+    )
   }
 }
 

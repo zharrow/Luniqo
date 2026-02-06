@@ -74,6 +74,7 @@ interface NavItem {
 const baseNavigation: NavItem[] = [
   { name: 'Tableau de bord', href: '/owner/dashboard', icon: HomeIcon, roles: ['Owner'], moduleColor: '#5a9dc9', moduleId: 'base', isAnimated: true },
   { name: 'Mes Crèches', href: '/owner/nurseries', icon: BuildingOffice2Icon, roles: ['Owner'], moduleColor: '#5a9dc9', moduleId: 'base' },
+  { name: 'Enfants', href: '/owner/children', icon: UserGroupIcon, roles: ['Owner'], moduleColor: '#f4c2c2', moduleId: 'base' },
   { name: 'Employés', href: '/owner/users', icon: UserGroupIcon, roles: ['Owner'], moduleColor: '#5a9dc9', moduleId: 'base' },
   { name: 'Messages', href: '/owner/messages', icon: ChatBubbleLeftRightIcon, roles: ['Owner'], moduleColor: '#64b5d1', moduleId: 'base' },
 ]
@@ -92,7 +93,6 @@ const cleaningNavigation: NavItem[] = [
 // MODULE HACCP (39€/mois) - Traçabilité alimentaire
 // ============================================================================
 const haccpNavigation: NavItem[] = [
-  { name: 'Enfants', href: '/owner/haccp/children', icon: UserGroupIcon, roles: ['Owner'], moduleColor: '#f4c2c2', moduleId: 'haccp' },
   { name: 'Repas', href: '/owner/haccp/meals', icon: ClipboardDocumentCheckIcon, roles: ['Owner'], moduleColor: '#ffcba4', moduleId: 'haccp' },
   { name: 'Produits', href: '/owner/haccp/products', icon: ShoppingBagIcon, roles: ['Owner'], moduleColor: '#c5e1a5', moduleId: 'haccp' },
   { name: 'Fournisseurs', href: '/owner/haccp/suppliers', icon: TruckIcon, roles: ['Owner'], moduleColor: '#80cbc4', moduleId: 'haccp' },
@@ -106,7 +106,6 @@ const haccpNavigation: NavItem[] = [
 // MODULE ENFANTS (29€/mois) - Gestion des enfants et familles
 // ============================================================================
 const childrenNavigation: NavItem[] = [
-  { name: 'Enfants', href: '/owner/children', icon: UserGroupIcon, roles: ['Owner'], moduleColor: '#f4c2c2', moduleId: 'children' },
   { name: 'Familles', href: '/owner/families', icon: UserGroupIcon, roles: ['Owner'], moduleColor: '#e8b4d4', moduleId: 'children' },
   { name: 'Sections', href: '/owner/sections', icon: BuildingOfficeIcon, roles: ['Owner'], moduleColor: '#d4a5d4', moduleId: 'children' },
 ]

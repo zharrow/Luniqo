@@ -205,10 +205,30 @@ export class NurseryService {
   }
 
   /**
-   * @deprecated Use deactivate() instead
+   * Permanently delete a nursery
    */
   async delete(id: string, enterpriseId: string): Promise<void> {
-    return this.deactivate(id, enterpriseId)
+    const supabase = this.getClient()
+
+    // Don't allow deleting the last nursery
+    const allNurseries = await this.getAll(enterpriseId)
+    if (allNurseries.length === 1 && allNurseries[0].id === id) {
+      throw new Error('Impossible de supprimer la dernière crèche')
+    }
+
+    // Don't allow deleting the default nursery
+    const nursery = await this.getById(id, enterpriseId)
+    if (nursery?.is_default) {
+      throw new Error('Impossible de supprimer la crèche par défaut. Veuillez d\'abord définir une autre crèche par défaut.')
+    }
+
+    const { error } = await supabase
+      .from('nursery')
+      .delete()
+      .eq('id', id)
+      .eq('enterprise_id', enterpriseId)
+
+    if (error) throw error
   }
 
   /**

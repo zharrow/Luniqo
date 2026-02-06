@@ -33,7 +33,7 @@ export function DeleteConfirmationDialog({
 
   const handleConfirm = () => {
     onConfirm()
-    onClose()
+    // Ne pas appeler onClose() ici - le parent gère la fermeture après l'opération
   }
 
   return (
