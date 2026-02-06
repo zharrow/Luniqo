@@ -14,7 +14,8 @@ import {
   PlusIcon,
   ChevronLeftIcon,
   PhotoIcon,
-  DocumentArrowDownIcon
+  DocumentArrowDownIcon,
+  CalendarIcon
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { FormDialog } from '@/components/shared/FormDialog'
@@ -370,15 +371,18 @@ export default function SessionDetailPage() {
           Retour aux sessions
         </Link>
 
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-3">
-              Session du {formatDate(session.date)}
-            </h1>
-            <div className="flex items-center gap-3">
-              <Badge variant={getStatusBadgeVariant(session.status)} size="md">
-                {session.completed_tasks}/{session.total_tasks} · {getStatusLabel(session.status)}
-              </Badge>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-sky-100">
+              <CalendarIcon className="w-6 h-6 text-sky-600" strokeWidth={1.5} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Session du {formatDate(session.date)}</h1>
+              <div className="flex items-center gap-3 mt-1">
+                <Badge variant={getStatusBadgeVariant(session.status)} size="md">
+                  {session.completed_tasks}/{session.total_tasks} · {getStatusLabel(session.status)}
+                </Badge>
+              </div>
             </div>
           </div>
 

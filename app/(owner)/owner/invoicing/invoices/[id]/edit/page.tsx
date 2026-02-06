@@ -170,7 +170,7 @@ export default function InvoiceEditPage() {
             <ArrowLeftIcon className="w-5 h-5" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold mb-2">Modifier {invoice.invoice_number}</h1>
+            <h1 className="text-2xl font-bold mb-2">Modifier {invoice.invoice_number}</h1>
             <p className="text-muted-foreground">Édition de la facture brouillon</p>
           </div>
         </div>

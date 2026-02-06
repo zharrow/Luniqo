@@ -125,12 +125,17 @@ export default function PortalDashboardPage() {
             { label: 'Portail Parents' }
           ]}
         />
-        <div className="mt-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Portail Parents</h1>
-            <p className="mt-2 text-gray-600">
-              Gérez la communication avec les familles et partagez le quotidien des enfants
-            </p>
+        <div className="flex items-center justify-between mb-8 mt-4">
+          <div className="flex items-center gap-4">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-pink-100">
+              <UsersIcon className="w-6 h-6 text-pink-600" strokeWidth={1.5} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Portail Parents</h1>
+              <p className="text-sm text-muted-foreground">
+                Gérez la communication avec les familles et partagez le quotidien des enfants
+              </p>
+            </div>
           </div>
         </div>
       </div>

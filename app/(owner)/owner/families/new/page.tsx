@@ -116,7 +116,7 @@ export default function NewFamilyPage() {
           Retour à la liste
         </Button>
 
-        <h1 className="text-3xl font-bold text-gray-900">Nouvelle famille</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Nouvelle famille</h1>
         <p className="text-gray-500 mt-2">Créez un dossier famille</p>
       </div>
 

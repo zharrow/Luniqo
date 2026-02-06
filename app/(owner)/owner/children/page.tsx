@@ -23,7 +23,6 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Card } from '@/components/ui/card'
 import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
 import { FormDialog } from '@/components/shared/FormDialog'
 import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
@@ -119,13 +118,6 @@ export default function ChildrenPage() {
 
     return matchesSearch && matchesSection && child.is_active
   })
-
-  // Stats
-  const totalChildren = children.length
-  const activeChildren = children.filter(c => c.is_active).length
-  const childrenWithAllergies = children.filter(c =>
-    (c.childAllergies && c.childAllergies.length > 0) || c.allergies
-  ).length
 
   function openCreateModal() {
     setEditingChild(null)
@@ -307,26 +299,6 @@ export default function ChildrenPage() {
           <PlusIcon className="w-5 h-5" />
           Nouvel enfant
         </Button>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card className="p-4 bg-gradient-to-br from-pink-50 to-white border-pink-100">
-          <div className="text-sm text-gray-600">Total enfants</div>
-          <div className="text-2xl font-bold text-gray-900">{totalChildren}</div>
-        </Card>
-        <Card className="p-4 bg-gradient-to-br from-green-50 to-white border-green-100">
-          <div className="text-sm text-gray-600">Actifs</div>
-          <div className="text-2xl font-bold text-green-600">{activeChildren}</div>
-        </Card>
-        <Card className="p-4 bg-gradient-to-br from-orange-50 to-white border-orange-100">
-          <div className="text-sm text-gray-600">Avec PAI</div>
-          <div className="text-2xl font-bold text-orange-600">0</div>
-        </Card>
-        <Card className="p-4 bg-gradient-to-br from-red-50 to-white border-red-100">
-          <div className="text-sm text-gray-600">Allergies</div>
-          <div className="text-2xl font-bold text-red-600">{childrenWithAllergies}</div>
-        </Card>
       </div>
 
       {/* Filters */}

@@ -190,7 +190,7 @@ export default function CertificatesPage() {
           ]}
         />
         <div className="mt-4">
-          <h1 className="text-3xl font-bold text-gray-900">Attestations Fiscales & CAF</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Attestations Fiscales & CAF</h1>
           <p className="mt-2 text-gray-600">
             Gérez les attestations fiscales et documents CAF pour les familles
           </p>

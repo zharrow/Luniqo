@@ -198,14 +198,16 @@ export default function StaffPage() {
       />
 
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="p-3 bg-blue-50 rounded-xl">
-            <UserGroupIcon className="h-8 w-8 text-blue-600" />
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-100">
+            <UserGroupIcon className="w-6 h-6 text-blue-600" strokeWidth={1.5} />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Personnel</h1>
-            <p className="text-gray-600">Gestion du personnel et des qualifications</p>
+            <h1 className="text-2xl font-bold text-gray-900">Personnel</h1>
+            <p className="text-sm text-muted-foreground">
+              Gestion du personnel et des qualifications
+            </p>
           </div>
         </div>
       </div>

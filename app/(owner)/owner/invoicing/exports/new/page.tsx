@@ -116,7 +116,7 @@ export default function NewExportPage() {
           <ArrowLeftIcon className="w-5 h-5" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold mb-2">Nouvel export comptable</h1>
+          <h1 className="text-2xl font-bold mb-2">Nouvel export comptable</h1>
           <p className="text-muted-foreground">Exporter les données vers un logiciel comptable</p>
         </div>
       </div>

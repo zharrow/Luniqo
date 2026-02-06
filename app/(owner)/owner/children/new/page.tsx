@@ -309,7 +309,7 @@ export default function NewChildPage() {
           Retour à la liste
         </Button>
 
-        <h1 className="text-3xl font-bold text-gray-900">Nouvel enfant</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Nouvel enfant</h1>
         <p className="text-gray-500 mt-2">Créez un dossier enfant complet</p>
       </div>
 

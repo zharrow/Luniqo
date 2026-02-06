@@ -111,7 +111,7 @@ export default function NewRateGridPage() {
           <ArrowLeftIcon className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Nouvelle Grille Tarifaire</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Nouvelle Grille Tarifaire</h1>
           <p className="text-gray-600 mt-1">
             Créer une nouvelle grille pour {selectedNursery.name}
           </p>

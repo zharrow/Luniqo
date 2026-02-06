@@ -271,41 +271,23 @@ export default function NurseriesPage() {
           ]}
         />
 
-        {/* Header - Module Nurseries (Bleu) */}
-        <div className="relative mb-6 p-6 rounded-3xl bg-white border overflow-hidden group hover:-translate-y-1 transition-all duration-300"
-          style={{
-            borderColor: '#5a9dc933',
-            background: 'linear-gradient(to bottom right, #e3f2fd, white)'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(90,157,201,0.25)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow = '0 0 0 0 rgba(90,157,201,0.25)'
-          }}
-        >
-          <div className="relative flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#5a9dc9] to-[#4a8db9] flex items-center justify-center shadow-md shadow-[#5a9dc9]/30 group-hover:scale-105 group-hover:rotate-2 transition-all duration-300">
-                <BuildingOffice2Icon className="w-6 h-6 text-white" strokeWidth={1.5} />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  Crèches
-                </h1>
-                <p className="text-sm text-gray-600">
-                  Gérez vos établissements multi-sites
-                </p>
-              </div>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-100">
+              <BuildingOffice2Icon className="w-6 h-6 text-blue-600" strokeWidth={1.5} />
             </div>
-            <button
-              onClick={openCreateModal}
-              className="px-6 py-3 rounded-2xl bg-[#5a9dc9] hover:bg-[#4a8db9] text-white font-medium shadow-lg shadow-[#5a9dc9]/30 hover:shadow-xl hover:shadow-[#5a9dc9]/40 hover:scale-105 transition-all duration-300 flex items-center gap-2"
-            >
-              <PlusIcon className="w-5 h-5" />
-              Nouvelle crèche
-            </button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Crèches</h1>
+              <p className="text-sm text-muted-foreground">
+                Gérez vos établissements multi-sites
+              </p>
+            </div>
           </div>
+          <Button onClick={openCreateModal}>
+            <PlusIcon className="w-5 h-5 mr-2" />
+            Nouvelle crèche
+          </Button>
         </div>
 
         {/* Error Message */}

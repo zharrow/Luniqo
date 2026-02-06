@@ -100,16 +100,22 @@ export default function HACCPAnalyticsPage() {
 
   return (
     <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
           <Link href="/owner/analytics">
             <Button variant="ghost" size="icon">
               <ArrowLeftIcon className="w-5 h-5" />
             </Button>
           </Link>
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-green-100">
+            <CheckCircleIcon className="w-6 h-6 text-green-600" strokeWidth={1.5} />
+          </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Analytics HACCP & Sécurité</h1>
-            <p className="text-gray-600">Conformité, incidents et traçabilité alimentaire</p>
+            <h1 className="text-2xl font-bold text-gray-900">Analytics HACCP & Sécurité</h1>
+            <p className="text-sm text-muted-foreground">
+              Conformité, incidents et traçabilité alimentaire
+            </p>
           </div>
         </div>
       </div>

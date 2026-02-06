@@ -157,14 +157,16 @@ export default function AbsencesPage() {
       />
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-purple-50 rounded-xl">
-            <CalendarIcon className="h-8 w-8 text-purple-600" />
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-purple-100">
+            <CalendarIcon className="w-6 h-6 text-purple-600" strokeWidth={1.5} />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Gestion des absences</h1>
-            <p className="text-gray-600">{selectedNursery.name}</p>
+            <p className="text-sm text-muted-foreground">
+              {selectedNursery.name}
+            </p>
           </div>
         </div>
         <div className="flex gap-2">

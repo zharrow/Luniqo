@@ -91,15 +91,19 @@ export default function OwnerAttendanceReportsPage() {
   return (
     <div className="container mx-auto p-6 max-w-7xl">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-100">
+            <Calendar className="w-6 h-6 text-blue-600" strokeWidth={1.5} />
+          </div>
           <div>
-            <h1 className="text-3xl font-bold mb-2">Rapports de présences</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl font-bold text-gray-900">Rapports de présences</h1>
+            <p className="text-sm text-muted-foreground">
               Analyse détaillée de la fréquentation - {selectedNursery.name}
             </p>
           </div>
-          <div className="flex gap-3">
+        </div>
+        <div className="flex gap-3">
             <Button
               variant={selectedPeriod === 'week' ? 'default' : 'outline'}
               onClick={() => setSelectedPeriod('week')}

@@ -121,16 +121,16 @@ export default function CompliancePage() {
       />
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className={`p-3 rounded-xl ${isCompliant ? 'bg-green-50' : 'bg-red-50'}`}>
-            <ShieldCheckIcon
-              className={`h-8 w-8 ${isCompliant ? 'text-green-600' : 'text-red-600'}`}
-            />
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-green-100">
+            <ShieldCheckIcon className="w-6 h-6 text-green-600" strokeWidth={1.5} />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Conformité réglementaire</h1>
-            <p className="text-gray-600">{selectedNursery.name}</p>
+            <p className="text-sm text-muted-foreground">
+              {selectedNursery.name}
+            </p>
           </div>
         </div>
         <div className="flex gap-2">

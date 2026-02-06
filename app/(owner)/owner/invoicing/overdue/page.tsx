@@ -117,14 +117,18 @@ export default function OverdueInvoicesPage() {
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
-          <ExclamationTriangleIcon className="w-8 h-8 text-orange-600" />
-          Factures impayées
-        </h1>
-        <p className="text-muted-foreground">
-          Gérez les factures en retard de paiement
-        </p>
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-orange-100">
+            <ExclamationTriangleIcon className="w-6 h-6 text-orange-600" strokeWidth={1.5} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Factures impayées</h1>
+            <p className="text-sm text-muted-foreground">
+              Gérez les factures en retard de paiement
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Statistiques */}

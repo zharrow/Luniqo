@@ -183,41 +183,26 @@ export default function RoomsPage() {
           ]}
         />
 
-        {/* Header - Module Rooms (Pêche) */}
-        <div className="relative mb-6 p-6 rounded-3xl bg-white border overflow-hidden group hover:-translate-y-1 transition-all duration-300"
-          style={{
-            borderColor: '#ffab9133',
-            background: 'linear-gradient(to bottom right, #fff3e0, white)'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(255,171,145,0.25)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow = '0 0 0 0 rgba(255,171,145,0.25)'
-          }}
-        >
-          <div className="relative flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#ffab91] to-[#ff8a65] flex items-center justify-center shadow-md shadow-[#ffab91]/30 group-hover:scale-105 group-hover:rotate-2 transition-all duration-300">
-                <BuildingOfficeIcon className="w-6 h-6 text-white" strokeWidth={1.5} />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  Pièces
-                </h1>
-                <p className="text-sm text-gray-600">
-                  Gérez les pièces de votre crèche
-                </p>
-              </div>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-orange-100">
+              <BuildingOfficeIcon className="w-6 h-6 text-orange-600" strokeWidth={1.5} />
             </div>
-            <button
-              onClick={openCreateModal}
-              className="px-6 py-3 rounded-2xl bg-[#ffab91] hover:bg-[#ff8a65] text-white font-medium shadow-lg shadow-[#ffab91]/30 hover:shadow-xl hover:shadow-[#ffab91]/40 hover:scale-105 transition-all duration-300 flex items-center gap-2"
-            >
-              <PlusIcon className="w-5 h-5" />
-              Nouvelle pièce
-            </button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Pièces</h1>
+              <p className="text-sm text-muted-foreground">
+                Gérez les pièces de votre crèche
+              </p>
+            </div>
           </div>
+          <Button
+            onClick={openCreateModal}
+            className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white"
+          >
+            <PlusIcon className="w-5 h-5" />
+            Nouvelle pièce
+          </Button>
         </div>
 
         {/* Rooms Bento Grid */}

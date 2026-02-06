@@ -150,7 +150,7 @@ export default function EditFamilyPage() {
           Retour à la fiche famille
         </Button>
 
-        <h1 className="text-3xl font-bold text-gray-900">Modifier la famille</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Modifier la famille</h1>
         <p className="text-gray-500 mt-2">Modifiez les informations de la famille {family.family_name}</p>
       </div>
 

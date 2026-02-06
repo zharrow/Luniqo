@@ -191,7 +191,7 @@ export default function FamilyDetailPage() {
               <UserGroupIcon className="h-10 w-10 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold text-gray-900">
                 Famille {family.family_name}
               </h1>
               {family.caf_number && (

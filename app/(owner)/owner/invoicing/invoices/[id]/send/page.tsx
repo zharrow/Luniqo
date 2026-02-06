@@ -141,7 +141,7 @@ L'équipe de la crèche`)
             <ArrowLeftIcon className="w-5 h-5" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold mb-2">Envoyer {invoice.invoice_number}</h1>
+            <h1 className="text-2xl font-bold mb-2">Envoyer {invoice.invoice_number}</h1>
             <p className="text-muted-foreground">Envoi par email</p>
           </div>
         </div>

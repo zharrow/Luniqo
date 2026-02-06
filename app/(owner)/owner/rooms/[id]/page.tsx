@@ -14,7 +14,8 @@ import {
   CheckCircleIcon,
   ClipboardDocumentListIcon,
   ClockIcon,
-  PencilIcon
+  PencilIcon,
+  BuildingOfficeIcon
 } from '@heroicons/react/24/outline'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -260,13 +261,16 @@ export default function RoomTasksPage() {
           </Button>
 
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">
-                {room.name}
-              </h1>
-              <p className="text-muted-foreground">
-                Gérez les tâches assignées à cette pièce
-              </p>
+            <div className="flex items-center gap-4">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-orange-100">
+                <BuildingOfficeIcon className="w-6 h-6 text-orange-600" strokeWidth={1.5} />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">{room.name}</h1>
+                <p className="text-sm text-muted-foreground">
+                  Gérez les tâches assignées à cette pièce
+                </p>
+              </div>
             </div>
             <Badge variant="neutral" size="lg">
               {assignedTasks.length} tâche{assignedTasks.length !== 1 ? 's' : ''} assignée{assignedTasks.length !== 1 ? 's' : ''}

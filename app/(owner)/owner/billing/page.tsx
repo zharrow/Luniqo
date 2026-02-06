@@ -288,13 +288,17 @@ export default function BillingPage() {
       />
 
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Facturation & Abonnements</h1>
-          <p className="text-gray-500 mt-1">
-            Gérez vos modules et abonnements pour{' '}
-            <span className="font-medium text-gray-700">{selectedNursery?.name || 'votre crèche'}</span>
-          </p>
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-amber-100">
+            <CreditCardIcon className="w-6 h-6 text-amber-600" strokeWidth={1.5} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Facturation & Abonnements</h1>
+            <p className="text-sm text-muted-foreground">
+              Gérez vos modules et abonnements pour {selectedNursery?.name || 'votre crèche'}
+            </p>
+          </div>
         </div>
         {subscriptions.length > 0 && (
           <Button

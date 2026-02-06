@@ -111,9 +111,16 @@ export default function FamiliesPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Familles</h1>
-          <p className="text-gray-500 mt-1">Gérez les dossiers famille</p>
+        <div className="flex items-center gap-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-100">
+            <UserGroupIcon className="w-6 h-6 text-blue-600" strokeWidth={1.5} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Familles</h1>
+            <p className="text-sm text-muted-foreground">
+              Gérez les dossiers famille
+            </p>
+          </div>
         </div>
         <Button onClick={() => router.push('/owner/families/new')}>
           <PlusIcon className="h-5 w-5 mr-2" />

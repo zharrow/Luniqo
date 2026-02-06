@@ -6,13 +6,15 @@ import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/contexts/AuthContext'
 import { NurseryInsert } from '@/types/database.types'
 import { modulesService } from '@/lib/services/modules.service'
+import { STARTER_PACKS } from '@/lib/constants/starter-templates'
+import { starterTemplatesService } from '@/lib/services/starter-templates.service'
 
 interface EnterpriseSetupFormProps {
   ownerId: string
 }
 
 export default function EnterpriseSetupForm({ ownerId }: EnterpriseSetupFormProps) {
-  const [step, setStep] = useState<1 | 2>(1)
+  const [step, setStep] = useState<1 | 2 | 3>(1)
   const [enterpriseData, setEnterpriseData] = useState({
     name: '',
     legal_form: '',
@@ -28,6 +30,8 @@ export default function EnterpriseSetupForm({ ownerId }: EnterpriseSetupFormProp
     capacity: ''
   })
   const [createdEnterpriseId, setCreatedEnterpriseId] = useState<string | null>(null)
+  const [createdNurseryId, setCreatedNurseryId] = useState<string | null>(null)
+  const [selectedPack, setSelectedPack] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isCheckingEnterprise, setIsCheckingEnterprise] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -182,14 +186,44 @@ export default function EnterpriseSetupForm({ ownerId }: EnterpriseSetupFormProp
         // Ne pas bloquer si l'activation du module échoue
       }
 
+      // Sauvegarder l'ID de la crèche et passer à l'étape 3
+      setCreatedNurseryId((newNursery as any).id)
+      setStep(3)
+      setIsLoading(false)
+    } catch (err) {
+      console.error('Nursery creation error:', err)
+      setError('Une erreur est survenue. Veuillez réessayer.')
+      setIsLoading(false)
+    }
+  }
+
+  const handlePackSelect = async (packId: string | null) => {
+    setError(null)
+    setIsLoading(true)
+    setSelectedPack(packId)
+
+    try {
+      if (packId && createdNurseryId && createdEnterpriseId) {
+        // Appliquer le pack sélectionné
+        const result = await starterTemplatesService.applyStarterPack(
+          packId,
+          createdNurseryId,
+          createdEnterpriseId
+        )
+
+        if (!result.success) {
+          throw new Error(result.error || 'Erreur lors de l\'application du pack')
+        }
+      }
+
       // Rafraîchir la session pour inclure l'entreprise
       await refreshSession()
 
       // Rediriger vers le dashboard
       router.push('/owner/dashboard')
-    } catch (err) {
-      console.error('Nursery creation error:', err)
-      setError('Une erreur est survenue. Veuillez réessayer.')
+    } catch (err: any) {
+      console.error('Error applying starter pack:', err)
+      setError(err.message || 'Une erreur est survenue. Veuillez réessayer.')
       setIsLoading(false)
     }
   }
@@ -215,13 +249,19 @@ export default function EnterpriseSetupForm({ ownerId }: EnterpriseSetupFormProp
             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
               step === 1 ? 'bg-primary text-white' : 'bg-green-500 text-white'
             }`}>
-              {step === 2 ? '✓' : '1'}
+              {step > 1 ? '✓' : '1'}
             </div>
-            <div className="w-12 h-0.5 bg-gray-300" />
+            <div className={`w-8 h-0.5 ${step > 1 ? 'bg-green-500' : 'bg-gray-300'}`} />
             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
-              step === 2 ? 'bg-primary text-white' : 'bg-gray-200 text-gray-500'
+              step === 2 ? 'bg-primary text-white' : step > 2 ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'
             }`}>
-              2
+              {step > 2 ? '✓' : '2'}
+            </div>
+            <div className={`w-8 h-0.5 ${step > 2 ? 'bg-green-500' : 'bg-gray-300'}`} />
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
+              step === 3 ? 'bg-primary text-white' : 'bg-gray-200 text-gray-500'
+            }`}>
+              3
             </div>
           </div>
         </div>
@@ -234,7 +274,7 @@ export default function EnterpriseSetupForm({ ownerId }: EnterpriseSetupFormProp
                 Bienvenue ! 🎉
               </h1>
               <p className="text-gray-600">
-                Étape 1/2 : Créons votre entreprise
+                Étape 1/3 : Créons votre entreprise
               </p>
             </div>
 
@@ -322,7 +362,7 @@ export default function EnterpriseSetupForm({ ownerId }: EnterpriseSetupFormProp
                 Parfait ! 🏠
               </h1>
               <p className="text-gray-600">
-                Étape 2/2 : Créons votre première crèche
+                Étape 2/3 : Créons votre première crèche
               </p>
             </div>
 
@@ -448,9 +488,91 @@ export default function EnterpriseSetupForm({ ownerId }: EnterpriseSetupFormProp
                 disabled={isLoading || !nurseryData.name}
                 className="w-full btn-primary py-3 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLoading ? 'Création en cours...' : 'Terminer la configuration'}
+                {isLoading ? 'Création en cours...' : 'Continuer →'}
               </button>
             </form>
+          </>
+        )}
+
+        {/* Step 3: Starter Pack */}
+        {step === 3 && (
+          <>
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                Dernière étape ! ✨
+              </h1>
+              <p className="text-gray-600">
+                Étape 3/3 : Choisissez un pack de démarrage
+              </p>
+            </div>
+
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                {error}
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600 text-center mb-4">
+                Gagnez du temps avec des pièces et tâches pré-configurées
+              </p>
+
+              {STARTER_PACKS.map((pack) => (
+                <button
+                  key={pack.id}
+                  onClick={() => handlePackSelect(pack.id)}
+                  disabled={isLoading}
+                  className={`w-full p-4 border-2 rounded-xl text-left transition-all hover:border-primary hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed ${
+                    selectedPack === pack.id ? 'border-primary bg-primary/5' : 'border-gray-200'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">{pack.icon}</span>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-800">{pack.name}</h3>
+                      <p className="text-sm text-gray-500 mt-1">{pack.description}</p>
+                      {pack.rooms.length > 0 && (
+                        <p className="text-xs text-primary mt-2">
+                          {pack.rooms.length} pièces • {pack.tasks.length} tâches
+                        </p>
+                      )}
+                      {pack.rooms.length === 0 && (
+                        <p className="text-xs text-primary mt-2">
+                          {pack.tasks.length} tâches (créez vos pièces manuellement)
+                        </p>
+                      )}
+                    </div>
+                    {isLoading && selectedPack === pack.id && (
+                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary border-t-transparent" />
+                    )}
+                  </div>
+                </button>
+              ))}
+
+              <div className="relative py-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-200" />
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="bg-white px-3 text-sm text-gray-500">ou</span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => handlePackSelect(null)}
+                disabled={isLoading}
+                className="w-full p-4 border-2 border-dashed border-gray-300 rounded-xl text-center text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading && selectedPack === null ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-400 border-t-transparent" />
+                    Finalisation...
+                  </span>
+                ) : (
+                  'Commencer avec une configuration vide'
+                )}
+              </button>
+            </div>
           </>
         )}
 

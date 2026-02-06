@@ -125,12 +125,17 @@ export default function ContractsPage() {
       />
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-6 mt-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Contrats d'Accueil</h1>
-          <p className="text-gray-600 mt-1">
-            Gestion des contrats pour {selectedNursery.name}
-          </p>
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-indigo-100">
+            <DocumentTextIcon className="w-6 h-6 text-indigo-600" strokeWidth={1.5} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Contrats d'Accueil</h1>
+            <p className="text-sm text-muted-foreground">
+              Gestion des contrats pour {selectedNursery.name}
+            </p>
+          </div>
         </div>
         <Button
           onClick={() => router.push('/owner/contracts/new')}

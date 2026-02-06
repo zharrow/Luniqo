@@ -111,44 +111,28 @@ export default function MessagesPage() {
         ]}
       />
 
-      {/* Header - Style organique */}
-      <div
-        className="relative rounded-3xl p-6 mb-8 bg-white overflow-hidden"
-        style={{
-          border: '1px solid #80deea33',
-          background: 'linear-gradient(to bottom right, #f0fdff, white)'
-        }}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div
-              className="inline-flex items-center justify-center w-14 h-14 rounded-2xl"
-              style={{ background: 'linear-gradient(to bottom right, #80deea1A, #80deea0D)' }}
-            >
-              <ChatBubbleLeftRightIcon className="w-7 h-7" style={{ color: '#2c8a99' }} strokeWidth={1.5} />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-cyan-600 to-teal-700 bg-clip-text text-transparent">
-                Messages
-              </h1>
-              <p className="text-muted-foreground">
-                {session?.role === 'Owner'
-                  ? 'Communiquez avec le support'
-                  : 'Messages des administrateurs'}
-              </p>
-            </div>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-cyan-100">
+            <ChatBubbleLeftRightIcon className="w-6 h-6 text-cyan-600" strokeWidth={1.5} />
           </div>
-
-          {session?.role === 'Owner' && (
-            <Button
-              onClick={handleCreateConversation}
-              className="inline-flex items-center gap-2 bg-gradient-to-br from-cyan-500 to-teal-600 hover:from-cyan-600 hover:to-teal-700 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
-            >
-              <PlusIcon className="w-5 h-5" />
-              Nouvelle conversation
-            </Button>
-          )}
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Messages</h1>
+            <p className="text-sm text-muted-foreground">
+              {session?.role === 'Owner'
+                ? 'Communiquez avec le support'
+                : 'Messages des administrateurs'}
+            </p>
+          </div>
         </div>
+
+        {session?.role === 'Owner' && (
+          <Button onClick={handleCreateConversation}>
+            <PlusIcon className="w-5 h-5 mr-2" />
+            Nouvelle conversation
+          </Button>
+        )}
       </div>
 
       {/* Error Message - Style organique */}

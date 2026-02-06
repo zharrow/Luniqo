@@ -56,11 +56,18 @@ export default function BillingPeriodsPage() {
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Périodes de facturation</h1>
-        <p className="text-muted-foreground">
-          Suivi des périodes mensuelles de facturation
-        </p>
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-violet-100">
+            <CalendarIcon className="w-6 h-6 text-violet-600" strokeWidth={1.5} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Périodes de facturation</h1>
+            <p className="text-sm text-muted-foreground">
+              Suivi des périodes mensuelles de facturation
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Liste */}

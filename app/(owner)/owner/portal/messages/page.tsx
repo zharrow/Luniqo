@@ -193,7 +193,7 @@ export default function PortalMessagesPage() {
           ]}
         />
         <div className="mt-4">
-          <h1 className="text-3xl font-bold text-gray-900">Messagerie Parents</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Messagerie Parents</h1>
           <p className="mt-2 text-gray-600">
             Communication avec les familles via le portail parents
           </p>

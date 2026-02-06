@@ -153,7 +153,7 @@ export default function PortalDocumentsPage() {
         />
         <div className="mt-4 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Documents Partagés</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Documents Partagés</h1>
             <p className="mt-2 text-gray-600">
               Partagez des documents avec les familles via le portail parents
             </p>

@@ -155,22 +155,17 @@ export default function SessionsPage() {
           ]}
         />
 
-        {/* Header with Gradient - Module Clean (Bleu) */}
-        <div className="relative mb-8 p-8 rounded-3xl bg-gradient-to-br from-sky-50 via-blue-50 to-cyan-50 border border-sky-200/50 overflow-hidden">
-          <div className="absolute inset-0 bg-[url('/patterns/dots.svg')] opacity-5"></div>
-          <div className="relative flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center shadow-lg shadow-sky-500/30">
-                <CalendarIcon className="w-8 h-8 text-white" strokeWidth={1.5} />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent" style={{ fontFamily: 'Quicksand, sans-serif' }}>
-                  Sessions de Nettoyage
-                </h1>
-                <p className="text-sky-700/70">
-                  Gérez vos sessions de nettoyage quotidiennes
-                </p>
-              </div>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-sky-100">
+              <CalendarIcon className="w-6 h-6 text-sky-600" strokeWidth={1.5} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Sessions de Nettoyage</h1>
+              <p className="text-sm text-muted-foreground">
+                Gérez vos sessions de nettoyage quotidiennes
+              </p>
             </div>
           </div>
         </div>

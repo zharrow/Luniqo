@@ -160,7 +160,7 @@ export default function NewContractPage() {
           <ArrowLeftIcon className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Nouveau Contrat d'Accueil</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Nouveau Contrat d'Accueil</h1>
           <p className="text-gray-600 mt-1">
             Créer un nouveau contrat pour {selectedNursery.name}
           </p>

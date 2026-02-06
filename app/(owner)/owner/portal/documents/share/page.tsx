@@ -158,7 +158,7 @@ export default function ShareDocumentPage() {
             Retour
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Partager un Document</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Partager un Document</h1>
             <p className="mt-2 text-gray-600">
               Partagez un document avec les familles via le portail parents
             </p>

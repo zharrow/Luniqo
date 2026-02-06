@@ -187,7 +187,7 @@ export default function ContractDetailPage() {
           </Button>
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold text-gray-900">
                 Contrat {contract.contract_number}
               </h1>
               {getStatusBadge(contract.status)}

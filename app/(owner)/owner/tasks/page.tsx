@@ -252,50 +252,35 @@ export default function TasksPage() {
           ]}
         />
 
-        {/* Header - Module Tasks (Lime) */}
-        <div className="relative mb-6 p-6 rounded-3xl bg-white border overflow-hidden group hover:-translate-y-1 transition-all duration-300"
-          style={{
-            borderColor: '#aed58133',
-            background: 'linear-gradient(to bottom right, #f1f8e9, white)'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(174,213,129,0.25)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow = '0 0 0 0 rgba(174,213,129,0.25)'
-          }}
-        >
-          <div className="relative flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#aed581] to-[#81c78a] flex items-center justify-center shadow-md shadow-[#aed581]/30 group-hover:scale-105 group-hover:rotate-2 transition-all duration-300">
-                <ClipboardDocumentListIcon className="w-6 h-6 text-white" strokeWidth={1.5} />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  Tâches
-                </h1>
-                <p className="text-sm text-gray-600">
-                  Gérez les templates de tâches de nettoyage
-                </p>
-              </div>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-lime-100">
+              <ClipboardDocumentListIcon className="w-6 h-6 text-lime-600" strokeWidth={1.5} />
             </div>
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                onClick={openCreateCategoryModal}
-                className="flex items-center gap-2"
-              >
-                <TagIcon className="w-5 h-5" />
-                Gérer les catégories
-              </Button>
-              <button
-                onClick={openCreateModal}
-                className="px-6 py-3 rounded-2xl bg-[#aed581] hover:bg-[#9ac66d] text-white font-medium shadow-lg shadow-[#aed581]/30 hover:shadow-xl hover:shadow-[#aed581]/40 hover:scale-105 transition-all duration-300 flex items-center gap-2"
-              >
-                <PlusIcon className="w-5 h-5" />
-                Nouvelle tâche
-              </button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Tâches</h1>
+              <p className="text-sm text-muted-foreground">
+                Gérez les templates de tâches de nettoyage
+              </p>
             </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              onClick={openCreateCategoryModal}
+              className="flex items-center gap-2"
+            >
+              <TagIcon className="w-5 h-5" />
+              Gérer les catégories
+            </Button>
+            <Button
+              onClick={openCreateModal}
+              className="flex items-center gap-2 bg-lime-500 hover:bg-lime-600 text-white"
+            >
+              <PlusIcon className="w-5 h-5" />
+              Nouvelle tâche
+            </Button>
           </div>
         </div>
 

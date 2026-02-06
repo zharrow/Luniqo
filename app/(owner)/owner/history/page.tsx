@@ -6,13 +6,7 @@ import { useRequireAuth } from '@/lib/contexts/AuthContext'
 import { useNursery } from '@/lib/contexts/NurseryContext'
 import { sessionsService, type SessionWithStats } from '@/lib/services/sessions.service'
 import Link from 'next/link'
-import {
-  ClipboardDocumentListIcon,
-  CheckCircleIcon,
-  ArrowPathIcon,
-  ExclamationTriangleIcon,
-  ChartBarIcon
-} from '@heroicons/react/24/outline'
+import { ClipboardDocumentListIcon, ClockIcon } from '@heroicons/react/24/outline'
 import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 
 export default function HistoryPage() {
@@ -20,7 +14,6 @@ export default function HistoryPage() {
   const { selectedNursery } = useNursery()
   const [sessions, setSessions] = useState<SessionWithStats[]>([])
   const [filteredSessions, setFilteredSessions] = useState<SessionWithStats[]>([])
-  const [filterStatus, setFilterStatus] = useState<string>('all')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -46,7 +39,7 @@ export default function HistoryPage() {
 
   useEffect(() => {
     applyFilters()
-  }, [sessions, filterStatus, startDate, endDate])
+  }, [sessions, startDate, endDate])
 
   async function loadSessions() {
     try {
@@ -64,11 +57,6 @@ export default function HistoryPage() {
 
   function applyFilters() {
     let filtered = [...sessions]
-
-    // Filter by status
-    if (filterStatus !== 'all') {
-      filtered = filtered.filter(s => s.status === filterStatus)
-    }
 
     // Filter by date range
     if (startDate) {
@@ -94,15 +82,6 @@ export default function HistoryPage() {
     )
   }
 
-  const stats = {
-    total: filteredSessions.length,
-    completed: filteredSessions.filter(s => s.status === 'COMPLETEE').length,
-    inProgress: filteredSessions.filter(s => s.status === 'EN_COURS').length,
-    avgCompletion: filteredSessions.length > 0
-      ? Math.round(filteredSessions.reduce((sum, s) => sum + s.completion_percentage, 0) / filteredSessions.length)
-      : 0
-  }
-
   return (
     <div className="max-w-7xl mx-auto">
       <div className="max-w-7xl mx-auto">
@@ -115,10 +94,17 @@ export default function HistoryPage() {
         />
 
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Historique & Rapports</h1>
-            <p className="text-muted-foreground">Suivi des sessions de nettoyage</p>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-indigo-100">
+              <ClockIcon className="w-6 h-6 text-indigo-600" strokeWidth={1.5} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Historique & Rapports</h1>
+              <p className="text-sm text-muted-foreground">
+                Suivi des sessions de nettoyage
+              </p>
+            </div>
           </div>
         </div>
 
@@ -137,133 +123,6 @@ export default function HistoryPage() {
           </div>
         )}
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Stat Card 1 - Total */}
-          <a
-            href="#"
-            className="relative rounded-3xl p-5 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden block"
-            style={{
-              border: '1px solid #5a9dc933',
-              boxShadow: '0 0 0 0 rgba(90,157,201,0.25)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(90,157,201,0.25)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.boxShadow = '0 0 0 0 rgba(90,157,201,0.25)'
-            }}
-          >
-            <div
-              className="absolute inset-0 opacity-60"
-              style={{ background: 'linear-gradient(to bottom right, #f8fbfd, white)' }}
-            />
-            <div className="relative z-10">
-              <div
-                className="inline-flex items-center justify-center w-12 h-12 rounded-2xl mb-3 group-hover:scale-105 transition-all duration-300"
-                style={{ background: 'linear-gradient(to bottom right, #5a9dc91A, #5a9dc90D)' }}
-              >
-                <ClipboardDocumentListIcon className="w-6 h-6" style={{ color: '#2c5f7f' }} strokeWidth={1.5} />
-              </div>
-              <p className="text-xs text-gray-600 mb-1">Total sessions</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-            </div>
-          </a>
-
-          {/* Stat Card 2 - Complétées */}
-          <a
-            href="#"
-            className="relative rounded-3xl p-5 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden block"
-            style={{
-              border: '1px solid #b5ead733',
-              boxShadow: '0 0 0 0 rgba(181,234,215,0.25)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(181,234,215,0.25)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.boxShadow = '0 0 0 0 rgba(181,234,215,0.25)'
-            }}
-          >
-            <div
-              className="absolute inset-0 opacity-60"
-              style={{ background: 'linear-gradient(to bottom right, #f0fdf4, white)' }}
-            />
-            <div className="relative z-10">
-              <div
-                className="inline-flex items-center justify-center w-12 h-12 rounded-2xl mb-3 group-hover:scale-105 transition-all duration-300"
-                style={{ background: 'linear-gradient(to bottom right, #b5ead71A, #b5ead70D)' }}
-              >
-                <CheckCircleIcon className="w-6 h-6" style={{ color: '#4a8f5a' }} strokeWidth={1.5} />
-              </div>
-              <p className="text-xs text-gray-600 mb-1">Complétées</p>
-              <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
-            </div>
-          </a>
-
-          {/* Stat Card 3 - En cours */}
-          <a
-            href="#"
-            className="relative rounded-3xl p-5 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden block"
-            style={{
-              border: '1px solid #5a9dc933',
-              boxShadow: '0 0 0 0 rgba(90,157,201,0.25)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(90,157,201,0.25)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.boxShadow = '0 0 0 0 rgba(90,157,201,0.25)'
-            }}
-          >
-            <div
-              className="absolute inset-0 opacity-60"
-              style={{ background: 'linear-gradient(to bottom right, #f8fbfd, white)' }}
-            />
-            <div className="relative z-10">
-              <div
-                className="inline-flex items-center justify-center w-12 h-12 rounded-2xl mb-3 group-hover:scale-105 group-hover:rotate-90 transition-all duration-300"
-                style={{ background: 'linear-gradient(to bottom right, #5a9dc91A, #5a9dc90D)' }}
-              >
-                <ArrowPathIcon className="w-6 h-6" style={{ color: '#2c5f7f' }} strokeWidth={1.5} />
-              </div>
-              <p className="text-xs text-gray-600 mb-1">En cours</p>
-              <p className="text-2xl font-bold text-[#5a9dc9]">{stats.inProgress}</p>
-            </div>
-          </a>
-
-          {/* Stat Card 4 - Taux moyen */}
-          <a
-            href="#"
-            className="relative rounded-3xl p-5 bg-white hover:-translate-y-1 transition-all duration-300 group overflow-hidden block"
-            style={{
-              border: '1px solid #9fa8da33',
-              boxShadow: '0 0 0 0 rgba(159,168,218,0.25)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.boxShadow = '0 16px 48px -12px rgba(159,168,218,0.25)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.boxShadow = '0 0 0 0 rgba(159,168,218,0.25)'
-            }}
-          >
-            <div
-              className="absolute inset-0 opacity-60"
-              style={{ background: 'linear-gradient(to bottom right, #e8eaf6, white)' }}
-            />
-            <div className="relative z-10">
-              <div
-                className="inline-flex items-center justify-center w-12 h-12 rounded-2xl mb-3 group-hover:scale-105 transition-all duration-300"
-                style={{ background: 'linear-gradient(to bottom right, #9fa8da1A, #9fa8da0D)' }}
-              >
-                <ChartBarIcon className="w-6 h-6" style={{ color: '#6870a0' }} strokeWidth={1.5} />
-              </div>
-              <p className="text-xs text-gray-600 mb-1">Taux moyen</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.avgCompletion}%</p>
-            </div>
-          </a>
-        </div>
-
         {/* Filters */}
         <div
           className="relative rounded-3xl p-6 mb-6 bg-white overflow-hidden"
@@ -275,23 +134,7 @@ export default function HistoryPage() {
             className="absolute inset-0 opacity-60"
             style={{ background: 'linear-gradient(to bottom right, #f8fbfd, white)' }}
           />
-          <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Statut
-              </label>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="all">Tous les statuts</option>
-                <option value="COMPLETEE">Complétée</option>
-                <option value="EN_COURS">En cours</option>
-                <option value="INCOMPLETE">Incomplète</option>
-              </select>
-            </div>
-
+          <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-2">
                 Date début

@@ -143,19 +143,22 @@ export default function OwnerActivitiesPage() {
   return (
     <div className="container mx-auto p-6 max-w-7xl">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-amber-100">
+            <Calendar className="w-6 h-6 text-amber-600" strokeWidth={1.5} />
+          </div>
           <div>
-            <h1 className="text-3xl font-bold mb-2">Planification des activités</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl font-bold text-gray-900">Planification des activités</h1>
+            <p className="text-sm text-muted-foreground">
               Gestion du programme pédagogique - {selectedNursery.name}
             </p>
           </div>
-          <Button className="bg-[#ffe5b4] hover:bg-[#ffd89b] text-gray-900">
-            <Plus className="w-4 h-4 mr-2" />
-            Nouvelle activité
-          </Button>
         </div>
+        <Button className="bg-[#ffe5b4] hover:bg-[#ffd89b] text-gray-900">
+          <Plus className="w-4 h-4 mr-2" />
+          Nouvelle activité
+        </Button>
       </div>
 
       {/* Error Message */}

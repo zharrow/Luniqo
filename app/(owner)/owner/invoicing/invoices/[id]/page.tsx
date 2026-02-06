@@ -135,7 +135,7 @@ export default function InvoiceDetailPage() {
             <ArrowLeftIcon className="w-5 h-5" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold mb-2">{invoice.invoice_number}</h1>
+            <h1 className="text-2xl font-bold mb-2">{invoice.invoice_number}</h1>
             <p className="text-muted-foreground">Détails de la facture</p>
           </div>
         </div>
