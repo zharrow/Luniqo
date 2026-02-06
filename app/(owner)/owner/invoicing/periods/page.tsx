@@ -6,6 +6,7 @@ import { useNursery } from '@/lib/contexts/NurseryContext'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { billingPeriodService, type BillingPeriod } from '@/lib/services/billing-period.service'
+import { Calendar as CalendarIcon } from 'lucide-react'
 
 export default function BillingPeriodsPage() {
   const { session, isLoading: authLoading } = useRequireAuth(['Owner'])

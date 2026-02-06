@@ -122,7 +122,6 @@ export default function OwnerAttendanceReportsPage() {
             </Button>
           </div>
         </div>
-      </div>
 
       {/* Error Message */}
       {error && (
