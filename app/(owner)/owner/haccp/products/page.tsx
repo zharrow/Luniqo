@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
 import { useNursery } from '@/lib/contexts/NurseryContext'
-import { haccpService, type Product, type Supplier, type Batch, type CreateProductInput, type CreateBatchInput } from '@/lib/services/haccp.service'
+import { haccpService, type Product, type Supplier, type Batch, type CreateProductInput, type CreateBatchInput, type Allergy } from '@/lib/services/haccp.service'
 import { lookupBarcode, type OpenFoodFactsProduct } from '@/lib/services/openfoodfacts.service'
 import {
   PlusIcon,
@@ -11,7 +11,6 @@ import {
   TrashIcon,
   ShoppingBagIcon,
   ExclamationTriangleIcon,
-  FunnelIcon,
   QrCodeIcon,
   ChevronDownIcon,
   ChevronUpIcon,
@@ -21,6 +20,7 @@ import {
   ClockIcon,
   ArchiveBoxIcon,
 } from '@heroicons/react/24/outline'
+import Link from 'next/link'
 import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
 import { FormDialog } from '@/components/shared/FormDialog'
 import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
@@ -112,19 +112,25 @@ export default function ProductsPage() {
   // DLC alerts
   const [expiringBatches, setExpiringBatches] = useState<Batch[]>([])
 
+  // Allergies (structured)
+  const [allergies, setAllergies] = useState<Allergy[]>([])
+  const [selectedAllergyIds, setSelectedAllergyIds] = useState<string[]>([])
+
   // Load data
   const loadData = useCallback(async () => {
     if (!selectedNursery?.id) return
     try {
       setLoading(true)
-      const [productsData, suppliersData, expiringData] = await Promise.all([
+      const [productsData, suppliersData, expiringData, allergiesData] = await Promise.all([
         haccpService.getProducts(selectedNursery.id),
         haccpService.getActiveSuppliers(selectedNursery.id),
         haccpService.getExpiringBatches(selectedNursery.id, 3),
+        haccpService.getAllergies(),
       ])
       setProducts(productsData)
       setSuppliers(suppliersData)
       setExpiringBatches(expiringData)
+      setAllergies(allergiesData)
     } catch (error) {
       console.error('Error loading data:', error)
     } finally {
@@ -165,10 +171,11 @@ export default function ProductsPage() {
       brand: '',
       image_url: '',
     })
+    setSelectedAllergyIds([])
     setShowModal(true)
   }
 
-  function openEditModal(product: Product) {
+  async function openEditModal(product: Product) {
     setEditingProduct(product)
     setFormData({
       supplier_id: product.supplier_id,
@@ -181,6 +188,24 @@ export default function ProductsPage() {
       brand: product.brand || '',
       image_url: product.image_url || '',
     })
+
+    // Load structured allergens
+    try {
+      const productAllergens = await haccpService.getProductAllergens(product.id)
+      setSelectedAllergyIds(productAllergens.map(pa => pa.allergy_id))
+    } catch {
+      // If no structured allergens, try to match from text field
+      if (product.allergens) {
+        const allergenNames = product.allergens.split(',').map(a => a.trim().toLowerCase())
+        const matchingIds = allergies
+          .filter(a => allergenNames.some(name => a.name.toLowerCase().includes(name)))
+          .map(a => a.id)
+        setSelectedAllergyIds(matchingIds)
+      } else {
+        setSelectedAllergyIds([])
+      }
+    }
+
     setShowModal(true)
   }
 
@@ -202,11 +227,29 @@ export default function ProductsPage() {
     if (!selectedNursery?.id) return
     try {
       setIsSubmitting(true)
+
+      // Build allergens text from selected allergies
+      const allergensText = selectedAllergyIds.length > 0
+        ? allergies.filter(a => selectedAllergyIds.includes(a.id)).map(a => a.name).join(', ')
+        : formData.allergens
+
+      const dataToSave = { ...formData, allergens: allergensText }
+
+      let productId: string
+
       if (editingProduct) {
-        await haccpService.updateProduct(editingProduct.id, selectedNursery.id, formData)
+        await haccpService.updateProduct(editingProduct.id, selectedNursery.id, dataToSave)
+        productId = editingProduct.id
       } else {
-        await haccpService.createProduct(selectedNursery.id, formData)
+        const newProduct = await haccpService.createProduct(selectedNursery.id, dataToSave)
+        productId = newProduct.id
       }
+
+      // Save structured allergens
+      if (selectedAllergyIds.length > 0) {
+        await haccpService.setProductAllergens(productId, selectedAllergyIds)
+      }
+
       setShowModal(false)
       loadData()
     } catch (error) {
@@ -225,12 +268,14 @@ export default function ProductsPage() {
     if (!selectedNursery?.id || !productToDelete) return
     try {
       setIsDeleting(true)
-      await haccpService.deleteProduct(productToDelete.id, selectedNursery.id)
+      // Utilise la suppression en cascade pour supprimer aussi les lots et éléments liés
+      await haccpService.deleteProductWithCascade(productToDelete.id, selectedNursery.id)
+      setProductToDelete(null)
       loadData()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting product:', error)
-      alert('Erreur lors de la suppression')
-    } finally {
+      const message = error?.message || error?.code || 'Erreur inconnue'
+      alert(`Erreur lors de la suppression: ${message}`)
       setIsDeleting(false)
       setProductToDelete(null)
     }
@@ -355,7 +400,7 @@ export default function ProductsPage() {
     if (!productBatches[productId]) {
       setLoadingBatches(productId)
       try {
-        const batches = await haccpService.getBatchesByProduct(selectedNursery.id, productId)
+        const batches = await haccpService.getActiveBatchesByProduct(selectedNursery.id, productId)
         setProductBatches(prev => ({ ...prev, [productId]: batches }))
       } catch (error) {
         console.error('Error loading batches:', error)
@@ -384,7 +429,7 @@ export default function ProductsPage() {
       setBatchSubmitting(true)
       await haccpService.createBatch(selectedNursery.id, batchFormData)
       setShowBatchModal(false)
-      const batches = await haccpService.getBatchesByProduct(selectedNursery.id, batchFormData.product_id)
+      const batches = await haccpService.getActiveBatchesByProduct(selectedNursery.id, batchFormData.product_id)
       setProductBatches(prev => ({ ...prev, [batchFormData.product_id]: batches }))
       loadData()
     } catch (error) {
@@ -403,7 +448,7 @@ export default function ProductsPage() {
       } else {
         await haccpService.updateBatchStatus(batchId, selectedNursery.id, action === 'consume' ? 'consumed' : 'discarded')
       }
-      const batches = await haccpService.getBatchesByProduct(selectedNursery.id, productId)
+      const batches = await haccpService.getActiveBatchesByProduct(selectedNursery.id, productId)
       setProductBatches(prev => ({ ...prev, [productId]: batches }))
       loadData()
     } catch (error) {
@@ -450,6 +495,13 @@ export default function ProductsPage() {
             </div>
           </div>
           <div className="flex gap-3">
+            <Link
+              href="/owner/haccp/products/history"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium transition-colors"
+            >
+              <ArchiveBoxIcon className="w-5 h-5" />
+              Historique
+            </Link>
             <button
               onClick={() => setShowScanner(true)}
               className="flex items-center gap-2 px-4 py-2 rounded-xl border border-lime-300 hover:bg-lime-50 text-lime-700 font-medium transition-colors"
@@ -536,31 +588,28 @@ export default function ProductsPage() {
             <p className="text-muted-foreground mb-4">
               Vous devez d&apos;abord créer des fournisseurs avant d&apos;ajouter des produits
             </p>
-            <a href="/owner/haccp/suppliers" className="btn btn-primary">
+            <Link href="/owner/haccp/suppliers" className="btn btn-primary">
               Gérer les fournisseurs
-            </a>
+            </Link>
           </div>
         ) : (
           <>
             {/* Filters */}
             {categories.length > 1 && (
-              <div className="flex items-center gap-3 mb-6">
-                <FunnelIcon className="w-5 h-5 text-muted-foreground" />
-                <div className="flex gap-2 flex-wrap">
-                  {categories.map((category) => (
-                    <button
-                      key={category}
-                      onClick={() => setFilterCategory(category)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                        filterCategory === category
-                          ? 'bg-primary-500 text-white'
-                          : 'bg-muted hover:bg-muted/80'
-                      }`}
-                    >
-                      {category === 'ALL' ? 'Tous' : category}
-                    </button>
-                  ))}
-                </div>
+              <div className="flex gap-2 flex-wrap mb-6">
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => setFilterCategory(category)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      filterCategory === category
+                        ? 'bg-lime-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {category === 'ALL' ? 'Tous' : category}
+                  </button>
+                ))}
               </div>
             )}
 
@@ -599,26 +648,28 @@ export default function ProductsPage() {
 
                     <div className="relative z-10 p-6">
                       <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="flex items-center gap-4 flex-1 min-w-0">
                           {/* Product image or category emoji */}
                           <div
-                            className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 group-hover:rotate-2 transition-all duration-300 text-2xl overflow-hidden"
+                            className="w-20 h-20 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 group-hover:rotate-2 transition-all duration-300 text-3xl overflow-hidden shadow-sm"
                             style={{ background: product.image_url ? undefined : 'linear-gradient(to bottom right, #aed5811A, #aed5810D)' }}
                           >
                             {product.image_url ? (
                               <img src={product.image_url} alt={product.name} className="w-full h-full object-cover rounded-2xl" />
                             ) : product.category ? getCategoryEmoji(product.category) : (
-                              <ShoppingBagIcon className="w-6 h-6" style={{ color: '#7da453' }} strokeWidth={1.5} />
+                              <ShoppingBagIcon className="w-8 h-8" style={{ color: '#7da453' }} strokeWidth={1.5} />
                             )}
                           </div>
-                          <div className="min-w-0">
-                            <h3 className="font-semibold truncate">{product.name}</h3>
-                            {product.brand && (
-                              <span className="text-xs text-muted-foreground">{product.brand}</span>
-                            )}
-                            {!product.brand && product.category && (
-                              <span className="text-xs text-muted-foreground">{product.category}</span>
-                            )}
+                          <div className="min-w-0 flex-1">
+                            <h3 className="font-bold text-lg truncate mb-1">{product.name}</h3>
+                            <div className="flex flex-col gap-0.5">
+                              {product.brand && (
+                                <span className="text-sm text-muted-foreground">{product.brand}</span>
+                              )}
+                              {product.category && (
+                                <span className="text-xs text-muted-foreground">{product.category}</span>
+                              )}
+                            </div>
                           </div>
                         </div>
                         <div className="flex gap-2 flex-shrink-0">
@@ -676,12 +727,24 @@ export default function ProductsPage() {
 
                         {/* Allergens */}
                         {product.allergens && (
-                          <div className="p-3 rounded-lg bg-danger-50 border border-danger-200">
+                          <div className="p-3 rounded-lg bg-amber-50 border border-amber-200">
                             <div className="flex items-start gap-2">
-                              <ExclamationTriangleIcon className="w-5 h-5 text-danger-600 flex-shrink-0 mt-0.5" />
+                              <ExclamationTriangleIcon className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                               <div>
-                                <p className="text-xs font-medium text-danger-900 mb-1">Allergènes</p>
-                                <p className="text-sm text-danger-700">{product.allergens}</p>
+                                <p className="text-xs font-medium text-amber-900 mb-1">Allergènes</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {product.allergens.split(',').map((allergen, idx) => {
+                                    const matchingAllergy = allergies.find(
+                                      a => a.name.toLowerCase() === allergen.trim().toLowerCase()
+                                    )
+                                    return (
+                                      <Badge key={idx} className="bg-amber-100 text-amber-800 text-xs">
+                                        {matchingAllergy?.icon && <span className="mr-1">{matchingAllergy.icon}</span>}
+                                        {allergen.trim()}
+                                      </Badge>
+                                    )
+                                  })}
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -700,7 +763,7 @@ export default function ProductsPage() {
                           onClick={() => toggleBatches(product.id)}
                           className="flex items-center justify-between w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
                         >
-                          <span className="font-medium">Lots en stock</span>
+                          <span className="font-medium">Lots actifs (scellés/ouverts)</span>
                           {expandedProduct === product.id ?
                             <ChevronUpIcon className="w-4 h-4" /> :
                             <ChevronDownIcon className="w-4 h-4" />
@@ -1144,16 +1207,39 @@ export default function ProductsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Allergènes</label>
-            <input
-              type="text"
-              value={formData.allergens}
-              onChange={(e) => setFormData({ ...formData, allergens: e.target.value })}
-              className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary-500 bg-background"
-              placeholder="ex: Lactose, Gluten"
-            />
+            <label className="block text-sm font-medium mb-2">
+              <ExclamationTriangleIcon className="w-4 h-4 inline mr-1 text-amber-500" />
+              Allergènes ({selectedAllergyIds.length} sélectionné{selectedAllergyIds.length > 1 ? 's' : ''})
+            </label>
+            <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-3 border border-border rounded-lg bg-gray-50">
+              {allergies.map((allergy) => (
+                <label
+                  key={allergy.id}
+                  className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
+                    selectedAllergyIds.includes(allergy.id)
+                      ? 'bg-amber-100 border border-amber-300'
+                      : 'bg-white border border-gray-200 hover:bg-gray-100'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedAllergyIds.includes(allergy.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedAllergyIds([...selectedAllergyIds, allergy.id])
+                      } else {
+                        setSelectedAllergyIds(selectedAllergyIds.filter(id => id !== allergy.id))
+                      }
+                    }}
+                    className="rounded border-gray-300 text-amber-500 focus:ring-amber-500"
+                  />
+                  <span className="text-lg">{allergy.icon}</span>
+                  <span className="text-sm font-medium">{allergy.name}</span>
+                </label>
+              ))}
+            </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Séparez les allergènes par des virgules
+              Cochez les allergènes présents dans ce produit
             </p>
           </div>
 

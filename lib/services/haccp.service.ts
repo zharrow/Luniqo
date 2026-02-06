@@ -19,46 +19,14 @@ import { createClient } from '@/lib/supabase/client'
 // TYPES & INTERFACES
 // ============================================================================
 
-export type Section = 'Babies' | 'Toddlers' | 'Preschoolers'
 export type MealType = 'Breakfast' | 'Lunch' | 'Snack'
 export type CheckpointType = 'Reception' | 'Holding' | 'Service' | 'Storage'
 export type ComplianceType = 'Product' | 'Temperature' | 'Hygiene' | 'Other'
 export type ComplianceStatus = 'Open' | 'Corrected' | 'Closed'
 export type DocumentCategory = 'Temperatures' | 'Cleaning' | 'Training' | 'Compliance' | 'Other'
 
-// Children
-export interface Child {
-  id: string
-  nursery_id: string
-  first_name: string
-  last_name: string
-  birth_date: string
-  section: Section
-  allergies: string | null
-  specific_diet: string | null
-  is_active: boolean
-  created_at: string
-  updated_at: string
-}
-
-export interface CreateChildInput {
-  first_name: string
-  last_name: string
-  birth_date: string
-  section: Section
-  allergies?: string
-  specific_diet?: string
-}
-
-export interface UpdateChildInput {
-  first_name?: string
-  last_name?: string
-  birth_date?: string
-  section?: Section
-  allergies?: string
-  specific_diet?: string
-  is_active?: boolean
-}
+// Note: Child types have been moved to child.service.ts (Core module)
+// HACCP module consumes child data but doesn't manage it
 
 // Suppliers
 export interface Supplier {
@@ -199,6 +167,7 @@ export interface Temperature {
   id: string
   nursery_id: string
   meal_id: string | null
+  batch_id: string | null
   checkpoint_type: CheckpointType
   temperature_value: number
   measured_at: string
@@ -207,16 +176,110 @@ export interface Temperature {
   is_compliant: boolean
   created_at: string
   updated_at: string
+  batch?: Batch
+  meal?: Meal
 }
 
 export interface CreateTemperatureInput {
   meal_id?: string
+  batch_id?: string
   checkpoint_type: CheckpointType
   temperature_value: number
   measured_at: string
   measured_by_id: string
   notes?: string
   is_compliant: boolean
+}
+
+// Meal Items (composition d'un repas)
+export interface MealItem {
+  id: string
+  meal_id: string
+  product_id: string
+  batch_id: string | null
+  quantity: number | null
+  unit: string | null
+  notes: string | null
+  created_at: string
+  product?: Product
+  batch?: Batch
+}
+
+export interface CreateMealItemInput {
+  product_id: string
+  batch_id?: string
+  quantity?: number
+  unit?: string
+  notes?: string
+}
+
+// Product Allergens (allergènes structurés)
+export interface ProductAllergen {
+  id: string
+  product_id: string
+  allergy_id: string
+  created_at: string
+  allergy?: Allergy
+}
+
+export interface Allergy {
+  id: string
+  name: string
+  description: string | null
+  icon: string | null
+  severity: string
+  is_common: boolean
+  display_order: number
+  created_at: string
+}
+
+// Menu Templates
+export interface MenuTemplate {
+  id: string
+  nursery_id: string
+  name: string
+  description: string | null
+  meal_type: MealType
+  is_active: boolean
+  created_at: string
+  updated_at: string
+  items?: MenuTemplateItem[]
+}
+
+export interface MenuTemplateItem {
+  id: string
+  template_id: string
+  product_id: string
+  quantity: number | null
+  unit: string | null
+  notes: string | null
+  display_order: number
+  created_at: string
+  product?: Product
+}
+
+export interface CreateMenuTemplateInput {
+  name: string
+  description?: string
+  meal_type: MealType
+}
+
+export interface CreateMenuTemplateItemInput {
+  product_id: string
+  quantity?: number
+  unit?: string
+  notes?: string
+  display_order?: number
+}
+
+// Computed meal allergens
+export interface MealAllergenInfo {
+  allergy_id: string
+  allergy_name: string
+  allergy_icon: string | null
+  severity: string
+  from_product_id: string
+  from_product_name: string
 }
 
 // Non-Compliance
@@ -310,96 +373,6 @@ export class HaccpService {
 
   constructor() {
     this.supabase = createClient()
-  }
-
-  // ==========================================================================
-  // CHILDREN
-  // ==========================================================================
-
-  async getChildren(nurseryId: string): Promise<Child[]> {
-    const { data, error } = await this.supabase
-      .from('child')
-      .select('*')
-      .eq('nursery_id', nurseryId)
-      .order('last_name', { ascending: true })
-
-    if (error) throw error
-    return (data as any[]) || []
-  }
-
-  async getActiveChildren(nurseryId: string): Promise<Child[]> {
-    const { data, error } = await this.supabase
-      .from('child')
-      .select('*')
-      .eq('nursery_id', nurseryId)
-      .eq('is_active', true)
-      .order('last_name', { ascending: true })
-
-    if (error) throw error
-    return (data as any[]) || []
-  }
-
-  async getChildById(id: string, nurseryId: string): Promise<Child | null> {
-    const { data, error } = await this.supabase
-      .from('child')
-      .select('*')
-      .eq('id', id)
-      .eq('nursery_id', nurseryId)
-      .single()
-
-    if (error) {
-      if (error.code === 'PGRST116') return null
-      throw error
-    }
-    return data as any
-  }
-
-  async createChild(nurseryId: string, input: CreateChildInput): Promise<Child> {
-    const { data, error } = await this.supabase
-      .from('child')
-      .insert({
-        nursery_id: nurseryId,
-        ...input,
-        is_active: true
-      })
-      .select()
-      .single()
-
-    if (error) throw error
-    return data as any
-  }
-
-  async updateChild(id: string, nurseryId: string, input: UpdateChildInput): Promise<Child> {
-    const { data, error } = await this.supabase
-      .from('child')
-      .update(input)
-      .eq('id', id)
-      .eq('nursery_id', nurseryId)
-      .select()
-      .single()
-
-    if (error) throw error
-    return data as any
-  }
-
-  async deactivateChild(id: string, nurseryId: string): Promise<void> {
-    const { error } = await this.supabase
-      .from('child')
-      .update({ is_active: false })
-      .eq('id', id)
-      .eq('nursery_id', nurseryId)
-
-    if (error) throw error
-  }
-
-  async deleteChild(id: string, nurseryId: string): Promise<void> {
-    const { error } = await this.supabase
-      .from('child')
-      .delete()
-      .eq('id', id)
-      .eq('nursery_id', nurseryId)
-
-    if (error) throw error
   }
 
   // ==========================================================================
@@ -533,6 +506,43 @@ export class HaccpService {
   }
 
   async deleteProduct(id: string, nurseryId: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('product')
+      .delete()
+      .eq('id', id)
+      .eq('nursery_id', nurseryId)
+
+    if (error) throw error
+  }
+
+  async deleteProductWithCascade(id: string, nurseryId: string): Promise<void> {
+    // Supprimer d'abord les éléments liés qui ont ON DELETE RESTRICT
+
+    // 1. Supprimer les meal_items liés (si la table existe)
+    await this.supabase
+      .from('meal_item')
+      .delete()
+      .eq('product_id', id)
+
+    // 2. Supprimer les menu_template_items liés (si la table existe)
+    await this.supabase
+      .from('menu_template_item')
+      .delete()
+      .eq('product_id', id)
+
+    // 3. Supprimer les product_allergens liés
+    await this.supabase
+      .from('product_allergen')
+      .delete()
+      .eq('product_id', id)
+
+    // 4. Supprimer les batches liés (normalement CASCADE mais on le fait explicitement)
+    await this.supabase
+      .from('batch')
+      .delete()
+      .eq('product_id', id)
+
+    // 5. Enfin, supprimer le produit
     const { error } = await this.supabase
       .from('product')
       .delete()
@@ -713,6 +723,32 @@ export class HaccpService {
       .eq('nursery_id', nurseryId)
       .eq('product_id', productId)
       .order('reception_date', { ascending: false })
+
+    if (error) throw error
+    return (data as any[]) || []
+  }
+
+  async getActiveBatchesByProduct(nurseryId: string, productId: string): Promise<Batch[]> {
+    const { data, error } = await this.supabase
+      .from('batch')
+      .select('*, product(*, supplier(*))')
+      .eq('nursery_id', nurseryId)
+      .eq('product_id', productId)
+      .in('status', ['sealed', 'opened'])
+      .order('expiry_date', { ascending: true })
+
+    if (error) throw error
+    return (data as any[]) || []
+  }
+
+  async getBatchHistory(nurseryId: string): Promise<Batch[]> {
+    const { data, error } = await this.supabase
+      .from('batch')
+      .select('*, product(*, supplier(*))')
+      .eq('nursery_id', nurseryId)
+      .in('status', ['consumed', 'discarded', 'expired'])
+      .order('updated_at', { ascending: false })
+      .limit(100)
 
     if (error) throw error
     return (data as any[]) || []
@@ -988,6 +1024,329 @@ export class HaccpService {
       openNonCompliances: openNonCompliances || 0,
       todayMeals: todayMeals || 0
     }
+  }
+
+  // ==========================================================================
+  // ALLERGIES (Reference table)
+  // ==========================================================================
+
+  async getAllergies(): Promise<Allergy[]> {
+    const { data, error } = await this.supabase
+      .from('allergy')
+      .select('*')
+      .order('display_order', { ascending: true })
+
+    if (error) throw error
+    return (data as any[]) || []
+  }
+
+  // ==========================================================================
+  // MEAL ITEMS (Composition d'un repas)
+  // ==========================================================================
+
+  async getMealItems(mealId: string): Promise<MealItem[]> {
+    const { data, error } = await this.supabase
+      .from('meal_item')
+      .select('*, product(*, supplier(*)), batch(*)')
+      .eq('meal_id', mealId)
+
+    if (error) throw error
+    return (data as any[]) || []
+  }
+
+  async addMealItem(mealId: string, input: CreateMealItemInput): Promise<MealItem> {
+    const { data, error } = await this.supabase
+      .from('meal_item')
+      .insert({
+        meal_id: mealId,
+        ...input
+      })
+      .select('*, product(*, supplier(*)), batch(*)')
+      .single()
+
+    if (error) throw error
+    return data as any
+  }
+
+  async updateMealItem(id: string, input: Partial<CreateMealItemInput>): Promise<MealItem> {
+    const { data, error } = await this.supabase
+      .from('meal_item')
+      .update(input)
+      .eq('id', id)
+      .select('*, product(*, supplier(*)), batch(*)')
+      .single()
+
+    if (error) throw error
+    return data as any
+  }
+
+  async removeMealItem(id: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('meal_item')
+      .delete()
+      .eq('id', id)
+
+    if (error) throw error
+  }
+
+  async setMealItems(mealId: string, items: CreateMealItemInput[]): Promise<MealItem[]> {
+    // Delete existing items
+    await this.supabase
+      .from('meal_item')
+      .delete()
+      .eq('meal_id', mealId)
+
+    if (items.length === 0) return []
+
+    // Insert new items
+    const { data, error } = await this.supabase
+      .from('meal_item')
+      .insert(items.map(item => ({ meal_id: mealId, ...item })))
+      .select('*, product(*, supplier(*)), batch(*)')
+
+    if (error) throw error
+    return (data as any[]) || []
+  }
+
+  // Get computed allergens for a meal based on its products
+  async getMealComputedAllergens(mealId: string): Promise<MealAllergenInfo[]> {
+    const { data, error } = await this.supabase
+      .rpc('get_meal_allergens', { p_meal_id: mealId })
+
+    if (error) throw error
+    return (data as any[]) || []
+  }
+
+  // Get meal with items and computed allergens
+  async getMealWithItems(mealId: string): Promise<Meal & { items: MealItem[], computed_allergens: MealAllergenInfo[] }> {
+    const [meal, items, allergens] = await Promise.all([
+      this.supabase.from('meal').select('*').eq('id', mealId).single(),
+      this.getMealItems(mealId),
+      this.getMealComputedAllergens(mealId)
+    ])
+
+    if (meal.error) throw meal.error
+
+    return {
+      ...(meal.data as any),
+      items,
+      computed_allergens: allergens
+    }
+  }
+
+  // ==========================================================================
+  // PRODUCT ALLERGENS (Allergènes structurés)
+  // ==========================================================================
+
+  async getProductAllergens(productId: string): Promise<ProductAllergen[]> {
+    const { data, error } = await this.supabase
+      .from('product_allergen')
+      .select('*, allergy(*)')
+      .eq('product_id', productId)
+
+    if (error) throw error
+    return (data as any[]) || []
+  }
+
+  async setProductAllergens(productId: string, allergyIds: string[]): Promise<void> {
+    // Delete existing
+    await this.supabase
+      .from('product_allergen')
+      .delete()
+      .eq('product_id', productId)
+
+    if (allergyIds.length === 0) return
+
+    // Insert new
+    const { error } = await this.supabase
+      .from('product_allergen')
+      .insert(allergyIds.map(allergyId => ({
+        product_id: productId,
+        allergy_id: allergyId
+      })))
+
+    if (error) throw error
+  }
+
+  async addProductAllergen(productId: string, allergyId: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('product_allergen')
+      .insert({ product_id: productId, allergy_id: allergyId })
+
+    if (error && error.code !== '23505') throw error // Ignore duplicate
+  }
+
+  async removeProductAllergen(productId: string, allergyId: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('product_allergen')
+      .delete()
+      .eq('product_id', productId)
+      .eq('allergy_id', allergyId)
+
+    if (error) throw error
+  }
+
+  // Get products with their structured allergens
+  async getProductsWithAllergens(nurseryId: string): Promise<(Product & { product_allergens: ProductAllergen[] })[]> {
+    const { data, error } = await this.supabase
+      .from('product')
+      .select('*, supplier(*), product_allergen(*, allergy(*))')
+      .eq('nursery_id', nurseryId)
+      .eq('is_active', true)
+      .order('name', { ascending: true })
+
+    if (error) throw error
+    return (data as any[]) || []
+  }
+
+  // ==========================================================================
+  // MENU TEMPLATES
+  // ==========================================================================
+
+  async getMenuTemplates(nurseryId: string): Promise<MenuTemplate[]> {
+    const { data, error } = await this.supabase
+      .from('menu_template')
+      .select('*, menu_template_item(*, product(*))')
+      .eq('nursery_id', nurseryId)
+      .eq('is_active', true)
+      .order('name', { ascending: true })
+
+    if (error) throw error
+    return (data as any[]).map(t => ({
+      ...t,
+      items: t.menu_template_item || []
+    })) || []
+  }
+
+  async getMenuTemplatesByType(nurseryId: string, mealType: MealType): Promise<MenuTemplate[]> {
+    const { data, error } = await this.supabase
+      .from('menu_template')
+      .select('*, menu_template_item(*, product(*))')
+      .eq('nursery_id', nurseryId)
+      .eq('meal_type', mealType)
+      .eq('is_active', true)
+      .order('name', { ascending: true })
+
+    if (error) throw error
+    return (data as any[]).map(t => ({
+      ...t,
+      items: t.menu_template_item || []
+    })) || []
+  }
+
+  async createMenuTemplate(nurseryId: string, input: CreateMenuTemplateInput): Promise<MenuTemplate> {
+    const { data, error } = await this.supabase
+      .from('menu_template')
+      .insert({
+        nursery_id: nurseryId,
+        ...input,
+        is_active: true
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+    return data as any
+  }
+
+  async updateMenuTemplate(id: string, nurseryId: string, input: Partial<CreateMenuTemplateInput>): Promise<MenuTemplate> {
+    const { data, error } = await this.supabase
+      .from('menu_template')
+      .update({ ...input, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('nursery_id', nurseryId)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data as any
+  }
+
+  async deleteMenuTemplate(id: string, nurseryId: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('menu_template')
+      .update({ is_active: false })
+      .eq('id', id)
+      .eq('nursery_id', nurseryId)
+
+    if (error) throw error
+  }
+
+  async setMenuTemplateItems(templateId: string, items: CreateMenuTemplateItemInput[]): Promise<MenuTemplateItem[]> {
+    // Delete existing
+    await this.supabase
+      .from('menu_template_item')
+      .delete()
+      .eq('template_id', templateId)
+
+    if (items.length === 0) return []
+
+    // Insert new
+    const { data, error } = await this.supabase
+      .from('menu_template_item')
+      .insert(items.map((item, index) => ({
+        template_id: templateId,
+        ...item,
+        display_order: item.display_order ?? index
+      })))
+      .select('*, product(*)')
+
+    if (error) throw error
+    return (data as any[]) || []
+  }
+
+  // Apply a menu template to a meal (creates meal items from template)
+  async applyMenuTemplateToMeal(mealId: string, templateId: string): Promise<MealItem[]> {
+    // Get template items
+    const { data: templateItems, error: fetchError } = await this.supabase
+      .from('menu_template_item')
+      .select('*')
+      .eq('template_id', templateId)
+
+    if (fetchError) throw fetchError
+
+    // Convert to meal items
+    const mealItemInputs: CreateMealItemInput[] = (templateItems || []).map((ti: any) => ({
+      product_id: ti.product_id,
+      quantity: ti.quantity,
+      unit: ti.unit,
+      notes: ti.notes
+    }))
+
+    return this.setMealItems(mealId, mealItemInputs)
+  }
+
+  // ==========================================================================
+  // TEMPERATURES WITH BATCH LINKING
+  // ==========================================================================
+
+  async getTemperaturesWithBatches(nurseryId: string, startDate?: string, endDate?: string): Promise<Temperature[]> {
+    let query = this.supabase
+      .from('temperature_check')
+      .select('*, batch(*, product(*)), meal(*)')
+      .eq('nursery_id', nurseryId)
+
+    if (startDate) query = query.gte('measured_at', startDate)
+    if (endDate) query = query.lte('measured_at', endDate)
+
+    const { data, error } = await query.order('measured_at', { ascending: false })
+
+    if (error) throw error
+    return (data as any[]) || []
+  }
+
+  async createTemperatureWithBatch(nurseryId: string, input: CreateTemperatureInput): Promise<Temperature> {
+    const { data, error } = await this.supabase
+      .from('temperature_check')
+      .insert({
+        nursery_id: nurseryId,
+        ...input
+      })
+      .select('*, batch(*, product(*)), meal(*)')
+      .single()
+
+    if (error) throw error
+    return data as any
   }
 }
 

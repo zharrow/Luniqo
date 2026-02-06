@@ -103,10 +103,10 @@ export default function HaccpDashboardPage() {
   const modules = [
     {
       name: 'Enfants',
-      description: 'Gestion des enfants inscrits et allergènes',
+      description: 'Voir les enfants inscrits et allergènes',
       icon: <UserGroupIcon className="w-5 h-5" strokeWidth={1.5} />,
-      href: '/owner/haccp/children',
-      module: 'users' as const, // Rose pastel
+      href: '/owner/children',
+      module: 'users' as const, // Rose pastel (Core module)
       colSpan: 'md:col-span-1'
     },
     {

@@ -8,6 +8,17 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
 
+  // Redirects for deprecated routes
+  async redirects() {
+    return [
+      {
+        source: '/owner/haccp/children',
+        destination: '/owner/children',
+        permanent: true,
+      },
+    ]
+  },
+
   // Disable ESLint during build (run manually with npm run lint)
   eslint: {
     ignoreDuringBuilds: true,

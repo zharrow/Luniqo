@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useRequireTabletAuth } from '@/lib/contexts/TabletAuthContext'
 import { haccpService } from '@/lib/services/haccp.service'
+import { childService } from '@/lib/services/child.service'
 
 interface Child {
   id: string
@@ -52,8 +53,8 @@ export default function TabletHaccpMealsPage() {
       )
       setTodayMeals(todayValidated)
 
-      // Load children
-      const childrenData = await haccpService.getChildren(session.enterprise.id)
+      // Load children (using childService from Core module)
+      const childrenData = await childService.getAll(session.enterprise.id)
       setChildren(childrenData as Child[])
 
       // Initialize servings for all children

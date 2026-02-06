@@ -328,7 +328,16 @@ export class SessionsService {
       .order('created_at', { ascending: true })
 
     if (error) throw error
-    return (data as any) || []
+
+    // Filter out logs where the assigned_task or its room/task_template is null
+    const validLogs = (data as any[] || []).filter(
+      (log: any) =>
+        log.assigned_task !== null &&
+        log.assigned_task.room !== null &&
+        log.assigned_task.task_template !== null
+    )
+
+    return validLogs
   }
 
   /**
@@ -387,7 +396,13 @@ export class SessionsService {
       .order('order_in_room', { ascending: true })
 
     if (error) throw error
-    return (data as any) || []
+
+    // Filter out tasks with null room or task_template (can happen if related records were deleted)
+    const validTasks = (data as any[] || []).filter(
+      (task: any) => task.room !== null && task.task_template !== null
+    )
+
+    return validTasks
   }
 
   /**
