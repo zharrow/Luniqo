@@ -160,7 +160,7 @@ export default function ApplicationDetailPage() {
           </Button>
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold text-gray-900">
                 {application.child_first_name} {application.child_last_name}
               </h1>
               {getStatusBadge(application.status)}

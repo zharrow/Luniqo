@@ -276,53 +276,28 @@ export default function ProfilPage() {
           ]}
         />
 
-        {/* En-tête avec avatar - Style organique */}
-        <div
-          className="relative rounded-3xl p-8 bg-white overflow-hidden"
-          style={{
-            border: '1px solid #c5b3d133',
-            background: 'linear-gradient(to bottom right, #f5f3f8, white)'
-          }}
-        >
-          <div className="flex items-center gap-6">
-            <Avatar className="h-24 w-24 border-4 border-purple-100 shadow-lg">
-              {ownerData?.avatar ? (
-                <AvatarImage src={`/${ownerData.avatar}`} alt="Avatar" />
-              ) : null}
-              <AvatarFallback className="bg-gradient-to-br from-purple-400 to-purple-600 text-white text-2xl font-bold">
-                {getInitials(ownerData?.first_name, ownerData?.last_name)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-500 to-purple-700 bg-clip-text text-transparent">
-                Mon Profil
-              </h1>
-              <p className="text-muted-foreground mt-1">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-purple-100">
+              <UserCircleIcon className="w-6 h-6 text-purple-600" strokeWidth={1.5} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Mon Profil</h1>
+              <p className="text-sm text-muted-foreground">
                 Gérez vos informations personnelles et celles de votre entreprise
               </p>
-              <div className="flex gap-2 mt-3">
-                <Badge variant="secondary" className="gap-1">
-                  <ShieldCheckIcon className="w-3 h-3" />
-                  Propriétaire
-                </Badge>
-                {enterpriseData && (
-                  <Badge variant="outline" className="gap-1 border-purple-200 text-purple-700">
-                    <BuildingOfficeIcon className="w-3 h-3" />
-                    {enterpriseData.name}
-                  </Badge>
-                )}
-              </div>
             </div>
-            {!isEditing && (
-              <Button
-                onClick={() => setIsEditing(true)}
-                className="gap-2 bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
-              >
-                <PencilIcon className="w-4 h-4" />
-                Modifier
-              </Button>
-            )}
           </div>
+          {!isEditing && (
+            <Button
+              onClick={() => setIsEditing(true)}
+              className="flex items-center gap-2 bg-purple-500 hover:bg-purple-600 text-white"
+            >
+              <PencilIcon className="w-4 h-4" />
+              Modifier
+            </Button>
+          )}
         </div>
 
         {/* Messages - Style organique */}

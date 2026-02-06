@@ -104,12 +104,17 @@ export default function InvoicesListPage() {
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Factures</h1>
-          <p className="text-muted-foreground">
-            Gérez toutes les factures émises
-          </p>
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-100">
+            <MagnifyingGlassIcon className="w-6 h-6 text-blue-600" strokeWidth={1.5} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Factures</h1>
+            <p className="text-sm text-muted-foreground">
+              Gérez toutes les factures émises
+            </p>
+          </div>
         </div>
         <Button onClick={() => router.push('/owner/invoicing/invoices/generate')}>
           <PlusIcon className="w-4 h-4 mr-2" />

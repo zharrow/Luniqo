@@ -213,7 +213,7 @@ export default function ChildTimelinePage() {
           )}
 
           <div className="flex-1">
-            <h1 className="text-3xl font-bold mb-1">
+            <h1 className="text-2xl font-bold mb-1">
               {mockChild.first_name} {mockChild.last_name}
             </h1>
             <div className="flex items-center gap-3 text-muted-foreground">

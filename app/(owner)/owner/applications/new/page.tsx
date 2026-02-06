@@ -136,7 +136,7 @@ export default function NewApplicationPage() {
           <ArrowLeftIcon className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Nouvelle Demande d'Inscription</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Nouvelle Demande d'Inscription</h1>
           <p className="text-gray-600 mt-1">
             Créer une nouvelle demande de pré-inscription pour {selectedNursery.name}
           </p>

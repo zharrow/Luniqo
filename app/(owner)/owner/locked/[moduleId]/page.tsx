@@ -210,7 +210,7 @@ export default function LockedModulePage() {
         <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 mb-4">
           <LockClosedIcon className="w-10 h-10 text-blue-600" />
         </div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">{module.name}</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">{module.name}</h1>
         <p className="text-gray-600 max-w-2xl mx-auto">{module.description}</p>
       </div>
 

@@ -44,6 +44,13 @@ export interface CreateOwnerInput {
   last_name: string
 }
 
+export interface RegisterOwnerInput {
+  email: string
+  password: string
+  first_name?: string
+  last_name?: string
+}
+
 /**
  * Create a new employee with Supabase Auth + Profile
  * This requires server-side execution with service role
@@ -222,4 +229,62 @@ async function generateUniqueUsername(
   }
 
   return username
+}
+
+/**
+ * Register a new owner (public registration)
+ * Uses admin client to auto-confirm email
+ */
+export async function registerOwner(
+  input: RegisterOwnerInput
+): Promise<{ success: boolean; userId?: string; error?: string }> {
+  try {
+    const supabase = getAdminClient()
+
+    // 1. Create user in Supabase Auth with auto-confirmed email
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email: input.email,
+      password: input.password,
+      email_confirm: true, // Auto-confirm email - no verification needed
+      user_metadata: {
+        first_name: input.first_name || '',
+        last_name: input.last_name || '',
+        role: 'Owner'
+      }
+    })
+
+    if (authError || !authData.user) {
+      console.error('Error creating auth user:', authError)
+      if (authError?.message?.includes('already been registered')) {
+        return { success: false, error: 'Un compte existe déjà avec cet email' }
+      }
+      return { success: false, error: authError?.message || 'Échec de la création du compte' }
+    }
+
+    const userId = authData.user.id
+
+    // 2. Create the profile manually
+    const { error: profileError } = await (supabase as any)
+      .from('profiles')
+      .insert({
+        id: userId,
+        role: 'Owner',
+        email: input.email,
+        first_name: input.first_name || null,
+        last_name: input.last_name || null,
+        is_active: true
+      })
+
+    if (profileError) {
+      console.error('Error creating profile:', profileError)
+      // Rollback: delete the auth user if profile creation fails
+      await supabase.auth.admin.deleteUser(userId)
+      return { success: false, error: 'Échec de la création du profil' }
+    }
+
+    return { success: true, userId }
+  } catch (error) {
+    console.error('Unexpected error in registerOwner:', error)
+    return { success: false, error: 'Une erreur inattendue est survenue' }
+  }
 }

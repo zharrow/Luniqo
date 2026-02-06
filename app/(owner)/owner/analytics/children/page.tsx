@@ -188,16 +188,21 @@ export default function ChildrenAnalyticsPage() {
   return (
     <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
           <Link href="/owner/analytics">
             <Button variant="ghost" size="icon">
               <ArrowLeftIcon className="w-5 h-5" />
             </Button>
           </Link>
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-pink-100">
+            <UserGroupIcon className="w-6 h-6 text-pink-600" strokeWidth={1.5} />
+          </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Analytics Enfants & Familles</h1>
-            <p className="text-gray-600">Occupation, inscriptions et rétention</p>
+            <h1 className="text-2xl font-bold text-gray-900">Analytics Enfants & Familles</h1>
+            <p className="text-sm text-muted-foreground">
+              Occupation, inscriptions et rétention
+            </p>
           </div>
         </div>
 

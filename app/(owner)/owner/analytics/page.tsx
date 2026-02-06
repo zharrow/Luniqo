@@ -191,10 +191,17 @@ export default function AnalyticsDashboardPage() {
   return (
     <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Analytics</h1>
-          <p className="text-gray-600">Vue d'ensemble des indicateurs clés de performance</p>
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-indigo-100">
+            <ChartBarIcon className="w-6 h-6 text-indigo-600" strokeWidth={1.5} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
+            <p className="text-sm text-muted-foreground">
+              Vue d'ensemble des indicateurs clés de performance
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-3">

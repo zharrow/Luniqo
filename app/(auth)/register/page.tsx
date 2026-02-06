@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { registerOwner } from '@/lib/actions/users.actions'
 import { EyeIcon, EyeSlashIcon, EnvelopeIcon, KeyIcon, UserIcon } from '@heroicons/react/24/outline'
 
 export default function RegisterPage() {
@@ -37,46 +38,32 @@ export default function RegisterPage() {
     setIsLoading(true)
 
     try {
-      // Create auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // Create owner via server action (auto-confirms email)
+      const result = await registerOwner({
         email,
         password,
-        options: {
-          data: {
-            full_name: `${firstName} ${lastName}`.trim(),
-          },
-        },
+        first_name: firstName || undefined,
+        last_name: lastName || undefined,
       })
 
-      if (authError) {
-        if (authError.message.includes('already registered')) {
-          setError('Un compte existe deja avec cet email')
-        } else {
-          setError(authError.message)
-        }
+      if (!result.success) {
+        setError(result.error || 'Échec de la création du compte')
         setIsLoading(false)
         return
       }
 
-      if (!authData.user) {
-        setError('Echec de la creation du compte')
-        setIsLoading(false)
-        return
-      }
-
-      // Create Owner profile via admin client (server action would be better but keeping it simple)
-      const { error: profileError } = await (supabase as any).from('profiles').insert({
-        id: authData.user.id,
+      // Sign in immediately after registration
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
-        role: 'Owner',
-        first_name: firstName || null,
-        last_name: lastName || null,
-        is_active: true,
+        password,
       })
 
-      if (profileError) {
-        console.error('Profile creation error:', profileError)
-        // Profile might be created by trigger, continue anyway
+      if (signInError) {
+        console.error('Sign in error after registration:', signInError)
+        setError('Compte créé mais erreur de connexion. Veuillez vous connecter manuellement.')
+        setIsLoading(false)
+        router.push('/login')
+        return
       }
 
       // Redirect to setup

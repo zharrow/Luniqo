@@ -178,39 +178,41 @@ export default function HaccpDashboardPage() {
           ]}
         />
 
-        {/* Page header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-lg bg-[#81c995]/10 flex items-center justify-center">
-              <BeakerIcon className="w-6 h-6 text-[#4a8f5a]" />
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-100">
+              <BeakerIcon className="w-6 h-6 text-emerald-600" strokeWidth={1.5} />
             </div>
-            <h1 className="text-3xl font-bold">
-              HACCP - Traçabilité Alimentaire
-            </h1>
-            <Popover>
-              <PopoverTrigger asChild>
-                <button className="text-muted-foreground hover:text-primary transition-colors">
-                  <InformationCircleIcon className="w-6 h-6" />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-96" align="start">
-                <div className="space-y-3">
-                  <h4 className="font-semibold">Qu'est-ce que HACCP ?</h4>
-                  <p className="text-sm text-muted-foreground">
-                    HACCP (Hazard Analysis Critical Control Point) est un système qui permet d'identifier,
-                    d'évaluer et de maîtriser les dangers significatifs au regard de la sécurité des aliments.
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Cette section vous permet de gérer la traçabilité alimentaire complète de votre crèche :
-                    enfants et allergènes, repas, produits, fournisseurs, températures, équipements et non-conformités.
-                  </p>
-                </div>
-              </PopoverContent>
-            </Popover>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold text-gray-900">HACCP - Traçabilité Alimentaire</h1>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="text-muted-foreground hover:text-primary transition-colors">
+                      <InformationCircleIcon className="w-5 h-5" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-96" align="start">
+                    <div className="space-y-3">
+                      <h4 className="font-semibold">Qu'est-ce que HACCP ?</h4>
+                      <p className="text-sm text-muted-foreground">
+                        HACCP (Hazard Analysis Critical Control Point) est un système qui permet d'identifier,
+                        d'évaluer et de maîtriser les dangers significatifs au regard de la sécurité des aliments.
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Cette section vous permet de gérer la traçabilité alimentaire complète de votre crèche :
+                        enfants et allergènes, repas, produits, fournisseurs, températures, équipements et non-conformités.
+                      </p>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Gestion complète de la sécurité alimentaire et de la traçabilité
+              </p>
+            </div>
           </div>
-          <p className="text-muted-foreground">
-            Gestion complète de la sécurité alimentaire et de la traçabilité
-          </p>
         </div>
 
         {/* Modules grid - Layout organique avec couleurs variées */}

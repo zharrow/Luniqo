@@ -122,7 +122,7 @@ export default function NewPaymentPage() {
           <ArrowLeftIcon className="w-5 h-5" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold mb-2">Enregistrer un paiement</h1>
+          <h1 className="text-2xl font-bold mb-2">Enregistrer un paiement</h1>
           <p className="text-muted-foreground">Saisir les informations du paiement reçu</p>
         </div>
       </div>

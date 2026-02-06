@@ -175,7 +175,7 @@ export default function ManageWaitingListPage() {
             <ArrowLeftIcon className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Gérer les Positions</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Gérer les Positions</h1>
             <p className="text-gray-600 mt-1">
               Réorganisez l'ordre de la liste d'attente par glisser-déposer
             </p>

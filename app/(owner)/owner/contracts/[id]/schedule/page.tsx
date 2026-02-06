@@ -246,7 +246,7 @@ export default function ContractSchedulePage() {
           <ArrowLeftIcon className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Horaires Hebdomadaires</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Horaires Hebdomadaires</h1>
           <p className="text-gray-600 mt-1">
             Contrat {contract.contract_number} - {contract.child_first_name} {contract.child_last_name}
           </p>

@@ -237,7 +237,7 @@ export default function EditChildPage() {
           Retour à la fiche enfant
         </Button>
 
-        <h1 className="text-3xl font-bold text-gray-900">Modifier l'enfant</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Modifier l'enfant</h1>
         <p className="text-gray-500 mt-2">
           Modifiez les informations de {child.first_name} {child.last_name}
         </p>

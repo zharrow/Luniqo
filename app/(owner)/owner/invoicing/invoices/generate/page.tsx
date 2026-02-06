@@ -95,7 +95,7 @@ export default function GenerateInvoicesPage() {
     <div className="max-w-4xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Génération des factures</h1>
+        <h1 className="text-2xl font-bold mb-2">Génération des factures</h1>
         <p className="text-muted-foreground">
           Générez automatiquement les factures mensuelles pour toutes les familles
         </p>

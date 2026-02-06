@@ -108,19 +108,22 @@ export default function OwnerObservationsPage() {
   return (
     <div className="container mx-auto p-6 max-w-7xl">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-100">
+            <Eye className="w-6 h-6 text-emerald-600" strokeWidth={1.5} />
+          </div>
           <div>
-            <h1 className="text-3xl font-bold mb-2">Observations pédagogiques</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl font-bold text-gray-900">Observations pédagogiques</h1>
+            <p className="text-sm text-muted-foreground">
               Suivi du développement global - {selectedNursery.name}
             </p>
           </div>
-          <Button className="bg-[#b5ead7] hover:bg-[#a0dcc4] text-gray-900">
-            <Download className="w-4 h-4 mr-2" />
-            Exporter rapport
-          </Button>
         </div>
+        <Button className="bg-[#b5ead7] hover:bg-[#a0dcc4] text-gray-900">
+          <Download className="w-4 h-4 mr-2" />
+          Exporter rapport
+        </Button>
       </div>
 
       {/* Error Message */}

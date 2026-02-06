@@ -165,7 +165,7 @@ export default function RateGridDetailPage() {
           </Button>
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-3xl font-bold text-gray-900">{rateGrid.grid_name}</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{rateGrid.grid_name}</h1>
               {getTypeBadge(rateGrid.grid_type)}
               {rateGrid.is_active && (
                 <Badge className="bg-green-100 text-green-800">

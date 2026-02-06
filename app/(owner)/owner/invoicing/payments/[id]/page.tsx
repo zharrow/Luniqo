@@ -122,7 +122,7 @@ export default function PaymentDetailPage() {
             <ArrowLeftIcon className="w-5 h-5" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold mb-2">Paiement #{payment.payment_number}</h1>
+            <h1 className="text-2xl font-bold mb-2">Paiement #{payment.payment_number}</h1>
             <p className="text-muted-foreground">Détails du paiement</p>
           </div>
         </div>

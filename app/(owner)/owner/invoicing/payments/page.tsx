@@ -141,12 +141,17 @@ export default function PaymentsListPage() {
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Paiements</h1>
-          <p className="text-muted-foreground">
-            Gérez et validez les paiements reçus
-          </p>
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-green-100">
+            <CheckIcon className="w-6 h-6 text-green-600" strokeWidth={1.5} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Paiements</h1>
+            <p className="text-sm text-muted-foreground">
+              Gérez et validez les paiements reçus
+            </p>
+          </div>
         </div>
         <Button onClick={() => router.push('/owner/invoicing/payments/new')}>
           <PlusIcon className="w-4 h-4 mr-2" />

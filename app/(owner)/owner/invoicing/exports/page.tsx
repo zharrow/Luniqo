@@ -75,12 +75,17 @@ export default function ExportsPage() {
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Exports comptables</h1>
-          <p className="text-muted-foreground">
-            Historique des exports vers logiciels comptables
-          </p>
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-indigo-100">
+            <ArrowDownTrayIcon className="w-6 h-6 text-indigo-600" strokeWidth={1.5} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Exports comptables</h1>
+            <p className="text-sm text-muted-foreground">
+              Historique des exports vers logiciels comptables
+            </p>
+          </div>
         </div>
         <Link href="/owner/invoicing/exports/new">
           <Button>

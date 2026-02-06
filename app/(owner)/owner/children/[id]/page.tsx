@@ -276,7 +276,7 @@ export default function ChildDetailPage() {
               </div>
             )}
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold text-gray-900">
                 {child.first_name} {child.last_name}
               </h1>
               {child.preferred_name && (

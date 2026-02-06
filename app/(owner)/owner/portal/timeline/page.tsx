@@ -172,7 +172,7 @@ export default function TimelineModerationPage() {
           ]}
         />
         <div className="mt-4">
-          <h1 className="text-3xl font-bold text-gray-900">Modération Timeline</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Modération Timeline</h1>
           <p className="mt-2 text-gray-600">
             Gérez les publications du cahier de vie avant publication aux parents
           </p>
