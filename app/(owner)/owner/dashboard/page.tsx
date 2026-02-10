@@ -32,7 +32,7 @@ export default function DashboardPage() {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Tableau de bord</h1>
               <p className="text-sm text-muted-foreground">
-                Bienvenue {(session?.user as any)?.first_name} {(session?.user as any)?.last_name}
+                Bienvenue {(session?.user as any)?.first_name} {(session?.user as any)?.last_name} 🙌
               </p>
             </div>
           </div>
