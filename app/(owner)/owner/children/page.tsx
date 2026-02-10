@@ -294,7 +294,7 @@ export default function ChildrenPage() {
         </div>
         <Button
           onClick={openCreateModal}
-          className="flex items-center gap-2 bg-pink-500 hover:bg-pink-600 text-white"
+          className="hidden md:flex items-center gap-2 bg-pink-500 hover:bg-pink-600 text-white"
         >
           <PlusIcon className="w-5 h-5" />
           Nouvel enfant
@@ -706,6 +706,14 @@ export default function ChildrenPage() {
         itemName={childToDelete ? `${childToDelete.first_name} ${childToDelete.last_name}` : ''}
         isDeleting={isDeleting}
       />
+
+      {/* Mobile FAB - Floating Action Button */}
+      <Button
+        onClick={openCreateModal}
+        className="md:hidden fixed bottom-6 right-6 h-14 w-14 rounded-full bg-pink-500 hover:bg-pink-600 text-white shadow-lg hover:shadow-xl z-50"
+      >
+        <PlusIcon className="w-6 h-6" />
+      </Button>
     </div>
   )
 }

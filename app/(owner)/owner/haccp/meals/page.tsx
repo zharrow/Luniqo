@@ -424,13 +424,6 @@ export default function MealsPage() {
               </p>
             </div>
           </div>
-          <button
-            onClick={() => openCreateModal()}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-medium transition-colors"
-          >
-            <PlusIcon className="w-5 h-5" />
-            Nouveau repas
-          </button>
         </div>
 
         {/* Week navigation */}

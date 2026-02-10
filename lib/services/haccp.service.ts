@@ -478,11 +478,17 @@ export class HaccpService {
   }
 
   async createProduct(nurseryId: string, input: CreateProductInput): Promise<Product> {
+    // Convert empty strings to null to avoid unique constraint violation on barcode
+    const cleanedInput = {
+      ...input,
+      barcode: input.barcode?.trim() || null,
+    }
+
     const { data, error } = await this.supabase
       .from('product')
       .insert({
         nursery_id: nurseryId,
-        ...input,
+        ...cleanedInput,
         is_active: true
       })
       .select()
@@ -493,9 +499,15 @@ export class HaccpService {
   }
 
   async updateProduct(id: string, nurseryId: string, input: UpdateProductInput): Promise<Product> {
+    // Convert empty strings to null to avoid unique constraint violation on barcode
+    const cleanedInput = {
+      ...input,
+      ...(input.barcode !== undefined && { barcode: input.barcode?.trim() || null }),
+    }
+
     const { data, error } = await this.supabase
       .from('product')
-      .update(input)
+      .update(cleanedInput)
       .eq('id', id)
       .eq('nursery_id', nurseryId)
       .select()
