@@ -364,6 +364,69 @@ export interface CreateDocumentInput {
   uploaded_by_id: string
 }
 
+// Bottle Feeding
+export interface BottleFeeding {
+  id: string
+  nursery_id: string
+  child_id: string
+  product_id: string | null
+  batch_id: string | null
+  quantity: number
+  unit: string
+  fed_at: string
+  fed_by_id: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+  // Joined relations
+  child?: {
+    id: string
+    first_name: string
+    last_name: string
+    section: string
+    photo_url: string | null
+  }
+  product?: {
+    id: string
+    name: string
+    category: string | null
+    brand: string | null
+  }
+  batch?: {
+    id: string
+    batch_code: string | null
+    expiry_date: string | null
+    status: string
+  }
+  fed_by?: {
+    id: string
+    first_name: string | null
+    last_name: string | null
+  }
+}
+
+export interface CreateBottleFeedingInput {
+  child_id: string
+  product_id?: string
+  batch_id?: string
+  quantity: number
+  unit?: string
+  fed_at: string
+  fed_by_id?: string
+  notes?: string
+}
+
+export interface UpdateBottleFeedingInput {
+  child_id?: string
+  product_id?: string
+  batch_id?: string
+  quantity?: number
+  unit?: string
+  fed_at?: string
+  fed_by_id?: string
+  notes?: string
+}
+
 // ============================================================================
 // SERVICE CLASS
 // ============================================================================
@@ -1359,6 +1422,159 @@ export class HaccpService {
 
     if (error) throw error
     return data as any
+  }
+
+  // ==========================================================================
+  // BOTTLE FEEDING (Traçabilité des biberons)
+  // ==========================================================================
+
+  async getBottleFeedings(
+    nurseryId: string,
+    date?: string
+  ): Promise<BottleFeeding[]> {
+    let query = this.supabase
+      .from('bottle_feeding')
+      .select(`
+        *,
+        child:child(id, first_name, last_name, section, photo_url),
+        product:product(id, name, category, brand),
+        batch:batch(id, batch_code, expiry_date, status),
+        fed_by:profiles!fed_by_id(id, first_name, last_name)
+      `)
+      .eq('nursery_id', nurseryId)
+
+    if (date) {
+      query = query
+        .gte('fed_at', date + 'T00:00:00')
+        .lte('fed_at', date + 'T23:59:59')
+    }
+
+    const { data, error } = await query.order('fed_at', { ascending: false })
+
+    if (error) throw error
+    return (data as any[]) || []
+  }
+
+  async getBottleFeedingsByDateRange(
+    nurseryId: string,
+    startDate: string,
+    endDate: string
+  ): Promise<BottleFeeding[]> {
+    const { data, error } = await this.supabase
+      .from('bottle_feeding')
+      .select(`
+        *,
+        child:child(id, first_name, last_name, section, photo_url),
+        product:product(id, name, category, brand),
+        batch:batch(id, batch_code, expiry_date, status),
+        fed_by:profiles!fed_by_id(id, first_name, last_name)
+      `)
+      .eq('nursery_id', nurseryId)
+      .gte('fed_at', startDate + 'T00:00:00')
+      .lte('fed_at', endDate + 'T23:59:59')
+      .order('fed_at', { ascending: false })
+
+    if (error) throw error
+    return (data as any[]) || []
+  }
+
+  async createBottleFeeding(
+    nurseryId: string,
+    input: CreateBottleFeedingInput
+  ): Promise<BottleFeeding> {
+    const { data, error } = await this.supabase
+      .from('bottle_feeding')
+      .insert({
+        nursery_id: nurseryId,
+        child_id: input.child_id,
+        product_id: input.product_id || null,
+        batch_id: input.batch_id || null,
+        quantity: input.quantity,
+        unit: input.unit || 'mL',
+        fed_at: input.fed_at,
+        fed_by_id: input.fed_by_id || null,
+        notes: input.notes || null
+      })
+      .select(`
+        *,
+        child:child(id, first_name, last_name, section, photo_url),
+        product:product(id, name, category, brand),
+        batch:batch(id, batch_code, expiry_date, status),
+        fed_by:profiles!fed_by_id(id, first_name, last_name)
+      `)
+      .single()
+
+    if (error) throw error
+    return data as any
+  }
+
+  async updateBottleFeeding(
+    id: string,
+    nurseryId: string,
+    input: UpdateBottleFeedingInput
+  ): Promise<BottleFeeding> {
+    const { data, error } = await this.supabase
+      .from('bottle_feeding')
+      .update({
+        ...input,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .eq('nursery_id', nurseryId)
+      .select(`
+        *,
+        child:child(id, first_name, last_name, section, photo_url),
+        product:product(id, name, category, brand),
+        batch:batch(id, batch_code, expiry_date, status),
+        fed_by:profiles!fed_by_id(id, first_name, last_name)
+      `)
+      .single()
+
+    if (error) throw error
+    return data as any
+  }
+
+  async deleteBottleFeeding(id: string, nurseryId: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('bottle_feeding')
+      .delete()
+      .eq('id', id)
+      .eq('nursery_id', nurseryId)
+
+    if (error) throw error
+  }
+
+  async getBottleFeedingStats(
+    nurseryId: string,
+    date: string
+  ): Promise<{ totalFeedings: number; totalQuantity: number }> {
+    const { data, error } = await this.supabase
+      .from('bottle_feeding')
+      .select('quantity')
+      .eq('nursery_id', nurseryId)
+      .gte('fed_at', date + 'T00:00:00')
+      .lte('fed_at', date + 'T23:59:59')
+
+    if (error) throw error
+
+    const feedings = data || []
+    return {
+      totalFeedings: feedings.length,
+      totalQuantity: feedings.reduce((sum: number, f: any) => sum + (f.quantity || 0), 0)
+    }
+  }
+
+  async getProductsByCategory(nurseryId: string, category: string): Promise<Product[]> {
+    const { data, error } = await this.supabase
+      .from('product')
+      .select('*, supplier(*)')
+      .eq('nursery_id', nurseryId)
+      .eq('is_active', true)
+      .eq('category', category)
+      .order('name', { ascending: true })
+
+    if (error) throw error
+    return (data as any[]) || []
   }
 }
 

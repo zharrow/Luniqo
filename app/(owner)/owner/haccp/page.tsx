@@ -118,6 +118,14 @@ export default function HaccpDashboardPage() {
       colSpan: 'md:col-span-1'
     },
     {
+      name: 'Biberons',
+      description: 'Traçabilité des biberons',
+      icon: <BeakerIcon className="w-5 h-5" strokeWidth={1.5} />,
+      href: '/owner/haccp/bottles',
+      module: 'users' as const, // Rose pastel - bébés
+      colSpan: 'md:col-span-1'
+    },
+    {
       name: 'Produits',
       description: 'Gestion des produits alimentaires',
       icon: <ShoppingBagIcon className="w-5 h-5" strokeWidth={1.5} />,

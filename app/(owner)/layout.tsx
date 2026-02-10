@@ -4,6 +4,7 @@ import { useRequireAuth } from '@/lib/contexts/AuthContext'
 import { AppSidebar } from '@/components/layout/AppSidebar'
 import Header from '@/components/layout/Header'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
+import { EventPopup } from '@/components/shared/EventPopup'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,6 +35,8 @@ export default function OwnerLayout({
         <Header />
         <main className="p-6">{children}</main>
       </SidebarInset>
+      {/* Event popups (welcome, seasonal, promo) */}
+      <EventPopup />
     </SidebarProvider>
   )
 }

@@ -1,10 +1,15 @@
 /**
- * Open Food Facts API Service
- * Looks up food products by barcode (EAN-13, EAN-8, UPC)
- * Free API, no authentication required
+ * Product Lookup Service
+ *
+ * Hybrid approach:
+ * 1. Check local catalog for verified product info (name, brand, allergens)
+ * 2. Always call Open Food Facts to enrich with image, quantity, etc.
+ * 3. Merge both sources: catalog data takes priority, OFF fills the gaps
  */
 
-export interface OpenFoodFactsProduct {
+import { findProductByBarcode, getInfantMilkProducts, searchProducts, type CatalogProduct } from '@/lib/data/product-catalog'
+
+export interface ProductLookupResult {
   barcode: string
   name: string
   brand: string | null
@@ -12,7 +17,12 @@ export interface OpenFoodFactsProduct {
   allergens: string | null
   image_url: string | null
   quantity: string | null
+  emoji?: string
+  source: 'catalog' | 'openfoodfacts' | 'hybrid'
 }
+
+// Legacy type alias for backwards compatibility
+export type OpenFoodFactsProduct = ProductLookupResult
 
 // Mapping Open Food Facts allergen tags to French labels
 const ALLERGEN_MAP: Record<string, string> = {
@@ -56,6 +66,8 @@ const CATEGORY_MAP: Record<string, string> = {
   'en:frozen-foods': 'Surgelés',
   'en:frozen': 'Surgelés',
   'en:eggs': 'Oeufs',
+  'en:baby-milks': 'Laits infantiles',
+  'en:infant-formulas': 'Laits infantiles',
 }
 
 function parseAllergens(allergenTags: string[] | undefined): string | null {
@@ -79,7 +91,36 @@ function parseCategory(categoryTags: string[] | undefined): string | null {
   return null
 }
 
-export async function lookupBarcode(barcode: string): Promise<OpenFoodFactsProduct | null> {
+/**
+ * Convert CatalogProduct to ProductLookupResult
+ */
+function catalogToResult(product: CatalogProduct): ProductLookupResult {
+  return {
+    barcode: product.barcode || '',
+    name: product.name,
+    brand: product.brand || null,
+    category: product.category,
+    allergens: product.allergens,
+    image_url: null,
+    quantity: null,
+    emoji: product.emoji,
+    source: 'catalog',
+  }
+}
+
+interface OpenFoodFactsData {
+  name: string | null
+  brand: string | null
+  category: string | null
+  allergens: string | null
+  image_url: string | null
+  quantity: string | null
+}
+
+/**
+ * Fetch data from Open Food Facts API
+ */
+async function fetchOpenFoodFacts(barcode: string): Promise<OpenFoodFactsData | null> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 5000)
 
@@ -102,12 +143,8 @@ export async function lookupBarcode(barcode: string): Promise<OpenFoodFactsProdu
 
     const product = data.product
 
-    const name = product.product_name_fr || product.product_name || null
-    if (!name) return null
-
     return {
-      barcode,
-      name,
+      name: product.product_name_fr || product.product_name || null,
       brand: product.brands || null,
       category: parseCategory(product.categories_tags),
       allergens: parseAllergens(product.allergens_tags),
@@ -119,4 +156,68 @@ export async function lookupBarcode(barcode: string): Promise<OpenFoodFactsProdu
   } finally {
     clearTimeout(timeout)
   }
+}
+
+/**
+ * Main lookup function - enriches catalog data with Open Food Facts
+ *
+ * Strategy:
+ * 1. Check local catalog for verified product data
+ * 2. Fetch Open Food Facts for additional info (image, quantity)
+ * 3. Merge: catalog data takes priority, OFF fills missing fields
+ */
+export async function lookupBarcode(barcode: string): Promise<ProductLookupResult | null> {
+  // Check local catalog
+  const catalogProduct = findProductByBarcode(barcode)
+
+  // Fetch from Open Food Facts (always, for enrichment)
+  const offData = await fetchOpenFoodFacts(barcode)
+
+  // If we have catalog data, use it as base and enrich with OFF
+  if (catalogProduct) {
+    return {
+      barcode,
+      name: catalogProduct.name,
+      brand: catalogProduct.brand || offData?.brand || null,
+      category: catalogProduct.category,
+      allergens: catalogProduct.allergens || offData?.allergens || null,
+      image_url: offData?.image_url || null,
+      quantity: offData?.quantity || null,
+      emoji: catalogProduct.emoji,
+      source: offData ? 'hybrid' : 'catalog',
+    }
+  }
+
+  // If no catalog data but OFF found something
+  if (offData && offData.name) {
+    return {
+      barcode,
+      name: offData.name,
+      brand: offData.brand,
+      category: offData.category,
+      allergens: offData.allergens,
+      image_url: offData.image_url,
+      quantity: offData.quantity,
+      source: 'openfoodfacts',
+    }
+  }
+
+  // Nothing found
+  return null
+}
+
+/**
+ * Search catalog by name (for autocomplete/search features)
+ */
+export function searchCatalogProducts(query: string): ProductLookupResult[] {
+  const products = searchProducts(query)
+  return products.map(catalogToResult)
+}
+
+/**
+ * Get all infant milk products from catalog (for dropdown selection)
+ */
+export function getInfantMilkCatalog(): ProductLookupResult[] {
+  const products = getInfantMilkProducts()
+  return products.map(catalogToResult)
 }
