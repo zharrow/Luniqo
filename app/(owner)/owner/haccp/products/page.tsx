@@ -32,6 +32,22 @@ import { Badge } from '@/components/ui/badge'
 import { type CatalogProduct, getCategoryEmoji } from '@/lib/data/product-catalog'
 import { formatDateLocal, getTodayLocal } from '@/lib/utils/date'
 
+// Predefined product categories
+const PRODUCT_CATEGORIES = [
+  'Laits infantiles',
+  'Produits laitiers',
+  'Légumes',
+  'Fruits',
+  'Viandes',
+  'Poissons',
+  'Féculents',
+  'Épicerie',
+  'Boissons',
+  'Surgelés',
+  'Condiments',
+  'Autre',
+] as const
+
 // Helper: days until expiry
 function daysUntilExpiry(expiryDate: string): number {
   const today = new Date(getTodayLocal())
@@ -987,13 +1003,16 @@ export default function ProductsPage() {
 
                       <div>
                         <label className="block text-sm font-medium mb-1">Catégorie</label>
-                        <input
-                          type="text"
+                        <select
                           value={formData.category || ''}
                           onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                           className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-lime-500 bg-background"
-                          placeholder="ex: Produits laitiers"
-                        />
+                        >
+                          <option value="">Sélectionner une catégorie</option>
+                          {PRODUCT_CATEGORIES.map((cat) => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))}
+                        </select>
                       </div>
 
                       <div>
@@ -1175,13 +1194,16 @@ export default function ProductsPage() {
 
           <div>
             <label className="block text-sm font-medium mb-1">Catégorie</label>
-            <input
-              type="text"
-              value={formData.category}
+            <select
+              value={formData.category || ''}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
               className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary-500 bg-background"
-              placeholder="ex: Produits laitiers, Légumes, Viandes"
-            />
+            >
+              <option value="">Sélectionner une catégorie</option>
+              {PRODUCT_CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
           </div>
 
           <div>

@@ -28,6 +28,7 @@ import {
   ExclamationTriangleIcon,
   WrenchIcon,
   HomeIcon,
+  HeartIcon,
   ClockIcon,
   Cog6ToothIcon,
   SparklesIcon,
@@ -86,6 +87,7 @@ const cleaningNavigation: NavItem[] = [
 // ============================================================================
 const haccpNavigation: NavItem[] = [
   { name: 'Repas', href: '/owner/haccp/meals', icon: ClipboardDocumentCheckIcon, roles: ['Owner'], moduleColor: '#ffcba4', moduleId: 'haccp' },
+  { name: 'Biberons', href: '/owner/haccp/bottles', icon: HeartIcon, roles: ['Owner'], moduleColor: '#b3e5fc', moduleId: 'haccp' },
   { name: 'Produits', href: '/owner/haccp/products', icon: ShoppingBagIcon, roles: ['Owner'], moduleColor: '#c5e1a5', moduleId: 'haccp' },
   { name: 'Fournisseurs', href: '/owner/haccp/suppliers', icon: TruckIcon, roles: ['Owner'], moduleColor: '#80cbc4', moduleId: 'haccp' },
   { name: 'Températures', href: '/owner/haccp/temperatures', icon: BeakerIcon, roles: ['Owner'], moduleColor: '#81c995', moduleId: 'haccp' },

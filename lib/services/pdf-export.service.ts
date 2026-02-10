@@ -641,6 +641,163 @@ export class PDFExportService {
       default: return status
     }
   }
+
+  // ============================================================================
+  // BOTTLE FEEDING TRACEABILITY EXPORT
+  // ============================================================================
+
+  /**
+   * Export bottle feeding traceability report
+   * Format matches paper form: DATE ET HEURE | ENFANT | LAIT | QUANTITÉ | DONNÉ PAR
+   */
+  async exportBottleTraceability(data: {
+    nurseryName: string
+    date: string
+    feedings: Array<{
+      fed_at: string
+      child_name: string
+      child_section?: string
+      milk_name: string
+      milk_brand?: string
+      batch_number?: string
+      quantity: number
+      unit: string
+      fed_by_name: string
+      notes?: string
+    }>
+  }): Promise<void> {
+    const doc = new jsPDF({ orientation: 'landscape' })
+    let currentY = 20
+
+    // ========== HEADER ==========
+    doc.setFontSize(18)
+    doc.setFont('helvetica', 'bold')
+    doc.text('TRAÇABILITÉ DE LA CONSOMMATION DES BIBERONS', 14, currentY)
+    currentY += 10
+
+    doc.setFontSize(12)
+    doc.setFont('helvetica', 'normal')
+    doc.text(data.nurseryName, 14, currentY)
+    currentY += 8
+
+    doc.setFontSize(10)
+    const formattedDate = new Date(data.date).toLocaleDateString('fr-FR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    })
+    doc.text(`Date: ${formattedDate}`, 14, currentY)
+    currentY += 6
+
+    // Stats
+    const totalQuantity = data.feedings.reduce((sum, f) => sum + f.quantity, 0)
+    doc.text(`Total: ${data.feedings.length} biberon(s) - ${totalQuantity} mL`, 14, currentY)
+    currentY += 10
+
+    doc.setDrawColor(200, 200, 200)
+    doc.line(14, currentY, 283, currentY) // Landscape width
+    currentY += 10
+
+    // ========== TABLE ==========
+    if (data.feedings.length > 0) {
+      const tableData = data.feedings.map(feeding => {
+        const fedAt = new Date(feeding.fed_at)
+        return [
+          fedAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+          feeding.child_name + (feeding.child_section ? `\n(${this.getSectionLabel(feeding.child_section)})` : ''),
+          feeding.milk_name +
+            (feeding.milk_brand ? `\n${feeding.milk_brand}` : '') +
+            (feeding.batch_number ? `\nLot: ${feeding.batch_number}` : ''),
+          `${feeding.quantity} ${feeding.unit}`,
+          feeding.fed_by_name,
+          feeding.notes || '-'
+        ]
+      })
+
+      autoTable(doc, {
+        startY: currentY,
+        head: [['HEURE', 'ENFANT', 'LAIT', 'QUANTITÉ', 'DONNÉ PAR', 'NOTES']],
+        body: tableData,
+        theme: 'striped',
+        headStyles: {
+          fillColor: [244, 194, 194], // Rose pastel (secondary color)
+          textColor: [127, 29, 29],
+          fontStyle: 'bold',
+          fontSize: 10,
+          halign: 'center'
+        },
+        bodyStyles: {
+          fontSize: 9,
+          cellPadding: 4
+        },
+        columnStyles: {
+          0: { cellWidth: 25, halign: 'center' },  // Heure
+          1: { cellWidth: 50 },                     // Enfant
+          2: { cellWidth: 60 },                     // Lait
+          3: { cellWidth: 30, halign: 'center' },  // Quantité
+          4: { cellWidth: 45 },                     // Donné par
+          5: { cellWidth: 50 }                      // Notes
+        },
+        margin: { left: 14, right: 14 },
+        styles: {
+          overflow: 'linebreak',
+          lineColor: [200, 200, 200]
+        }
+      })
+
+      currentY = (doc as any).lastAutoTable.finalY + 15
+    } else {
+      doc.setFontSize(11)
+      doc.text('Aucun biberon enregistré pour cette date', 14, currentY)
+      currentY += 20
+    }
+
+    // ========== SIGNATURE AREA ==========
+    if (currentY < 160) {
+      currentY = Math.max(currentY, 140)
+      doc.setDrawColor(200, 200, 200)
+      doc.setFontSize(10)
+      doc.text('Signature du responsable:', 14, currentY)
+      doc.line(70, currentY, 150, currentY)
+      currentY += 15
+      doc.text('Date:', 14, currentY)
+      doc.line(35, currentY, 100, currentY)
+    }
+
+    // ========== FOOTER ==========
+    doc.setFontSize(8)
+    doc.setTextColor(128, 128, 128)
+    const pageCount = (doc as any).internal.getNumberOfPages()
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i)
+      const footerY = doc.internal.pageSize.height - 10
+      doc.text(
+        `Document généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}`,
+        14,
+        footerY
+      )
+      doc.text(
+        `Page ${i}/${pageCount} - Conforme HACCP`,
+        doc.internal.pageSize.width - 14,
+        footerY,
+        { align: 'right' }
+      )
+    }
+
+    // Save PDF
+    const fileName = `biberons-${data.date}-${Date.now()}.pdf`
+    doc.save(fileName)
+  }
+
+  private getSectionLabel(section: string): string {
+    switch (section) {
+      case 'Babies': return 'Bébés'
+      case 'Toddlers': return 'Moyens'
+      case 'Preschoolers': return 'Grands'
+      default: return section
+    }
+  }
 }
 
 // Export singleton instance

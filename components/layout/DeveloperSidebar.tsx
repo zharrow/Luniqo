@@ -8,6 +8,7 @@ import {
   BuildingOfficeIcon,
   Cog6ToothIcon,
   LockClosedIcon,
+  MegaphoneIcon,
 } from '@heroicons/react/24/outline'
 import {
   Sidebar,
@@ -33,6 +34,7 @@ const navigation: NavItem[] = [
   { name: 'Analytics', href: '/developer/dashboard', icon: ChartBarIcon },
   { name: 'Permissions', href: '/developer/permissions', icon: LockClosedIcon },
   { name: 'Entreprises', href: '/developer/enterprises', icon: BuildingOfficeIcon },
+  { name: 'Popups', href: '/developer/popups', icon: MegaphoneIcon },
   { name: 'Paramètres', href: '/developer/settings', icon: Cog6ToothIcon },
 ]
 
