@@ -21,7 +21,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail
+  SidebarRail,
+  useSidebar
 } from '@/components/ui/sidebar'
 
 interface NavItem {
@@ -41,6 +42,7 @@ const navigation: NavItem[] = [
 export function DeveloperSidebar() {
   const pathname = usePathname()
   const { session } = useAuth()
+  const { setOpenMobile } = useSidebar()
 
   // Get initials for avatar
   const getInitials = () => {
@@ -96,7 +98,7 @@ export function DeveloperSidebar() {
                 return (
                   <SidebarMenuItem key={item.name}>
                     <SidebarMenuButton asChild isActive={isActive} tooltip={item.name}>
-                      <Link href={item.href}>
+                      <Link href={item.href} onClick={() => setOpenMobile(false)}>
                         <item.icon className="w-5 h-5" />
                         <span className="font-medium">{item.name}</span>
                       </Link>
