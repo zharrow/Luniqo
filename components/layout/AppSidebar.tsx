@@ -48,7 +48,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
-  SidebarRail
+  SidebarRail,
+  useSidebar
 } from '@/components/ui/sidebar'
 import { Badge } from '@/components/ui/badge'
 
@@ -166,6 +167,7 @@ export function AppSidebar() {
   const pathname = usePathname()
   const { role, enterprise } = useAuth()
   const { accessibleModules } = useNursery()
+  const { setOpenMobile } = useSidebar()
 
   // Check if Owner has access to a module (now per-nursery)
   const hasModuleAccess = (moduleId?: string) => {
@@ -225,7 +227,7 @@ export function AppSidebar() {
                         filter: 'brightness(0.85) saturate(1.2)',
                       } : {}}
                     >
-                      <Link href={targetHref} className="flex items-center gap-3 relative group/item">
+                      <Link href={targetHref} className="flex items-center gap-3 relative group/item" onClick={() => setOpenMobile(false)}>
                         <Icon className="w-5 h-5 transition-all duration-300 group-hover/item:scale-110 group-hover/item:text-primary-600" />
                         <span className="font-medium">{item.name}</span>
                         {isLocked && (
@@ -310,7 +312,7 @@ export function AppSidebar() {
             <>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Messages" className="rounded-md">
-                  <Link href="/owner/messages" className="flex items-center gap-2">
+                  <Link href="/owner/messages" className="flex items-center gap-2" onClick={() => setOpenMobile(false)}>
                     <ChatBubbleLeftRightIcon className="w-5 h-5" />
                     <span>Messages</span>
                   </Link>
@@ -318,7 +320,7 @@ export function AppSidebar() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Abonnements" className="rounded-md">
-                  <Link href="/owner/billing" className="flex items-center gap-2">
+                  <Link href="/owner/billing" className="flex items-center gap-2" onClick={() => setOpenMobile(false)}>
                     <CurrencyEuroIcon className="w-5 h-5" />
                     <span>Abonnements</span>
                   </Link>
@@ -328,7 +330,7 @@ export function AppSidebar() {
           )}
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Mon Profil" className="rounded-md">
-              <Link href="/owner/profile" className="flex items-center gap-2">
+              <Link href="/owner/profile" className="flex items-center gap-2" onClick={() => setOpenMobile(false)}>
                 <Cog6ToothIcon className="w-5 h-5" />
                 <span>Mon Profil</span>
               </Link>

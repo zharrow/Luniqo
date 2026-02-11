@@ -25,7 +25,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail
+  SidebarRail,
+  useSidebar
 } from '@/components/ui/sidebar'
 
 interface NavItem {
@@ -54,7 +55,8 @@ const communicationNavigation: NavItem[] = [
 
 export function EmployeeSidebar() {
   const pathname = usePathname()
-  const { session, enterprise } = useAuth()
+  const { enterprise } = useAuth()
+  const { setOpenMobile } = useSidebar()
 
   return (
     <Sidebar collapsible="icon" className="border-r border-neutral-200">
@@ -101,7 +103,7 @@ export function EmployeeSidebar() {
                         background: `linear-gradient(to right, ${item.moduleColor}, ${item.moduleColor}dd)`,
                       } : {}}
                     >
-                      <Link href={item.href} className="flex items-center relative group/item">
+                      <Link href={item.href} className="flex items-center relative group/item" onClick={() => setOpenMobile(false)}>
                         <Icon className="w-5 h-5 transition-transform duration-300 group-hover/item:scale-110" />
                         <span>{item.name}</span>
                       </Link>
@@ -133,7 +135,7 @@ export function EmployeeSidebar() {
                         background: `linear-gradient(to right, ${item.moduleColor}, ${item.moduleColor}dd)`,
                       } : {}}
                     >
-                      <Link href={item.href} className="flex items-center relative group/item">
+                      <Link href={item.href} className="flex items-center relative group/item" onClick={() => setOpenMobile(false)}>
                         <Icon className="w-5 h-5 transition-transform duration-300 group-hover/item:scale-110" />
                         <span>{item.name}</span>
                       </Link>
@@ -165,7 +167,7 @@ export function EmployeeSidebar() {
                         background: `linear-gradient(to right, ${item.moduleColor}, ${item.moduleColor}dd)`,
                       } : {}}
                     >
-                      <Link href={item.href} className="flex items-center relative group/item">
+                      <Link href={item.href} className="flex items-center relative group/item" onClick={() => setOpenMobile(false)}>
                         <Icon className="w-5 h-5 transition-transform duration-300 group-hover/item:scale-110" />
                         <span>{item.name}</span>
                       </Link>
@@ -182,7 +184,7 @@ export function EmployeeSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Mon Profil" className="rounded-md">
-              <Link href="/employee/profile" className="group/footer">
+              <Link href="/employee/profile" className="group/footer" onClick={() => setOpenMobile(false)}>
                 <UserCircleIcon className="w-5 h-5 transition-transform duration-300 group-hover/footer:scale-110" />
                 <span>Mon Profil</span>
               </Link>
