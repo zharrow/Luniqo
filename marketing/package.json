@@ -1,0 +1,25 @@
+{
+  "name": "luniqo-marketing-video",
+  "version": "1.0.0",
+  "description": "Marketing video for Luniqo childcare management app",
+  "scripts": {
+    "start": "remotion studio",
+    "build": "remotion render src/index.ts LuniqoMarketing out/luniqo-marketing.mp4",
+    "build:promo": "remotion render src/index.ts LuniqoPromo out/luniqo-promo.mp4",
+    "build:all": "npm run build && npm run build:promo",
+    "upgrade": "remotion upgrade"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.0",
+    "@remotion/media-utils": "^4.0.421",
+    "@remotion/player": "^4.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "remotion": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "typescript": "^5.0.0"
+  }
+}

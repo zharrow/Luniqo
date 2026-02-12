@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { DailyCalendar } from '@/components/tablet/DailyCalendar'
 import { TaskValidationModal } from '@/components/tablet/TaskValidationModal'
 import type { CalendarTask } from '@/lib/services/calendar.service'
+import { trackTabletUsage } from '@/lib/analytics/posthog'
 
 interface Room {
   id: string
@@ -222,6 +223,14 @@ export default function TabletRoomPage() {
         note: data.note,
         photo_urls: data.photo_urls
       }])
+
+      // Track task completion on tablet
+      trackTabletUsage('task_completed', {
+        task_name: selectedTask.task_template?.name,
+        room_name: room?.name,
+        has_photo: data.photo_urls.length > 0,
+        has_note: !!data.note,
+      })
 
       // Trigger calendar refresh
       setRefreshTrigger(prev => prev + 1)

@@ -7,6 +7,7 @@ import { useNursery } from '@/lib/contexts/NurseryContext'
 import { sessionsService, type SessionWithStats, type CreateLogInput, type LogStatus } from '@/lib/services/sessions.service'
 import { usersService } from '@/lib/services/users.service'
 import { pdfExportService } from '@/lib/services/pdf-export.service'
+import { trackSession, trackTaskCompleted, trackFeatureUsed } from '@/lib/analytics/posthog'
 import {
   ClockIcon,
   CheckCircleIcon,
@@ -135,6 +136,14 @@ export default function SessionDetailPage() {
       setSession(sessionData)
       setLogs(logsData)
 
+      // Track session view
+      trackSession('viewed', {
+        session_id: id,
+        nursery_id: selectedNursery.id,
+        tasks_count: sessionData?.total_tasks,
+        completion_rate: sessionData?.completion_percentage,
+      })
+
       const logsMap = new Map<string, SessionLog>()
       logsData.forEach((log: SessionLog) => {
         logsMap.set(log.assigned_task_id, log)
@@ -194,6 +203,17 @@ export default function SessionDetailPage() {
         performed_by_id: formData.performed_by_id || undefined,
         note: formData.note || undefined
       })
+
+      // Track task completion
+      const task = availableTasks.find(t => t.id === formData.assigned_task_id)
+      if (task) {
+        trackTaskCompleted({
+          task_id: task.id,
+          task_name: task.task_template?.name || 'Unknown',
+          room_name: task.room?.name,
+          nursery_id: selectedNursery.id,
+        })
+      }
 
       await sessionsService.checkAndCompleteSession(id, selectedNursery.id)
 
@@ -283,6 +303,13 @@ export default function SessionDetailPage() {
 
     try {
       await pdfExportService.exportSession(exportData)
+
+      // Track PDF export
+      trackFeatureUsed('export_pdf', {
+        export_type: 'session',
+        session_id: session.id,
+        tasks_count: session.total_tasks,
+      })
     } catch (error) {
       console.error('Error exporting PDF:', error)
       alert('Erreur lors de l\'export PDF')

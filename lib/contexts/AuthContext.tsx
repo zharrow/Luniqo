@@ -13,6 +13,7 @@ import type {
   AuthResponse,
   Profile
 } from '@/types/auth.types'
+import { identifyUser, resetUser } from '@/lib/analytics/posthog'
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
@@ -248,6 +249,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       setSession(newSession)
 
+      // Identify user in PostHog
+      identifyUser(response.data.id, {
+        email: response.data.email,
+        role: response.role,
+        enterprise_id: response.enterprise?.id,
+        enterprise_name: response.enterprise?.name,
+        first_name: response.data.first_name || undefined,
+        last_name: response.data.last_name || undefined,
+      })
+
       // Role-based redirects
       if (response.role === 'Owner' && !response.enterprise) {
         // Owner without enterprise → setup
@@ -278,6 +289,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         accessibleRooms: response.accessibleRooms
       }
       setSession(newSession)
+
+      // Identify user in PostHog (tablet login)
+      identifyUser(response.data.id, {
+        email: response.data.email,
+        role: 'Employee',
+        enterprise_id: response.enterprise?.id,
+        enterprise_name: response.enterprise?.name,
+        first_name: response.data.first_name || undefined,
+        last_name: response.data.last_name || undefined,
+      })
     }
 
     return response
@@ -285,6 +306,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function handleLogout() {
     console.log('🚪 Intentional logout initiated')
+    // Reset PostHog user identity
+    resetUser()
     // Clear session first to prevent race conditions
     setSession(null)
     // Then clear Supabase auth
