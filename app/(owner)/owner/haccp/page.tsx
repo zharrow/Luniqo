@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
 import { haccpService } from '@/lib/services/haccp.service'
 import { pdfExportService } from '@/lib/services/pdf-export.service'
+import { trackFeatureUsed, trackHaccpModule } from '@/lib/analytics/posthog'
 import {
   UserGroupIcon,
   ShoppingBagIcon,
@@ -82,6 +83,14 @@ export default function HaccpDashboardPage() {
       }
 
       await pdfExportService.exportHACCP(exportData)
+
+      // Track HACCP export
+      trackFeatureUsed('export_pdf', {
+        export_type: 'haccp_report',
+        date_range_days: 30,
+        meals_count: meals.length,
+        temperatures_count: temperatures.length,
+      })
     } catch (error) {
       console.error('Error exporting HACCP report:', error)
       alert('Erreur lors de l\'export du rapport HACCP')

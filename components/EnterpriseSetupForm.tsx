@@ -6,8 +6,9 @@ import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/contexts/AuthContext'
 import { NurseryInsert } from '@/types/database.types'
 import { modulesService } from '@/lib/services/modules.service'
-import { STARTER_PACKS } from '@/lib/constants/starter-templates'
+import { STARTER_PACKS, DEFAULT_SECTIONS } from '@/lib/constants/starter-templates'
 import { starterTemplatesService } from '@/lib/services/starter-templates.service'
+import { trackOnboarding } from '@/lib/analytics/posthog'
 
 interface EnterpriseSetupFormProps {
   ownerId: string
@@ -121,6 +122,12 @@ export default function EnterpriseSetupForm({ ownerId }: EnterpriseSetupFormProp
         return
       }
 
+      // Track enterprise creation
+      trackOnboarding('enterprise_created', {
+        enterprise_name: enterpriseData.name,
+        has_siret: !!enterpriseData.siret,
+      })
+
       // Sauvegarder l'ID de l'entreprise et passer à l'étape 2
       setCreatedEnterpriseId(newEnterprise.id)
       setStep(2)
@@ -173,6 +180,33 @@ export default function EnterpriseSetupForm({ ownerId }: EnterpriseSetupFormProp
         return
       }
 
+      // Créer les sections par défaut (Bébés, Moyens, Grands)
+      try {
+        const sectionsToInsert = DEFAULT_SECTIONS.map(section => ({
+          nursery_id: (newNursery as any).id,
+          name: section.name,
+          code: section.code,
+          age_min_months: section.age_min_months,
+          age_max_months: section.age_max_months,
+          capacity: section.capacity,
+          color_hex: section.color_hex,
+          display_order: section.display_order,
+          is_active: true
+        }))
+
+        const { error: sectionsError } = await supabase
+          .from('section')
+          .insert(sectionsToInsert as any)
+
+        if (sectionsError) {
+          console.error('Error creating default sections:', sectionsError)
+          // Ne pas bloquer si la création des sections échoue
+        }
+      } catch (sectionsErr) {
+        console.error('Error creating default sections:', sectionsErr)
+        // Ne pas bloquer si la création des sections échoue
+      }
+
       // Activer le module de base pour la nouvelle crèche
       try {
         await modulesService.grantNurseryModuleAccess(
@@ -185,6 +219,12 @@ export default function EnterpriseSetupForm({ ownerId }: EnterpriseSetupFormProp
         console.error('Error activating base module:', moduleError)
         // Ne pas bloquer si l'activation du module échoue
       }
+
+      // Track nursery creation
+      trackOnboarding('nursery_created', {
+        nursery_name: nurseryData.name,
+        has_capacity: !!nurseryData.capacity,
+      })
 
       // Sauvegarder l'ID de la crèche et passer à l'étape 3
       setCreatedNurseryId((newNursery as any).id)
@@ -215,6 +255,12 @@ export default function EnterpriseSetupForm({ ownerId }: EnterpriseSetupFormProp
           throw new Error(result.error || 'Erreur lors de l\'application du pack')
         }
       }
+
+      // Track onboarding completion
+      trackOnboarding('completed', {
+        starter_pack: packId || 'none',
+        pack_name: packId ? STARTER_PACKS.find(p => p.id === packId)?.name : 'Configuration vide',
+      })
 
       // Rafraîchir la session pour inclure l'entreprise
       await refreshSession()

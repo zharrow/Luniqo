@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRequireAuth } from '@/lib/contexts/AuthContext'
 import { useNursery } from '@/lib/contexts/NurseryContext'
 import { sessionsService, type SessionWithStats } from '@/lib/services/sessions.service'
+import { trackSession } from '@/lib/analytics/posthog'
 import {
   PlusIcon,
   CalendarIcon,
@@ -66,6 +67,12 @@ export default function SessionsPage() {
       })
 
       console.log('✅ Session created:', result)
+
+      // Track session creation
+      trackSession('created', {
+        session_id: result?.id,
+        nursery_id: selectedNursery.id,
+      })
 
       loadSessions()
     } catch (error) {

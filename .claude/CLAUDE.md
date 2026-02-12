@@ -10,6 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 2. **ROADMAP.md** - Current tasks, bugs, and roadmap
 3. **DESIGN-SYSTEM.md** - Complete design system, components catalog, and UI patterns
 4. **COMPONENT.md** - List of all reusable components
+5. **docs/POSTHOG.md** - Product analytics tracking with PostHog
 
 ## Project Overview
 
@@ -597,6 +598,26 @@ The app has been heavily optimized for fast page transitions and reduced latency
 - [next.config.mjs](next.config.mjs:16-23) - Static page generation timeout and build ID
 
 ## Recent Updates
+
+- 📊 **POSTHOG PRODUCT ANALYTICS** (2026-02-12) - Analytics produit pour guider le développement ✅ **COMPLETED**
+  - **Feature**: Tracking du comportement utilisateur pour comprendre l'usage réel de l'app
+  - **Fonctionnalités activées**:
+    - Page views automatiques
+    - Session recordings (replay vidéo)
+    - Autocapture (clics, formulaires)
+    - Identification utilisateur au login
+  - **Fichiers**:
+    - `lib/providers/PostHogProvider.tsx` - Provider React
+    - `lib/analytics/posthog.ts` - Fonctions de tracking
+    - `docs/POSTHOG.md` - Documentation complète
+  - **Utilisation**:
+    ```typescript
+    import { trackSession, trackHaccpModule } from '@/lib/analytics/posthog'
+    trackSession('created', { rooms_count: 3 })
+    trackHaccpModule('temperatures', 'entry_created')
+    ```
+  - **Dashboard**: https://eu.posthog.com (serveurs EU, RGPD compliant)
+  - **Status**: ✅ **100% complete** - Intégration de base terminée
 
 - 🔐 **NURSERY MODULE ACCESS SYSTEM** (2026-01-20) - Granular module permissions per nursery 🔄 **IN PROGRESS**
   - **Feature**: Each nursery can now have its own module subscriptions (not just enterprise-level)

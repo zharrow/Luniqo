@@ -2,12 +2,22 @@
  * Templates de démarrage pour les nouvelles crèches
  *
  * Ces templates permettent aux nouveaux owners de démarrer rapidement
- * avec des pièces et tâches pré-configurées typiques d'une crèche.
+ * avec des pièces, sections et tâches pré-configurées typiques d'une crèche.
  */
 
 // ====================================
 // Types
 // ====================================
+
+export interface StarterSection {
+  name: string
+  code: string
+  age_min_months: number
+  age_max_months: number
+  capacity: number
+  color_hex: string
+  display_order: number
+}
 
 export interface StarterRoom {
   name: string
@@ -32,10 +42,45 @@ export interface StarterPack {
   name: string
   description: string
   icon: string
+  sections: StarterSection[]
   rooms: StarterRoom[]
   categories: StarterTaskCategory[]
   tasks: StarterTask[]
 }
+
+// ====================================
+// Sections par défaut (standardisées en France)
+// ====================================
+
+export const DEFAULT_SECTIONS: StarterSection[] = [
+  {
+    name: 'Bébés',
+    code: 'BB',
+    age_min_months: 0,
+    age_max_months: 12,
+    capacity: 8,
+    color_hex: '#f4c2c2', // Rose pastel
+    display_order: 1
+  },
+  {
+    name: 'Moyens',
+    code: 'MOY',
+    age_min_months: 12,
+    age_max_months: 24,
+    capacity: 10,
+    color_hex: '#e0d4f7', // Lavande
+    display_order: 2
+  },
+  {
+    name: 'Grands',
+    code: 'GRD',
+    age_min_months: 24,
+    age_max_months: 36,
+    capacity: 12,
+    color_hex: '#b5ead7', // Menthe
+    display_order: 3
+  }
+]
 
 // ====================================
 // Catégories de tâches (partagées entre tous les packs)
@@ -124,6 +169,7 @@ export const MICRO_CRECHE_PACK: StarterPack = {
   name: 'Micro-crèche',
   description: '6 pièces essentielles pour une structure de 10-12 places',
   icon: '🏠',
+  sections: DEFAULT_SECTIONS,
   rooms: [
     { name: 'Espace de vie', description: 'Salle principale (jeux, repas, activités)', display_order: 1 },
     { name: 'Espace repos', description: 'Zone de sieste avec lits', display_order: 2 },
@@ -145,6 +191,7 @@ export const CRECHE_COLLECTIVE_PACK: StarterPack = {
   name: 'Crèche collective',
   description: '10 pièces pour une structure multi-sections',
   icon: '🏫',
+  sections: DEFAULT_SECTIONS,
   rooms: [
     { name: 'Section Bébés', description: 'Espace dédié aux 0-12 mois', display_order: 1 },
     { name: 'Section Moyens', description: 'Espace dédié aux 12-24 mois', display_order: 2 },
@@ -174,6 +221,7 @@ export const MINIMAL_PACK: StarterPack = {
   name: 'Pack minimal',
   description: 'Catégories de tâches uniquement, créez vos pièces vous-même',
   icon: '📝',
+  sections: DEFAULT_SECTIONS, // Sections toujours créées (standardisées)
   rooms: [], // Pas de pièces pré-définies
   categories: DEFAULT_TASK_CATEGORIES,
   tasks: DEFAULT_TASKS,

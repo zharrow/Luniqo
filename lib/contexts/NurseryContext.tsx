@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState, useRef } from 'r
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from './AuthContext'
 import type { Nursery } from '@/types/database.types'
+import { trackNurserySwitched } from '@/lib/analytics/posthog'
 
 interface NurseryContextType {
   selectedNursery: Nursery | null
@@ -48,9 +49,20 @@ export function NurseryProvider({ children }: { children: React.ReactNode }) {
 
   // Wrapper to save selected nursery to localStorage
   const setSelectedNursery = (nursery: Nursery) => {
+    const previousNurseryId = selectedNursery?.id
+
     setSelectedNurseryState(nursery)
     localStorage.setItem(SELECTED_NURSERY_KEY, nursery.id)
     console.log('🏢 Selected nursery:', nursery.name)
+
+    // Track nursery switch (only if switching, not initial selection)
+    if (previousNurseryId && previousNurseryId !== nursery.id) {
+      trackNurserySwitched({
+        from_nursery_id: previousNurseryId,
+        to_nursery_id: nursery.id,
+        nursery_name: nursery.name,
+      })
+    }
   }
 
   // Load nurseries for the current enterprise

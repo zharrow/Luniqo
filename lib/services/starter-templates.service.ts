@@ -8,12 +8,14 @@
 import { createClient } from '@/lib/supabase/client'
 import {
   getStarterPackById,
+  DEFAULT_SECTIONS,
   DEFAULT_TASK_CATEGORIES,
   DEFAULT_TASKS
 } from '@/lib/constants/starter-templates'
 
 export interface ApplyTemplateResult {
   success: boolean
+  sectionsCreated: number
   roomsCreated: number
   categoriesCreated: number
   tasksCreated: number
@@ -38,6 +40,7 @@ export const starterTemplatesService = {
     if (!pack) {
       return {
         success: false,
+        sectionsCreated: 0,
         roomsCreated: 0,
         categoriesCreated: 0,
         tasksCreated: 0,
@@ -46,12 +49,55 @@ export const starterTemplatesService = {
     }
 
     const supabase = createClient()
+    let sectionsCreated = 0
     let roomsCreated = 0
     let categoriesCreated = 0
     let tasksCreated = 0
 
     try {
-      // 1. Créer les pièces (liées à la nursery)
+      // 1. Créer les sections (liées à la nursery)
+      if (pack.sections.length > 0) {
+        // Vérifier les sections existantes
+        const { data: existingSections } = await supabase
+          .from('section')
+          .select('name')
+          .eq('nursery_id', nurseryId)
+
+        const existingSectionNames = new Set(existingSections?.map((s: any) => s.name) || [])
+
+        // Filtrer les sections qui n'existent pas encore
+        const sectionsToCreate = pack.sections.filter(
+          section => !existingSectionNames.has(section.name)
+        )
+
+        if (sectionsToCreate.length > 0) {
+          const sectionsToInsert = sectionsToCreate.map(section => ({
+            nursery_id: nurseryId,
+            name: section.name,
+            code: section.code,
+            age_min_months: section.age_min_months,
+            age_max_months: section.age_max_months,
+            capacity: section.capacity,
+            color_hex: section.color_hex,
+            display_order: section.display_order,
+            is_active: true
+          }))
+
+          const { data: createdSections, error: sectionsError } = await supabase
+            .from('section')
+            .insert(sectionsToInsert as any)
+            .select('id')
+
+          if (sectionsError) {
+            console.error('Erreur création sections:', sectionsError)
+            throw new Error(`Erreur lors de la création des sections: ${sectionsError.message}`)
+          }
+
+          sectionsCreated = createdSections?.length || 0
+        }
+      }
+
+      // 3. Créer les pièces (liées à la nursery)
       if (pack.rooms.length > 0) {
         const roomsToInsert = pack.rooms.map(room => ({
           nursery_id: nurseryId,
@@ -74,7 +120,7 @@ export const starterTemplatesService = {
         roomsCreated = createdRooms?.length || 0
       }
 
-      // 2. Vérifier si des catégories existent déjà pour cette enterprise
+      // 4. Vérifier si des catégories existent déjà pour cette enterprise
       const { data: existingCategories } = await supabase
         .from('task_category')
         .select('id, name')
@@ -91,7 +137,7 @@ export const starterTemplatesService = {
         cat => !existingCategoryMap.has(cat.name)
       )
 
-      // 3. Créer les nouvelles catégories (liées à l'enterprise)
+      // 5. Créer les nouvelles catégories (liées à l'enterprise)
       if (categoriesToCreate.length > 0) {
         const categoriesInsert = categoriesToCreate.map(cat => ({
           enterprise_id: enterpriseId,
@@ -118,7 +164,7 @@ export const starterTemplatesService = {
         categoriesCreated = createdCategories?.length || 0
       }
 
-      // 4. Vérifier si des tâches existent déjà pour cette enterprise
+      // 6. Vérifier si des tâches existent déjà pour cette enterprise
       const { data: existingTasks } = await supabase
         .from('task_template')
         .select('name')
@@ -131,7 +177,7 @@ export const starterTemplatesService = {
         task => !existingTaskNames.has(task.name)
       )
 
-      // 5. Créer les nouvelles tâches (liées à l'enterprise via category)
+      // 7. Créer les nouvelles tâches (liées à l'enterprise via category)
       if (tasksToCreate.length > 0) {
         const tasksInsert = tasksToCreate
           .map(task => {
@@ -168,6 +214,7 @@ export const starterTemplatesService = {
 
       return {
         success: true,
+        sectionsCreated,
         roomsCreated,
         categoriesCreated,
         tasksCreated
@@ -177,6 +224,7 @@ export const starterTemplatesService = {
       console.error('Erreur application pack starter:', error)
       return {
         success: false,
+        sectionsCreated,
         roomsCreated,
         categoriesCreated,
         tasksCreated,
@@ -275,6 +323,7 @@ export const starterTemplatesService = {
 
       return {
         success: true,
+        sectionsCreated: 0,
         roomsCreated: 0,
         categoriesCreated,
         tasksCreated
@@ -284,6 +333,7 @@ export const starterTemplatesService = {
       console.error('Erreur application tâches par défaut:', error)
       return {
         success: false,
+        sectionsCreated: 0,
         roomsCreated: 0,
         categoriesCreated,
         tasksCreated,
@@ -301,6 +351,7 @@ export const starterTemplatesService = {
     if (!pack) {
       return {
         success: false,
+        sectionsCreated: 0,
         roomsCreated: 0,
         categoriesCreated: 0,
         tasksCreated: 0,
@@ -311,6 +362,7 @@ export const starterTemplatesService = {
     if (pack.rooms.length === 0) {
       return {
         success: true,
+        sectionsCreated: 0,
         roomsCreated: 0,
         categoriesCreated: 0,
         tasksCreated: 0
@@ -337,6 +389,7 @@ export const starterTemplatesService = {
 
       return {
         success: true,
+        sectionsCreated: 0,
         roomsCreated: createdRooms?.length || 0,
         categoriesCreated: 0,
         tasksCreated: 0
@@ -346,6 +399,7 @@ export const starterTemplatesService = {
       console.error('Erreur application pièces:', error)
       return {
         success: false,
+        sectionsCreated: 0,
         roomsCreated: 0,
         categoriesCreated: 0,
         tasksCreated: 0,

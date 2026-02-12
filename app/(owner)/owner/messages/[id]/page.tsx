@@ -1,16 +1,13 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 import { useAuth } from '@/lib/contexts/AuthContext'
 import { messagingService, type Conversation, type Message } from '@/lib/services/messaging.service'
 
-interface PageProps {
-  params: { id: string }
-}
-
-export default function ConversationPage({ params }: PageProps) {
-  const { id } = params
+export default function ConversationPage() {
+  const params = useParams()
+  const id = params.id as string
   const [conversation, setConversation] = useState<Conversation | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState('')
