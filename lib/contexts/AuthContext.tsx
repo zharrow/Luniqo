@@ -54,10 +54,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [supabase] = useState(() => createClient())
   const lastCheckTimestamp = useRef<number>(0)
   const hasInitialized = useRef(false)
+  const sessionRef = useRef<AuthSession | null>(session) // Ref to track current session for callbacks
+
+  // Keep sessionRef in sync with session state
+  useEffect(() => {
+    sessionRef.current = session
+  }, [session])
 
   // Wrapper to save session to localStorage automatically
   const setSession = (newSession: AuthSession | null) => {
     setSessionState(newSession)
+    sessionRef.current = newSession  // Update ref immediately
 
     if (newSession) {
       // Save to localStorage with timestamp
@@ -103,13 +110,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('🔐 Auth state change:', event)
 
       if (event === 'SIGNED_IN' && supabaseSession) {
-        await checkSession()
+        // If we already have a session, do a silent refresh (use ref to avoid stale closure)
+        const hasExistingSession = sessionRef.current !== null
+        await checkSession(true, hasExistingSession)
       } else if (event === 'SIGNED_OUT') {
         // Only clear session if it was an intentional logout
         console.warn('⚠️ SIGNED_OUT event detected, keeping session to prevent accidental logout')
       } else if (event === 'TOKEN_REFRESHED') {
         console.log('🔄 Token refreshed successfully')
-        await checkSession(true)
+        await checkSession(true, true)  // Force refresh but SILENT (no loading state)
       }
     })
 
@@ -145,7 +154,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const sessionCheckPromise = (async () => {
         // Check Supabase Auth session
-        const { data: { session: supabaseSession } } = await supabase.auth.getSession()
+        const { data: { session: supabaseSession }, error: sessionError } = await supabase.auth.getSession()
+
+        // Handle refresh token errors gracefully
+        if (sessionError) {
+          console.error('Session error:', sessionError.message)
+          // If refresh token is invalid, clear local session
+          if (sessionError.message?.includes('Refresh Token') || sessionError.code === 'refresh_token_not_found') {
+            console.warn('⚠️ Refresh token invalid, clearing session')
+            return null
+          }
+        }
 
         if (supabaseSession) {
           // Get profile from unified profiles table
@@ -219,13 +238,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Update cache timestamp on successful check
       lastCheckTimestamp.current = Date.now()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Session check error:', error)
-      // On timeout/error, keep the previous session instead of logging out
-      if (!previousSession) {
+
+      // Check if it's an auth error (refresh token invalid, etc.)
+      const isAuthError = error?.__isAuthError ||
+        error?.code === 'refresh_token_not_found' ||
+        error?.message?.includes('Refresh Token')
+
+      if (isAuthError) {
+        // Auth errors mean the session is truly invalid - clear it
+        console.warn('⚠️ Auth error detected, clearing session')
+        setSession(null)
+      } else if (!previousSession) {
+        // No previous session, nothing to keep
         setSession(null)
       } else {
-        console.warn('Keeping previous session due to check failure')
+        // Network/timeout error - keep previous session
+        console.warn('Keeping previous session due to check failure (network error)')
         setSessionState(previousSession) // Use setSessionState to avoid re-saving
       }
     } finally {
