@@ -6,7 +6,8 @@
     "start": "remotion studio",
     "build": "remotion render src/index.ts LuniqoMarketing out/luniqo-marketing.mp4",
     "build:promo": "remotion render src/index.ts LuniqoPromo out/luniqo-promo.mp4",
-    "build:all": "npm run build && npm run build:promo",
+    "build:premium": "remotion render src/index.ts LuniqoPremium out/luniqo-premium.mp4",
+    "build:all": "npm run build && npm run build:promo && npm run build:premium",
     "upgrade": "remotion upgrade"
   },
   "dependencies": {
