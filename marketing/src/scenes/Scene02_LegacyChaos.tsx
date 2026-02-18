@@ -1,150 +1,107 @@
-import React from "react";
+/**
+ * Scene 02 - Legacy Chaos (8-16s) - REFACTORED
+ *
+ * ARCHITECTURE DÉCLARATIVE:
+ * - Animations définies via specs (DATA)
+ * - Logique isolée dans le moteur (ENGINE)
+ * - Composants purement présentationnels (VIEW)
+ *
+ * CONTENU:
+ * - Texte kinétique au centre (focus)
+ * - Chaos desktop en fond flou (contexte)
+ * - Progression de tension vers "Risque d'erreur"
+ */
+
+import React from 'react';
 import {
   AbsoluteFill,
   useCurrentFrame,
   useVideoConfig,
-  interpolate,
-  spring,
-} from "remotion";
-import { colors } from "../colors";
+} from 'remotion';
+import { colors } from '../colors';
+
+// Engine & DSL imports
+import type { AnimationSpec } from '../dsl/animationSpec';
+import { animateToStyle, sceneOpacity } from '../engine';
+
+// ============================================
+// ANIMATION SPECS (DATA)
+// ============================================
 
 /**
- * Scene 02 - Legacy Chaos (8-16s) - VERSION KINETIC
- *
- * Approche "Focus Typography":
- * - Texte kinétique au centre qui capte l'attention
- * - Chaos desktop en fond flou pour contexte
- * - Animation séquentielle claire: un élément à la fois
- * - Typographie grande et impactante
+ * Specs pour le premier texte "Données dispersées."
+ * Direction: gauche → centre
  */
+const text1Specs: AnimationSpec[] = [
+  { type: 'fade-in', startFrame: 50, duration: 15 },
+  { type: 'slide-left', startFrame: 50, duration: 25, distance: 100, easing: 'easeOutExpo' },
+  { type: 'float', startFrame: 75, amplitude: 3, speed: 0.04 },
+];
+
+/**
+ * Specs pour le deuxième texte "Suivi manuel."
+ * Direction: droite → centre
+ */
+const text2Specs: AnimationSpec[] = [
+  { type: 'fade-in', startFrame: 80, duration: 15 },
+  { type: 'slide-right', startFrame: 80, duration: 25, distance: 100, easing: 'easeOutExpo' },
+  { type: 'float', startFrame: 105, amplitude: 3, speed: 0.03 },
+];
+
+/**
+ * Specs pour le troisième texte "Risque d'erreur." (IMPACT)
+ * Animation plus dramatique avec pop et glow
+ */
+const text3ImpactSpecs: AnimationSpec[] = [
+  { type: 'fade-in', startFrame: 110, duration: 8 },
+  { type: 'slide-up', startFrame: 110, duration: 20, distance: 50, easing: 'easeOutExpo' },
+  { type: 'pop', startFrame: 110, spring: 'impact' },
+  { type: 'pulse', startFrame: 130, amplitude: 2, speed: 0.08 },
+];
+
+/**
+ * Specs pour le conteneur central
+ */
+const containerSpecs: AnimationSpec[] = [
+  { type: 'fade-in', startFrame: 40, duration: 20 },
+  { type: 'scale', startFrame: 80, duration: 130, scale: 0.92, easing: 'linear' }, // Zoom in progressif
+];
 
 // ============================================
-// KINETIC TEXT COMPONENT
+// SCENE TIMING (DATA)
 // ============================================
 
-interface KineticWordProps {
-  word: string;
-  startFrame: number;
-  color?: string;
-  fontSize?: number;
-  fontWeight?: number;
-  direction?: "left" | "right" | "up" | "down";
-  impact?: boolean;
-}
-
-const KineticWord: React.FC<KineticWordProps> = ({
-  word,
-  startFrame,
-  color = "#1f2937",
-  fontSize = 72,
-  fontWeight = 600,
-  direction = "up",
-  impact = false,
-}) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-
-  // Entry animation
-  const entryProgress = spring({
-    frame: frame - startFrame,
-    fps,
-    config: {
-      damping: impact ? 18 : 25,
-      stiffness: impact ? 200 : 150,
-      mass: impact ? 0.8 : 1,
-    },
-  });
-
-  const opacity = interpolate(frame, [startFrame, startFrame + 8], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-
-  // Direction-based entry offset
-  const offsets = {
-    left: { x: -100, y: 0 },
-    right: { x: 100, y: 0 },
-    up: { x: 0, y: 50 },
-    down: { x: 0, y: -50 },
-  };
-
-  const translateX = interpolate(entryProgress, [0, 1], [offsets[direction].x, 0]);
-  const translateY = interpolate(entryProgress, [0, 1], [offsets[direction].y, 0]);
-
-  // Impact effect - scale bounce
-  const impactScale = impact
-    ? spring({
-        frame: frame - startFrame,
-        fps,
-        config: { damping: 12, stiffness: 300 },
-      })
-    : 1;
-
-  const scale = interpolate(impactScale, [0, 1], [1.3, 1], {
-    extrapolateRight: "clamp",
-  });
-
-  // Continuous subtle float after entry (keeps scene alive)
-  const floatY = Math.sin((frame - startFrame) * 0.04) * 3;
-  const floatX = Math.cos((frame - startFrame) * 0.03) * 2;
-
-  // Danger pulse for impact words - more intense over time
-  const pulseIntensity = impact
-    ? interpolate(frame, [startFrame, startFrame + 100], [0.02, 0.06], { extrapolateRight: "clamp" })
-    : 0;
-  const pulse = impact
-    ? 1 + Math.sin((frame - startFrame) * 0.2) * pulseIntensity
-    : 1;
-
-  // Increasing shake for tension (after all text appears)
-  const shakeIntensity = interpolate(frame, [140, 200], [0, 4], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-  const shakeX = Math.sin(frame * 0.8) * shakeIntensity * (impact ? 1.5 : 0.5);
-  const shakeY = Math.cos(frame * 0.6) * shakeIntensity * (impact ? 1 : 0.3);
-
-  if (frame < startFrame) return null;
-
-  return (
-    <div
-      style={{
-        opacity,
-        transform: `translate(${translateX + floatX + shakeX}px, ${translateY + floatY + shakeY}px) scale(${scale * pulse})`,
-        fontSize,
-        fontWeight,
-        color,
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif",
-        letterSpacing: "-0.03em",
-        textShadow: impact
-          ? `0 0 ${40 + shakeIntensity * 5}px ${color}40, 0 4px 20px rgba(0,0,0,0.15)`
-          : "0 4px 20px rgba(0,0,0,0.1)",
-        whiteSpace: "nowrap",
-      }}
-    >
-      {word}
-    </div>
-  );
+const SCENE_TIMING = {
+  duration: 240,
+  fadeOutStart: 210,
+  fadeOutDuration: 30,
 };
 
 // ============================================
-// CHAOS BACKGROUND (SIMPLIFIED & BLURRED)
+// CHAOS BACKGROUND COMPONENT
 // ============================================
 
+/**
+ * ChaosBackground - Bureau chaotique en arrière-plan
+ *
+ * Utilise le moteur pour les animations de base,
+ * mais garde certains calculs inline pour les effets complexes
+ * (comme le blur progressif qui n'est pas une animation standard).
+ */
 const ChaosBackground: React.FC = () => {
   const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
 
-  // Simplified window representations - just shapes suggesting chaos
+  // Windows data (pure data, no logic)
   const windows = [
-    { x: 80, y: 100, w: 380, h: 280, rotation: -4, color: "#217346", delay: 0 },
-    { x: 420, y: 320, w: 360, h: 260, rotation: 3, color: "#0078d4", delay: 5 },
-    { x: 820, y: 80, w: 320, h: 240, rotation: 5, color: "#2563eb", delay: 10 },
-    { x: 160, y: 460, w: 300, h: 240, rotation: -3, color: "#34c759", delay: 15 },
-    { x: 850, y: 400, w: 340, h: 220, rotation: 6, color: "#f59e0b", delay: 20 },
-    { x: 560, y: 180, w: 280, h: 180, rotation: -2, color: "#dc2626", delay: 25 },
+    { x: 80, y: 100, w: 380, h: 280, rotation: -4, color: '#217346', delay: 0 },
+    { x: 420, y: 320, w: 360, h: 260, rotation: 3, color: '#0078d4', delay: 5 },
+    { x: 820, y: 80, w: 320, h: 240, rotation: 5, color: '#2563eb', delay: 10 },
+    { x: 160, y: 460, w: 300, h: 240, rotation: -3, color: '#34c759', delay: 15 },
+    { x: 850, y: 400, w: 340, h: 220, rotation: 6, color: '#f59e0b', delay: 20 },
+    { x: 560, y: 180, w: 280, h: 180, rotation: -2, color: '#dc2626', delay: 25 },
   ];
 
-  // Error indicators
   const errorBadges = [
     { x: 200, y: 320, delay: 30 },
     { x: 680, y: 360, delay: 45 },
@@ -152,154 +109,188 @@ const ChaosBackground: React.FC = () => {
     { x: 380, y: 640, delay: 75 },
   ];
 
-  // Overall blur increases over time to focus on text
-  const bgBlur = interpolate(frame, [0, 60, 120], [2, 4, 8], {
-    extrapolateRight: "clamp",
-  });
-
-  const bgOpacity = interpolate(frame, [0, 60, 120], [0.6, 0.45, 0.3], {
-    extrapolateRight: "clamp",
-  });
-
-  // Red tint increases with tension
-  const redTint = interpolate(frame, [140, 200], [0, 0.15], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-
-  // Background shake
-  const bgShake = interpolate(frame, [140, 200], [0, 6], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-  const bgShakeX = Math.sin(frame * 0.5) * bgShake;
-  const bgShakeY = Math.cos(frame * 0.4) * bgShake;
+  // Progressive blur via engine (using primitive directly for custom range)
+  const { fade } = require('../engine/motionPrimitives');
+  const bgBlur = 2 + fade(frame, 0, 120, 0, 6); // 2 → 8
+  const bgOpacity = 0.6 - fade(frame, 0, 120, 0, 0.3); // 0.6 → 0.3
+  const redTint = fade(frame, 140, 60, 0, 0.15);
 
   return (
     <div
       style={{
-        position: "absolute",
+        position: 'absolute',
         inset: 0,
         filter: `blur(${bgBlur}px)`,
         opacity: bgOpacity,
-        transform: `translate(${bgShakeX}px, ${bgShakeY}px)`,
       }}
     >
       {/* Desktop gradient */}
       <div
         style={{
-          position: "absolute",
+          position: 'absolute',
           inset: 0,
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #6B8DD6 100%)",
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #6B8DD6 100%)',
           opacity: 0.15,
         }}
       />
 
-      {/* Red danger tint overlay */}
+      {/* Red danger tint */}
       <div
         style={{
-          position: "absolute",
+          position: 'absolute',
           inset: 0,
-          backgroundColor: "#dc2626",
+          backgroundColor: '#dc2626',
           opacity: redTint,
-          pointerEvents: "none",
+          pointerEvents: 'none',
         }}
       />
 
-      {/* Simplified windows */}
+      {/* Windows */}
       {windows.map((win, i) => {
-        const entryOpacity = interpolate(frame, [win.delay, win.delay + 15], [0, 1], {
-          extrapolateLeft: "clamp",
-          extrapolateRight: "clamp",
-        });
-
-        const floatY = Math.sin((frame + i * 20) * 0.03) * 5;
+        const windowSpecs: AnimationSpec[] = [
+          { type: 'fade-in', startFrame: win.delay, duration: 15 },
+          { type: 'float', startFrame: win.delay + 15, amplitude: 5, speed: 0.03 },
+        ];
+        const style = animateToStyle(windowSpecs, frame, fps);
 
         return (
           <div
             key={i}
             style={{
-              position: "absolute",
+              position: 'absolute',
               left: win.x,
-              top: win.y + floatY,
+              top: win.y,
               width: win.w,
               height: win.h,
               borderRadius: 12,
-              backgroundColor: "rgba(255, 255, 255, 0.95)",
-              transform: `rotate(${win.rotation}deg)`,
-              opacity: entryOpacity,
-              boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
-              overflow: "hidden",
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              transform: `rotate(${win.rotation}deg) ${style.transform || ''}`,
+              opacity: style.opacity,
+              boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+              overflow: 'hidden',
             }}
           >
             {/* Window header */}
             <div
               style={{
                 height: 32,
-                backgroundColor: "#f6f6f6",
-                borderBottom: "1px solid #e0e0e0",
-                display: "flex",
-                alignItems: "center",
+                backgroundColor: '#f6f6f6',
+                borderBottom: '1px solid #e0e0e0',
+                display: 'flex',
+                alignItems: 'center',
                 paddingLeft: 12,
                 gap: 6,
               }}
             >
-              <div style={{ width: 12, height: 12, borderRadius: "50%", backgroundColor: "#ff5f57" }} />
-              <div style={{ width: 12, height: 12, borderRadius: "50%", backgroundColor: "#febc2e" }} />
-              <div style={{ width: 12, height: 12, borderRadius: "50%", backgroundColor: "#28c840" }} />
+              <div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: '#ff5f57' }} />
+              <div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: '#febc2e' }} />
+              <div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: '#28c840' }} />
             </div>
 
-            {/* Colored content hint */}
-            <div
-              style={{
-                padding: 16,
-                display: "flex",
-                flexDirection: "column",
-                gap: 8,
-              }}
-            >
-              <div style={{ height: 8, width: "70%", backgroundColor: win.color, borderRadius: 4, opacity: 0.3 }} />
-              <div style={{ height: 6, width: "90%", backgroundColor: "#e5e7eb", borderRadius: 3 }} />
-              <div style={{ height: 6, width: "60%", backgroundColor: "#e5e7eb", borderRadius: 3 }} />
-              <div style={{ height: 6, width: "80%", backgroundColor: "#e5e7eb", borderRadius: 3 }} />
+            {/* Content */}
+            <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ height: 8, width: '70%', backgroundColor: win.color, borderRadius: 4, opacity: 0.3 }} />
+              <div style={{ height: 6, width: '90%', backgroundColor: '#e5e7eb', borderRadius: 3 }} />
+              <div style={{ height: 6, width: '60%', backgroundColor: '#e5e7eb', borderRadius: 3 }} />
+              <div style={{ height: 6, width: '80%', backgroundColor: '#e5e7eb', borderRadius: 3 }} />
             </div>
           </div>
         );
       })}
 
-      {/* Error indicators floating */}
+      {/* Error badges */}
       {errorBadges.map((badge, i) => {
-        const entryOpacity = interpolate(frame, [badge.delay, badge.delay + 10], [0, 1], {
-          extrapolateLeft: "clamp",
-          extrapolateRight: "clamp",
-        });
-
-        const pulse = Math.sin(frame * 0.15 + i) * 0.2 + 1;
-        const floatY = Math.sin((frame + i * 30) * 0.04) * 8;
+        const badgeSpecs: AnimationSpec[] = [
+          { type: 'fade-in', startFrame: badge.delay, duration: 10 },
+          { type: 'float', startFrame: badge.delay + 10, amplitude: 8, speed: 0.04 },
+          { type: 'pulse', startFrame: badge.delay + 10, amplitude: 20, speed: 0.15 },
+        ];
+        const style = animateToStyle(badgeSpecs, frame, fps);
 
         return (
           <div
             key={i}
             style={{
-              position: "absolute",
+              position: 'absolute',
               left: badge.x,
-              top: badge.y + floatY,
+              top: badge.y,
               width: 48,
               height: 48,
-              borderRadius: "50%",
-              backgroundColor: "#dc2626",
-              opacity: entryOpacity,
-              transform: `scale(${pulse})`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 8px 24px rgba(220, 38, 38, 0.4)",
+              borderRadius: '50%',
+              backgroundColor: '#dc2626',
+              ...style,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 8px 24px rgba(220, 38, 38, 0.4)',
             }}
           >
-            <span style={{ color: "#fff", fontSize: 24, fontWeight: 700 }}>!</span>
+            <span style={{ color: '#fff', fontSize: 24, fontWeight: 700 }}>!</span>
           </div>
         );
       })}
+    </div>
+  );
+};
+
+// ============================================
+// KINETIC TEXT COMPONENT (DECLARATIVE)
+// ============================================
+
+interface KineticTextProps {
+  text: string;
+  animations: AnimationSpec[];
+  fontSize?: number;
+  fontWeight?: number;
+  color?: string;
+  isImpact?: boolean;
+}
+
+/**
+ * KineticText - Texte animé via le moteur
+ *
+ * N'utilise AUCUNE logique d'animation inline.
+ * Tout est résolu par le moteur via les specs.
+ */
+const KineticText: React.FC<KineticTextProps> = ({
+  text,
+  animations,
+  fontSize = 64,
+  fontWeight = 500,
+  color = '#374151',
+  isImpact = false,
+}) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+
+  // Vérifier si l'animation a démarré
+  const firstSpec = animations[0];
+  if (firstSpec && frame < firstSpec.startFrame) return null;
+
+  // Résoudre les animations via le moteur
+  const style = animateToStyle(animations, frame, fps);
+
+  // Calculer le glow pour les textes impact (via primitive)
+  const { fade } = require('../engine/motionPrimitives');
+  const glowIntensity = isImpact ? 30 + fade(frame, firstSpec?.startFrame || 0, 70, 0, 30) : 0;
+  const glowPulse = isImpact ? 1 + Math.sin(frame * 0.12) * 0.3 : 1;
+
+  return (
+    <div
+      style={{
+        ...style,
+        fontSize,
+        fontWeight,
+        color,
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif",
+        letterSpacing: '-0.03em',
+        textShadow: isImpact
+          ? `0 0 ${glowIntensity * glowPulse}px ${color}60, 0 0 ${glowIntensity * 2 * glowPulse}px ${color}30, 0 4px 20px rgba(0,0,0,0.15)`
+          : '0 4px 20px rgba(0,0,0,0.1)',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {text}
     </div>
   );
 };
@@ -310,49 +301,41 @@ const ChaosBackground: React.FC = () => {
 
 export const Scene02_LegacyChaos: React.FC = () => {
   const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
 
   // Scene fade out
-  const fadeOut = interpolate(frame, [210, 240], [1, 0], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
+  const fadeOut = sceneOpacity(
+    frame,
+    0,
+    SCENE_TIMING.duration,
+    0, // No fade in
+    SCENE_TIMING.fadeOutDuration
+  );
 
-  // Center text container animation
-  const containerOpacity = interpolate(frame, [40, 60], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
+  // Container animation
+  const containerStyle = animateToStyle(containerSpecs, frame, fps);
 
-  // Vignette for focus
-  const vignetteIntensity = interpolate(frame, [60, 150], [0.1, 0.4], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-
-  // Slow zoom in for tension
-  const zoom = interpolate(frame, [100, 210], [1, 1.08], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
+  // Vignette intensity (progressive)
+  const { fade } = require('../engine/motionPrimitives');
+  const vignetteIntensity = 0.1 + fade(frame, 60, 120, 0, 0.45);
 
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: "#e8eaed",
+        backgroundColor: '#e8eaed',
         opacity: fadeOut,
       }}
     >
       {/* Chaos background */}
       <ChaosBackground />
 
-
-      {/* Vignette for focus on center */}
+      {/* Vignette for focus */}
       <div
         style={{
-          position: "absolute",
+          position: 'absolute',
           inset: 0,
           background: `radial-gradient(ellipse 70% 60% at center, transparent 20%, rgba(0, 0, 0, ${vignetteIntensity}) 100%)`,
-          pointerEvents: "none",
+          pointerEvents: 'none',
           zIndex: 40,
         }}
       />
@@ -360,51 +343,47 @@ export const Scene02_LegacyChaos: React.FC = () => {
       {/* Central kinetic text */}
       <div
         style={{
-          position: "absolute",
+          position: 'absolute',
           inset: 0,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
           gap: 24,
           zIndex: 100,
-          opacity: containerOpacity,
-          transform: `scale(${zoom})`,
+          ...containerStyle,
         }}
       >
         {/* First phrase */}
-        <KineticWord
-          word="Données dispersées."
-          startFrame={50}
+        <KineticText
+          text="Données dispersées."
+          animations={text1Specs}
           fontSize={64}
           fontWeight={500}
           color="#374151"
-          direction="left"
         />
 
         {/* Second phrase */}
-        <KineticWord
-          word="Suivi manuel."
-          startFrame={80}
+        <KineticText
+          text="Suivi manuel."
+          animations={text2Specs}
           fontSize={64}
           fontWeight={500}
           color="#374151"
-          direction="right"
         />
 
         {/* Third phrase - IMPACT */}
-        <KineticWord
-          word="Risque d'erreur."
-          startFrame={110}
+        <KineticText
+          text="Risque d'erreur."
+          animations={text3ImpactSpecs}
           fontSize={80}
           fontWeight={700}
           color={colors.destructive}
-          direction="up"
-          impact
+          isImpact
         />
       </div>
-
     </AbsoluteFill>
   );
 };
 
+export default Scene02_LegacyChaos;

@@ -1,258 +1,315 @@
-import React from "react";
+/**
+ * Scene 01 - Responsibility (REFACTORED)
+ *
+ * ARCHITECTURE DÉCLARATIVE:
+ * Ce fichier démontre la séparation DATA / ENGINE / COMPOSANT.
+ *
+ * AVANT (inline):
+ * ```tsx
+ * const opacity = interpolate(frame, [wordDelay, wordDelay + 15], [0, 1], {...});
+ * const translateY = interpolate(frame, [wordDelay, wordDelay + 20], [20, 0], {...});
+ * const scale = spring({ frame: frame - wordDelay, fps, config: ... });
+ * ```
+ *
+ * APRÈS (déclaratif):
+ * ```tsx
+ * const wordAnimations = staggerWordsBlur(15, { delayPerItem: 6 });
+ * <AnimatedWord word={word} animations={wordAnimations} index={index} />
+ * ```
+ *
+ * BÉNÉFICES:
+ * - Animations définies comme DATA (specs)
+ * - Logique d'animation isolée dans le moteur
+ * - Composants purement présentationnels
+ * - Code testable et déterministe
+ */
+
+import React from 'react';
 import {
   AbsoluteFill,
   useCurrentFrame,
   useVideoConfig,
-  interpolate,
-  spring,
-  Easing,
-} from "remotion";
-import { colors, springConfig } from "../colors";
+} from 'remotion';
+import { colors } from '../colors';
+
+// DSL Imports - Animation specs (DATA)
+import type { AnimationSpec } from '../dsl/animationSpec';
+import { staggerWordsBlur, slideUpFade, gentlePulse } from '../dsl/presets';
+
+// Engine Imports - Pour les animations custom
+import { animateToStyle, sceneOpacity } from '../engine';
+
+// Component Imports
+import { AnimatedWord } from '../components/animated';
+
+// ============================================
+// ANIMATION SPECS (DATA - DÉCLARATIF)
+// ============================================
 
 /**
- * Scene 01 - Responsibility (0-8s)
- * Kinetic typography centrée
- * Texte: "Diriger une crèche implique une responsabilité réglementaire constante."
- * Animation lente et élégante
+ * Specs pour les mots de la ligne 1
+ * Démarre à la frame 15, stagger de 6 frames par mot
  */
+const line1Specs = staggerWordsBlur(15, { delayPerItem: 6 });
 
-interface WordProps {
-  word: string;
-  index: number;
-  totalWords: number;
-  startFrame: number;
-  isHighlight?: boolean;
-}
+/**
+ * Specs pour les mots de la ligne 2
+ * Démarre à la frame 40
+ */
+const line2Specs = staggerWordsBlur(40, { delayPerItem: 6 });
 
-const Word: React.FC<WordProps> = ({ word, index, startFrame, isHighlight }) => {
+/**
+ * Specs pour les mots de la ligne 3
+ * Démarre à la frame 70
+ */
+const line3Specs = staggerWordsBlur(70, { delayPerItem: 6 });
+
+/**
+ * Specs pour le tagline
+ * Apparition avec slide up + scale
+ */
+const taglineSpecs: AnimationSpec[] = [
+  { type: 'fade-in', startFrame: 140, duration: 30 },
+  { type: 'slide-up', startFrame: 140, duration: 40, distance: 20, easing: 'easeOutExpo' },
+  { type: 'scale', startFrame: 140, duration: 40, scale: 0.8, easing: 'easeOutBack' },
+];
+
+/**
+ * Specs pour les éléments décoratifs
+ */
+const decorSpecs: AnimationSpec[] = [
+  { type: 'fade-in', startFrame: 60, duration: 30 },
+];
+
+// ============================================
+// SCENE DATA
+// ============================================
+
+/**
+ * Contenu textuel de la scène
+ * Séparé de la logique d'animation
+ */
+const SCENE_CONTENT = {
+  line1: ['Diriger', 'une', 'crèche'],
+  line2: ['implique', 'une', 'responsabilité'],
+  line3: ['réglementaire', 'constante.'],
+  tagline: 'Luniqo simplifie tout.',
+  highlightWords: ['responsabilité', 'réglementaire', 'constante.'],
+};
+
+/**
+ * Timings de la scène
+ */
+const SCENE_TIMING = {
+  startFrame: 0,
+  duration: 240,
+  fadeOut: 40,
+};
+
+// ============================================
+// SUB-COMPONENTS
+// ============================================
+
+/**
+ * Decorative Background Elements
+ *
+ * Cercles avec effet de pulsation subtile.
+ * Animation via specs déclaratives.
+ */
+const DecorativeElements: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const wordDelay = startFrame + index * 6; // Stagger each word
-
-  // Opacity animation
-  const opacity = interpolate(
-    frame,
-    [wordDelay, wordDelay + 15],
-    [0, 1],
-    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
-  );
-
-  // Y translation (enter from below)
-  const translateY = interpolate(
-    frame,
-    [wordDelay, wordDelay + 20],
-    [20, 0],
-    {
-      extrapolateLeft: "clamp",
-      extrapolateRight: "clamp",
-      easing: Easing.out(Easing.cubic),
-    }
-  );
-
-  // Subtle scale
-  const scale = spring({
-    frame: frame - wordDelay,
-    fps,
-    config: springConfig.gentle,
-  });
-
-  // Blur effect on entry
-  const blur = interpolate(
-    frame,
-    [wordDelay, wordDelay + 10],
-    [4, 0],
-    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
-  );
+  // Résoudre les animations via le moteur
+  const decorStyle = animateToStyle(decorSpecs, frame, fps);
+  const pulseStyle = animateToStyle(gentlePulse({ amplitude: 2, speed: 0.02 }), frame, fps);
 
   return (
-    <span
-      style={{
-        display: "inline-block",
-        opacity,
-        transform: `translateY(${translateY}px) scale(${Math.max(0.98, scale)})`,
-        filter: `blur(${blur}px)`,
-        marginRight: 16,
-        color: isHighlight ? colors.primary : colors.foreground,
-        fontWeight: isHighlight ? 700 : 500,
-      }}
-    >
-      {word}
-    </span>
+    <>
+      <div
+        style={{
+          position: 'absolute',
+          top: '20%',
+          left: '10%',
+          width: 300,
+          height: 300,
+          borderRadius: '50%',
+          background: `radial-gradient(circle, ${colors.secondary}30 0%, transparent 70%)`,
+          ...decorStyle,
+          ...pulseStyle,
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '15%',
+          right: '15%',
+          width: 400,
+          height: 400,
+          borderRadius: '50%',
+          background: `radial-gradient(circle, ${colors.primary}20 0%, transparent 70%)`,
+          ...decorStyle,
+          transform: `${decorStyle.transform || ''} scale(1.1)`.trim(),
+        }}
+      />
+    </>
   );
 };
 
-export const Scene01_Responsibility: React.FC = () => {
+/**
+ * Animated Text Line
+ *
+ * Ligne de texte avec stagger par mot.
+ * Utilise AnimatedWord du moteur.
+ */
+interface TextLineProps {
+  words: string[];
+  animations: AnimationSpec[];
+  highlightWords: string[];
+}
+
+const TextLine: React.FC<TextLineProps> = ({ words, animations, highlightWords }) => {
+  return (
+    <div
+      style={{
+        fontSize: 80,
+        fontFamily: 'system-ui, sans-serif',
+        lineHeight: 1.3,
+        marginBottom: 8,
+        display: 'flex',
+        justifyContent: 'center',
+        flexWrap: 'wrap',
+      }}
+    >
+      {words.map((word, index) => (
+        <AnimatedWord
+          key={`${word}-${index}`}
+          word={word}
+          animations={animations}
+          index={index}
+          isHighlight={highlightWords.includes(word)}
+          highlightColor={colors.primary}
+          style={{
+            fontWeight: highlightWords.includes(word) ? 700 : 500,
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
+/**
+ * Tagline Component
+ *
+ * Tagline avec animation d'entrée.
+ */
+const Tagline: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  // Text content split into words
-  const line1Words = ["Diriger", "une", "crèche"];
-  const line2Words = ["implique", "une", "responsabilité"];
-  const line3Words = ["réglementaire", "constante."];
+  // Résoudre l'animation via le moteur
+  const style = animateToStyle(taglineSpecs, frame, fps);
 
-  // Highlight words (key message)
-  const highlightWords = ["responsabilité", "réglementaire", "constante."];
+  // Ne pas afficher avant le démarrage
+  if (frame < 140) return null;
 
-  // Background subtle pulse
-  const bgPulse = interpolate(
-    Math.sin(frame * 0.02),
-    [-1, 1],
-    [0.98, 1.02]
+  return (
+    <div
+      style={{
+        marginTop: 60,
+        display: 'flex',
+        justifyContent: 'center',
+        ...style,
+      }}
+    >
+      <span
+        style={{
+          fontSize: 36,
+          fontWeight: 600,
+          color: colors.secondary,
+          fontFamily: 'system-ui, sans-serif',
+          letterSpacing: '0.02em',
+          textShadow: `0 0 40px ${colors.secondary}80`,
+        }}
+      >
+        {SCENE_CONTENT.tagline}
+      </span>
+    </div>
   );
+};
 
-  // Decorative elements fade in
-  const decorOpacity = interpolate(
-    frame,
-    [60, 90],
-    [0, 0.3],
-    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
-  );
+// ============================================
+// MAIN SCENE COMPONENT
+// ============================================
 
-  // Final fade out
-  const sceneOpacity = interpolate(
+/**
+ * Scene01_Responsibility (Refactored)
+ *
+ * Scène entièrement refactorisée avec l'architecture déclarative.
+ *
+ * STRUCTURE:
+ * 1. DONNÉES: Textes et timings définis en constantes
+ * 2. SPECS: Animations définies via le DSL (staggerWordsBlur, etc.)
+ * 3. COMPOSANTS: Purement présentationnels, utilisent le moteur
+ */
+export const Scene01_Responsibility: React.FC = () => {
+  const frame = useCurrentFrame();
+
+  // Opacité de la scène (fade out à la fin)
+  const opacity = sceneOpacity(
     frame,
-    [200, 240],
-    [1, 0],
-    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+    SCENE_TIMING.startFrame,
+    SCENE_TIMING.duration,
+    0, // Pas de fade in
+    SCENE_TIMING.fadeOut
   );
 
   return (
     <AbsoluteFill
       style={{
         backgroundColor: colors.background,
-        justifyContent: "center",
-        alignItems: "center",
-        opacity: sceneOpacity,
+        justifyContent: 'center',
+        alignItems: 'center',
+        opacity,
       }}
     >
-      {/* Background decorative shapes */}
-      <div
-        style={{
-          position: "absolute",
-          top: "20%",
-          left: "10%",
-          width: 300,
-          height: 300,
-          borderRadius: "50%",
-          background: `radial-gradient(circle, ${colors.secondary}30 0%, transparent 70%)`,
-          transform: `scale(${bgPulse})`,
-          opacity: decorOpacity,
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          bottom: "15%",
-          right: "15%",
-          width: 400,
-          height: 400,
-          borderRadius: "50%",
-          background: `radial-gradient(circle, ${colors.primary}20 0%, transparent 70%)`,
-          transform: `scale(${bgPulse * 1.1})`,
-          opacity: decorOpacity,
-        }}
-      />
+      {/* Éléments décoratifs */}
+      <DecorativeElements />
 
-      {/* Main text container */}
+      {/* Contenu principal */}
       <div
         style={{
-          textAlign: "center",
+          textAlign: 'center',
           maxWidth: 1200,
-          padding: "0 60px",
+          padding: '0 60px',
         }}
       >
-        {/* Line 1 */}
-        <div
-          style={{
-            fontSize: 64,
-            fontFamily: "system-ui, sans-serif",
-            lineHeight: 1.3,
-            marginBottom: 8,
-          }}
-        >
-          {line1Words.map((word, index) => (
-            <Word
-              key={word + index}
-              word={word}
-              index={index}
-              totalWords={line1Words.length}
-              startFrame={15}
-              isHighlight={highlightWords.includes(word)}
-            />
-          ))}
-        </div>
+        {/* Ligne 1 */}
+        <TextLine
+          words={SCENE_CONTENT.line1}
+          animations={line1Specs}
+          highlightWords={SCENE_CONTENT.highlightWords}
+        />
 
-        {/* Line 2 */}
-        <div
-          style={{
-            fontSize: 64,
-            fontFamily: "system-ui, sans-serif",
-            lineHeight: 1.3,
-            marginBottom: 8,
-          }}
-        >
-          {line2Words.map((word, index) => (
-            <Word
-              key={word + index}
-              word={word}
-              index={index}
-              totalWords={line2Words.length}
-              startFrame={40}
-              isHighlight={highlightWords.includes(word)}
-            />
-          ))}
-        </div>
+        {/* Ligne 2 */}
+        <TextLine
+          words={SCENE_CONTENT.line2}
+          animations={line2Specs}
+          highlightWords={SCENE_CONTENT.highlightWords}
+        />
 
-        {/* Line 3 */}
-        <div
-          style={{
-            fontSize: 64,
-            fontFamily: "system-ui, sans-serif",
-            lineHeight: 1.3,
-          }}
-        >
-          {line3Words.map((word, index) => (
-            <Word
-              key={word + index}
-              word={word}
-              index={index}
-              totalWords={line3Words.length}
-              startFrame={70}
-              isHighlight={highlightWords.includes(word)}
-            />
-          ))}
-        </div>
+        {/* Ligne 3 */}
+        <TextLine
+          words={SCENE_CONTENT.line3}
+          animations={line3Specs}
+          highlightWords={SCENE_CONTENT.highlightWords}
+        />
 
-        {/* Underline accent */}
-        <div
-          style={{
-            marginTop: 40,
-            display: "flex",
-            justifyContent: "center",
-          }}
-        >
-          <div
-            style={{
-              width: interpolate(
-                frame,
-                [120, 160],
-                [0, 200],
-                { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
-              ),
-              height: 4,
-              backgroundColor: colors.primary,
-              borderRadius: 2,
-              opacity: interpolate(
-                frame,
-                [120, 140],
-                [0, 1],
-                { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
-              ),
-            }}
-          />
-        </div>
+        {/* Tagline */}
+        <Tagline />
       </div>
     </AbsoluteFill>
   );
 };
+
+export default Scene01_Responsibility;

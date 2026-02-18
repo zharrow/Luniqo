@@ -204,7 +204,7 @@ const SplitTransition: React.FC<{
   textColor: string;
   accentColor: string;
   backgroundColor: string;
-}> = ({ text, textColor, accentColor, backgroundColor }) => {
+}> = ({ text, textColor, accentColor }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
@@ -467,9 +467,6 @@ export const KineticTransition: React.FC<KineticTransitionProps> = ({
   const fadeIn = interpolate(frame, [0, 8], [0, 1], {
     extrapolateRight: "clamp",
   });
-
-  // Get total duration from useVideoConfig would need Sequence context
-  // For now, we'll handle fade-out in the parent
 
   const renderTransition = () => {
     switch (style) {

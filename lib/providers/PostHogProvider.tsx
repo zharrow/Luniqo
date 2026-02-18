@@ -2,8 +2,9 @@
 
 import posthog from 'posthog-js'
 import { PostHogProvider as PHProvider, usePostHog } from 'posthog-js/react'
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useState, useCallback } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
+import { CookieBanner, getConsentStatus, type ConsentStatus } from '@/components/shared/CookieBanner'
 
 // Page view tracker component (needs Suspense for useSearchParams)
 function PostHogPageViewTracker() {
@@ -32,38 +33,122 @@ function PostHogPageView() {
   )
 }
 
+// PostHog initialization options based on consent
+function getPostHogOptions(consent: ConsentStatus) {
+  const baseOptions = {
+    api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com',
+    capture_pageview: false, // We capture manually for more control
+    capture_pageleave: true,
+    request_batching: true,
+  }
+
+  if (consent === 'accepted') {
+    // Full tracking with cookies
+    return {
+      ...baseOptions,
+      person_profiles: 'identified_only' as const,
+      autocapture: true,
+      disable_session_recording: false,
+      session_recording: {
+        maskAllInputs: false,
+        maskInputOptions: {
+          password: true,
+        },
+      },
+    }
+  } else {
+    // Cookieless mode - minimal tracking
+    return {
+      ...baseOptions,
+      person_profiles: 'identified_only' as const,
+      persistence: 'memory' as const,
+      disable_persistence: true,
+      disable_session_recording: true,
+      autocapture: false,
+    }
+  }
+}
+
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
+  const [consent, setConsent] = useState<ConsentStatus>('pending')
   const [isInitialized, setIsInitialized] = useState(false)
 
-  useEffect(() => {
-    // Initialize PostHog only on client side
+  const initPostHog = useCallback((consentStatus: ConsentStatus) => {
     const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY
-    const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com'
 
-    console.log('PostHog config:', { key: posthogKey?.slice(0, 10) + '...', host: posthogHost })
-
-    if (typeof window !== 'undefined' && posthogKey && !posthog.__loaded) {
-      posthog.init(posthogKey, {
-        api_host: posthogHost,
-        person_profiles: 'identified_only',
-        capture_pageview: false, // We capture manually for more control
-        capture_pageleave: true,
-        autocapture: true,
-        disable_session_recording: false,
-        session_recording: {
-          maskAllInputs: false,
-          maskInputOptions: {
-            password: true,
-          },
-        },
-        request_batching: true, // Batch requests to reduce load
-        loaded: (ph) => {
-          console.log('PostHog initialized successfully', ph)
-          setIsInitialized(true)
-        },
-      })
+    if (!posthogKey) {
+      console.log('PostHog key not found, skipping initialization')
+      return
     }
+
+    // If already loaded, we need to update settings
+    if (posthog.__loaded) {
+      // Update persistence based on new consent
+      if (consentStatus === 'accepted') {
+        posthog.set_config({
+          persistence: 'localStorage+cookie',
+          disable_persistence: false,
+          disable_session_recording: false,
+          autocapture: true,
+        })
+        // Opt in to everything
+        posthog.opt_in_capturing()
+      } else if (consentStatus === 'refused') {
+        posthog.set_config({
+          persistence: 'memory',
+          disable_persistence: true,
+          disable_session_recording: true,
+          autocapture: false,
+        })
+      }
+      return
+    }
+
+    // First initialization
+    const options = getPostHogOptions(consentStatus)
+
+    console.log('PostHog initializing with consent:', consentStatus, {
+      key: posthogKey?.slice(0, 10) + '...',
+      mode: consentStatus === 'accepted' ? 'full' : 'cookieless',
+    })
+
+    posthog.init(posthogKey, {
+      ...options,
+      loaded: (ph) => {
+        console.log('PostHog initialized successfully', { consent: consentStatus })
+        setIsInitialized(true)
+      },
+    })
   }, [])
+
+  // Initialize on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const currentConsent = getConsentStatus()
+    setConsent(currentConsent)
+
+    // Initialize PostHog (even if pending, we start in cookieless mode)
+    const effectiveConsent = currentConsent === 'pending' ? 'refused' : currentConsent
+    initPostHog(effectiveConsent)
+  }, [initPostHog])
+
+  // Listen for consent changes
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const handleConsentChange = (event: CustomEvent<ConsentStatus>) => {
+      const newConsent = event.detail
+      console.log('Consent changed to:', newConsent)
+      setConsent(newConsent)
+      initPostHog(newConsent)
+    }
+
+    window.addEventListener('consent-changed', handleConsentChange as EventListener)
+    return () => {
+      window.removeEventListener('consent-changed', handleConsentChange as EventListener)
+    }
+  }, [initPostHog])
 
   // Don't render PostHog provider if no key is set
   if (!process.env.NEXT_PUBLIC_POSTHOG_KEY) {
@@ -74,6 +159,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
     <PHProvider client={posthog}>
       <PostHogPageView />
       {children}
+      <CookieBanner />
     </PHProvider>
   )
 }
