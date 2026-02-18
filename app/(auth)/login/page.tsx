@@ -270,6 +270,16 @@ export default function LoginPage() {
               </a>
             </p>
           </div>
+
+          {/* Privacy Policy Link */}
+          <div className="mt-6 text-center">
+            <a
+              href="/politique-de-confidentialite"
+              className="text-xs text-gray-400 hover:text-gray-600 transition-colors duration-200"
+            >
+              Politique de confidentialite
+            </a>
+          </div>
         </div>
       </div>
 
