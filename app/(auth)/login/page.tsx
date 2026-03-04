@@ -261,9 +261,9 @@ export default function LoginPage() {
           {/* Employee Login Link */}
           <div className="mt-4 pt-4 border-t border-gray-200">
             <p className="text-center text-sm text-gray-600">
-              Vous etes employe ?{' '}
+              Accéder à la{' '}
               <a href="/tablet/login" className="text-[#5a9dc9] hover:text-[#2c5f7f] font-medium transition-colors duration-200 inline-flex items-center gap-1 group">
-                Connexion employe
+                vue tablette
                 <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>

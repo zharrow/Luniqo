@@ -5,7 +5,7 @@ import { calendarService, type DayTasks, type CalendarTask } from '@/lib/service
 import { ClockIcon } from '@heroicons/react/24/outline'
 
 interface DailyCalendarProps {
-  enterpriseId: string
+  nurseryId: string
   roomId: string
   onTaskClick?: (task: CalendarTask) => void
   selectedTaskIds?: string[]
@@ -13,7 +13,7 @@ interface DailyCalendarProps {
 }
 
 export function DailyCalendar({
-  enterpriseId,
+  nurseryId,
   roomId,
   onTaskClick,
   selectedTaskIds = [],
@@ -24,12 +24,12 @@ export function DailyCalendar({
 
   useEffect(() => {
     loadDayData()
-  }, [enterpriseId, roomId, refreshTrigger])
+  }, [nurseryId, roomId, refreshTrigger])
 
   async function loadDayData() {
     try {
       setLoading(true)
-      const data = await calendarService.getDailyData(enterpriseId, 0, roomId)
+      const data = await calendarService.getDailyData(nurseryId, 0, roomId)
       setDayData(data)
     } catch (error) {
       console.error('Error loading day data:', error)
@@ -66,7 +66,7 @@ export function DailyCalendar({
   return (
     <div className="card p-6 bg-white">
       {/* Header */}
-      <div className="mb-6 pb-4 border-b-2 border-primary-100">
+      <div className="grid grid-cols-2 justify-items mb-6 pb-4 border-primary-100">
         <h2 className="text-3xl font-bold text-primary-700 mb-2 capitalize" style={{ fontFamily: 'Quicksand, sans-serif' }}>
           Programme du jour
         </h2>
@@ -103,7 +103,7 @@ export function DailyCalendar({
                 className={`p-6 rounded-2xl border-2 transition-all cursor-pointer ${
                   isSelected
                     ? 'bg-success-50 border-success-500 shadow-lg'
-                    : 'bg-white border-gray-200 hover:border-primary-300 hover:shadow-md'
+                    : 'bg-white border-primary-300 shadow-md'
                 }`}
               >
                 <div className="flex items-center gap-6">

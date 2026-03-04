@@ -87,7 +87,7 @@ export class PopupEventsService {
       .order('priority', { ascending: false })
 
     if (error) {
-      console.error('Error fetching popup events:', error)
+      console.error('Error fetching popup events:', error.message || JSON.stringify(error))
       return []
     }
 

@@ -3,19 +3,29 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Profile } from '@/types/auth.types'
-import type { Enterprise } from '@/types/database.types'
+import type { Enterprise, Nursery } from '@/types/database.types'
 
 // Tablet-specific session type (Employee only)
 export interface TabletSession {
   user: Profile
   enterprise: Enterprise
   accessibleRooms: string[]
+  selectedNursery: Nursery
+  todayShifts: Array<{
+    id: string
+    start_time: string
+    end_time: string
+    status: string
+    assigned_room_id?: string
+    role_during_shift?: string
+  }>
 }
 
 interface TabletAuthContextType {
   session: TabletSession | null
   isLoading: boolean
   setSession: (session: TabletSession | null) => void
+  switchNursery: (nursery: Nursery, shifts: TabletSession['todayShifts']) => void
   logout: () => void
 }
 
@@ -97,6 +107,16 @@ export function TabletAuthProvider({ children }: { children: React.ReactNode }) 
     }
   }
 
+  function switchNursery(nursery: Nursery, shifts: TabletSession['todayShifts']) {
+    if (!session) return
+    const updated: TabletSession = {
+      ...session,
+      selectedNursery: nursery,
+      todayShifts: shifts
+    }
+    setSession(updated)
+  }
+
   function logout() {
     if (typeof window !== 'undefined') {
       localStorage.removeItem(SESSION_KEY)
@@ -109,6 +129,7 @@ export function TabletAuthProvider({ children }: { children: React.ReactNode }) 
     session,
     isLoading,
     setSession,
+    switchNursery,
     logout
   }
 

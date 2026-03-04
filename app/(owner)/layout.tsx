@@ -17,20 +17,17 @@ export default function OwnerLayout({
   // Protect Owner routes - redirect if not Owner
   const { session, isLoading } = useRequireAuth(['Owner'])
 
-  // Show skeleton while checking session
-  if (isLoading) {
-    return <DashboardSkeleton statsCount={4} cardsCount={6} />
-  }
-
   return (
     <SidebarProvider defaultOpen={true}>
       <AppSidebar />
       <SidebarInset className="bg-neutral-50">
         <Header />
-        <main className="p-6">{children}</main>
+        <main className="p-6">
+          {isLoading ? <DashboardSkeleton statsCount={4} cardsCount={6} /> : children}
+        </main>
       </SidebarInset>
       {/* Event popups (welcome, seasonal, promo) */}
-      <EventPopup />
+      {!isLoading && <EventPopup />}
     </SidebarProvider>
   )
 }

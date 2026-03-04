@@ -16,17 +16,14 @@ export default function EmployeeLayout({
   // Protect Employee routes - redirect if not Employee
   const { session, isLoading } = useRequireAuth(['Employee'])
 
-  // Show skeleton while checking session
-  if (isLoading) {
-    return <DashboardSkeleton statsCount={3} cardsCount={4} />
-  }
-
   return (
     <SidebarProvider defaultOpen={true}>
       <EmployeeSidebar />
       <SidebarInset className="bg-neutral-50">
         <Header />
-        <main className="p-6">{children}</main>
+        <main className="p-6">
+          {isLoading ? <DashboardSkeleton statsCount={3} cardsCount={4} /> : children}
+        </main>
       </SidebarInset>
     </SidebarProvider>
   )

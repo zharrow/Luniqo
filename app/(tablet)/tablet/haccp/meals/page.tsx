@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useRequireTabletAuth } from '@/lib/contexts/TabletAuthContext'
 import { haccpService } from '@/lib/services/haccp.service'
 import { childService } from '@/lib/services/child.service'
+import type { MealItem } from '@/lib/services/haccp.service'
 
 interface Child {
   id: string
@@ -29,32 +30,38 @@ export default function TabletHaccpMealsPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
 
+  // Meal items (products) for the selected meal
+  const [mealItems, setMealItems] = useState<MealItem[]>([])
+  const [loadingItems, setLoadingItems] = useState(false)
+  // Per-child consumed items: Record<childId, Set<mealItemId>>
+  const [consumedItems, setConsumedItems] = useState<Record<string, Set<string>>>({})
+
   const { session } = useRequireTabletAuth()
   const router = useRouter()
 
   useEffect(() => {
     // useRequireTabletAuth handles redirect if no session
-    if (session && session.enterprise?.id) {
+    if (session && session.selectedNursery?.id) {
       loadData()
     }
   }, [session])
 
   async function loadData() {
     try {
-      if (!session?.enterprise?.id) return
+      if (!session?.selectedNursery?.id) return
 
-      // Load today's meals
+      // Load today's meals (scoped to selected nursery)
       const today = new Date().toISOString().split('T')[0]
-      const meals = await haccpService.getMealsByDate(session.enterprise.id, today, today)
+      const meals = await haccpService.getMealsByDate(session.selectedNursery.id, today, today)
 
-      // Filter only validated meals for today
-      const todayValidated = meals.filter(
-        (m: any) => m.date === today && m.is_validated
+      // Filter meals for today
+      const todayMealsFiltered = meals.filter(
+        (m: any) => m.date === today
       )
-      setTodayMeals(todayValidated)
+      setTodayMeals(todayMealsFiltered)
 
-      // Load children (using childService from Core module)
-      const childrenData = await childService.getAll(session.enterprise.id)
+      // Load children (scoped to selected nursery)
+      const childrenData = await childService.getAll(session.selectedNursery.id)
       setChildren(childrenData as Child[])
 
       // Initialize servings for all children
@@ -74,6 +81,45 @@ export default function TabletHaccpMealsPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  async function selectMeal(mealId: string) {
+    setSelectedMeal(mealId)
+    setLoadingItems(true)
+    try {
+      const items = await haccpService.getMealItems(mealId)
+      setMealItems(items)
+
+      // Initialize all children with all items selected by default
+      const initialConsumed: Record<string, Set<string>> = {}
+      children.forEach(child => {
+        initialConsumed[child.id] = new Set(items.map(i => i.id))
+      })
+      setConsumedItems(initialConsumed)
+    } catch (err) {
+      console.error('Error loading meal items:', err)
+    } finally {
+      setLoadingItems(false)
+    }
+  }
+
+  function toggleConsumedItem(childId: string, mealItemId: string) {
+    setConsumedItems(prev => {
+      const childSet = new Set(prev[childId] || [])
+      if (childSet.has(mealItemId)) {
+        childSet.delete(mealItemId)
+      } else {
+        childSet.add(mealItemId)
+      }
+      return { ...prev, [childId]: childSet }
+    })
+  }
+
+  function toggleAllItemsForChild(childId: string, selectAll: boolean) {
+    setConsumedItems(prev => ({
+      ...prev,
+      [childId]: selectAll ? new Set(mealItems.map(i => i.id)) : new Set()
+    }))
   }
 
   function updateServing(childId: string, field: keyof MealServing, value: string) {
@@ -96,21 +142,20 @@ export default function TabletHaccpMealsPage() {
     setError('')
 
     try {
-      // Prepare child_meal_record records
       const records = Object.values(servings).map(serving => ({
         meal_id: selectedMeal,
         child_id: serving.child_id,
         portion_size: serving.portion_size,
         comments: serving.comments || null,
-        recorded_by_id: session.user.id
+        recorded_by_id: session.user.id,
+        consumed_item_ids: Array.from(consumedItems[serving.child_id] || [])
       }))
 
-      // Save to database (we'll need to add this method to haccpService)
       await haccpService.recordMealServings(records)
 
       setSuccess(true)
       setTimeout(() => {
-        router.push('/tablet/haccp')
+        router.push('/tablet/home')
       }, 2000)
 
     } catch (err: any) {
@@ -136,12 +181,12 @@ export default function TabletHaccpMealsPage() {
     return (
       <div className="tablet-mode min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-secondary-50">
         <div className="text-center">
-          <div className="w-32 h-32 rounded-full bg-success-100 flex items-center justify-center mx-auto mb-6">
-            <svg className="w-20 h-20 text-success-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-32 h-32 rounded-full bg-[#e8f5e9] flex items-center justify-center mx-auto mb-6">
+            <svg className="w-20 h-20 text-[#4a8f5a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-4xl font-bold text-success-600 mb-4">Enregistré !</h2>
+          <h2 className="text-4xl font-bold text-[#4a8f5a] mb-4">Enregistré !</h2>
           <p className="text-2xl text-muted-foreground">Retour au menu HACCP...</p>
         </div>
       </div>
@@ -157,22 +202,23 @@ export default function TabletHaccpMealsPage() {
   return (
     <div className="tablet-mode min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 p-8">
       {/* Header */}
-      <div className="flex justify-between items-center mb-12">
-        <div className="flex items-center gap-6">
+      <div className="mb-12">
+        <div className="mb-6">
           <button
-            onClick={() => router.push('/tablet/haccp')}
-            className="btn btn-secondary px-6 py-4 text-xl"
+            onClick={() => router.push('/tablet/home')}
+            className="inline-flex items-center gap-3 px-8 py-4 text-xl font-semibold rounded-2xl bg-gray-50 border-2 border-gray-300 text-gray-700 active:opacity-80 transition-opacity shadow-sm"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
+            Retour
           </button>
-          <div>
-            <h1 className="text-5xl font-bold mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
-              Enregistrer les Repas
-            </h1>
-            <p className="text-2xl text-muted-foreground">{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
-          </div>
+        </div>
+        <div>
+          <h1 className="text-5xl font-bold mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+            Enregistrer les Repas
+          </h1>
+          <p className="text-2xl text-muted-foreground">{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
         </div>
       </div>
 
@@ -184,9 +230,8 @@ export default function TabletHaccpMealsPage() {
       )}
 
       {/* Meal Selection */}
-      <div className="relative rounded-3xl p-8 mb-8 bg-white border border-[#81c995]/20 shadow-lg overflow-hidden">
-        {/* Gradient vert pastel en fond */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#f1f9f3] to-white opacity-60"></div>
+      <div className="relative rounded-3xl p-8 mb-8 overflow-hidden">
+        <div className="absolute inset-0 opacity-60"></div>
 
         <div className="relative z-10">
           <label className="block text-2xl font-bold mb-4 text-gray-900">
@@ -198,27 +243,52 @@ export default function TabletHaccpMealsPage() {
               {todayMeals.map((meal: any) => (
                 <button
                   key={meal.id}
-                  onClick={() => setSelectedMeal(meal.id)}
+                  onClick={() => selectMeal(meal.id)}
                   className={`p-6 rounded-2xl border-2 text-xl font-semibold transition-all shadow-md ${
                     selectedMeal === meal.id
                       ? 'bg-[#81c995] border-[#4a8f5a] text-white scale-105'
-                    : 'bg-white border-[#81c995]/20 hover:border-[#81c995] hover:shadow-lg'
+                    : 'bg-white border-[#81c995]/40 shadow-lg'
                 }`}
               >
-                {meal.meal_type === 'Breakfast' && '🥐 Petit-déjeuner'}
-                {meal.meal_type === 'Lunch' && '🍽️ Déjeuner'}
-                {meal.meal_type === 'Snack' && '🍪 Goûter'}
+                {meal.type === 'Breakfast' && '🥐 Petit-déjeuner'}
+                {meal.type === 'Lunch' && '🍽️ Déjeuner'}
+                {meal.type === 'Snack' && '🍪 Goûter'}
               </button>
             ))}
           </div>
         ) : (
-          <p className="text-xl text-gray-600">Aucun repas validé pour aujourd'hui</p>
+          <p className="text-xl text-gray-600">Aucun repas prévu pour aujourd&apos;hui</p>
         )}
         </div>
       </div>
 
+      {/* Loading meal items */}
+      {selectedMeal && loadingItems && (
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#81c995] border-t-transparent mx-auto mb-4"></div>
+          <p className="text-xl text-muted-foreground">Chargement des produits...</p>
+        </div>
+      )}
+
+      {/* Meal composition summary */}
+      {selectedMeal && !loadingItems && mealItems.length > 0 && (
+        <div className="relative rounded-3xl p-6 mb-8 bg-white border border-[#81c995]/20 shadow-lg overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#f1f9f3] to-white opacity-60"></div>
+          <div className="relative z-10">
+            <h3 className="text-xl font-bold text-gray-900 mb-3">Composition du repas</h3>
+            <div className="flex flex-wrap gap-2">
+              {mealItems.map(item => (
+                <span key={item.id} className="px-4 py-2 bg-[#e8f5e9] text-[#4a8f5a] rounded-xl text-lg font-medium">
+                  {item.product?.name || 'Produit'}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Children List (if meal selected) */}
-      {selectedMeal && Object.keys(groupedChildren).length > 0 && (
+      {selectedMeal && !loadingItems && Object.keys(groupedChildren).length > 0 && (
         <div className="space-y-8 mb-32">
           {Object.entries(groupedChildren).map(([section, sectionChildren]) => (
             <div key={section} className="relative rounded-3xl p-8 bg-white border border-[#81c995]/20 shadow-lg overflow-hidden">
@@ -234,13 +304,61 @@ export default function TabletHaccpMealsPage() {
 
               <div className="space-y-4">
                 {sectionChildren.map((child) => (
-                  <div key={child.id} className="bg-muted p-6 rounded-xl">
+                  <div key={child.id} className="bg-white/80 border border-gray-100 p-6 rounded-xl shadow-sm">
                     <div className="flex items-center justify-between mb-4">
-                      <h4 className="text-2xl font-bold">
+                      <h4 className="text-2xl font-bold text-gray-900">
                         {child.first_name} {child.last_name}
                       </h4>
+                      {mealItems.length > 0 && (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => toggleAllItemsForChild(child.id, true)}
+                            className="px-4 py-2 text-base rounded-lg bg-[#81c995] text-white font-medium active:opacity-80 transition-opacity"
+                          >
+                            Tout
+                          </button>
+                          <button
+                            onClick={() => toggleAllItemsForChild(child.id, false)}
+                            className="px-4 py-2 text-base rounded-lg bg-gray-200 text-gray-700 font-medium active:opacity-80 transition-opacity"
+                          >
+                            Rien
+                          </button>
+                        </div>
+                      )}
                     </div>
 
+                    {/* Product items grid */}
+                    {mealItems.length > 0 && (
+                      <div className="grid grid-cols-2 gap-3 mb-4">
+                        {mealItems.map(item => {
+                          const isSelected = consumedItems[child.id]?.has(item.id)
+                          return (
+                            <button
+                              key={item.id}
+                              onClick={() => toggleConsumedItem(child.id, item.id)}
+                              className={`p-4 rounded-xl text-left text-lg font-medium transition-all flex items-center gap-3 ${
+                                isSelected
+                                  ? 'bg-[#81c995] border-2 border-[#4a8f5a] text-white'
+                                  : 'bg-white border-2 border-gray-200 text-gray-600'
+                              }`}
+                            >
+                              <span className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 ${
+                                isSelected ? 'bg-white/30' : 'bg-gray-100'
+                              }`}>
+                                {isSelected && (
+                                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                )}
+                              </span>
+                              {item.product?.name || 'Produit'}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
+
+                    {/* Portion size */}
                     <div className="grid grid-cols-3 gap-4">
                       {['Petite', 'Normal', 'Grande'].map((size) => (
                         <button
@@ -248,8 +366,8 @@ export default function TabletHaccpMealsPage() {
                           onClick={() => updateServing(child.id, 'portion_size', size)}
                           className={`p-4 rounded-xl text-lg font-semibold transition-all ${
                             servings[child.id]?.portion_size === size
-                              ? 'bg-success-500 text-white scale-105'
-                              : 'bg-card border-2 border-border'
+                              ? 'bg-[#81c995] border-2 border-[#4a8f5a] text-white scale-105'
+                              : 'bg-white border-2 border-gray-200'
                           }`}
                         >
                           {size === 'Petite' && '🍽️ Petite'}
@@ -262,7 +380,7 @@ export default function TabletHaccpMealsPage() {
                     <textarea
                       value={servings[child.id]?.comments || ''}
                       onChange={(e) => updateServing(child.id, 'comments', e.target.value)}
-                      className="w-full mt-4 px-4 py-3 text-lg rounded-xl border-2 border-border focus:outline-none focus:ring-4 focus:ring-primary-500 bg-background"
+                      className="w-full mt-4 px-4 py-3 text-lg rounded-xl border-2 border-gray-200 focus:outline-none focus:ring-4 focus:ring-[#81c995]/30 focus:border-[#81c995] bg-white"
                       rows={2}
                       placeholder="Remarque (optionnel)..."
                     />
@@ -282,7 +400,7 @@ export default function TabletHaccpMealsPage() {
             <button
               onClick={handleSubmit}
               disabled={isSaving}
-              className="rounded-2xl bg-[#81c995] text-white hover:bg-[#4a8f5a] w-full h-24 text-3xl font-bold shadow-2xl disabled:opacity-50 transition-colors"
+              className="rounded-2xl bg-[#4a8f5a] text-white w-full h-24 text-3xl font-bold shadow-2xl disabled:opacity-50 active:opacity-80 transition-opacity"
             >
               {isSaving ? (
                 <span className="flex items-center justify-center gap-3">

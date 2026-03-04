@@ -643,6 +643,361 @@ export class PDFExportService {
   }
 
   // ============================================================================
+  // INDIVIDUAL HACCP REGISTER EXPORTS
+  // ============================================================================
+
+  /**
+   * Export temperature register for a date range
+   */
+  exportTemperatureRegister(data: {
+    nurseryName: string
+    startDate: string
+    endDate: string
+    temperatures: Array<{
+      measured_at: string
+      checkpoint_type: string
+      temperature_value: number
+      is_compliant: boolean
+      notes: string | null
+    }>
+  }): void {
+    const doc = new jsPDF()
+    let currentY = 20
+
+    doc.setFontSize(18)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Registre des Températures', 14, currentY)
+    currentY += 10
+
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'normal')
+    doc.text(data.nurseryName, 14, currentY)
+    currentY += 7
+
+    doc.setFontSize(10)
+    doc.text(`Période: du ${new Date(data.startDate).toLocaleDateString('fr-FR')} au ${new Date(data.endDate).toLocaleDateString('fr-FR')}`, 14, currentY)
+    currentY += 5
+
+    const compliant = data.temperatures.filter(t => t.is_compliant).length
+    const total = data.temperatures.length
+    doc.text(`${total} relevé(s) — ${compliant} conforme(s) (${total > 0 ? Math.round(compliant / total * 100) : 0}%)`, 14, currentY)
+    currentY += 8
+
+    doc.setDrawColor(200, 200, 200)
+    doc.line(14, currentY, 196, currentY)
+    currentY += 8
+
+    if (data.temperatures.length > 0) {
+      autoTable(doc, {
+        startY: currentY,
+        head: [['Date & Heure', 'Point de contrôle', 'Température', 'Conformité', 'Notes']],
+        body: data.temperatures.map(t => [
+          new Date(t.measured_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+          this.getCheckpointLabel(t.checkpoint_type),
+          `${t.temperature_value}°C`,
+          t.is_compliant ? 'Conforme' : 'Non conforme',
+          t.notes || '-'
+        ]),
+        theme: 'striped',
+        headStyles: { fillColor: [181, 234, 215], textColor: [41, 98, 83], fontStyle: 'bold', fontSize: 9 },
+        bodyStyles: { fontSize: 8 },
+        margin: { left: 14, right: 14 },
+        didParseCell: (cellData: any) => {
+          if (cellData.column.index === 3 && cellData.cell.raw === 'Non conforme') {
+            cellData.cell.styles.textColor = [220, 38, 38]
+            cellData.cell.styles.fontStyle = 'bold'
+          }
+        }
+      })
+    } else {
+      doc.text('Aucun relevé de température pour cette période.', 14, currentY)
+    }
+
+    this.addRegisterFooter(doc)
+    doc.save(`registre-temperatures-${data.startDate}-${data.endDate}.pdf`)
+  }
+
+  /**
+   * Export cleaning register for a date range
+   */
+  exportCleaningRegister(data: {
+    nurseryName: string
+    startDate: string
+    endDate: string
+    sessions: Array<{
+      date: string
+      status: string
+      completed_tasks: number
+      total_tasks: number
+      completion_percentage: number
+    }>
+  }): void {
+    const doc = new jsPDF()
+    let currentY = 20
+
+    doc.setFontSize(18)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Registre de Nettoyage Quotidien', 14, currentY)
+    currentY += 10
+
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'normal')
+    doc.text(data.nurseryName, 14, currentY)
+    currentY += 7
+
+    doc.setFontSize(10)
+    doc.text(`Période: du ${new Date(data.startDate).toLocaleDateString('fr-FR')} au ${new Date(data.endDate).toLocaleDateString('fr-FR')}`, 14, currentY)
+    currentY += 5
+
+    const completed = data.sessions.filter(s => s.status === 'COMPLETEE').length
+    const avgCompletion = data.sessions.length > 0
+      ? Math.round(data.sessions.reduce((sum, s) => sum + s.completion_percentage, 0) / data.sessions.length)
+      : 0
+    doc.text(`${data.sessions.length} session(s) — ${completed} complétée(s) — Taux moyen: ${avgCompletion}%`, 14, currentY)
+    currentY += 8
+
+    doc.setDrawColor(200, 200, 200)
+    doc.line(14, currentY, 196, currentY)
+    currentY += 8
+
+    if (data.sessions.length > 0) {
+      autoTable(doc, {
+        startY: currentY,
+        head: [['Date', 'Statut', 'Tâches', 'Complétion']],
+        body: data.sessions.map(s => [
+          new Date(s.date).toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' }),
+          this.getStatusLabel(s.status),
+          `${s.completed_tasks} / ${s.total_tasks}`,
+          `${s.completion_percentage}%`
+        ]),
+        theme: 'striped',
+        headStyles: { fillColor: [90, 157, 201], textColor: 255, fontStyle: 'bold', fontSize: 9 },
+        bodyStyles: { fontSize: 8 },
+        margin: { left: 14, right: 14 }
+      })
+    } else {
+      doc.text('Aucune session de nettoyage pour cette période.', 14, currentY)
+    }
+
+    this.addRegisterFooter(doc)
+    doc.save(`registre-nettoyage-${data.startDate}-${data.endDate}.pdf`)
+  }
+
+  /**
+   * Export meal traceability register for a date range
+   */
+  exportMealRegister(data: {
+    nurseryName: string
+    startDate: string
+    endDate: string
+    meals: Array<{
+      date: string
+      type: string
+      menu: string | null
+      allergens_present: string | null
+      is_validated: boolean
+    }>
+  }): void {
+    const doc = new jsPDF()
+    let currentY = 20
+
+    doc.setFontSize(18)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Registre de Traçabilité des Repas', 14, currentY)
+    currentY += 10
+
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'normal')
+    doc.text(data.nurseryName, 14, currentY)
+    currentY += 7
+
+    doc.setFontSize(10)
+    doc.text(`Période: du ${new Date(data.startDate).toLocaleDateString('fr-FR')} au ${new Date(data.endDate).toLocaleDateString('fr-FR')}`, 14, currentY)
+    currentY += 5
+
+    const validated = data.meals.filter(m => m.is_validated).length
+    doc.text(`${data.meals.length} repas — ${validated} validé(s)`, 14, currentY)
+    currentY += 8
+
+    doc.setDrawColor(200, 200, 200)
+    doc.line(14, currentY, 196, currentY)
+    currentY += 8
+
+    if (data.meals.length > 0) {
+      autoTable(doc, {
+        startY: currentY,
+        head: [['Date', 'Type', 'Menu', 'Allergènes', 'Validé']],
+        body: data.meals.map(m => [
+          new Date(m.date).toLocaleDateString('fr-FR'),
+          this.getMealTypeLabel(m.type),
+          m.menu || '-',
+          m.allergens_present || 'Aucun',
+          m.is_validated ? 'Oui' : 'Non'
+        ]),
+        theme: 'striped',
+        headStyles: { fillColor: [255, 171, 145], textColor: [127, 29, 29], fontStyle: 'bold', fontSize: 9 },
+        bodyStyles: { fontSize: 8 },
+        columnStyles: { 2: { cellWidth: 60 } },
+        margin: { left: 14, right: 14 }
+      })
+    } else {
+      doc.text('Aucun repas enregistré pour cette période.', 14, currentY)
+    }
+
+    this.addRegisterFooter(doc)
+    doc.save(`registre-repas-${data.startDate}-${data.endDate}.pdf`)
+  }
+
+  /**
+   * Export non-compliance register for a date range
+   */
+  exportNonComplianceRegister(data: {
+    nurseryName: string
+    startDate: string
+    endDate: string
+    incidents: Array<{
+      discovered_at: string
+      type: string
+      description: string
+      status: string
+      corrective_action: string | null
+    }>
+  }): void {
+    const doc = new jsPDF()
+    let currentY = 20
+
+    doc.setFontSize(18)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Registre des Non-Conformités', 14, currentY)
+    currentY += 10
+
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'normal')
+    doc.text(data.nurseryName, 14, currentY)
+    currentY += 7
+
+    doc.setFontSize(10)
+    doc.text(`Période: du ${new Date(data.startDate).toLocaleDateString('fr-FR')} au ${new Date(data.endDate).toLocaleDateString('fr-FR')}`, 14, currentY)
+    currentY += 5
+
+    const open = data.incidents.filter(i => i.status === 'Open').length
+    const closed = data.incidents.filter(i => i.status === 'Closed').length
+    doc.text(`${data.incidents.length} incident(s) — ${open} ouvert(s) — ${closed} fermé(s)`, 14, currentY)
+    currentY += 8
+
+    doc.setDrawColor(200, 200, 200)
+    doc.line(14, currentY, 196, currentY)
+    currentY += 8
+
+    if (data.incidents.length > 0) {
+      autoTable(doc, {
+        startY: currentY,
+        head: [['Date', 'Type', 'Description', 'Statut', 'Action corrective']],
+        body: data.incidents.map(i => [
+          new Date(i.discovered_at).toLocaleDateString('fr-FR'),
+          this.getComplianceTypeLabel(i.type),
+          i.description,
+          this.getComplianceStatusLabel(i.status),
+          i.corrective_action || 'En attente'
+        ]),
+        theme: 'striped',
+        headStyles: { fillColor: [244, 194, 194], textColor: [127, 29, 29], fontStyle: 'bold', fontSize: 9 },
+        bodyStyles: { fontSize: 8 },
+        columnStyles: { 2: { cellWidth: 50 }, 4: { cellWidth: 50 } },
+        margin: { left: 14, right: 14 }
+      })
+    } else {
+      doc.text('Aucune non-conformité pour cette période.', 14, currentY)
+    }
+
+    this.addRegisterFooter(doc)
+    doc.save(`registre-non-conformites-${data.startDate}-${data.endDate}.pdf`)
+  }
+
+  /**
+   * Export equipment register
+   */
+  exportEquipmentRegister(data: {
+    nurseryName: string
+    equipment: Array<{
+      name: string
+      category: string | null
+      last_maintenance_date: string | null
+      next_maintenance_date: string | null
+      notes: string | null
+      is_active: boolean
+    }>
+  }): void {
+    const doc = new jsPDF()
+    let currentY = 20
+
+    doc.setFontSize(18)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Registre des Équipements', 14, currentY)
+    currentY += 10
+
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'normal')
+    doc.text(data.nurseryName, 14, currentY)
+    currentY += 7
+
+    doc.setFontSize(10)
+    const active = data.equipment.filter(e => e.is_active).length
+    doc.text(`${data.equipment.length} équipement(s) — ${active} actif(s)`, 14, currentY)
+    currentY += 8
+
+    doc.setDrawColor(200, 200, 200)
+    doc.line(14, currentY, 196, currentY)
+    currentY += 8
+
+    if (data.equipment.length > 0) {
+      autoTable(doc, {
+        startY: currentY,
+        head: [['Équipement', 'Catégorie', 'Dernière maintenance', 'Prochaine', 'Notes', 'Actif']],
+        body: data.equipment.map(e => [
+          e.name,
+          e.category || '-',
+          e.last_maintenance_date ? new Date(e.last_maintenance_date).toLocaleDateString('fr-FR') : '-',
+          e.next_maintenance_date ? new Date(e.next_maintenance_date).toLocaleDateString('fr-FR') : '-',
+          e.notes || '-',
+          e.is_active ? 'Oui' : 'Non'
+        ]),
+        theme: 'striped',
+        headStyles: { fillColor: [179, 157, 219], textColor: [74, 20, 140], fontStyle: 'bold', fontSize: 9 },
+        bodyStyles: { fontSize: 8 },
+        margin: { left: 14, right: 14 }
+      })
+    } else {
+      doc.text('Aucun équipement enregistré.', 14, currentY)
+    }
+
+    this.addRegisterFooter(doc)
+    doc.save(`registre-equipements-${Date.now()}.pdf`)
+  }
+
+  private addRegisterFooter(doc: jsPDF): void {
+    doc.setFontSize(8)
+    doc.setTextColor(128, 128, 128)
+    const pageCount = (doc as any).internal.getNumberOfPages()
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i)
+      const footerY = doc.internal.pageSize.height - 10
+      doc.text(
+        `Généré le ${new Date().toLocaleString('fr-FR')} — Page ${i}/${pageCount}`,
+        14,
+        footerY
+      )
+      doc.text(
+        'Conforme aux normes HACCP',
+        doc.internal.pageSize.width - 14,
+        footerY,
+        { align: 'right' }
+      )
+    }
+    doc.setTextColor(0, 0, 0)
+  }
+
+  // ============================================================================
   // BOTTLE FEEDING TRACEABILITY EXPORT
   // ============================================================================
 

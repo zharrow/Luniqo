@@ -20,6 +20,9 @@ export default function Header() {
   const [showNotificationModal, setShowNotificationModal] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
 
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
   const userDisplayName = session?.user ? getUserDisplayName(session.user) : 'User'
   const userRole = session?.role || 'Employee'
 
@@ -124,21 +127,21 @@ export default function Header() {
             className="flex items-center gap-3 pl-3 pr-2 py-2 rounded-xl hover:bg-neutral-100 transition-colors"
           >
             <div className="text-right">
-              <p className="text-sm font-semibold text-neutral-900">{userDisplayName}</p>
-              <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full border ${roleBadgeColors[userRole]}`}>
+              <p className="text-sm font-semibold text-neutral-900" suppressHydrationWarning>{userDisplayName}</p>
+              <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full border ${roleBadgeColors[userRole]}`} suppressHydrationWarning>
                 {roleLabels[userRole]}
               </span>
             </div>
 
             {/* Avatar with image or initials */}
-            {session?.user?.avatar_url ? (
+            {mounted && session?.user?.avatar_url ? (
               <img
                 src={session.user.avatar_url}
                 alt="Avatar"
                 className="w-10 h-10 rounded-full shadow-md object-cover"
               />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-linear-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
+              <div className="w-10 h-10 rounded-full bg-linear-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-bold text-sm shadow-md" suppressHydrationWarning>
                 {getInitials(userDisplayName)}
               </div>
             )}

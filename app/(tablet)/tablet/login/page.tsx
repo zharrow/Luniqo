@@ -2,82 +2,41 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTabletAuth } from '@/lib/contexts/TabletAuthContext'
-import { loginWithEmail, getEnterpriseEmployees, loginEmployeeWithPin } from '@/lib/utils/auth.client'
+import { useTabletAuth, type TabletSession } from '@/lib/contexts/TabletAuthContext'
+import { loginWithPin, getTodayNurseries, type TodayNurseryAssignment } from '@/lib/utils/auth.client'
 
-type Step = 'admin-login' | 'employee-selection' | 'pin-entry'
-
-interface Employee {
-  id: string
-  first_name: string
-  last_name: string
-  username: string | null
-  avatar_url: string | null
-}
+type Step = 'username' | 'pin-entry' | 'nursery-selection' | 'no-nursery'
 
 export default function TabletLoginPage() {
-  const [step, setStep] = useState<Step>('admin-login')
-  const [adminEmail, setAdminEmail] = useState('')
-  const [adminPassword, setAdminPassword] = useState('')
-  const [enterpriseId, setEnterpriseId] = useState('')
-  const [enterpriseName, setEnterpriseName] = useState('')
-  const [employees, setEmployees] = useState<Employee[]>([])
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
+  const [step, setStep] = useState<Step>('username')
+  const [email, setEmail] = useState('')
   const [pin, setPin] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
+  // Data stored between steps
+  const [employeeData, setEmployeeData] = useState<{
+    user: any
+    enterprise: any
+    accessibleRooms: string[]
+  } | null>(null)
+  const [nurseryAssignments, setNurseryAssignments] = useState<TodayNurseryAssignment[]>([])
+
   const { setSession } = useTabletAuth()
   const router = useRouter()
 
-  // Step 1: Admin Login
-  async function handleAdminLogin(e: React.FormEvent) {
+  // Step 1: Username submission
+  async function handleUsernameSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError('')
-    setIsLoading(true)
-
-    try {
-      console.log('🔐 Attempting admin login...', { email: adminEmail })
-      const response = await loginWithEmail(adminEmail, adminPassword)
-      console.log('📥 Login response:', { success: response.success, role: response.role, hasEnterprise: !!response.enterprise })
-
-      if (response.success && response.role === 'Owner' && response.enterprise) {
-        setEnterpriseId(response.enterprise.id)
-        setEnterpriseName(response.enterprise.name)
-
-        console.log('🏢 Loading employees for enterprise:', response.enterprise.id)
-        // Load employees for this enterprise
-        const employeeList = await getEnterpriseEmployees(response.enterprise.id)
-        console.log('👥 Employees loaded:', employeeList.length)
-
-        if (employeeList.length === 0) {
-          setError('Aucun employé actif trouvé pour cette entreprise')
-        } else {
-          setEmployees(employeeList)
-          setStep('employee-selection')
-          console.log('✅ Employee list loaded, ready for selection')
-        }
-      } else {
-        console.error('❌ Login failed:', response.error || 'Invalid role or missing enterprise')
-        setError('Connexion échouée. Seuls les administrateurs peuvent se connecter ici.')
-      }
-    } catch (err) {
-      console.error('❌ Login error:', err)
-      setError('Une erreur est survenue lors de la connexion')
-    } finally {
-      setIsLoading(false)
+    if (!email.trim()) {
+      setError('Veuillez entrer votre adresse email')
+      return
     }
-  }
-
-  // Step 2: Employee Selection
-  function handleEmployeeSelect(employee: Employee) {
-    setSelectedEmployee(employee)
-    setPin('')
     setError('')
     setStep('pin-entry')
   }
 
-  // Step 3: PIN Entry
+  // Step 2: PIN Entry
   function handlePinInput(digit: string) {
     if (pin.length < 4) {
       setPin(pin + digit)
@@ -94,7 +53,7 @@ export default function TabletLoginPage() {
   }
 
   async function handlePinSubmit() {
-    if (!selectedEmployee || pin.length !== 4) {
+    if (pin.length !== 4) {
       setError('Veuillez entrer un code PIN à 4 chiffres')
       return
     }
@@ -103,57 +62,92 @@ export default function TabletLoginPage() {
     setIsLoading(true)
 
     try {
-      console.log('🔢 Verifying PIN for employee:', selectedEmployee.id)
-      const response = await loginEmployeeWithPin(selectedEmployee.id, pin)
-      console.log('✅ PIN verification response:', { success: response.success, role: response.role })
+      // Authenticate with email + PIN
+      const response = await loginWithPin({ email: email.trim(), pin })
 
-      if (response.success && response.data && response.enterprise) {
-        console.log('💾 Setting tablet session...')
-
-        // Store session using TabletAuthContext
-        setSession({
-          user: response.data as any, // Safe: loginEmployeeWithPin always returns User type
-          enterprise: response.enterprise,
-          accessibleRooms: response.accessibleRooms || []
-        })
-
-        console.log('✅ Tablet session set successfully')
-        console.log('🚀 Redirecting to /tablet/home')
-        router.push('/tablet/home')
-      } else {
-        console.error('❌ PIN verification failed:', response.error)
+      if (!response.success || !response.data || !response.enterprise) {
         setError(response.error || 'Code PIN incorrect')
         setPin('')
+        setIsLoading(false)
+        return
+      }
+
+      const employee = {
+        user: response.data,
+        enterprise: response.enterprise,
+        accessibleRooms: response.accessibleRooms || []
+      }
+      setEmployeeData(employee)
+
+      // Fetch today's nursery assignments
+      const assignments = await getTodayNurseries(response.data.id)
+      setNurseryAssignments(assignments)
+
+      if (assignments.length === 1) {
+        // Single nursery today — connect directly
+        finalizeSession(employee, assignments[0])
+      } else if (assignments.length > 1) {
+        // Multiple nurseries — show selector
+        setStep('nursery-selection')
+        setIsLoading(false)
+      } else {
+        // No nursery assigned today
+        setStep('no-nursery')
+        setIsLoading(false)
       }
     } catch (err) {
-      console.error('❌ PIN submit error:', err)
+      console.error('Login error:', err)
       setError('Une erreur est survenue')
       setPin('')
-    } finally {
       setIsLoading(false)
     }
   }
 
+  function finalizeSession(
+    employee: { user: any; enterprise: any; accessibleRooms: string[] },
+    assignment: TodayNurseryAssignment
+  ) {
+    const session: TabletSession = {
+      user: employee.user,
+      enterprise: employee.enterprise,
+      accessibleRooms: employee.accessibleRooms,
+      selectedNursery: assignment.nursery,
+      todayShifts: assignment.shifts
+    }
+    setSession(session)
+    router.push('/tablet/home')
+  }
+
+  function handleNurserySelect(assignment: TodayNurseryAssignment) {
+    if (!employeeData) return
+    finalizeSession(employeeData, assignment)
+  }
+
   // Auto-submit when PIN is 4 digits
   useEffect(() => {
-    if (pin.length === 4 && selectedEmployee) {
+    if (pin.length === 4) {
       handlePinSubmit()
     }
   }, [pin])
 
   function handleBack() {
     if (step === 'pin-entry') {
-      setStep('employee-selection')
-      setSelectedEmployee(null)
+      setStep('username')
       setPin('')
       setError('')
-    } else if (step === 'employee-selection') {
-      setStep('admin-login')
-      setEmployees([])
-      setAdminEmail('')
-      setAdminPassword('')
+    } else if (step === 'nursery-selection' || step === 'no-nursery') {
+      setStep('username')
+      setEmail('')
+      setPin('')
       setError('')
+      setEmployeeData(null)
+      setNurseryAssignments([])
     }
+  }
+
+  function formatTime(time: string) {
+    // time is in HH:MM:SS or HH:MM format, display as HH:MM
+    return time.substring(0, 5)
   }
 
   return (
@@ -161,7 +155,7 @@ export default function TabletLoginPage() {
       <div className="w-full max-w-4xl">
         {/* Logo & Title */}
         <div className="text-center mb-12 animate-fade-in">
-          <div className="inline-block p-6 bg-white rounded-3xl shadow-[0_8px_24px_-4px_rgba(90,157,201,0.15)] mb-6 hover:shadow-[0_12px_32px_-4px_rgba(90,157,201,0.25)] transition-all duration-300 hover:-translate-y-1">
+          <div className="inline-block p-6 bg-white rounded-3xl shadow-[0_12px_32px_-4px_rgba(90,157,201,0.25)] mb-6">
             <img
               src="/luniqo.png"
               alt="Luniqo"
@@ -172,45 +166,31 @@ export default function TabletLoginPage() {
             Connexion Employé
           </h1>
           <p className="text-2xl text-gray-600">
-            {step === 'admin-login' && 'Connexion administrateur'}
-            {step === 'employee-selection' && `${enterpriseName} - Sélectionnez votre nom`}
-            {step === 'pin-entry' && `Bonjour ${selectedEmployee?.first_name}`}
+            {step === 'username' && 'Entrez votre adresse email'}
+            {step === 'pin-entry' && 'Entrez votre code PIN'}
+            {step === 'nursery-selection' && `Bonjour ${employeeData?.user.first_name} — Sélectionnez votre crèche`}
+            {step === 'no-nursery' && `Bonjour ${employeeData?.user.first_name}`}
           </p>
         </div>
 
-        {/* Step 1: Admin Login */}
-        {step === 'admin-login' && (
+        {/* Step 1: Username */}
+        {step === 'username' && (
           <div className="bg-white rounded-3xl shadow-[0_16px_48px_-12px_rgba(90,157,201,0.15)] p-8 animate-slide-up border border-[#5a9dc9]/10">
-            <form onSubmit={handleAdminLogin} className="space-y-6">
+            <form onSubmit={handleUsernameSubmit} className="space-y-6">
               <div>
                 <label className="block text-xl font-medium mb-3 text-gray-700">
-                  Email administrateur
+                  Adresse email
                 </label>
                 <input
                   type="email"
-                  value={adminEmail}
-                  onChange={(e) => setAdminEmail(e.target.value)}
-                  className="w-full px-6 py-4 text-xl rounded-2xl border border-[#5a9dc9]/20 focus:outline-none focus:ring-2 focus:ring-[#5a9dc9]/20 focus:border-[#5a9dc9] bg-white transition-all duration-300 hover:border-[#5a9dc9]/40"
-                  placeholder="admin@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-6 py-4 text-xl rounded-2xl border border-[#5a9dc9]/30 focus:outline-none focus:ring-2 focus:ring-[#5a9dc9]/20 focus:border-[#5a9dc9] bg-white transition-colors"
+                  placeholder="prenom.nom@exemple.com"
                   required
                   disabled={isLoading}
                   autoComplete="email"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xl font-medium mb-3 text-gray-700">
-                  Mot de passe
-                </label>
-                <input
-                  type="password"
-                  value={adminPassword}
-                  onChange={(e) => setAdminPassword(e.target.value)}
-                  className="w-full px-6 py-4 text-xl rounded-2xl border border-[#5a9dc9]/20 focus:outline-none focus:ring-2 focus:ring-[#5a9dc9]/20 focus:border-[#5a9dc9] bg-white transition-all duration-300 hover:border-[#5a9dc9]/40"
-                  placeholder="••••••••"
-                  required
-                  disabled={isLoading}
-                  autoComplete="current-password"
+                  autoFocus
                 />
               </div>
 
@@ -223,29 +203,18 @@ export default function TabletLoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="bg-gradient-to-r from-[#81c995] to-[#4a8f5a] text-white w-full h-16 text-2xl font-semibold rounded-2xl hover:shadow-[0_8px_24px_-4px_rgba(129,201,149,0.4)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:-translate-y-1 relative overflow-hidden group"
+                className="bg-gradient-to-r from-[#81c995] to-[#4a8f5a] text-white w-full h-16 text-2xl font-semibold rounded-2xl shadow-[0_8px_24px_-4px_rgba(129,201,149,0.4)] disabled:opacity-50 disabled:cursor-not-allowed active:opacity-80 transition-opacity relative overflow-hidden"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
-                {isLoading ? (
-                  <span className="flex items-center justify-center gap-3 relative">
-                    <svg className="animate-spin h-8 w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Connexion...
-                  </span>
-                ) : (
-                  <span className="relative">Continuer</span>
-                )}
+                <span className="relative">Continuer</span>
               </button>
             </form>
 
             <div className="text-center mt-6">
               <a
                 href="/login"
-                className="text-xl text-gray-600 hover:text-[#5a9dc9] transition-colors inline-flex items-center gap-2 group"
+                className="text-xl text-[#5a9dc9] inline-flex items-center gap-2"
               >
-                <svg className="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
                 Retour à la connexion standard
@@ -254,50 +223,8 @@ export default function TabletLoginPage() {
           </div>
         )}
 
-        {/* Step 2: Employee Selection */}
-        {step === 'employee-selection' && (
-          <div className="animate-slide-up">
-            <div className="grid grid-cols-2 gap-6 mb-6">
-              {employees.map((employee) => (
-                <button
-                  key={employee.id}
-                  onClick={() => handleEmployeeSelect(employee)}
-                  className="relative bg-white rounded-3xl p-8 hover:-translate-y-1 hover:shadow-[0_16px_48px_-12px_rgba(244,165,165,0.25)] transition-all duration-300 text-center border border-[#f4a5a5]/20 overflow-hidden group"
-                >
-                  {/* Gradient rose pastel en fond */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#fef6f7] to-white opacity-60"></div>
-
-                  <div className="relative z-10">
-                    <div className="w-24 h-24 mx-auto mb-4 bg-gradient-to-br from-[#f4a5a5] to-[#c66b6b] rounded-full flex items-center justify-center shadow-lg group-hover:scale-105 group-hover:rotate-3 transition-all duration-300">
-                      <span className="text-4xl font-bold text-white">
-                        {employee.first_name.charAt(0)}{employee.last_name.charAt(0)}
-                      </span>
-                    </div>
-                    <h3 className="text-2xl font-semibold mb-1 text-gray-900 tracking-tight">
-                      {employee.first_name} {employee.last_name}
-                    </h3>
-                    {employee.username && (
-                      <p className="text-lg text-gray-600">@{employee.username}</p>
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            <button
-              onClick={handleBack}
-              className="bg-gray-100 hover:bg-gray-200 text-gray-800 w-full h-16 text-xl rounded-2xl transition-all font-semibold border border-gray-200 hover:border-gray-300 hover:-translate-y-0.5 inline-flex items-center justify-center gap-2 group"
-            >
-              <svg className="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              Retour
-            </button>
-          </div>
-        )}
-
-        {/* Step 3: PIN Entry */}
-        {step === 'pin-entry' && selectedEmployee && (
+        {/* Step 2: PIN Entry */}
+        {step === 'pin-entry' && (
           <div className="bg-white rounded-3xl shadow-[0_16px_48px_-12px_rgba(90,157,201,0.15)] p-8 animate-slide-up border border-[#5a9dc9]/10">
             {/* PIN Display */}
             <div className="flex justify-center items-center gap-6 mb-8">
@@ -329,7 +256,7 @@ export default function TabletLoginPage() {
                   key={digit}
                   onClick={() => handlePinInput(digit.toString())}
                   disabled={isLoading || pin.length >= 4}
-                  className="bg-gradient-to-br from-[#5a9dc9] to-[#2c5f7f] text-white h-24 text-3xl font-bold rounded-2xl hover:shadow-[0_8px_24px_-4px_rgba(90,157,201,0.4)] hover:scale-105 active:scale-95 disabled:opacity-50 transition-all duration-200"
+                  className="bg-gradient-to-br from-[#5a9dc9] to-[#2c5f7f] text-white h-24 text-3xl font-bold rounded-2xl shadow-[0_8px_24px_-4px_rgba(90,157,201,0.4)] active:scale-95 disabled:opacity-50 transition-transform duration-200"
                 >
                   {digit}
                 </button>
@@ -339,7 +266,7 @@ export default function TabletLoginPage() {
               <button
                 onClick={handleClear}
                 disabled={isLoading}
-                className="bg-gradient-to-br from-[#ffe5b4] to-[#ffd580] text-gray-800 h-24 text-xl rounded-2xl hover:shadow-[0_8px_24px_-4px_rgba(255,229,180,0.4)] hover:scale-105 active:scale-95 transition-all duration-200 font-semibold"
+                className="bg-gradient-to-br from-[#ffe5b4] to-[#ffd580] text-gray-800 h-24 text-xl rounded-2xl shadow-[0_8px_24px_-4px_rgba(255,229,180,0.4)] active:scale-95 transition-transform duration-200 font-semibold"
               >
                 Effacer
               </button>
@@ -348,7 +275,7 @@ export default function TabletLoginPage() {
               <button
                 onClick={() => handlePinInput('0')}
                 disabled={isLoading || pin.length >= 4}
-                className="bg-gradient-to-br from-[#5a9dc9] to-[#2c5f7f] text-white h-24 text-3xl font-bold rounded-2xl hover:shadow-[0_8px_24px_-4px_rgba(90,157,201,0.4)] hover:scale-105 active:scale-95 disabled:opacity-50 transition-all duration-200"
+                className="bg-gradient-to-br from-[#5a9dc9] to-[#2c5f7f] text-white h-24 text-3xl font-bold rounded-2xl shadow-[0_8px_24px_-4px_rgba(90,157,201,0.4)] active:scale-95 disabled:opacity-50 transition-transform duration-200"
               >
                 0
               </button>
@@ -357,7 +284,7 @@ export default function TabletLoginPage() {
               <button
                 onClick={handleBackspace}
                 disabled={isLoading || pin.length === 0}
-                className="bg-gray-100 hover:bg-gray-200 text-gray-800 h-24 text-2xl rounded-2xl hover:scale-105 active:scale-95 disabled:opacity-50 transition-all duration-200 font-semibold border border-gray-200"
+                className="bg-gray-200 text-gray-800 h-24 text-2xl rounded-2xl active:scale-95 disabled:opacity-50 transition-transform duration-200 font-semibold border border-gray-200"
               >
                 ←
               </button>
@@ -367,13 +294,100 @@ export default function TabletLoginPage() {
             <button
               onClick={handleBack}
               disabled={isLoading}
-              className="bg-gray-100 hover:bg-gray-200 text-gray-800 w-full h-16 text-xl rounded-2xl transition-all font-semibold border border-gray-200 hover:border-gray-300 hover:-translate-y-0.5 inline-flex items-center justify-center gap-2 group"
+              className="bg-gray-200 text-gray-800 w-full h-16 text-xl rounded-2xl font-semibold border border-gray-300 active:opacity-80 transition-opacity inline-flex items-center justify-center gap-2"
             >
-              <svg className="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-              Changer d'employé
+              Retour
             </button>
+          </div>
+        )}
+
+        {/* Step 3a: Nursery Selection */}
+        {step === 'nursery-selection' && (
+          <div className="animate-slide-up">
+            <div className="grid grid-cols-1 gap-6 mb-6">
+              {nurseryAssignments.map((assignment) => (
+                <button
+                  key={assignment.nursery.id}
+                  onClick={() => handleNurserySelect(assignment)}
+                  className="relative bg-white rounded-3xl p-8 shadow-[0_16px_48px_-12px_rgba(90,157,201,0.25)] active:opacity-90 transition-opacity text-left border border-[#5a9dc9]/20 overflow-hidden group"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#f8fbfd] to-white opacity-60"></div>
+
+                  <div className="relative z-10 flex items-center gap-6">
+                    <div className="w-20 h-20 bg-gradient-to-br from-[#5a9dc9] to-[#2c5f7f] rounded-full flex items-center justify-center shadow-lg">
+                      <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-2xl font-semibold text-gray-900 tracking-tight mb-2">
+                        {assignment.nursery.name}
+                      </h3>
+                      <div className="flex flex-wrap gap-3">
+                        {assignment.shifts.map((shift) => (
+                          <span
+                            key={shift.id}
+                            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#5a9dc9]/10 text-[#2c5f7f] text-lg font-medium"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {formatTime(shift.start_time)} - {formatTime(shift.end_time)}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <svg className="w-8 h-8 text-[#5a9dc9]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={handleBack}
+              className="bg-gray-200 text-gray-800 w-full h-16 text-xl rounded-2xl font-semibold border border-gray-300 active:opacity-80 transition-opacity inline-flex items-center justify-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Retour
+            </button>
+          </div>
+        )}
+
+        {/* Step 3b: No Nursery Assigned */}
+        {step === 'no-nursery' && (
+          <div className="bg-white rounded-3xl shadow-[0_16px_48px_-12px_rgba(90,157,201,0.15)] p-8 animate-slide-up border border-[#f4a5a5]/20">
+            <div className="text-center">
+              <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-[#ffe5b4] to-[#ffd580] rounded-full flex items-center justify-center shadow-lg">
+                <svg className="w-12 h-12 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                Aucune crèche assignée aujourd'hui
+              </h2>
+              <p className="text-xl text-gray-600 mb-8 max-w-lg mx-auto">
+                Vous n'avez pas de crèche assignée pour aujourd'hui. Si vous pensez que c'est une erreur, contactez votre supérieur.
+              </p>
+
+              <button
+                onClick={handleBack}
+                className="bg-gradient-to-r from-[#5a9dc9] to-[#2c5f7f] text-white w-full max-w-md h-16 text-2xl font-semibold rounded-2xl shadow-[0_8px_24px_-4px_rgba(90,157,201,0.4)] active:opacity-80 transition-opacity relative overflow-hidden"
+              >
+                <span className="relative inline-flex items-center gap-2">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Retour
+                </span>
+              </button>
+            </div>
           </div>
         )}
       </div>

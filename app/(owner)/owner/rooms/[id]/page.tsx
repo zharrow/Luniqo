@@ -98,6 +98,21 @@ export default function RoomTasksPage() {
     }
   }
 
+  async function refreshTasks() {
+    if (!session?.enterprise?.id || !id) return
+
+    try {
+      const [tasksData, assignedData] = await Promise.all([
+        tasksService.getActive(session.enterprise.id),
+        assignedTasksService.getActiveByRoom(id as string)
+      ])
+      setAvailableTasks(tasksData)
+      setAssignedTasks(assignedData)
+    } catch (error) {
+      console.error('Error refreshing tasks:', error)
+    }
+  }
+
   async function handleAssignTask() {
     if (!id || selectedTaskId === 'none') return
 
@@ -135,13 +150,13 @@ export default function RoomTasksPage() {
         frequency
       })
 
-      // Reset selection and reload
+      // Reset selection and refresh tasks only
       setSelectedTaskId('none')
       setSuggestedHour('12')
       setSuggestedMinute('30')
       setExpectedDuration('')
       setSelectedDays([])
-      loadData()
+      refreshTasks()
     } catch (error) {
       console.error('Error assigning task:', error)
       alert('Erreur lors de l\'assignation')
@@ -170,13 +185,13 @@ export default function RoomTasksPage() {
         frequency
       })
 
-      // Reset edit state and reload
+      // Reset edit state and refresh tasks only
       setEditingTask(null)
       setEditHour('')
       setEditMinute('')
       setEditDuration('')
       setEditDays([])
-      loadData()
+      refreshTasks()
     } catch (error) {
       console.error('Error updating task schedule:', error)
       alert('Erreur lors de la mise à jour')
@@ -216,7 +231,7 @@ export default function RoomTasksPage() {
     try {
       setSaving(true)
       await assignedTasksService.hardDelete(assignedTaskId)
-      loadData()
+      refreshTasks()
     } catch (error) {
       console.error('Error unassigning task:', error)
       alert('Erreur lors de la suppression')
@@ -278,84 +293,81 @@ export default function RoomTasksPage() {
           </div>
         </div>
 
-        {/* Assign new task */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <PlusIcon className="w-5 h-5" />
-              Assigner une nouvelle tâche
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {unassignedTasks.length === 0 ? (
-              <div className="text-center py-8">
-                <CheckCircleIcon className="w-12 h-12 text-success-500 mx-auto mb-3" />
-                <p className="text-muted-foreground">
-                  Toutes les tâches disponibles sont déjà assignées à cette pièce
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="flex gap-3">
-                  <div className="flex-1">
-                    <Label htmlFor="task-select">Tâche à assigner</Label>
-                    <Select value={selectedTaskId} onValueChange={setSelectedTaskId}>
-                      <SelectTrigger id="task-select">
-                        <SelectValue placeholder="Sélectionnez une tâche" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Sélectionnez une tâche</SelectItem>
-                        {unassignedTasks.map((task) => (
-                          <SelectItem key={task.id} value={task.id}>
-                            {task.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+        {/* Two-column layout: form left (narrow), list right (wide) */}
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-6 items-start">
+          {/* Assign new task */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <PlusIcon className="w-5 h-5" />
+                Assigner une tâche
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {unassignedTasks.length === 0 ? (
+                <div className="text-center py-8">
+                  <CheckCircleIcon className="w-12 h-12 text-success-500 mx-auto mb-3" />
+                  <p className="text-muted-foreground">
+                    Toutes les tâches disponibles sont déjà assignées à cette pièce
+                  </p>
                 </div>
-
-                {/* Time and duration fields */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="flex items-center gap-2">
-                      <ClockIcon className="w-4 h-4" />
-                      Horaire suggéré (optionnel)
-                    </Label>
-                    <div className="flex items-center gap-2">
-                      <Select value={suggestedHour} onValueChange={setSuggestedHour}>
-                        <SelectTrigger className="w-24">
-                          <SelectValue />
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-[1fr_auto] gap-3 items-end">
+                    <div>
+                      <Label htmlFor="task-select">Tâche à assigner</Label>
+                      <Select value={selectedTaskId} onValueChange={setSelectedTaskId}>
+                        <SelectTrigger id="task-select">
+                          <SelectValue placeholder="Sélectionnez une tâche" />
                         </SelectTrigger>
                         <SelectContent>
-                          {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
-                            <SelectItem key={hour} value={hour.toString().padStart(2, '0')}>
-                              {hour.toString().padStart(2, '0')}h
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <span className="text-muted-foreground">:</span>
-                      <Select value={suggestedMinute} onValueChange={setSuggestedMinute}>
-                        <SelectTrigger className="w-24">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map((min) => (
-                            <SelectItem key={min} value={min}>
-                              {min}
+                          <SelectItem value="none">Sélectionnez une tâche</SelectItem>
+                          {unassignedTasks.map((task) => (
+                            <SelectItem key={task.id} value={task.id}>
+                              {task.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Heure idéale pour effectuer cette tâche
-                    </p>
+                    <div>
+                      <Label className="flex items-center gap-1 text-xs">
+                        <ClockIcon className="w-3.5 h-3.5" />
+                        Horaire
+                      </Label>
+                      <div className="flex items-center gap-1">
+                        <Select value={suggestedHour} onValueChange={setSuggestedHour}>
+                          <SelectTrigger className="w-[72px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
+                              <SelectItem key={hour} value={hour.toString().padStart(2, '0')}>
+                                {hour.toString().padStart(2, '0')}h
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <span className="text-muted-foreground">:</span>
+                        <Select value={suggestedMinute} onValueChange={setSuggestedMinute}>
+                          <SelectTrigger className="w-[72px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map((min) => (
+                              <SelectItem key={min} value={min}>
+                                {min}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                   </div>
+
                   <div>
                     <Label htmlFor="expected-duration">
-                      Durée estimée (modifiable)
+                      Durée estimée
                     </Label>
                     <div className="flex items-center gap-2">
                       <Input
@@ -368,303 +380,270 @@ export default function RoomTasksPage() {
                         placeholder="30"
                       />
                       <span className="text-sm text-muted-foreground whitespace-nowrap">
-                        minutes
+                        min
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Durée pré-remplie depuis la tâche, modifiable selon la pièce
+                  </div>
+
+                  {/* Days of week selection */}
+                  <div>
+                    <Label className="mb-2 block">
+                      Jours spécifiques
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Si vide, la tâche sera répétée tous les jours.
                     </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as DayOfWeek[]).map((day) => {
+                        const dayLabels = {
+                          Monday: 'Lun',
+                          Tuesday: 'Mar',
+                          Wednesday: 'Mer',
+                          Thursday: 'Jeu',
+                          Friday: 'Ven'
+                        }
+                        const isSelected = selectedDays.includes(day)
+
+                        return (
+                          <Badge
+                            key={day}
+                            variant={isSelected ? 'default' : 'outline'}
+                            className="cursor-pointer px-2.5 py-1 text-xs"
+                            onClick={() => {
+                              if (isSelected) {
+                                setSelectedDays(selectedDays.filter(d => d !== day))
+                              } else {
+                                setSelectedDays([...selectedDays, day])
+                              }
+                            }}
+                          >
+                            {dayLabels[day]}
+                          </Badge>
+                        )
+                      })}
+                    </div>
                   </div>
+
+                  <Button
+                    onClick={handleAssignTask}
+                    disabled={selectedTaskId === 'none' || saving}
+                    className="w-full"
+                  >
+                    {saving ? 'Assignation...' : 'Assigner la tâche'}
+                  </Button>
                 </div>
+              )}
+            </CardContent>
+          </Card>
 
-                {/* Days of week selection */}
-                <div>
-                  <Label className="mb-2 block">
-                    Jours spécifiques (optionnel)
-                  </Label>
-                  <p className="text-xs text-muted-foreground mb-3">
-                    Si vide, la tâche sera répétée tous les jours. Sélectionnez les jours pour une tâche hebdomadaire.
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as DayOfWeek[]).map((day) => {
-                      const dayLabels = {
-                        Monday: 'Lundi',
-                        Tuesday: 'Mardi',
-                        Wednesday: 'Mercredi',
-                        Thursday: 'Jeudi',
-                        Friday: 'Vendredi'
-                      }
-                      const isSelected = selectedDays.includes(day)
-
-                      return (
-                        <Badge
-                          key={day}
-                          variant={isSelected ? 'default' : 'outline'}
-                          className="cursor-pointer px-3 py-1.5 text-sm"
-                          onClick={() => {
-                            if (isSelected) {
-                              setSelectedDays(selectedDays.filter(d => d !== day))
-                            } else {
-                              setSelectedDays([...selectedDays, day])
-                            }
-                          }}
-                        >
-                          {dayLabels[day]}
-                        </Badge>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                <Button
-                  onClick={handleAssignTask}
-                  disabled={selectedTaskId === 'none' || saving}
-                  className="w-full"
-                >
-                  {saving ? 'Assignation...' : 'Assigner la tâche'}
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Assigned tasks list */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+          {/* Assigned tasks list */}
+          <div className="lg:max-h-[calc(100vh-16rem)] lg:flex lg:flex-col">
+            <h3 className="flex items-center gap-2 text-lg font-semibold mb-4">
               <ClipboardDocumentListIcon className="w-5 h-5" />
               Tâches assignées
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {assignedTasks.length === 0 ? (
-              <div className="text-center py-12">
-                <ClipboardDocumentListIcon className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">
-                  Aucune tâche assignée
-                </h3>
-                <p className="text-muted-foreground">
-                  Commencez par assigner des tâches à cette pièce
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {assignedTasks.map((assignedTask, index) => (
-                  <div
-                    key={assignedTask.id}
-                    className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
-                  >
-                    {editingTask === assignedTask.id ? (
-                      // Edit mode
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-sm font-medium">
-                            {index + 1}
-                          </div>
+            </h3>
+            <div className="lg:overflow-y-auto lg:flex-1">
+              {assignedTasks.length === 0 ? (
+                <div className="text-center py-12">
+                  <ClipboardDocumentListIcon className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">
+                    Aucune tâche assignée
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Commencez par assigner des tâches à cette pièce
+                  </p>
+                </div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {assignedTasks.map((assignedTask) => (
+                    <div
+                      key={assignedTask.id}
+                      className="px-4 py-2.5 hover:bg-accent/50 transition-colors"
+                    >
+                      {editingTask === assignedTask.id ? (
+                        // Edit mode
+                        <div className="space-y-3">
                           <h4 className="font-medium">
                             {assignedTask.task_template?.name || 'Tâche supprimée'}
                           </h4>
-                        </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <div>
-                            <Label className="text-xs">
-                              Horaire suggéré
-                            </Label>
-                            <div className="flex items-center gap-2">
-                              <Select value={editHour} onValueChange={setEditHour}>
-                                <SelectTrigger className="w-24">
-                                  <SelectValue placeholder="Heure" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
-                                    <SelectItem key={hour} value={hour.toString().padStart(2, '0')}>
-                                      {hour.toString().padStart(2, '0')}h
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <span className="text-muted-foreground">:</span>
-                              <Select value={editMinute} onValueChange={setEditMinute}>
-                                <SelectTrigger className="w-24">
-                                  <SelectValue placeholder="Min" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map((min) => (
-                                    <SelectItem key={min} value={min}>
-                                      {min}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                              <Label className="text-xs">
+                                Horaire suggéré
+                              </Label>
+                              <div className="flex items-center gap-2">
+                                <Select value={editHour} onValueChange={setEditHour}>
+                                  <SelectTrigger className="w-24">
+                                    <SelectValue placeholder="Heure" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
+                                      <SelectItem key={hour} value={hour.toString().padStart(2, '0')}>
+                                        {hour.toString().padStart(2, '0')}h
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <span className="text-muted-foreground">:</span>
+                                <Select value={editMinute} onValueChange={setEditMinute}>
+                                  <SelectTrigger className="w-24">
+                                    <SelectValue placeholder="Min" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map((min) => (
+                                      <SelectItem key={min} value={min}>
+                                        {min}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                            <div>
+                              <Label htmlFor={`edit-duration-${assignedTask.id}`} className="text-xs">
+                                Durée (minutes)
+                              </Label>
+                              <Input
+                                id={`edit-duration-${assignedTask.id}`}
+                                type="number"
+                                min="1"
+                                max="480"
+                                value={editDuration}
+                                onChange={(e) => setEditDuration(e.target.value)}
+                              />
                             </div>
                           </div>
+
+                          {/* Days of week selection - Edit mode */}
                           <div>
-                            <Label htmlFor={`edit-duration-${assignedTask.id}`} className="text-xs">
-                              Durée (minutes)
+                            <Label className="text-xs mb-2 block">
+                              Jours spécifiques (optionnel)
                             </Label>
-                            <Input
-                              id={`edit-duration-${assignedTask.id}`}
-                              type="number"
-                              min="1"
-                              max="480"
-                              value={editDuration}
-                              onChange={(e) => setEditDuration(e.target.value)}
-                            />
+                            <div className="flex flex-wrap gap-2">
+                              {(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as DayOfWeek[]).map((day) => {
+                                const dayLabels = {
+                                  Monday: 'Lun',
+                                  Tuesday: 'Mar',
+                                  Wednesday: 'Mer',
+                                  Thursday: 'Jeu',
+                                  Friday: 'Ven'
+                                }
+                                const isSelected = editDays.includes(day)
+
+                                return (
+                                  <Badge
+                                    key={day}
+                                    variant={isSelected ? 'default' : 'outline'}
+                                    className="cursor-pointer px-2 py-1 text-xs"
+                                    onClick={() => {
+                                      if (isSelected) {
+                                        setEditDays(editDays.filter(d => d !== day))
+                                      } else {
+                                        setEditDays([...editDays, day])
+                                      }
+                                    }}
+                                  >
+                                    {dayLabels[day]}
+                                  </Badge>
+                                )
+                              })}
+                            </div>
+                          </div>
+
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => handleUpdateTaskSchedule(assignedTask.id)}
+                              disabled={saving}
+                            >
+                              Enregistrer
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={cancelEditing}
+                              disabled={saving}
+                            >
+                              Annuler
+                            </Button>
                           </div>
                         </div>
-
-                        {/* Days of week selection - Edit mode */}
-                        <div>
-                          <Label className="text-xs mb-2 block">
-                            Jours spécifiques (optionnel)
-                          </Label>
-                          <div className="flex flex-wrap gap-2">
-                            {(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as DayOfWeek[]).map((day) => {
-                              const dayLabels = {
-                                Monday: 'Lun',
-                                Tuesday: 'Mar',
-                                Wednesday: 'Mer',
-                                Thursday: 'Jeu',
-                                Friday: 'Ven'
-                              }
-                              const isSelected = editDays.includes(day)
-
-                              return (
-                                <Badge
-                                  key={day}
-                                  variant={isSelected ? 'default' : 'outline'}
-                                  className="cursor-pointer px-2 py-1 text-xs"
-                                  onClick={() => {
-                                    if (isSelected) {
-                                      setEditDays(editDays.filter(d => d !== day))
-                                    } else {
-                                      setEditDays([...editDays, day])
-                                    }
-                                  }}
-                                >
-                                  {dayLabels[day]}
-                                </Badge>
-                              )
-                            })}
-                          </div>
-                        </div>
-
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => handleUpdateTaskSchedule(assignedTask.id)}
-                            disabled={saving}
-                          >
-                            Enregistrer
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={cancelEditing}
-                            disabled={saving}
-                          >
-                            Annuler
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      // View mode
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4 flex-1">
-                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-sm font-medium">
-                            {index + 1}
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="font-medium">
+                      ) : (
+                        // View mode
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium truncate">
                               {assignedTask.task_template?.name || 'Tâche supprimée'}
                             </h4>
-                            <div className="flex flex-wrap items-center gap-3 mt-1">
-                              {assignedTask.task_template?.task_category && (
-                                <Badge variant="neutral" size="sm">
-                                  {assignedTask.task_template.task_category.name}
-                                </Badge>
-                              )}
-                              {assignedTask.suggested_time && (
-                                <div className="flex items-center gap-1 text-sm text-primary-600">
-                                  <ClockIcon className="w-4 h-4" />
-                                  {assignedTask.suggested_time}
-                                  {assignedTask.expected_duration && (
-                                    <span className="text-muted-foreground">
-                                      ({assignedTask.expected_duration} min)
-                                    </span>
-                                  )}
-                                </div>
-                              )}
-                              {!assignedTask.suggested_time && (
-                                <span className="text-xs text-muted-foreground italic">
-                                  Aucun horaire défini
-                                </span>
-                              )}
-                            </div>
-                            {/* Display selected days */}
-                            {assignedTask.frequency?.days && assignedTask.frequency.days.length > 0 && (
-                              <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                                {assignedTask.frequency.days.map((day) => {
-                                  const dayLabels: Record<DayOfWeek, string> = {
-                                    Monday: 'Lun',
-                                    Tuesday: 'Mar',
-                                    Wednesday: 'Mer',
-                                    Thursday: 'Jeu',
-                                    Friday: 'Ven'
-                                  }
-                                  return (
-                                    <Badge key={day} variant="secondary" size="sm">
-                                      {dayLabels[day]}
-                                    </Badge>
-                                  )
-                                })}
-                              </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            {assignedTask.task_template?.task_category && (
+                              <Badge variant="neutral" size="sm">
+                                {assignedTask.task_template.task_category.name}
+                              </Badge>
                             )}
-                            {assignedTask.frequency?.days && assignedTask.frequency.days.length === 0 && (
-                              <div className="mt-2">
-                                <span className="text-xs text-muted-foreground italic">
-                                  Tous les jours
-                                </span>
-                              </div>
+                            {assignedTask.suggested_time && (
+                              <Badge variant="outline" size="sm" className="gap-1">
+                                <ClockIcon className="w-3 h-3" />
+                                {assignedTask.suggested_time.slice(0, 5)}
+                                {assignedTask.expected_duration && (
+                                  <span className="text-muted-foreground">
+                                    · {assignedTask.expected_duration}min
+                                  </span>
+                                )}
+                              </Badge>
                             )}
-                            {!assignedTask.frequency && (
-                              <div className="mt-2">
-                                <span className="text-xs text-muted-foreground italic">
-                                  Tous les jours
-                                </span>
-                              </div>
+                            {assignedTask.frequency?.days && assignedTask.frequency.days.length > 0 ? (
+                              assignedTask.frequency.days.map((day) => {
+                                const dayLabels: Record<DayOfWeek, string> = {
+                                  Monday: 'Lun',
+                                  Tuesday: 'Mar',
+                                  Wednesday: 'Mer',
+                                  Thursday: 'Jeu',
+                                  Friday: 'Ven'
+                                }
+                                return (
+                                  <Badge key={day} variant="secondary" size="sm">
+                                    {dayLabels[day]}
+                                  </Badge>
+                                )
+                              })
+                            ) : (
+                              <Badge variant="secondary" size="sm">
+                                Quotidien
+                              </Badge>
                             )}
                           </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => startEditingTask(assignedTask)}
+                              disabled={saving}
+                              title="Modifier l'horaire"
+                            >
+                              <PencilIcon className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleUnassign(assignedTask.id)}
+                              disabled={saving}
+                              title="Retirer la tâche"
+                            >
+                              <TrashIcon className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => startEditingTask(assignedTask)}
-                            disabled={saving}
-                            title="Modifier l'horaire"
-                          >
-                            <PencilIcon className="w-5 h-5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleUnassign(assignedTask.id)}
-                            disabled={saving}
-                            title="Retirer la tâche"
-                          >
-                            <TrashIcon className="w-5 h-5 text-destructive" />
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )

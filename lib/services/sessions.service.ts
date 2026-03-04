@@ -176,6 +176,30 @@ export class SessionsService {
   }
 
   /**
+   * Get sessions by date range
+   */
+  async getByDateRange(nurseryId: string, startDate: string, endDate: string): Promise<SessionWithStats[]> {
+    const { data: sessions, error } = await this.supabase
+      .from('daily_cleaning_session')
+      .select('*')
+      .eq('nursery_id', nurseryId)
+      .gte('date', startDate)
+      .lte('date', endDate)
+      .order('date', { ascending: false })
+
+    if (error) throw error
+
+    const sessionsWithStats = await Promise.all(
+      (sessions as any[] || []).map(async (session) => {
+        const stats = await this.getSessionStats(session.id)
+        return { ...session, ...stats }
+      })
+    )
+
+    return sessionsWithStats
+  }
+
+  /**
    * Create a new session
    */
   async create(nurseryId: string, input: CreateSessionInput): Promise<CleaningSession> {

@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
-  KPICard,
   LineChart,
   GaugeChart,
   FunnelChart,
@@ -17,12 +16,8 @@ import {
 } from '@/components/analytics'
 import { metricsService } from '@/lib/services/metrics.service'
 import { analyticsService } from '@/lib/services/analytics.service'
-import { reportsService } from '@/lib/services/reports.service'
 import {
   UserGroupIcon,
-  ArrowTrendingUpIcon,
-  ClockIcon,
-  ChartPieIcon,
   ArrowLeftIcon,
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
@@ -209,40 +204,6 @@ export default function ChildrenAnalyticsPage() {
         <ExportButton
           formats={['csv']}
           onExport={handleExport}
-        />
-      </div>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard
-          title="Taux d'Occupation Moyen"
-          value={metrics?.avg_occupancy?.toFixed(1) || '0'}
-          unit="%"
-          icon={<UserGroupIcon className="w-6 h-6" />}
-          color="pink"
-        />
-
-        <KPICard
-          title="Rétention (6 mois)"
-          value={metrics?.retention_rate_6mo?.toFixed(1) || '0'}
-          unit="%"
-          icon={<ArrowTrendingUpIcon className="w-6 h-6" />}
-          color="mint"
-        />
-
-        <KPICard
-          title="Rétention (1 an)"
-          value={metrics?.retention_rate_1yr?.toFixed(1) || '0'}
-          unit="%"
-          icon={<ArrowTrendingUpIcon className="w-6 h-6" />}
-          color="peach"
-        />
-
-        <KPICard
-          title="Enfants Actifs"
-          value={childrenBySection.reduce((sum, s) => sum + (s.child_count || 0), 0)}
-          icon={<ChartPieIcon className="w-6 h-6" />}
-          color="lavender"
         />
       </div>
 

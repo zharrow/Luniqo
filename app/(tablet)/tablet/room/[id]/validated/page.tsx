@@ -59,14 +59,14 @@ export default function ValidatedTasksPage() {
 
   async function loadValidatedTasks() {
     try {
-      if (!session?.user?.id || !session?.enterprise?.id) return
+      if (!session?.user?.id || !session?.selectedNursery?.id) return
 
-      // Load room details
+      // Load room details (scoped to selected nursery)
       const { data: roomData, error: roomError } = await supabase
         .from('room')
         .select('id, name')
         .eq('id', roomId)
-        .eq('enterprise_id', session.enterprise.id)
+        .eq('nursery_id', session.selectedNursery.id)
         .single()
 
       if (roomError) throw roomError
@@ -77,7 +77,7 @@ export default function ValidatedTasksPage() {
       const { data: sessionData } = await supabase
         .from('daily_cleaning_session')
         .select('id')
-        .eq('enterprise_id', session.enterprise.id)
+        .eq('nursery_id', session.selectedNursery.id)
         .eq('date', today)
         .single()
 
@@ -191,7 +191,7 @@ export default function ValidatedTasksPage() {
         </div>
         <button
           onClick={logout}
-          className="px-6 py-4 text-xl rounded-xl font-semibold text-white bg-destructive hover:opacity-90 transition-opacity shadow-lg"
+          className="px-6 py-4 text-xl rounded-xl font-semibold text-white bg-destructive active:opacity-80 transition-opacity shadow-lg"
           title="Déconnexion"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -266,7 +266,7 @@ export default function ValidatedTasksPage() {
                 {/* Invalidate button */}
                 <button
                   onClick={() => handleInvalidateTask(log.id)}
-                  className="px-6 py-4 text-lg font-semibold rounded-xl text-white bg-destructive hover:opacity-90 transition-opacity shadow-lg"
+                  className="px-6 py-4 text-lg font-semibold rounded-xl text-white bg-destructive active:opacity-80 transition-opacity shadow-lg"
                 >
                   <svg className="w-6 h-6 mr-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -294,7 +294,7 @@ export default function ValidatedTasksPage() {
                       <button
                         key={index}
                         onClick={() => setSelectedPhotos(log.photo_urls)}
-                        className="aspect-square rounded-xl overflow-hidden border-2 border-gray-200 hover:border-primary-400 transition-colors"
+                        className="aspect-square rounded-xl overflow-hidden border-2 border-primary-400"
                       >
                         <img
                           src={url}
@@ -332,7 +332,7 @@ export default function ValidatedTasksPage() {
                 <h3 className="text-3xl font-bold">Photos ({selectedPhotos.length})</h3>
                 <button
                   onClick={() => setSelectedPhotos(null)}
-                  className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+                  className="p-2 bg-gray-100 rounded-xl active:opacity-80 transition-opacity"
                 >
                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -360,7 +360,7 @@ export default function ValidatedTasksPage() {
         <div className="max-w-7xl mx-auto">
           <button
             onClick={() => router.push(`/tablet/room/${roomId}`)}
-            className="btn bg-primary-500 text-white hover:bg-primary-600 w-full h-24 text-3xl font-bold shadow-2xl"
+            className="btn bg-primary-600 text-white w-full h-24 text-3xl font-bold shadow-2xl active:opacity-80 transition-opacity"
           >
             <svg className="w-8 h-8 mr-4 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />

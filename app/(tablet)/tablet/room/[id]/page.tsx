@@ -68,7 +68,7 @@ export default function TabletRoomPage() {
 
   async function loadRoomData() {
     try {
-      if (!session?.user?.id || !session?.enterprise?.id) return
+      if (!session?.user?.id || !session?.selectedNursery?.id) return
 
       // Check if user has access to this room
       const { data: access } = await supabase
@@ -84,12 +84,12 @@ export default function TabletRoomPage() {
         return
       }
 
-      // Load room details
+      // Load room details (scoped to selected nursery)
       const { data: roomData, error: roomError } = await supabase
         .from('room')
         .select('id, name, description')
         .eq('id', roomId)
-        .eq('enterprise_id', session.enterprise.id)
+        .eq('nursery_id', session.selectedNursery.id)
         .single()
 
       if (roomError) throw roomError
@@ -124,7 +124,7 @@ export default function TabletRoomPage() {
       const { data: sessionData } = await supabase
         .from('daily_cleaning_session')
         .select('id')
-        .eq('enterprise_id', session.enterprise.id)
+        .eq('nursery_id', session.selectedNursery.id)
         .eq('date', today)
         .single()
 
@@ -169,7 +169,7 @@ export default function TabletRoomPage() {
   }
 
   async function handleValidateTask(data: { note: string; photo_urls: string[] }) {
-    if (!selectedTask || !session?.user?.id || !session?.enterprise?.id) return
+    if (!selectedTask || !session?.user?.id || !session?.selectedNursery?.id) return
 
     try {
       // Get or create today's session
@@ -178,7 +178,7 @@ export default function TabletRoomPage() {
       let { data: existingSession } = await supabase
         .from('daily_cleaning_session')
         .select('id')
-        .eq('enterprise_id', session.enterprise.id)
+        .eq('nursery_id', session.selectedNursery.id)
         .eq('date', today)
         .single()
 
@@ -189,7 +189,7 @@ export default function TabletRoomPage() {
         const { data: newSession, error: createError } = await (supabase
           .from('daily_cleaning_session')
           .insert({
-            enterprise_id: session.enterprise.id,
+            nursery_id: session.selectedNursery.id,
             date: today,
             status: 'EN_COURS'
           } as any)
@@ -277,45 +277,38 @@ export default function TabletRoomPage() {
   return (
     <div className="tablet-mode min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 p-8 pb-32">
       {/* Header */}
-      <div className="flex justify-between items-center mb-12">
-        <div className="flex items-center gap-6">
+      <div className="mb-12">
+        <div className="flex justify-between items-start mb-6">
           <button
             onClick={() => router.push('/tablet/home')}
-            className="btn btn-secondary px-6 py-4 text-xl"
+            className="inline-flex items-center gap-3 px-8 py-4 text-xl font-semibold rounded-2xl bg-gray-50 border-2 border-gray-300 text-gray-700 active:opacity-80 transition-opacity shadow-sm"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
+            Retour
           </button>
-          <div>
-            <h1 className="text-5xl font-bold mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
-              {room?.name}
-            </h1>
-            {room?.description && (
-              <p className="text-2xl text-muted-foreground">{room.description}</p>
-            )}
+
+          {/* Progress */}
+          <div className="flex items-center gap-6">
+            <div className="text-right">
+              <div className="text-5xl font-bold text-primary-500 mb-2">
+                {progress}%
+              </div>
+              <p className="text-xl text-muted-foreground">
+                {validatedTasks.length} / {tasks.length} tâches
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Progress and Logout */}
-        <div className="flex items-center gap-6">
-          <div className="text-right">
-            <div className="text-5xl font-bold text-primary-500 mb-2">
-              {progress}%
-            </div>
-            <p className="text-xl text-muted-foreground">
-              {validatedTasks.length} / {tasks.length} tâches
-            </p>
-          </div>
-          <button
-            onClick={logout}
-            className="px-6 py-4 text-xl rounded-xl font-semibold text-white bg-destructive hover:opacity-90 transition-opacity shadow-lg"
-            title="Déconnexion"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-          </button>
+        <div>
+          <h1 className="text-5xl font-bold mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+            {room?.name}
+          </h1>
+          {room?.description && (
+            <p className="text-2xl text-muted-foreground">{room.description}</p>
+          )}
         </div>
       </div>
 
@@ -325,16 +318,6 @@ export default function TabletRoomPage() {
           <p className="text-xl text-danger-700">{error}</p>
         </div>
       )}
-
-      {/* Progress Bar */}
-      <div className="card p-6 mb-8">
-        <div className="w-full h-8 bg-muted rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-primary-500 to-success-500 transition-all duration-500 ease-out"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </div>
 
       {/* Success message if all tasks are done */}
       {remainingTasksCount === 0 && tasks.length > 0 && (
@@ -352,10 +335,10 @@ export default function TabletRoomPage() {
       )}
 
       {/* Daily Calendar */}
-      {session?.enterprise?.id && remainingTasksCount > 0 ? (
+      {session?.selectedNursery?.id && remainingTasksCount > 0 ? (
         <div className="mb-8">
           <DailyCalendar
-            enterpriseId={session.enterprise.id}
+            nurseryId={session.selectedNursery.id}
             roomId={roomId}
             selectedTaskIds={validatedTasks.map(v => v.assignedTaskId)}
             onTaskClick={handleTaskClick}
@@ -402,8 +385,9 @@ export default function TabletRoomPage() {
             {/* View Validated Tasks Button */}
             {validatedTasks.length > 0 && (
               <button
+              
                 onClick={() => router.push(`/tablet/room/${roomId}/validated`)}
-                className="flex-1 btn btn-secondary h-24 text-2xl font-bold shadow-2xl"
+                className="flex-1 h-24 text-2xl font-bold shadow-2xl rounded-2xl bg-gray-50 border-2 border-gray-300 text-gray-700 active:opacity-80 transition-opacity"
               >
                 <svg className="w-8 h-8 mr-3 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -417,7 +401,7 @@ export default function TabletRoomPage() {
             <button
               onClick={handleFinishSession}
               disabled={validatedTasks.length === 0}
-              className="flex-1 h-24 text-2xl font-bold shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed rounded-2xl !bg-green-600 hover:!bg-green-700 text-white transition-colors"
+              className="flex-1 h-24 text-2xl font-bold shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed rounded-2xl !bg-green-700 text-white active:opacity-80 transition-opacity"
             >
               <svg className="w-8 h-8 mr-3 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />

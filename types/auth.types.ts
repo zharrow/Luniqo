@@ -41,9 +41,9 @@ export interface EmailPasswordCredentials {
   password: string
 }
 
-// Username/PIN login (for Employee tablet only)
+// Email/PIN login (for Employee tablet only)
 export interface UsernameCredentials {
-  username: string
+  email: string
   pin: string
 }
 

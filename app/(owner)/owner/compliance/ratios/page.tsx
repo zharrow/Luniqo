@@ -14,8 +14,6 @@ import {
   ExclamationTriangleIcon,
   CheckCircleIcon,
   ArrowLeftIcon,
-  ChartBarIcon,
-  ClockIcon
 } from '@heroicons/react/24/outline'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -324,37 +322,6 @@ export default function RatiosPage() {
           </div>
         </Card>
       )}
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Card className="p-4 bg-red-50 border-red-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Alertes critiques</p>
-              <p className="text-2xl font-bold text-red-600">{criticalAlerts.length}</p>
-            </div>
-            <ExclamationTriangleIcon className="h-10 w-10 text-red-400" />
-          </div>
-        </Card>
-        <Card className="p-4 bg-yellow-50 border-yellow-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Avertissements</p>
-              <p className="text-2xl font-bold text-yellow-600">{warningAlerts.length}</p>
-            </div>
-            <ClockIcon className="h-10 w-10 text-yellow-400" />
-          </div>
-        </Card>
-        <Card className="p-4 bg-blue-50 border-blue-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Historique</p>
-              <p className="text-2xl font-bold text-blue-600">{ratioHistory.length}</p>
-            </div>
-            <ChartBarIcon className="h-10 w-10 text-blue-400" />
-          </div>
-        </Card>
-      </div>
 
       {/* Alerts List */}
       {alerts.length > 0 && (

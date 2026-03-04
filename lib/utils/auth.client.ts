@@ -2,6 +2,8 @@
 // Updated for Unified Profiles Architecture (2025-12-07)
 import { createClient } from '@/lib/supabase/client'
 import type { AuthResponse, UsernameCredentials, Profile, UserRole } from '@/types/auth.types'
+import type { Nursery } from '@/types/database.types'
+import { formatDateLocal } from '@/lib/utils/date'
 import bcrypt from 'bcryptjs'
 
 /**
@@ -27,11 +29,11 @@ export async function loginWithPin(credentials: UsernameCredentials): Promise<Au
   try {
     const supabase: any = createClient()
 
-    // Find employee by username
+    // Find employee by email
     const { data: employee, error } = await supabase
       .from('profiles')
       .select('*, enterprise:enterprise_id(*)')
-      .eq('username', credentials.username)
+      .eq('email', credentials.email)
       .eq('role', 'Employee')
       .eq('is_active', true)
       .single()
@@ -68,6 +70,110 @@ export async function loginWithPin(credentials: UsernameCredentials): Promise<Au
   } catch (error) {
     console.error('Login error:', error)
     return { success: false, error: 'Échec de la connexion' }
+  }
+}
+
+/**
+ * Get today's nursery assignments for an employee based on staff_shift
+ * Returns nurseries grouped with their shifts for the day
+ */
+export interface TodayNurseryAssignment {
+  nursery: Nursery
+  shifts: Array<{
+    id: string
+    start_time: string
+    end_time: string
+    status: string
+    assigned_room_id?: string
+    role_during_shift?: string
+  }>
+}
+
+export async function getTodayNurseries(employeeId: string): Promise<TodayNurseryAssignment[]> {
+  try {
+    const supabase: any = createClient()
+    const today = formatDateLocal(new Date())
+
+    // 1. Check staff_shift for today's scheduled shifts
+    const { data: shifts, error } = await supabase
+      .from('staff_shift')
+      .select(`
+        id,
+        nursery_id,
+        start_time,
+        end_time,
+        status,
+        assigned_room_id,
+        role_during_shift,
+        nursery:nursery_id(*)
+      `)
+      .eq('employee_id', employeeId)
+      .eq('shift_date', today)
+      .not('status', 'eq', 'cancelled')
+      .order('start_time', { ascending: true })
+
+    if (!error && shifts && shifts.length > 0) {
+      // Group shifts by nursery
+      const nurseryMap = new Map<string, TodayNurseryAssignment>()
+      for (const shift of shifts) {
+        const nurseryId = shift.nursery_id
+        if (!nurseryMap.has(nurseryId)) {
+          nurseryMap.set(nurseryId, {
+            nursery: shift.nursery as Nursery,
+            shifts: []
+          })
+        }
+        nurseryMap.get(nurseryId)!.shifts.push({
+          id: shift.id,
+          start_time: shift.start_time,
+          end_time: shift.end_time,
+          status: shift.status,
+          assigned_room_id: shift.assigned_room_id,
+          role_during_shift: shift.role_during_shift
+        })
+      }
+      return Array.from(nurseryMap.values())
+    }
+
+    // 2. Fallback: use employee_nursery_access (assigned nurseries)
+    const { data: nurseryAccess, error: accessError } = await supabase
+      .from('employee_nursery_access')
+      .select('nursery:nursery_id(*)')
+      .eq('employee_id', employeeId)
+
+    if (!accessError && nurseryAccess && nurseryAccess.length > 0) {
+      return nurseryAccess
+        .filter((na: any) => na.nursery && na.nursery.is_active)
+        .map((na: any) => ({
+          nursery: na.nursery as Nursery,
+          shifts: [] // No shifts planned — employee still has access
+        }))
+    }
+
+    // 3. Last fallback: use primary_nursery_id from profile
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('primary_nursery_id')
+      .eq('id', employeeId)
+      .single()
+
+    if (profile?.primary_nursery_id) {
+      const { data: nursery } = await supabase
+        .from('nursery')
+        .select('*')
+        .eq('id', profile.primary_nursery_id)
+        .eq('is_active', true)
+        .single()
+
+      if (nursery) {
+        return [{ nursery: nursery as Nursery, shifts: [] }]
+      }
+    }
+
+    return []
+  } catch (error) {
+    console.error('Error fetching today nurseries:', error)
+    return []
   }
 }
 
@@ -172,100 +278,6 @@ export async function loginWithEmail(email: string, password: string): Promise<A
 export async function logout() {
   const supabase: any = createClient()
   await supabase.auth.signOut()
-}
-
-/**
- * Login employee with PIN (flow: select employee from list -> enter PIN)
- * Used on tablet when employee is selected from a list
- * @param employeeId - The specific employee ID to authenticate
- * @param pin - The 4-digit PIN code
- */
-export async function loginEmployeeWithPin(employeeId: string, pin: string): Promise<AuthResponse> {
-  try {
-    const supabase: any = createClient()
-
-    // Get the specific employee from profiles table
-    const { data: employee, error: employeeError } = await supabase
-      .from('profiles')
-      .select('*, enterprise:enterprise_id(*)')
-      .eq('id', employeeId)
-      .eq('role', 'Employee')
-      .eq('is_active', true)
-      .single()
-
-    if (employeeError || !employee) {
-      return { success: false, error: 'Employé non trouvé' }
-    }
-
-    // Check if PIN is set
-    if (!employee.pin_hash) {
-      return { success: false, error: 'PIN non configuré' }
-    }
-
-    // Verify PIN
-    const isValidPin = await verifyPin(pin, employee.pin_hash)
-    if (!isValidPin) {
-      return { success: false, error: 'Code PIN incorrect' }
-    }
-
-    // Get accessible rooms
-    const { data: employeeRoomAccess } = await supabase
-      .from('employee_room_access')
-      .select('room_id')
-      .eq('employee_id', employeeId)
-
-    const accessibleRooms = (employeeRoomAccess || []).map((era: { room_id: string }) => era.room_id)
-
-    return {
-      success: true,
-      data: employee as Profile,
-      enterprise: employee.enterprise,
-      role: 'Employee',
-      accessibleRooms
-    }
-  } catch (error) {
-    console.error('Employee login error:', error)
-    return { success: false, error: 'Échec de la connexion' }
-  }
-}
-
-/**
- * Get all active employees for an enterprise (for employee selection on tablet)
- */
-export async function getEnterpriseEmployees(enterpriseId: string): Promise<Array<{
-  id: string
-  first_name: string
-  last_name: string
-  username: string | null
-  avatar_url: string | null
-}>> {
-  try {
-    const supabase: any = createClient()
-
-    const { data: employees, error } = await supabase
-      .from('profiles')
-      .select('id, first_name, last_name, username, avatar_url')
-      .eq('enterprise_id', enterpriseId)
-      .eq('role', 'Employee')
-      .eq('is_active', true)
-      .order('first_name')
-
-    if (error) {
-      console.error('Error fetching employees:', error)
-      return []
-    }
-
-    return (employees || []) as Array<{
-      id: string
-      first_name: string
-      last_name: string
-      username: string | null
-      avatar_url: string | null
-    }>
-  } catch (error) {
-    console.error('Error fetching employees:', error)
-    return []
-  }
 }
 
 /**
