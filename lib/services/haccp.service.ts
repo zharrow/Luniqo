@@ -213,6 +213,16 @@ export interface CreateMealItemInput {
   notes?: string
 }
 
+// Child Meal Item Record (which items a child ate)
+export interface ChildMealItemRecord {
+  id: string
+  child_meal_record_id: string
+  meal_item_id: string
+  eaten: boolean
+  created_at: string
+  meal_item?: MealItem
+}
+
 // Product Allergens (allergènes structurés)
 export interface ProductAllergen {
   id: string
@@ -345,23 +355,25 @@ export interface UpdateEquipmentInput {
 }
 
 // Documents
-export interface Document {
+export interface HaccpDocument {
   id: string
   nursery_id: string
-  title: string
+  name: string
   category: DocumentCategory
-  file_key: string
-  uploaded_by_id: string
-  uploaded_at: string
+  file_path: string
+  creation_date: string
+  retention_period: string | null
+  responsible_id: string | null
   created_at: string
-  updated_at: string
 }
 
 export interface CreateDocumentInput {
-  title: string
+  name: string
   category: DocumentCategory
-  file_key: string
-  uploaded_by_id: string
+  file_path: string
+  creation_date: string
+  responsible_id?: string
+  retention_period?: string
 }
 
 // Bottle Feeding
@@ -684,16 +696,98 @@ export class HaccpService {
     portion_size: string
     comments: string | null
     recorded_by_id: string
+    consumed_item_ids?: string[]
   }>): Promise<void> {
-    const { error } = await this.supabase
+    // Map to actual DB column names and upsert parent records
+    const parentRecords = servings.map(s => ({
+      meal_id: s.meal_id,
+      child_id: s.child_id,
+      portion: s.portion_size,
+      observations: s.comments,
+    }))
+
+    const { data: insertedRecords, error } = await this.supabase
       .from('child_meal_record')
-      .insert(servings)
+      .upsert(parentRecords, { onConflict: 'meal_id,child_id' })
+      .select('id, meal_id, child_id')
 
     if (error) throw error
+
+    // Insert child_meal_item_record rows for consumed items
+    if (insertedRecords) {
+      const itemRecords: Array<{
+        child_meal_record_id: string
+        meal_item_id: string
+        eaten: boolean
+      }> = []
+
+      for (const serving of servings) {
+        if (serving.consumed_item_ids && serving.consumed_item_ids.length > 0) {
+          const parentRecord = insertedRecords.find(
+            (r: any) => r.meal_id === serving.meal_id && r.child_id === serving.child_id
+          )
+          if (parentRecord) {
+            for (const itemId of serving.consumed_item_ids) {
+              itemRecords.push({
+                child_meal_record_id: parentRecord.id,
+                meal_item_id: itemId,
+                eaten: true,
+              })
+            }
+          }
+        }
+      }
+
+      if (itemRecords.length > 0) {
+        // Clear existing item records for these child_meal_records, then insert fresh
+        const parentIds = insertedRecords.map((r: any) => r.id)
+        await this.supabase
+          .from('child_meal_item_record')
+          .delete()
+          .in('child_meal_record_id', parentIds)
+
+        const { error: itemError } = await this.supabase
+          .from('child_meal_item_record')
+          .insert(itemRecords)
+
+        if (itemError) throw itemError
+      }
+    }
   }
 
-  async recordTemperatures(temperatures: Array<{
-    meal_id: string
+  async getMealRecords(mealId: string): Promise<Array<{
+    id: string
+    child_id: string
+    portion: string | null
+    observations: string | null
+    created_at: string
+    child: { id: string; first_name: string; last_name: string; section: string }
+    item_records: Array<{
+      id: string
+      meal_item_id: string
+      eaten: boolean
+      meal_item: { id: string; product: { name: string } }
+    }>
+  }>> {
+    const { data, error } = await this.supabase
+      .from('child_meal_record')
+      .select(`
+        id, child_id, portion, observations, created_at,
+        child(id, first_name, last_name, section),
+        item_records:child_meal_item_record(
+          id, meal_item_id, eaten,
+          meal_item:meal_item(id, product:product(name))
+        )
+      `)
+      .eq('meal_id', mealId)
+      .order('created_at', { ascending: true })
+
+    if (error) throw error
+    return (data as any[]) || []
+  }
+
+  async recordTemperatures(nurseryId: string, temperatures: Array<{
+    meal_id: string | null
     checkpoint: string
     temperature: number
     compliant: boolean
@@ -702,6 +796,7 @@ export class HaccpService {
     checked_at: string
   }>): Promise<void> {
     const records = temperatures.map(t => ({
+      nursery_id: nurseryId,
       meal_id: t.meal_id,
       checkpoint_type: t.checkpoint,
       temperature_value: t.temperature,
@@ -1026,18 +1121,18 @@ export class HaccpService {
   // DOCUMENTS
   // ==========================================================================
 
-  async getDocuments(nurseryId: string): Promise<Document[]> {
+  async getDocuments(nurseryId: string): Promise<HaccpDocument[]> {
     const { data, error } = await this.supabase
       .from('document')
       .select('*')
       .eq('nursery_id', nurseryId)
-      .order('uploaded_at', { ascending: false })
+      .order('creation_date', { ascending: false })
 
     if (error) throw error
     return (data as any[]) || []
   }
 
-  async createDocument(nurseryId: string, input: CreateDocumentInput): Promise<Document> {
+  async createDocument(nurseryId: string, input: CreateDocumentInput): Promise<HaccpDocument> {
     const { data, error } = await this.supabase
       .from('document')
       .insert({
@@ -1059,6 +1154,49 @@ export class HaccpService {
       .eq('nursery_id', nurseryId)
 
     if (error) throw error
+  }
+
+  // ==========================================================================
+  // REGISTERS (Data aggregation for HACCP registers)
+  // ==========================================================================
+
+  async getTemperaturesByDateRange(nurseryId: string, startDate: string, endDate: string): Promise<Temperature[]> {
+    const { data, error } = await this.supabase
+      .from('temperature_check')
+      .select('*')
+      .eq('nursery_id', nurseryId)
+      .gte('measured_at', `${startDate}T00:00:00`)
+      .lte('measured_at', `${endDate}T23:59:59`)
+      .order('measured_at', { ascending: false })
+
+    if (error) throw error
+    return (data as any[]) || []
+  }
+
+  async getMealsByDateRange(nurseryId: string, startDate: string, endDate: string): Promise<Meal[]> {
+    const { data, error } = await this.supabase
+      .from('meal')
+      .select('*')
+      .eq('nursery_id', nurseryId)
+      .gte('date', startDate)
+      .lte('date', endDate)
+      .order('date', { ascending: false })
+
+    if (error) throw error
+    return (data as any[]) || []
+  }
+
+  async getNonCompliancesByDateRange(nurseryId: string, startDate: string, endDate: string): Promise<NonCompliance[]> {
+    const { data, error } = await this.supabase
+      .from('haccp_incident')
+      .select('*')
+      .eq('nursery_id', nurseryId)
+      .gte('discovered_at', `${startDate}T00:00:00`)
+      .lte('discovered_at', `${endDate}T23:59:59`)
+      .order('discovered_at', { ascending: false })
+
+    if (error) throw error
+    return (data as any[]) || []
   }
 
   // ==========================================================================

@@ -20,16 +20,17 @@ import {
   PencilIcon,
   TrashIcon,
   ClipboardDocumentCheckIcon,
-  CheckCircleIcon,
+  EyeIcon,
   ExclamationTriangleIcon,
   CalendarIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   ShoppingBagIcon,
   XMarkIcon,
-  DocumentDuplicateIcon
+  DocumentDuplicateIcon,
+  CheckIcon
 } from '@heroicons/react/24/outline'
-import { format, startOfWeek, endOfWeek, addDays, subWeeks, addWeeks } from 'date-fns'
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addDays, subDays, subWeeks, addWeeks, subMonths, addMonths, isSameDay, eachDayOfInterval, getDay } from 'date-fns'
 import { PageBreadcrumb } from '@/components/shared/PageBreadcrumb'
 import { fr } from 'date-fns/locale'
 import { DeleteConfirmationDialog } from '@/components/shared/DeleteConfirmationDialog'
@@ -52,7 +53,14 @@ export default function MealsPage() {
   const [mealToDelete, setMealToDelete] = useState<Meal | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [weekStart, setWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }))
+  const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week')
+  const [currentDate, setCurrentDate] = useState(new Date())
+
+  // Results modal state
+  const [showResultsModal, setShowResultsModal] = useState(false)
+  const [resultsMeal, setResultsMeal] = useState<Meal | null>(null)
+  const [mealRecords, setMealRecords] = useState<any[]>([])
+  const [loadingResults, setLoadingResults] = useState(false)
 
   // Form state
   const [formData, setFormData] = useState<CreateMealInput>({
@@ -97,24 +105,39 @@ export default function MealsPage() {
     }
   }, [selectedNursery?.id])
 
-  // Load meals for the current week - called when week changes
+  // Compute date range based on viewMode
+  const getDateRange = useCallback(() => {
+    switch (viewMode) {
+      case 'day':
+        return { from: currentDate, to: currentDate }
+      case 'week': {
+        const ws = startOfWeek(currentDate, { weekStartsOn: 1 })
+        return { from: ws, to: endOfWeek(ws, { weekStartsOn: 1 }) }
+      }
+      case 'month':
+        return { from: startOfMonth(currentDate), to: endOfMonth(currentDate) }
+    }
+  }, [viewMode, currentDate])
+
+  // Load meals for the current date range
   const loadMeals = useCallback(async () => {
     if (!selectedNursery?.id) return
 
     try {
       setLoadingMeals(true)
-      const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 })
+      const { from, to } = getDateRange()
 
       const mealsData = await haccpService.getMeals(
         selectedNursery.id,
-        format(weekStart, 'yyyy-MM-dd'),
-        format(weekEnd, 'yyyy-MM-dd')
+        format(from, 'yyyy-MM-dd'),
+        format(to, 'yyyy-MM-dd')
       )
 
       setMeals(mealsData)
 
-      // Load meal items for all meals
-      const itemsPromises = mealsData.map(async (meal) => {
+      // Load meal items for all meals (limit to avoid too many requests on month view)
+      const mealsToLoad = mealsData.slice(0, 100)
+      const itemsPromises = mealsToLoad.map(async (meal) => {
         const items = await haccpService.getMealItems(meal.id)
         return { mealId: meal.id, items }
       })
@@ -127,7 +150,7 @@ export default function MealsPage() {
     } finally {
       setLoadingMeals(false)
     }
-  }, [selectedNursery?.id, weekStart])
+  }, [selectedNursery?.id, getDateRange])
 
   // Load initial data once
   useEffect(() => {
@@ -138,12 +161,12 @@ export default function MealsPage() {
     }
   }, [selectedNursery?.id, authLoading, loadInitialData])
 
-  // Load meals when week changes
+  // Load meals when date or view mode changes
   useEffect(() => {
     if (selectedNursery?.id && !loading) {
       loadMeals()
     }
-  }, [selectedNursery?.id, weekStart, loading, loadMeals])
+  }, [selectedNursery?.id, currentDate, viewMode, loading, loadMeals])
 
   // Compute allergens from selected products
   const computedAllergens = useCallback(() => {
@@ -333,29 +356,39 @@ export default function MealsPage() {
     }
   }
 
-  async function toggleValidation(meal: Meal) {
-    if (!selectedNursery?.id) return
-
+  async function viewMealResults(meal: Meal) {
+    setResultsMeal(meal)
+    setShowResultsModal(true)
+    setLoadingResults(true)
     try {
-      await haccpService.updateMeal(meal.id, selectedNursery.id, {
-        is_validated: !meal.is_validated
-      })
-      loadMeals()
+      const records = await haccpService.getMealRecords(meal.id)
+      setMealRecords(records)
     } catch (error) {
-      console.error('Error updating meal:', error)
+      console.error('Error loading meal records:', error)
+      setMealRecords([])
+    } finally {
+      setLoadingResults(false)
     }
   }
 
-  function previousWeek() {
-    setWeekStart(subWeeks(weekStart, 1))
+  function navigatePrev() {
+    switch (viewMode) {
+      case 'day': setCurrentDate(prev => subDays(prev, 1)); break
+      case 'week': setCurrentDate(prev => subWeeks(prev, 1)); break
+      case 'month': setCurrentDate(prev => subMonths(prev, 1)); break
+    }
   }
 
-  function nextWeek() {
-    setWeekStart(addWeeks(weekStart, 1))
+  function navigateNext() {
+    switch (viewMode) {
+      case 'day': setCurrentDate(prev => addDays(prev, 1)); break
+      case 'week': setCurrentDate(prev => addWeeks(prev, 1)); break
+      case 'month': setCurrentDate(prev => addMonths(prev, 1)); break
+    }
   }
 
   function goToToday() {
-    setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))
+    setCurrentDate(new Date())
   }
 
   const getMealTypeColor = (type: MealType) => {
@@ -376,7 +409,8 @@ export default function MealsPage() {
     }
   }
 
-  // Generate week days
+  // Generate week days based on currentDate
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 })
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
   const mealTypes: MealType[] = ['Breakfast', 'Lunch', 'Snack']
 
@@ -426,7 +460,7 @@ export default function MealsPage() {
           </div>
         </div>
 
-        {/* Week navigation */}
+        {/* Navigation bar */}
         <div
           className="relative rounded-3xl p-4 mb-6 bg-white overflow-hidden"
           style={{
@@ -436,168 +470,397 @@ export default function MealsPage() {
           }}
         >
           <div className="flex items-center justify-between">
-            <button
-              onClick={previousWeek}
-              className="p-2 rounded-xl hover:bg-orange-50 transition-all duration-300 hover:scale-110"
-            >
-              <ChevronLeftIcon className="w-5 h-5" style={{ color: '#d97557' }} />
-            </button>
+            {/* View mode toggle */}
+            <div className="flex items-center bg-orange-50 rounded-xl p-1 gap-0.5">
+              {([['day', 'Jour'], ['week', 'Semaine'], ['month', 'Mois']] as const).map(([mode, label]) => (
+                <button
+                  key={mode}
+                  onClick={() => setViewMode(mode)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    viewMode === mode
+                      ? 'bg-white text-orange-700 shadow-sm'
+                      : 'text-orange-600/70 hover:text-orange-700'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
 
-            <div className="flex items-center gap-4">
-              <CalendarIcon className="w-5 h-5" style={{ color: '#d97557' }} />
-              <span className="font-semibold text-gray-900">
-                Semaine du {format(weekStart, 'd MMMM yyyy', { locale: fr })}
-              </span>
+            {/* Date navigation */}
+            <div className="flex items-center gap-3">
               <button
-                onClick={goToToday}
-                className="px-3 py-1.5 rounded-xl text-sm bg-gradient-to-br from-orange-100 to-orange-200 text-orange-700 hover:from-orange-200 hover:to-orange-300 transition-all duration-300 font-medium"
+                onClick={navigatePrev}
+                className="p-2 rounded-xl hover:bg-orange-50 transition-all duration-300 hover:scale-110"
               >
-                Aujourd'hui
+                <ChevronLeftIcon className="w-5 h-5" style={{ color: '#d97557' }} />
+              </button>
+
+              <div className="flex items-center gap-3">
+                <CalendarIcon className="w-5 h-5" style={{ color: '#d97557' }} />
+                <span className="font-semibold text-gray-900 min-w-[200px] text-center">
+                  {viewMode === 'day' && format(currentDate, 'EEEE d MMMM yyyy', { locale: fr })}
+                  {viewMode === 'week' && `Semaine du ${format(weekStart, 'd MMMM yyyy', { locale: fr })}`}
+                  {viewMode === 'month' && format(currentDate, 'MMMM yyyy', { locale: fr })}
+                </span>
+              </div>
+
+              <button
+                onClick={navigateNext}
+                className="p-2 rounded-xl hover:bg-orange-50 transition-all duration-300 hover:scale-110"
+              >
+                <ChevronRightIcon className="w-5 h-5" style={{ color: '#d97557' }} />
               </button>
             </div>
 
             <button
-              onClick={nextWeek}
-              className="p-2 rounded-xl hover:bg-orange-50 transition-all duration-300 hover:scale-110"
+              onClick={goToToday}
+              className="px-3 py-1.5 rounded-xl text-sm bg-gradient-to-br from-orange-100 to-orange-200 text-orange-700 hover:from-orange-200 hover:to-orange-300 transition-all duration-300 font-medium"
             >
-              <ChevronRightIcon className="w-5 h-5" style={{ color: '#d97557' }} />
+              Aujourd&apos;hui
             </button>
           </div>
         </div>
 
-        {/* Weekly grid */}
-        <div className="relative overflow-x-auto">
-          {loadingMeals && (
-            <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 flex items-center justify-center rounded-lg">
-              <div className="flex flex-col items-center gap-3">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500"></div>
-                <p className="text-sm text-gray-600 font-medium">Chargement des repas...</p>
-              </div>
+        {/* Loading overlay */}
+        {loadingMeals && (
+          <div className="flex items-center justify-center py-12">
+            <div className="flex flex-col items-center gap-3">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500"></div>
+              <p className="text-sm text-gray-600 font-medium">Chargement des repas...</p>
             </div>
-          )}
-          <table className="w-full border-collapse">
-            <thead>
-              <tr>
-                <th className="p-3 text-left text-sm font-medium text-muted-foreground bg-muted border border-border sticky left-0 z-10">
-                  Type de repas
-                </th>
-                {weekDays.map((day) => {
-                  const isToday = format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')
-                  return (
-                    <th
-                      key={day.toISOString()}
-                      className={`p-3 text-center text-sm font-medium border border-border ${
-                        isToday ? 'bg-primary-50 text-primary-700' : 'bg-muted text-muted-foreground'
-                      }`}
-                    >
-                      <div className="font-semibold">{format(day, 'EEEE', { locale: fr })}</div>
-                      <div className="text-xs">{format(day, 'd MMM', { locale: fr })}</div>
-                    </th>
-                  )
-                })}
-              </tr>
-            </thead>
-            <tbody>
-              {mealTypes.map((type) => (
-                <tr key={type}>
-                  <td className="p-3 font-medium bg-muted border border-border sticky left-0 z-10">
-                    <span className={`px-3 py-1 rounded-lg text-sm font-medium border ${getMealTypeColor(type)}`}>
+          </div>
+        )}
+
+        {/* ============ DAY VIEW ============ */}
+        {!loadingMeals && viewMode === 'day' && (
+          <div className="space-y-4">
+            {mealTypes.map((type) => {
+              const meal = getMealForDateAndType(currentDate, type)
+              const items = meal ? mealItemsCache[meal.id] || [] : []
+
+              return (
+                <div
+                  key={type}
+                  className="rounded-2xl border border-border bg-white overflow-hidden"
+                  style={{ boxShadow: '0 2px 8px -2px rgba(0,0,0,0.06)' }}
+                >
+                  {/* Meal type header */}
+                  <div className="flex items-center justify-between px-6 py-4 bg-muted/30 border-b border-border">
+                    <span className={`px-4 py-1.5 rounded-lg text-sm font-semibold border ${getMealTypeColor(type)}`}>
                       {getMealTypeLabel(type)}
                     </span>
-                  </td>
-                  {weekDays.map((day) => {
-                    const meal = getMealForDateAndType(day, type)
-                    const isToday = format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')
-                    const mealItems = meal ? mealItemsCache[meal.id] || [] : []
+                    {meal && (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => viewMealResults(meal)}
+                          className="p-1.5 rounded-lg transition-colors text-primary-600 hover:bg-primary-50"
+                          title="Voir les résultats"
+                        >
+                          <EyeIcon className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => openEditModal(meal)}
+                          className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+                          title="Modifier"
+                        >
+                          <PencilIcon className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                        <button
+                          onClick={() => openDeleteDialog(meal)}
+                          className="p-1.5 rounded-lg hover:bg-danger-50 transition-colors"
+                          title="Supprimer"
+                        >
+                          <TrashIcon className="w-4 h-4 text-danger-600" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
 
-                    return (
-                      <td
-                        key={`${day.toISOString()}-${type}`}
-                        className={`p-2 border border-border ${isToday ? 'bg-primary-50/30' : ''}`}
-                      >
-                        {meal ? (
-                          <div className="space-y-2">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex-1 min-w-0">
-                                {/* Products used */}
-                                {mealItems.length > 0 ? (
-                                  <div className="flex flex-wrap gap-1">
-                                    {mealItems.slice(0, 3).map(item => (
-                                      <Badge
-                                        key={item.id}
-                                        variant="outline"
-                                        className={`text-xs py-0 px-1 ${item.batch_id ? 'border-green-300 bg-green-50' : ''}`}
-                                        title={item.batch?.batch_number ? `Lot: ${item.batch.batch_number}` : 'Pas de lot spécifié'}
-                                      >
-                                        {item.product?.name?.substring(0, 15) || 'Produit'}
-                                        {item.batch?.batch_number && (
-                                          <span className="ml-1 text-green-600">✓</span>
-                                        )}
-                                      </Badge>
-                                    ))}
-                                    {mealItems.length > 3 && (
-                                      <Badge variant="outline" className="text-xs py-0 px-1">
-                                        +{mealItems.length - 3}
-                                      </Badge>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <p className="text-xs text-muted-foreground italic">Aucun produit</p>
-                                )}
-
-                                {/* Allergens */}
-                                {meal.allergens_present && (
-                                  <div className="flex items-center gap-1 mt-1">
-                                    <ExclamationTriangleIcon className="w-3 h-3 text-danger-600 flex-shrink-0" />
-                                    <p className="text-xs text-danger-600 truncate">{meal.allergens_present}</p>
-                                  </div>
-                                )}
-                              </div>
-                              <div className="flex gap-1 flex-shrink-0">
-                                <button
-                                  onClick={() => toggleValidation(meal)}
-                                  className={`p-1 rounded transition-colors ${
-                                    meal.is_validated
-                                      ? 'text-success-600 hover:bg-success-50'
-                                      : 'text-muted-foreground/60 hover:bg-muted'
-                                  }`}
-                                  title={meal.is_validated ? 'Validé' : 'Non validé'}
+                  {/* Meal content */}
+                  <div className="px-6 py-5">
+                    {meal ? (
+                      <div className="space-y-3">
+                        {/* Products */}
+                        {items.length > 0 ? (
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">Produits</p>
+                            <div className="flex flex-wrap gap-2">
+                              {items.map((item) => (
+                                <Badge
+                                  key={item.id}
+                                  variant="outline"
+                                  className={`text-sm py-1 px-2.5 ${item.batch_id ? 'border-green-300 bg-green-50' : ''}`}
                                 >
-                                  <CheckCircleIcon className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => openEditModal(meal)}
-                                  className="p-1 rounded hover:bg-muted transition-colors"
-                                  title="Modifier"
-                                >
-                                  <PencilIcon className="w-3 h-3 text-muted-foreground" />
-                                </button>
-                                <button
-                                  onClick={() => openDeleteDialog(meal)}
-                                  className="p-1 rounded hover:bg-danger-50 transition-colors"
-                                  title="Supprimer"
-                                >
-                                  <TrashIcon className="w-3 h-3 text-danger-600" />
-                                </button>
-                              </div>
+                                  {item.product?.name || 'Produit'}
+                                  {item.batch?.batch_number && (
+                                    <span className="ml-1.5 text-green-600 text-xs">Lot: {item.batch.batch_number}</span>
+                                  )}
+                                </Badge>
+                              ))}
                             </div>
                           </div>
                         ) : (
-                          <button
-                            onClick={() => openCreateModal(day, type)}
-                            className="w-full p-3 rounded-lg border-2 border-dashed border-border hover:border-primary-300 hover:bg-primary-50 transition-colors text-sm text-muted-foreground/60 hover:text-primary-600"
-                          >
-                            + Ajouter
-                          </button>
+                          <p className="text-sm text-muted-foreground italic">Aucun produit associé</p>
                         )}
-                      </td>
+
+                        {/* Menu */}
+                        {meal.menu && (
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">Menu</p>
+                            <p className="text-sm text-gray-700">{meal.menu}</p>
+                          </div>
+                        )}
+
+                        {/* Allergens */}
+                        {meal.allergens_present && (
+                          <div className="flex items-center gap-2 p-2.5 rounded-lg bg-danger-50 border border-danger-200">
+                            <ExclamationTriangleIcon className="w-4 h-4 text-danger-600 flex-shrink-0" />
+                            <p className="text-sm text-danger-700">{meal.allergens_present}</p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => openCreateModal(currentDate, type)}
+                        className="w-full p-4 rounded-xl border-2 border-dashed border-border hover:border-primary-300 hover:bg-primary-50 transition-colors text-sm text-muted-foreground/60 hover:text-primary-600"
+                      >
+                        + Ajouter un repas
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* ============ WEEK VIEW ============ */}
+        {!loadingMeals && viewMode === 'week' && (
+          <div className="relative overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr>
+                  <th className="p-3 text-left text-sm font-medium text-muted-foreground bg-muted border border-border sticky left-0 z-10">
+                    Type de repas
+                  </th>
+                  {weekDays.map((day) => {
+                    const isToday = format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')
+                    return (
+                      <th
+                        key={day.toISOString()}
+                        className={`p-3 text-center text-sm font-medium border border-border ${
+                          isToday ? 'bg-primary-50 text-primary-700' : 'bg-muted text-muted-foreground'
+                        }`}
+                      >
+                        <div className="font-semibold">{format(day, 'EEEE', { locale: fr })}</div>
+                        <div className="text-xs">{format(day, 'd MMM', { locale: fr })}</div>
+                      </th>
                     )
                   })}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {mealTypes.map((type) => (
+                  <tr key={type}>
+                    <td className="p-3 font-medium bg-muted border border-border sticky left-0 z-10">
+                      <span className={`px-3 py-1 rounded-lg text-sm font-medium border ${getMealTypeColor(type)}`}>
+                        {getMealTypeLabel(type)}
+                      </span>
+                    </td>
+                    {weekDays.map((day) => {
+                      const meal = getMealForDateAndType(day, type)
+                      const isToday = format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')
+                      const mealItems = meal ? mealItemsCache[meal.id] || [] : []
+
+                      return (
+                        <td
+                          key={`${day.toISOString()}-${type}`}
+                          className={`p-2 border border-border ${isToday ? 'bg-primary-50/30' : ''}`}
+                        >
+                          {meal ? (
+                            <div className="space-y-2">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1 min-w-0">
+                                  {mealItems.length > 0 ? (
+                                    <div className="flex flex-wrap gap-1">
+                                      {mealItems.slice(0, 3).map(item => (
+                                        <Badge
+                                          key={item.id}
+                                          variant="outline"
+                                          className={`text-xs py-0 px-1 ${item.batch_id ? 'border-green-300 bg-green-50' : ''}`}
+                                          title={item.batch?.batch_number ? `Lot: ${item.batch.batch_number}` : 'Pas de lot spécifié'}
+                                        >
+                                          {item.product?.name?.substring(0, 15) || 'Produit'}
+                                          {item.batch?.batch_number && (
+                                            <span className="ml-1 text-green-600">✓</span>
+                                          )}
+                                        </Badge>
+                                      ))}
+                                      {mealItems.length > 3 && (
+                                        <Badge variant="outline" className="text-xs py-0 px-1">
+                                          +{mealItems.length - 3}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <p className="text-xs text-muted-foreground italic">Aucun produit</p>
+                                  )}
+
+                                  {meal.allergens_present && (
+                                    <div className="flex items-center gap-1 mt-1">
+                                      <ExclamationTriangleIcon className="w-3 h-3 text-danger-600 flex-shrink-0" />
+                                      <p className="text-xs text-danger-600 truncate">{meal.allergens_present}</p>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex gap-1 flex-shrink-0">
+                                  <button
+                                    onClick={() => viewMealResults(meal)}
+                                    className="p-1 rounded transition-colors text-primary-600 hover:bg-primary-50"
+                                    title="Voir les résultats"
+                                  >
+                                    <EyeIcon className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => openEditModal(meal)}
+                                    className="p-1 rounded hover:bg-muted transition-colors"
+                                    title="Modifier"
+                                  >
+                                    <PencilIcon className="w-3 h-3 text-muted-foreground" />
+                                  </button>
+                                  <button
+                                    onClick={() => openDeleteDialog(meal)}
+                                    className="p-1 rounded hover:bg-danger-50 transition-colors"
+                                    title="Supprimer"
+                                  >
+                                    <TrashIcon className="w-3 h-3 text-danger-600" />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => openCreateModal(day, type)}
+                              className="w-full p-3 rounded-lg border-2 border-dashed border-border hover:border-primary-300 hover:bg-primary-50 transition-colors text-sm text-muted-foreground/60 hover:text-primary-600"
+                            >
+                              + Ajouter
+                            </button>
+                          )}
+                        </td>
+                      )
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* ============ MONTH VIEW ============ */}
+        {!loadingMeals && viewMode === 'month' && (() => {
+          const monthStart = startOfMonth(currentDate)
+          const monthEnd = endOfMonth(currentDate)
+          const allDays = eachDayOfInterval({ start: monthStart, end: monthEnd })
+
+          // Pad start to align with Monday (weekStartsOn: 1)
+          const firstDayOfWeek = getDay(monthStart)
+          const padStart = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1
+          const padEnd = (7 - ((allDays.length + padStart) % 7)) % 7
+
+          const paddedDays: (Date | null)[] = [
+            ...Array(padStart).fill(null),
+            ...allDays,
+            ...Array(padEnd).fill(null)
+          ]
+
+          // Group into weeks
+          const weeks: (Date | null)[][] = []
+          for (let i = 0; i < paddedDays.length; i += 7) {
+            weeks.push(paddedDays.slice(i, i + 7))
+          }
+
+          // Helper: get meals for a day
+          const getMealsForDay = (day: Date) => {
+            const dateStr = format(day, 'yyyy-MM-dd')
+            return meals.filter(m => m.date === dateStr)
+          }
+
+          const mealTypeDots: Record<string, string> = {
+            'Breakfast': 'bg-blue-400',
+            'Lunch': 'bg-orange-400',
+            'Snack': 'bg-purple-400'
+          }
+
+          return (
+            <div className="rounded-2xl border border-border bg-white overflow-hidden" style={{ boxShadow: '0 2px 8px -2px rgba(0,0,0,0.06)' }}>
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr>
+                    {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map(d => (
+                      <th key={d} className="p-3 text-center text-sm font-medium text-muted-foreground bg-muted border-b border-border">
+                        {d}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {weeks.map((week, wi) => (
+                    <tr key={wi}>
+                      {week.map((day, di) => {
+                        if (!day) {
+                          return <td key={di} className="p-2 border border-border bg-muted/20 h-24"></td>
+                        }
+                        const isToday = isSameDay(day, new Date())
+                        const dayMeals = getMealsForDay(day)
+
+                        return (
+                          <td
+                            key={di}
+                            className={`p-2 border border-border h-24 align-top cursor-pointer transition-colors hover:bg-primary-50/40 ${
+                              isToday ? 'bg-primary-50/50' : ''
+                            }`}
+                            onClick={() => { setViewMode('day'); setCurrentDate(day) }}
+                          >
+                            <div className="flex flex-col h-full">
+                              <span className={`text-sm font-medium mb-1 ${
+                                isToday ? 'text-primary-700 font-bold' : 'text-gray-700'
+                              }`}>
+                                {format(day, 'd')}
+                              </span>
+                              {dayMeals.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                  {dayMeals.map(m => (
+                                    <span
+                                      key={m.id}
+                                      className={`w-2.5 h-2.5 rounded-full ${mealTypeDots[m.type] || 'bg-gray-400'}`}
+                                      title={getMealTypeLabel(m.type)}
+                                    />
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {/* Legend */}
+              <div className="flex items-center gap-4 px-4 py-3 border-t border-border bg-muted/20">
+                <span className="text-xs text-muted-foreground">Légende :</span>
+                {mealTypes.map(type => (
+                  <div key={type} className="flex items-center gap-1.5">
+                    <span className={`w-2.5 h-2.5 rounded-full ${mealTypeDots[type]}`} />
+                    <span className="text-xs text-muted-foreground">{getMealTypeLabel(type)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })()}
 
         {/* Form Dialog */}
         <FormDialog
@@ -943,6 +1206,141 @@ export default function MealsPage() {
           itemName={mealToDelete ? `${getMealTypeLabel(mealToDelete.type)} du ${format(new Date(mealToDelete.date), 'd MMMM', { locale: fr })}` : ''}
           isDeleting={isDeleting}
         />
+
+        {/* Results Modal */}
+        {showResultsModal && resultsMeal && (
+          <>
+            <div
+              className="fixed inset-0 bg-black/50 z-40 animate-fade-in"
+              onClick={() => setShowResultsModal(false)}
+            />
+            <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+              <div className="w-full max-w-3xl bg-card rounded-xl shadow-xl animate-slide-up max-h-[90vh] overflow-y-auto">
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h2 className="text-xl font-bold">
+                        Résultats — {getMealTypeLabel(resultsMeal.type)}
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        {format(new Date(resultsMeal.date), 'EEEE d MMMM yyyy', { locale: fr })}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setShowResultsModal(false)}
+                      className="p-2 rounded-lg hover:bg-muted transition-colors"
+                    >
+                      <XMarkIcon className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  {loadingResults ? (
+                    <div className="flex items-center justify-center py-12">
+                      <div className="animate-spin rounded-full h-8 w-8 border-4 border-primary-200 border-t-primary-500"></div>
+                    </div>
+                  ) : mealRecords.length === 0 ? (
+                    <div className="text-center py-12">
+                      <ClipboardDocumentCheckIcon className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
+                      <p className="text-muted-foreground">Pas encore enregistré sur la tablette</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="mb-4">
+                        <Badge variant="outline" className="text-sm">
+                          {mealRecords.length} enfant{mealRecords.length > 1 ? 's' : ''} enregistré{mealRecords.length > 1 ? 's' : ''}
+                        </Badge>
+                      </div>
+
+                      {/* Get all unique meal items from records for column headers */}
+                      {(() => {
+                        const allItemNames: { id: string; name: string }[] = []
+                        const seenIds = new Set<string>()
+                        mealRecords.forEach((record: any) => {
+                          record.item_records?.forEach((ir: any) => {
+                            const id = ir.meal_item_id
+                            if (!seenIds.has(id)) {
+                              seenIds.add(id)
+                              allItemNames.push({
+                                id,
+                                name: ir.meal_item?.product?.name || 'Produit'
+                              })
+                            }
+                          })
+                        })
+
+                        // Also check mealItemsCache for items that weren't in any record
+                        const cachedItems = mealItemsCache[resultsMeal.id] || []
+                        cachedItems.forEach(item => {
+                          if (!seenIds.has(item.id)) {
+                            seenIds.add(item.id)
+                            allItemNames.push({
+                              id: item.id,
+                              name: item.product?.name || 'Produit'
+                            })
+                          }
+                        })
+
+                        return (
+                          <div className="overflow-x-auto rounded-lg border border-border">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="bg-muted/50">
+                                  <th className="text-left px-4 py-3 font-semibold">Enfant</th>
+                                  <th className="text-center px-3 py-3 font-semibold">Portion</th>
+                                  {allItemNames.map(item => (
+                                    <th key={item.id} className="text-center px-3 py-3 font-semibold">
+                                      <span className="text-xs">{item.name}</span>
+                                    </th>
+                                  ))}
+                                  <th className="text-left px-3 py-3 font-semibold">Remarque</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {mealRecords.map((record: any) => {
+                                  const eatenIds = new Set(
+                                    record.item_records
+                                      ?.filter((ir: any) => ir.eaten)
+                                      .map((ir: any) => ir.meal_item_id) || []
+                                  )
+                                  return (
+                                    <tr key={record.id} className="border-t border-border hover:bg-muted/30">
+                                      <td className="px-4 py-3 font-medium whitespace-nowrap">
+                                        {record.child?.first_name} {record.child?.last_name}
+                                      </td>
+                                      <td className="text-center px-3 py-3">
+                                        <Badge variant="outline" className="text-xs">
+                                          {record.portion || '—'}
+                                        </Badge>
+                                      </td>
+                                      {allItemNames.map(item => (
+                                        <td key={item.id} className="text-center px-3 py-3">
+                                          {eatenIds.has(item.id) ? (
+                                            <CheckIcon className="w-5 h-5 text-green-600 mx-auto" />
+                                          ) : record.item_records?.length > 0 ? (
+                                            <XMarkIcon className="w-5 h-5 text-gray-300 mx-auto" />
+                                          ) : (
+                                            <span className="text-gray-300">—</span>
+                                          )}
+                                        </td>
+                                      ))}
+                                      <td className="px-3 py-3 text-muted-foreground text-xs max-w-[150px] truncate">
+                                        {record.observations || ''}
+                                      </td>
+                                    </tr>
+                                  )
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        )
+                      })()}
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )

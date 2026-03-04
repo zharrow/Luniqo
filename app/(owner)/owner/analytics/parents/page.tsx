@@ -6,7 +6,6 @@ import { useNursery } from '@/lib/contexts/NurseryContext'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import {
-  KPICard,
   LineChart,
   HeatMap,
   BarChart,
@@ -15,9 +14,6 @@ import {
 import { metricsService } from '@/lib/services/metrics.service'
 import {
   UsersIcon,
-  ChatBubbleLeftRightIcon,
-  ClockIcon,
-  HeartIcon,
   ArrowLeftIcon,
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
@@ -135,40 +131,6 @@ export default function ParentsAnalyticsPage() {
             </p>
           </div>
         </div>
-      </div>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard
-          title="Taux d'Engagement"
-          value={engagementRate.toFixed(1)}
-          unit="%"
-          icon={<UsersIcon className="w-6 h-6" />}
-          color="turquoise"
-        />
-
-        <KPICard
-          title="Temps de Réponse Moyen"
-          value={avgResponseTime.toFixed(1)}
-          unit="heures"
-          icon={<ClockIcon className="w-6 h-6" />}
-          color="peach"
-          reverseColors={true}
-        />
-
-        <KPICard
-          title="Messages ce Mois"
-          value="487"
-          icon={<ChatBubbleLeftRightIcon className="w-6 h-6" />}
-          color="lavender"
-        />
-
-        <KPICard
-          title="Réactions Timeline"
-          value="1,245"
-          icon={<HeartIcon className="w-6 h-6" />}
-          color="pink"
-        />
       </div>
 
       {/* Charts */}

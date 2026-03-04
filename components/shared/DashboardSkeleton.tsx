@@ -15,55 +15,7 @@ export function DashboardSkeleton({
   showTable = false,
 }: DashboardSkeletonProps) {
   return (
-    <div className="flex min-h-screen bg-neutral-50">
-      {/* Sidebar Skeleton */}
-      <div className="hidden md:flex w-64 flex-col border-r bg-white p-4 gap-4">
-        {/* Logo */}
-        <div className="flex items-center gap-3 px-2 py-4">
-          <Skeleton className="h-10 w-10 rounded-full" />
-          <Skeleton className="h-6 w-24" />
-        </div>
-
-        {/* Nav items */}
-        <div className="flex flex-col gap-2 mt-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-3 px-3 py-2">
-              <Skeleton className="h-5 w-5 rounded" />
-              <Skeleton className="h-4 w-28" />
-            </div>
-          ))}
-        </div>
-
-        {/* Bottom section */}
-        <div className="mt-auto flex flex-col gap-2">
-          <Skeleton className="h-10 w-full rounded-lg" />
-          <div className="flex items-center gap-3 px-3 py-2">
-            <Skeleton className="h-8 w-8 rounded-full" />
-            <div className="flex flex-col gap-1">
-              <Skeleton className="h-3 w-20" />
-              <Skeleton className="h-2 w-16" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Header Skeleton */}
-        <div className="h-16 border-b bg-white px-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Skeleton className="h-8 w-8 rounded md:hidden" />
-            <Skeleton className="h-6 w-48" />
-          </div>
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-8 w-32 rounded-lg hidden sm:block" />
-            <Skeleton className="h-8 w-8 rounded-full" />
-            <Skeleton className="h-8 w-8 rounded-full" />
-          </div>
-        </div>
-
-        {/* Page Content */}
-        <div className="p-6 space-y-6">
+    <div className="space-y-6">
           {/* Page Title */}
           <div className="flex items-center justify-between">
             <div className="space-y-2">
@@ -143,8 +95,6 @@ export function DashboardSkeleton({
               ))}
             </div>
           )}
-        </div>
-      </div>
     </div>
   )
 }

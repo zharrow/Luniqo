@@ -45,7 +45,7 @@ export default function DeveloperSettingsPage() {
       if (fetchError) throw fetchError
       setModules((data || []) as Module[])
     } catch (err) {
-      console.error('Error loading modules:', err)
+      console.error('Error loading modules:', err instanceof Error ? err.message : JSON.stringify(err))
       setError('Erreur lors du chargement des modules')
     } finally {
       setLoading(false)

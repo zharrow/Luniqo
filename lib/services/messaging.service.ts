@@ -427,7 +427,7 @@ class MessagingService {
     const { count, error } = await query
 
     if (error) {
-      console.error('Error fetching unread count:', error)
+      console.error('Error fetching unread count:', error.message || JSON.stringify(error))
       return 0
     }
 

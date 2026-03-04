@@ -147,12 +147,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(true)
       }
 
-      // Reduced timeout to 5 seconds
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Session check timeout')), 5000)
-      )
-
-      const sessionCheckPromise = (async () => {
+      const result = await (async () => {
         // Check Supabase Auth session
         const { data: { session: supabaseSession }, error: sessionError } = await supabase.auth.getSession()
 
@@ -233,7 +228,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return null
       })()
 
-      const result = await Promise.race([sessionCheckPromise, timeoutPromise])
       setSession(result as AuthSession | null)
 
       // Update cache timestamp on successful check

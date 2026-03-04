@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/lib/contexts/AuthContext'
@@ -43,12 +44,14 @@ export function DeveloperSidebar() {
   const pathname = usePathname()
   const { session } = useAuth()
   const { setOpenMobile } = useSidebar()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
 
   // Get initials for avatar
+  const email = mounted && session && 'email' in session.user ? session.user.email : null
   const getInitials = () => {
-    if (session && 'email' in session.user && session.user.email) {
-      return session.user.email[0].toUpperCase()
-    }
+    if (email) return email[0].toUpperCase()
     return 'D'
   }
 
@@ -79,7 +82,7 @@ export function DeveloperSidebar() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-neutral-900 truncate">
-                {session && 'email' in session.user ? session.user.email : 'Developer'}
+                {email || 'Developer'}
               </p>
               <p className="text-xs text-purple-600 font-semibold">Super Admin</p>
             </div>

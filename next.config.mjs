@@ -19,11 +19,6 @@ const nextConfig = {
     ]
   },
 
-  // Disable ESLint during build (run manually with npm run lint)
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-
   // Skip failing pages during static export (pages with auth context)
   // These pages will be server-rendered at runtime instead
   staticPageGenerationTimeout: 120,
@@ -35,7 +30,6 @@ const nextConfig = {
 
   // Performance optimizations
   experimental: {
-    // Reduce JavaScript sent to client (Next.js 14+)
     optimizePackageImports: ['@heroicons/react', 'recharts'],
   },
 

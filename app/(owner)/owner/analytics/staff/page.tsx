@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
-  KPICard,
   LineChart,
   BarChart,
   PieChart,
@@ -19,9 +18,6 @@ import { metricsService } from '@/lib/services/metrics.service'
 import { analyticsService } from '@/lib/services/analytics.service'
 import {
   UsersIcon,
-  ClockIcon,
-  ChartBarIcon,
-  ExclamationTriangleIcon,
   ArrowLeftIcon,
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
@@ -149,41 +145,6 @@ export default function StaffAnalyticsPage() {
             </p>
           </div>
         </div>
-      </div>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard
-          title="Taux d'Absentéisme"
-          value={metrics?.absenteeism_rate?.toFixed(1) || '0'}
-          unit="%"
-          icon={<ExclamationTriangleIcon className="w-6 h-6" />}
-          color="pink"
-          reverseColors={true}
-        />
-
-        <KPICard
-          title="Ratio Encadrement Actuel"
-          value={metrics?.current_ratio?.toFixed(2) || '0'}
-          unit=":1"
-          icon={<UsersIcon className="w-6 h-6" />}
-          color="lavender"
-        />
-
-        <KPICard
-          title="Heures Sup. Moyennes"
-          value={metrics?.avg_overtime_hours?.toFixed(0) || '0'}
-          unit="h/mois"
-          icon={<ClockIcon className="w-6 h-6" />}
-          color="peach"
-        />
-
-        <KPICard
-          title="Employés Actifs"
-          value={metrics?.total_active || 0}
-          icon={<ChartBarIcon className="w-6 h-6" />}
-          color="mint"
-        />
       </div>
 
       {/* Charts Grid */}

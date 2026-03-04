@@ -17,6 +17,7 @@ export default function TabletHomePage() {
   const [rooms, setRooms] = useState<Room[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   const { session, isLoading: authLoading, logout } = useRequireTabletAuth()
   const router = useRouter()
@@ -54,11 +55,12 @@ export default function TabletHomePage() {
         return
       }
 
-      // Get room details
+      // Get room details, filtered by selected nursery
       const { data: roomsData, error: roomsError } = await supabase
         .from('room')
         .select('*')
         .in('id', roomIds)
+        .eq('nursery_id', session.selectedNursery.id)
         .eq('is_active', true)
         .order('display_order', { ascending: true })
 
@@ -74,7 +76,12 @@ export default function TabletHomePage() {
   }
 
   function handleLogout() {
-    logout() // Already redirects to /tablet/login
+    setShowLogoutConfirm(true)
+  }
+
+  function confirmLogout() {
+    setShowLogoutConfirm(false)
+    logout()
   }
 
   function handleRoomSelect(roomId: string) {
@@ -104,17 +111,26 @@ export default function TabletHomePage() {
         </div>
         <div className="flex gap-4">
           <button
-            onClick={() => router.push('/tablet/haccp')}
-            className="px-8 py-4 text-xl rounded-xl font-semibold text-white bg-[#81c995] hover:bg-[#4a8f5a] transition-colors shadow-lg"
+            onClick={() => router.push('/tablet/haccp/meals')}
+            className="px-8 py-4 text-xl rounded-xl font-semibold text-white bg-[#4a8f5a] active:opacity-80 transition-opacity shadow-lg"
           >
             <svg className="w-6 h-6 mr-3 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            HACCP
+            Repas
+          </button>
+          <button
+            onClick={() => router.push('/tablet/haccp/temperatures')}
+            className="px-8 py-4 text-xl rounded-xl font-semibold text-white bg-[#e57c5a] active:opacity-80 transition-opacity shadow-lg"
+          >
+            <svg className="w-6 h-6 mr-3 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Températures
           </button>
           <button
             onClick={handleLogout}
-            className="px-8 py-4 text-xl rounded-xl font-semibold text-white bg-destructive hover:opacity-90 transition-opacity shadow-lg"
+            className="px-8 py-4 text-xl rounded-xl font-semibold text-white bg-destructive active:opacity-80 transition-opacity shadow-lg"
           >
             <svg className="w-6 h-6 mr-3 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -138,14 +154,14 @@ export default function TabletHomePage() {
             <button
               key={room.id}
               onClick={() => handleRoomSelect(room.id)}
-              className="relative rounded-3xl p-8 bg-white hover:-translate-y-1 hover:shadow-[0_16px_48px_-12px_rgba(90,157,201,0.25)] transition-all duration-300 text-left group border border-[#5a9dc9]/20 overflow-hidden"
+              className="relative rounded-3xl p-8 bg-white shadow-[0_16px_48px_-12px_rgba(90,157,201,0.25)] active:opacity-90 transition-opacity text-left group border border-[#5a9dc9]/20 overflow-hidden"
             >
               {/* Gradient pastel doux en fond */}
               <div className="absolute inset-0 bg-gradient-to-br from-[#f8fbfd] to-white opacity-60"></div>
 
               <div className="relative z-10">
                 {/* Room Icon avec animation */}
-                <div className="inline-flex items-center justify-center w-24 h-24 rounded-2xl bg-gradient-to-br from-[#5a9dc9]/10 to-[#5a9dc9]/5 mb-6 group-hover:scale-105 group-hover:rotate-2 transition-all duration-300">
+                <div className="inline-flex items-center justify-center w-24 h-24 rounded-2xl bg-gradient-to-br from-[#5a9dc9]/10 to-[#5a9dc9]/5 mb-6">
                   <svg
                     className="w-12 h-12 text-[#5a9dc9]"
                     fill="none"
@@ -162,7 +178,7 @@ export default function TabletHomePage() {
                 </div>
 
                 {/* Room Name */}
-                <h2 className="text-3xl font-bold mb-3 text-gray-900 group-hover:text-[#5a9dc9] transition-colors tracking-tight">
+                <h2 className="text-3xl font-bold mb-3 text-[#5a9dc9] tracking-tight">
                   {room.name}
                 </h2>
 
@@ -176,7 +192,7 @@ export default function TabletHomePage() {
                   <div className="flex items-center text-[#5a9dc9] text-xl font-semibold">
                     Accéder
                   </div>
-                  <div className="w-10 h-10 rounded-full bg-[#5a9dc9]/8 flex items-center justify-center opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
+                  <div className="w-10 h-10 rounded-full bg-[#5a9dc9]/10 flex items-center justify-center">
                     <svg className="w-5 h-5 text-[#5a9dc9]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                     </svg>
@@ -195,12 +211,45 @@ export default function TabletHomePage() {
         </div>
       )}
 
-      {/* Enterprise Info */}
-      {session?.enterprise && (
+      {/* Nursery & Enterprise Info */}
+      {session?.selectedNursery && (
         <div className="mt-12 text-center">
           <p className="text-xl text-muted-foreground">
-            {session.enterprise.name}
+            {session.selectedNursery.name} — {session.enterprise?.name}
           </p>
+        </div>
+      )}
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-3xl p-10 shadow-2xl max-w-md w-full mx-4 text-center">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-destructive/10 mb-6">
+              <svg className="w-10 h-10 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+            </div>
+            <h2 className="text-3xl font-bold mb-3" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+              Se déconnecter ?
+            </h2>
+            <p className="text-xl text-muted-foreground mb-8">
+              Êtes-vous sûr de vouloir vous déconnecter de la tablette ?
+            </p>
+            <div className="flex gap-4">
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 px-6 py-4 text-xl rounded-xl font-semibold border-2 border-gray-200 text-gray-700 bg-gray-50 active:opacity-80 transition-opacity"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={confirmLogout}
+                className="flex-1 px-6 py-4 text-xl rounded-xl font-semibold text-white bg-destructive active:opacity-80 transition-opacity"
+              >
+                Déconnexion
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

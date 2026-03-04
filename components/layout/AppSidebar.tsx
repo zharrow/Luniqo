@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/lib/contexts/AuthContext'
@@ -168,6 +169,11 @@ export function AppSidebar() {
   const { role, enterprise } = useAuth()
   const { accessibleModules } = useNursery()
   const { setOpenMobile } = useSidebar()
+  const [mounted, setMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Check if Owner has access to a module (now per-nursery)
   const hasModuleAccess = (moduleId?: string) => {
@@ -262,81 +268,85 @@ export function AppSidebar() {
             <span className="text-xl font-bold text-primary-700" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
               Luniqo
             </span>
-            {enterprise && (
-              <span className="text-xs text-muted-foreground truncate max-w-[160px]">
-                {enterprise.name}
-              </span>
-            )}
+            <span className="text-xs text-muted-foreground truncate max-w-[160px]" suppressHydrationWarning>
+              {enterprise?.name ?? '\u00A0'}
+            </span>
           </div>
         </div>
       </SidebarHeader>
 
       <SidebarContent>
-        {/* BASE MODULE - Always first (gratuit) */}
-        {renderNavGroup(filteredBaseNav, 'Configuration de Base', false)}
+        {mounted && (
+          <>
+            {/* BASE MODULE - Always first (gratuit) */}
+            {renderNavGroup(filteredBaseNav, 'Configuration de Base', false)}
 
-        {/* CLEANING MODULE - Nettoyage (29€/mois) */}
-        {renderNavGroup(filteredCleaningNav, 'Nettoyage')}
+            {/* CLEANING MODULE - Nettoyage (29€/mois) */}
+            {renderNavGroup(filteredCleaningNav, 'Nettoyage')}
 
-        {/* HACCP MODULE - Traçabilité (39€/mois) */}
-        {renderNavGroup(filteredHaccpNav, 'HACCP Traçabilité')}
+            {/* HACCP MODULE - Traçabilité (39€/mois) */}
+            {renderNavGroup(filteredHaccpNav, 'HACCP Traçabilité')}
 
-        {/* CHILDREN MODULE - Enfants (29€/mois) */}
-        {renderNavGroup(filteredChildrenNav, 'Enfants & Familles')}
+            {/* CHILDREN MODULE - Enfants (29€/mois) */}
+            {renderNavGroup(filteredChildrenNav, 'Enfants & Familles')}
 
-        {/* ATTENDANCE MODULE - Présences (39€/mois) */}
-        {renderNavGroup(filteredAttendanceNav, 'Présences & Activités')}
+            {/* ATTENDANCE MODULE - Présences (39€/mois) */}
+            {renderNavGroup(filteredAttendanceNav, 'Présences & Activités')}
 
-        {/* STAFF MODULE - Personnel (49€/mois) */}
-        {renderNavGroup(filteredStaffNav, 'Personnel & Planning')}
+            {/* STAFF MODULE - Personnel (49€/mois) */}
+            {renderNavGroup(filteredStaffNav, 'Personnel & Planning')}
 
-        {/* ENROLLMENT MODULE - Inscriptions (39€/mois) */}
-        {renderNavGroup(filteredEnrollmentNav, 'Inscriptions & Contrats')}
+            {/* ENROLLMENT MODULE - Inscriptions (39€/mois) */}
+            {renderNavGroup(filteredEnrollmentNav, 'Inscriptions & Contrats')}
 
-        {/* INVOICING MODULE - Facturation (49€/mois) */}
-        {renderNavGroup(filteredInvoicingNav, 'Facturation & Finances')}
+            {/* INVOICING MODULE - Facturation (49€/mois) */}
+            {renderNavGroup(filteredInvoicingNav, 'Facturation & Finances')}
 
-        {/* PARENT PORTAL MODULE - Portail Parents (39€/mois) */}
-        {renderNavGroup(filteredParentPortalNav, 'Portail Parents')}
+            {/* PARENT PORTAL MODULE - Portail Parents (39€/mois) */}
+            {renderNavGroup(filteredParentPortalNav, 'Portail Parents')}
 
-        {/* ANALYTICS MODULE - Statistiques (29€/mois) */}
-        {renderNavGroup(filteredAnalyticsNav, 'Statistiques & Rapports')}
+            {/* ANALYTICS MODULE - Statistiques (29€/mois) */}
+            {renderNavGroup(filteredAnalyticsNav, 'Statistiques & Rapports')}
 
-        {/* DEVELOPER NAVIGATION */}
-        {renderNavGroup(filteredDeveloperNav, 'Administration', role === 'Developer')}
+            {/* DEVELOPER NAVIGATION */}
+            {renderNavGroup(filteredDeveloperNav, 'Administration', role === 'Developer')}
+          </>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-neutral-200 bg-gradient-to-br from-neutral-50 to-white px-2">
-        <SidebarMenu>
-          {role === 'Owner' && (
-            <>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Messages" className="rounded-md">
-                  <Link href="/owner/messages" className="flex items-center gap-2" onClick={() => setOpenMobile(false)}>
-                    <ChatBubbleLeftRightIcon className="w-5 h-5" />
-                    <span>Messages</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Abonnements" className="rounded-md">
-                  <Link href="/owner/billing" className="flex items-center gap-2" onClick={() => setOpenMobile(false)}>
-                    <CurrencyEuroIcon className="w-5 h-5" />
-                    <span>Abonnements</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </>
-          )}
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Mon Profil" className="rounded-md">
-              <Link href="/owner/profile" className="flex items-center gap-2" onClick={() => setOpenMobile(false)}>
-                <Cog6ToothIcon className="w-5 h-5" />
-                <span>Mon Profil</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        {mounted && (
+          <SidebarMenu>
+            {role === 'Owner' && (
+              <>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Messages" className="rounded-md">
+                    <Link href="/owner/messages" className="flex items-center gap-2" onClick={() => setOpenMobile(false)}>
+                      <ChatBubbleLeftRightIcon className="w-5 h-5" />
+                      <span>Messages</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Abonnements" className="rounded-md">
+                    <Link href="/owner/billing" className="flex items-center gap-2" onClick={() => setOpenMobile(false)}>
+                      <CurrencyEuroIcon className="w-5 h-5" />
+                      <span>Abonnements</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </>
+            )}
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Mon Profil" className="rounded-md">
+                <Link href="/owner/profile" className="flex items-center gap-2" onClick={() => setOpenMobile(false)}>
+                  <Cog6ToothIcon className="w-5 h-5" />
+                  <span>Mon Profil</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        )}
 
         <div className="px-2 py-2 group-data-[collapsible=icon]:hidden">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">

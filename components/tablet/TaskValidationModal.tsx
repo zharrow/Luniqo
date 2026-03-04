@@ -101,7 +101,7 @@ export function TaskValidationModal({
               {/* Close button */}
               <button
                 onClick={handleCancel}
-                className="flex-shrink-0 ml-4 p-2 hover:bg-gray-100 rounded-xl transition-colors"
+                className="flex-shrink-0 ml-4 p-2 bg-gray-100 rounded-xl active:opacity-80 transition-opacity"
               >
                 <svg className="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -156,7 +156,7 @@ export function TaskValidationModal({
               <button
                 onClick={handleValidate}
                 disabled={isSubmitting}
-                className="flex-1 h-20 text-2xl font-bold disabled:opacity-50 disabled:cursor-not-allowed shadow-lg rounded-2xl !bg-green-600 hover:!bg-green-700 text-white transition-colors"
+                className="flex-1 h-20 text-2xl font-bold disabled:opacity-50 disabled:cursor-not-allowed shadow-lg rounded-2xl !bg-green-700 text-white active:opacity-80 transition-opacity"
               >
                 {isSubmitting ? (
                   <span className="flex items-center justify-center gap-3">

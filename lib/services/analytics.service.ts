@@ -189,11 +189,11 @@ export class AnalyticsService {
 
           if (employeeError) console.error('Error fetching employees:', employeeError);
 
-          // Get sessions this month for this enterprise
+          // Get sessions this month for this enterprise (via nursery relationship)
           const { count: sessionsCount, error: sessionsError } = await this.supabase
             .from('daily_cleaning_session')
-            .select('*', { count: 'exact', head: true })
-            .eq('enterprise_id', enterprise.id)
+            .select('*, nursery!inner(enterprise_id)', { count: 'exact', head: true })
+            .eq('nursery.enterprise_id', enterprise.id)
             .gte('date', firstDayOfMonth.toISOString())
             .lte('date', lastDayOfMonth.toISOString());
 

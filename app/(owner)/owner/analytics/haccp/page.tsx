@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
-  KPICard,
   LineChart,
   BarChart,
   PieChart,
@@ -17,9 +16,6 @@ import {
 import { metricsService } from '@/lib/services/metrics.service'
 import {
   CheckCircleIcon,
-  ExclamationTriangleIcon,
-  ClockIcon,
-  ChartBarIcon,
   ArrowLeftIcon,
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
@@ -118,50 +114,6 @@ export default function HACCPAnalyticsPage() {
             </p>
           </div>
         </div>
-      </div>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-6">
-          <div className="flex flex-col items-center">
-            <GaugeChart
-              value={complianceRate}
-              max={100}
-              title="Taux de Conformité Global"
-              subtitle=""
-              colorRanges={[
-                { min: 0, max: 85, color: '#f4c2c2' },
-                { min: 85, max: 95, color: '#ffe5b4' },
-                { min: 95, max: 100, color: '#b5ead7' },
-              ]}
-              height={200}
-            />
-            <p className="text-3xl font-bold text-gray-900 mt-2">{complianceRate.toFixed(1)}%</p>
-          </div>
-        </Card>
-
-        <KPICard
-          title="Incidents ce Mois"
-          value={incidentsByCategory.reduce((sum, i) => sum + i.count, 0)}
-          icon={<ExclamationTriangleIcon className="w-6 h-6" />}
-          color="pink"
-          reverseColors={true}
-        />
-
-        <KPICard
-          title="Temps Moyen de Résolution"
-          value="2.5"
-          unit="heures"
-          icon={<ClockIcon className="w-6 h-6" />}
-          color="peach"
-        />
-
-        <KPICard
-          title="Checks Quotidiens"
-          value="24/25"
-          icon={<CheckCircleIcon className="w-6 h-6" />}
-          color="mint"
-        />
       </div>
 
       {/* Charts */}

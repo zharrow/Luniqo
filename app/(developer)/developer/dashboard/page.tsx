@@ -10,13 +10,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { analyticsService } from '@/lib/services/analytics.service';
 import type { GlobalStats, EnterpriseStats } from '@/types/analytics.types';
-import KpiCard from '@/components/analytics/KpiCard';
 import EnterprisesList from '@/components/analytics/EnterprisesList';
 import {
-  BuildingOfficeIcon,
-  UserGroupIcon,
-  UsersIcon,
-  ChartBarIcon,
   InformationCircleIcon,
 } from '@heroicons/react/24/outline';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -117,34 +112,6 @@ export default function AnalyticsPage() {
           </h1>
           <p className="text-muted-foreground">Vue d'ensemble des métriques globales</p>
         </div>
-
-      {/* Global KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <KpiCard
-          title="Entreprises"
-          value={globalStats.total_enterprises}
-          icon={<BuildingOfficeIcon className="w-10 h-10" />}
-          gradient="blue"
-        />
-        <KpiCard
-          title="Propriétaires Actifs"
-          value={globalStats.active_owners}
-          icon={<UserGroupIcon className="w-10 h-10" />}
-          gradient="green"
-        />
-        <KpiCard
-          title="Employés"
-          value={globalStats.total_employees}
-          icon={<UsersIcon className="w-10 h-10" />}
-          gradient="purple"
-        />
-        <KpiCard
-          title="Sessions ce mois"
-          value={globalStats.sessions_this_month}
-          icon={<ChartBarIcon className="w-10 h-10" />}
-          gradient="orange"
-        />
-      </div>
 
       {/* Security Notice */}
       <Card className="bg-blue-50 border-blue-200 mb-8">

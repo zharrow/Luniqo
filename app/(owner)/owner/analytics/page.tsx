@@ -8,7 +8,6 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
-  KPICard,
   LineChart,
   BarChart,
   PieChart,
@@ -267,50 +266,6 @@ export default function AnalyticsDashboardPage() {
           </div>
         </Card>
       )}
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-        <KPICard
-          title="Taux d'Occupation"
-          value={summary?.occupancy_rate?.toFixed(1) || '0'}
-          unit="%"
-          icon={<UserGroupIcon className="w-6 h-6" />}
-          color="mint"
-          sparklineData={occupancyTrend.slice(-7).map((d) => ({ value: d.rate }))}
-        />
-
-        <KPICard
-          title="Revenue Mensuel"
-          value={new Intl.NumberFormat('fr-FR').format(summary?.monthly_revenue || 0)}
-          unit="€"
-          icon={<CurrencyEuroIcon className="w-6 h-6" />}
-          color="blue"
-          sparklineData={revenueTrend.slice(-7).map((d) => ({ value: d.total }))}
-        />
-
-        <KPICard
-          title="Ratio Encadrement"
-          value={summary?.staff_ratio?.toFixed(2) || '0'}
-          unit=":1"
-          icon={<UsersIcon className="w-6 h-6" />}
-          color="lavender"
-        />
-
-        <KPICard
-          title="Conformité HACCP"
-          value={summary?.haccp_compliance?.toFixed(1) || '0'}
-          unit="%"
-          icon={<CheckCircleIcon className="w-6 h-6" />}
-          color="peach"
-        />
-
-        <KPICard
-          title="Factures Impayées"
-          value={summary?.overdue_invoices_count || 0}
-          icon={<InboxIcon className="w-6 h-6" />}
-          color="pink"
-        />
-      </div>
 
       {/* Main Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
-  KPICard,
   LineChart,
   BarChart,
   AreaChart,
@@ -18,12 +17,9 @@ import {
 } from '@/components/analytics'
 import { metricsService } from '@/lib/services/metrics.service'
 import { analyticsService } from '@/lib/services/analytics.service'
-import { reportsService } from '@/lib/services/reports.service'
 import {
   CurrencyEuroIcon,
-  ArrowTrendingUpIcon,
   ClockIcon,
-  ChartBarIcon,
   ArrowLeftIcon,
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
@@ -175,44 +171,6 @@ export default function FinancialAnalyticsPage() {
         <ExportButton
           formats={['pdf', 'excel', 'csv']}
           onExport={handleExport}
-        />
-      </div>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard
-          title="MRR (Monthly Recurring Revenue)"
-          value={new Intl.NumberFormat('fr-FR').format(metrics?.mrr || 0)}
-          unit="€"
-          icon={<CurrencyEuroIcon className="w-6 h-6" />}
-          trend={mrrChange}
-          trendLabel="vs mois dernier"
-          color="blue"
-          sparklineData={revenueTrend.slice(-7).map((d) => ({ value: d.total }))}
-        />
-
-        <KPICard
-          title="ARR (Annual Recurring Revenue)"
-          value={new Intl.NumberFormat('fr-FR').format(metrics?.arr || 0)}
-          unit="€"
-          icon={<ArrowTrendingUpIcon className="w-6 h-6" />}
-          color="mint"
-        />
-
-        <KPICard
-          title="Taux de Recouvrement"
-          value={metrics?.collection_rate?.toFixed(1) || '0'}
-          unit="%"
-          icon={<ChartBarIcon className="w-6 h-6" />}
-          color="peach"
-        />
-
-        <KPICard
-          title="Créances En Cours"
-          value={new Intl.NumberFormat('fr-FR').format(metrics?.outstanding_amount || 0)}
-          unit="€"
-          icon={<ClockIcon className="w-6 h-6" />}
-          color="lavender"
         />
       </div>
 
