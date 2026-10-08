@@ -23,7 +23,7 @@ Les docs historiques annoncent les phases 0 à 7 « 100 % complètes ». **Rien 
 | Données / Auth | Supabase Cloud : PostgreSQL, Auth, Storage, Realtime (`@supabase/ssr`, `@supabase/supabase-js`) |
 | Intégrations | Stripe (abonnements), Resend (e-mails), PostHog (analytics produit, serveurs EU), OpenFoodFacts, jsPDF |
 | Gestionnaire de paquets | **pnpm** (`pnpm-lock.yaml`). Les scripts appellent encore `npx` |
-| Tests / CI | **Aucun** test, aucun workflow CI dans le dépôt |
+| Tests / CI | v1 : **aucun** test, lint cassé (ANO-002). v2 : pytest (unitaires + intégration PostgreSQL), CI GitHub Actions (`.github/workflows/ci.yml`, LUN-008) |
 
 README.md et l'ancien CLAUDE.md citent d'autres versions (React 19, Next 15). Seul package.json fait foi.
 
@@ -164,7 +164,7 @@ Détails et choix dans AGENTS.md et les ADR de `M2/decisions/`.
 
 - **v2** : `api/` (voir « Commandes » et [api/README.md](api/README.md)). Fait : authentification (ADR-003, LUN-003), entreprises, crèches et accès par crèche (LUN-004). À venir : tablette et PIN, TOTP, enfants et familles, pointage, client TypeScript généré depuis le schéma OpenAPI. Choix et sources : [M2/decisions/CHOIX-TECHNIQUES.md](M2/decisions/CHOIX-TECHNIQUES.md), à tenir à jour.
 - **Docker Compose** : passerelle nginx, front Next.js, API, PostgreSQL **fonctionnent** (TP Docker, [M2/cours/docker.md](M2/cours/docker.md)). Pour le front : `output: 'standalone'` dans `next.config.mjs` et une route `app/healthz` exclue du middleware ; ne pas les retirer. Images construites par nos soins (aucune image Docker Hub, base `FROM scratch`), arguments de ressources, healthchecks, gestion des signaux, non-root, lecture seule.
-- **CI** (GitHub Actions) : lint, typecheck, tests, build des images sur chaque PR.
+- **CI** (GitHub Actions, `.github/workflows/ci.yml`) : ruff, tests unitaires et d'intégration de l'API, build des 5 images, démarrage de la pile et sondes, sur chaque PR et push sur `main`.
 - **CD** : images publiées et taguées, déploiement sur VPS (recette puis production), retour arrière par tag.
 - **Exploitation** : sondes sur le parcours critique, alertes, sauvegardes PostgreSQL, journal des versions (`CHANGELOG.md`).
 

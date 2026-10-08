@@ -85,6 +85,17 @@ Compétences nourries : C1.3.1 (veille, sources), C1.3.2 (choix d'architecture),
 | 2026-10-08 | Une crèche se **ferme** (`is_active`), elle ne se supprime pas par l'API | Les données rattachées (enfants, pointages, HACCP) doivent rester consultables et traçables | Suppression en cascade | | en vigueur (LUN-004) |
 | 2026-10-08 | Tests d'isolation **éprouvés par mutation manuelle** : deux failles introduites volontairement dans la règle d'accès font échouer 8 et 5 tests | Un test qui passe toujours ne prouve rien ; on vérifie qu'il attrape la faille qu'il vise | Outil de mutation automatique (mutmut), à envisager avec la CI (LUN-008) | [mutmut](https://mutmut.readthedocs.io/) | en vigueur (LUN-004) |
 
+## Intégration continue
+
+| Date | Choix | Raisons | Écarté | Sources | Statut |
+|---|---|---|---|---|---|
+| 2026-10-08 | **GitHub Actions**, deux tâches à chaque PR et push sur `main` : API (ruff, tests unitaires et d'intégration) et images (construction des 5 images, démarrage de la pile, sondes) | Le dépôt est sur GitHub ; chaque PR porte la preuve horodatée de son exécution (C2.1.2) | GitLab CI, Jenkins (outil de plus à héberger) | [GitHub Actions](https://docs.github.com/actions) | en vigueur (LUN-008) |
+| 2026-10-08 | Actions tierces **épinglées par SHA de commit**, `permissions: contents: read`, `persist-credentials: false` | Une étiquette (`v7`) peut être déplacée vers du code malveillant, pas un SHA ; la CI n'a que le droit de lire | Épinglage par étiquette de version | [GitHub, durcissement des workflows](https://docs.github.com/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions#using-third-party-actions) | en vigueur (LUN-008) |
+| 2026-10-08 | **ruff** comme lint Python, règles de sécurité de Bandit (`S`) comprises | Un seul outil rapide pour le style, les erreurs et les motifs dangereux ; 9 remarques de forme au premier passage, aucune de sécurité | flake8 + isort + bandit (trois outils) | [ruff, règles](https://docs.astral.sh/ruff/rules/) | en vigueur (LUN-008) |
+| 2026-10-08 | Tests d'intégration **obligatoires en CI** : sans base, pytest s'arrête au lieu de les ignorer | Sinon une CI pourrait être verte sans avoir testé la base | Ignorer en silence (comportement local, gardé hors CI) | | en vigueur (LUN-008) |
+| 2026-10-08 | Rapport JUnit des tests **conservé 90 jours** comme artefact de chaque exécution | Preuve conservée des résultats (C2.1.2 demande des résultats conservés) | Résultats seulement dans le journal de l'exécution | [GitHub, artefacts](https://docs.github.com/actions/using-workflows/storing-workflow-data-as-artifacts) | en vigueur (LUN-008) |
+| 2026-10-08 | **Lint de la v1 non lancé** en CI ; typage du front vérifié par `next build` dans l'image `front` | Le lint v1 ne démarre pas (ANO-002) et la v1 est gelée hors sécurité | Corriger la configuration ESLint de la v1 | [ANO-002](../bloc-4-maintien-operationnel/anomalies/ANO-002-lint-v1.md) | en vigueur (LUN-008) |
+
 ## Méthode et outillage
 
 | Date | Choix | Raisons | Écarté | Sources | Statut |
