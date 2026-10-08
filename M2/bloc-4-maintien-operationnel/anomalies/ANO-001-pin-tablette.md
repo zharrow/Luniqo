@@ -8,7 +8,7 @@
 | Gravité | Critique par conception (confidentialité, usurpation d'accès tablette), à confirmer par reproduction. Exposition réelle nulle à ce jour : la base v1 ne contient que des données de test |
 | Composants | `lib/utils/auth.client.ts` (`loginWithPin`), `app/(tablet)/tablet/login/page.tsx`, `supabase/migrations/01_dev_permissions.sql` |
 | Compétences | C4.2.1 (consigner), C4.2.2 (corriger et déployer), C2.2.3 (sécurité) |
-| Ticket | à créer (`LUN-###`) |
+| Ticket | LUN-005 (correction par conception en v2, voir [ADR-003](../../decisions/ADR-003-authentification-v2.md)) |
 
 ## Description
 
