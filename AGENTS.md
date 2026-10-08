@@ -177,10 +177,11 @@ Statuts des preuves (repris du fil rouge) : à vérifier / absent / partiel / d�
 | 2026-10-08 | Squelette de l'API v2 (`api/`) : FastAPI asynchrone, Alembic, données synthétiques, 7 tests au vert. TP Docker : images base, db, api, web construites, mesurées (charge, arrêts, panne de la base) et documentées | [RÉEL] |
 | 2026-10-08 | Un seul dépôt : `M2/Docker/` intégré au dépôt principal (ancien `.git` supprimé). Image `front` (Next.js standalone) ajoutée : les exigences du TP sont couvertes, 5 images, build sans cache en 60 s. 11 problèmes corrigés au total, consignés dans la fiche. Rien n'est commité | [RÉEL] |
 | 2026-10-08 | 25 commits poussés sur `feat/m2-docker-luniqo`. Conteneurisation déplacée de `M2/Docker/` vers `docker/` (M2 réservé au RNCP). Dépôt GitHub renommé `nursery-app` → `Luniqo`. README racine : section Docker pour le cours | [RÉEL] |
+| 2026-10-08 | PR #37 fusionnée dans `main` avant les 5 derniers commits de la branche (déplacement vers `docker/`, renommage, README, `.env` du front) : deuxième PR ouverte pour les intégrer. Dossier local renommé `Luniqo` | [RÉEL] |
 
 ### Prochaines actions
 
-1. **Florent** : relire le travail du 2026-10-08 (branche `feat/m2-docker-luniqo`, poussée), puis le fusionner dans `main` par PR.
+1. **Florent** : relire et fusionner la deuxième PR de `feat/m2-docker-luniqo` (vérifier au passage que `docker/.env` et `docker/secrets/` ne contiennent que des valeurs de développement).
 2. TP Docker : tag de rendu et préparation de l'oral (voir « Reste à faire » dans [M2/cours/docker.md](M2/cours/docker.md)).
 3. Revoir le parcours central du fil rouge pour y intégrer la fiche de ménage (besoin réel d'origine).
 4. Créer le tableau Trello et le squelette `M2/` (README, management, journal).
