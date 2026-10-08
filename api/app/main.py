@@ -9,14 +9,14 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Response, status
-from sqlalchemy import select, text
+from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from app import __version__
 from app.auth.router import router as auth_router
 from app.db import SessionDep, get_engine
-from app.models import Nursery
-from app.schemas import Health, NurseryOut
+from app.nurseries.router import router as nurseries_router
+from app.schemas import Health
 from app.security import OriginCheckMiddleware
 
 
@@ -39,6 +39,7 @@ app = FastAPI(
 )
 app.add_middleware(OriginCheckMiddleware)
 app.include_router(auth_router)
+app.include_router(nurseries_router)
 
 
 @app.get(
@@ -54,14 +55,3 @@ async def health(session: SessionDep, response: Response) -> Health:
         response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
         return Health(status="degraded", database="unreachable", version=__version__)
     return Health(status="ok", database="ok", version=__version__)
-
-
-@app.get("/api/v2/nurseries", tags=["crèches"])
-async def list_nurseries(session: SessionDep) -> list[NurseryOut]:
-    """Crèches actives.
-
-    Squelette sans authentification, sur données synthétiques : l'accès par
-    utilisateur et par crèche arrive avec le socle v2 (ADR-003).
-    """
-    nurseries = await session.scalars(select(Nursery).where(Nursery.is_active).order_by(Nursery.name))
-    return [NurseryOut.model_validate(nursery) for nursery in nurseries]

@@ -1,53 +1,76 @@
 """Jeu de données synthétique de démonstration. Aucune donnée réelle.
 
-Idempotent : ne recrée ni l'entreprise ni les comptes déjà présents.
-Lancement : python -m app.seed
+Idempotent : chaque entreprise, crèche, compte et accès n'est créé que s'il
+manque. Lancement : python -m app.seed
 
-Les comptes de démonstration ne sont créés que si SEED_DEMO_PASSWORD est
-défini : aucun mot de passe n'est écrit dans le dépôt, qui est public.
+Deux entreprises : le groupe de démonstration, et un groupe « témoin » qui
+sert à vérifier l'isolation (sa direction ne doit rien voir du premier).
+
+Les comptes ne sont créés que si SEED_DEMO_PASSWORD est défini : aucun mot
+de passe n'est écrit dans le dépôt, qui est public.
 """
 
 import os
 
-from sqlalchemy import create_engine, func, select
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from app.auth.models import AppUser, UserRole
 from app.auth.passwords import PasswordPolicyError, check_policy, hash_password_sync
 from app.config import get_settings
-from app.models import Enterprise, Nursery
+from app.nurseries.models import Enterprise, Nursery, NurseryAccess
+
+DEMO_ENTERPRISES = {
+    "Groupe Démo": [("Crèche Démo Nord", "Toulouse", 30), ("Micro-crèche Démo Sud", "Labège", 12)],
+    "Groupe Témoin": [("Crèche Témoin", "Castanet-Tolosan", 20)],
+}
 
 # Domaine réservé .test (RFC 2606) : ces adresses ne peuvent appartenir à personne.
+# (adresse, prénom, nom, rôle, entreprise, crèches accessibles)
 DEMO_USERS = (
-    ("direction@demo.test", "Camille", "Martin", UserRole.OWNER),
-    ("employe@demo.test", "Lucas", "Bernard", UserRole.EMPLOYEE),
+    ("direction@demo.test", "Camille", "Martin", UserRole.OWNER, "Groupe Démo", ()),
+    ("employe@demo.test", "Lucas", "Bernard", UserRole.EMPLOYEE, "Groupe Démo", ("Crèche Démo Nord",)),
+    ("employe.sud@demo.test", "Inès", "Moreau", UserRole.EMPLOYEE, "Groupe Démo", ("Micro-crèche Démo Sud",)),
+    ("direction@temoin.test", "Paul", "Lefort", UserRole.OWNER, "Groupe Témoin", ()),
 )
 
 
 def seed(session: Session) -> int:
-    """Insère un groupe de démonstration et ses deux crèches. Renvoie le nombre de crèches créées."""
-    if session.scalar(select(func.count()).select_from(Enterprise)):
-        return 0
-    enterprise = Enterprise(name="Groupe Démo")
-    enterprise.nurseries = [
-        Nursery(name="Crèche Démo Nord", city="Toulouse", capacity=30),
-        Nursery(name="Micro-crèche Démo Sud", city="Labège", capacity=12),
-    ]
-    session.add(enterprise)
+    """Crée les entreprises et crèches manquantes. Renvoie le nombre de crèches créées."""
+    created = 0
+    for enterprise_name, nurseries in DEMO_ENTERPRISES.items():
+        enterprise = session.scalar(select(Enterprise).where(Enterprise.name == enterprise_name))
+        if enterprise is None:
+            enterprise = Enterprise(name=enterprise_name)
+            session.add(enterprise)
+            session.flush()
+        for name, city, capacity in nurseries:
+            exists = session.scalar(select(Nursery.id).where(Nursery.enterprise_id == enterprise.id, Nursery.name == name))
+            if not exists:
+                session.add(Nursery(enterprise_id=enterprise.id, name=name, city=city, capacity=capacity))
+                created += 1
     session.commit()
-    return len(enterprise.nurseries)
+    return created
 
 
 def seed_users(session: Session, password: str) -> int:
-    """Crée les comptes de démonstration manquants. Renvoie le nombre de comptes créés."""
+    """Crée les comptes et accès manquants. Renvoie le nombre de comptes créés."""
     created = 0
-    for email, first_name, last_name, role in DEMO_USERS:
-        if session.scalar(select(AppUser.id).where(AppUser.email == email)):
-            continue
-        check_policy(password, email)
-        session.add(AppUser(email=email, password_hash=hash_password_sync(password),
-                            first_name=first_name, last_name=last_name, role=role))
-        created += 1
+    for email, first_name, last_name, role, enterprise_name, nursery_names in DEMO_USERS:
+        enterprise = session.scalar(select(Enterprise).where(Enterprise.name == enterprise_name))
+        user = session.scalar(select(AppUser).where(AppUser.email == email))
+        if user is None:
+            check_policy(password, email)
+            user = AppUser(email=email, password_hash=hash_password_sync(password), first_name=first_name,
+                           last_name=last_name, role=role, enterprise_id=enterprise.id)
+            session.add(user)
+            session.flush()
+            created += 1
+        for nursery_name in nursery_names:
+            nursery_id = session.scalar(select(Nursery.id).where(Nursery.enterprise_id == enterprise.id,
+                                                                 Nursery.name == nursery_name))
+            if session.get(NurseryAccess, (user.id, nursery_id)) is None:
+                session.add(NurseryAccess(user_id=user.id, nursery_id=nursery_id, enterprise_id=enterprise.id))
     session.commit()
     return created
 

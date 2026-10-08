@@ -7,7 +7,8 @@ passerelle `web`, sous `/api/`.
 | Route | Rôle |
 |---|---|
 | `GET /api/health` | État de l'API et de sa connexion à la base (200 ou 503). Utilisé par le healthcheck. |
-| `GET /api/v2/nurseries` | Crèches actives, lues dans PostgreSQL (données synthétiques). |
+| `/api/v2/auth/*` | Connexion, déconnexion, utilisateur courant (sessions en base, ADR-003). |
+| `/api/v2/nurseries/*`, `/api/v2/staff` | Crèches et accès du personnel, contrôlés par crèche (LUN-004). Détail : `api/README.md`. |
 | `GET /api/docs` | Documentation interactive Swagger UI, générée par FastAPI. |
 | `GET /api/redoc`, `GET /api/openapi.json` | Documentation ReDoc et schéma OpenAPI. |
 
@@ -146,7 +147,7 @@ HEALTHCHECK --interval=5s --timeout=3s --start-period=10s --retries=3 \
 ## Ce que les mesures ont fait changer
 
 Les choix ci-dessus viennent de tests réels du 2026-10-08 (3 000 requêtes,
-60 simultanées, sur `/api/v2/nurseries` via la passerelle).
+60 simultanées, sur `/api/v2/nurseries` via la passerelle (route alors ouverte ; protégée par session depuis LUN-004)).
 
 | Version | Résultat | Cause | Correction |
 |---|---|---|---|

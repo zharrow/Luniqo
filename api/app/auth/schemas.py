@@ -20,3 +20,4 @@ class UserOut(BaseModel):
     first_name: str
     last_name: str
     role: UserRole
+    enterprise_id: uuid.UUID | None

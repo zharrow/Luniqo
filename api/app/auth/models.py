@@ -15,6 +15,7 @@ from sqlalchemy import (
     Index,
     LargeBinary,
     String,
+    UniqueConstraint,
     func,
     text,
 )
@@ -31,10 +32,21 @@ class UserRole(enum.StrEnum):
 
 
 class AppUser(Base):
-    """Compte de connexion. Le lien avec une entreprise ou une crèche arrive avec LUN-004."""
+    """Compte de connexion.
+
+    Direction (owner) et employés appartiennent à une entreprise ; l'éditeur
+    (developer) et les familles (guardian) n'en ont pas. Les crèches
+    accessibles à un employé sont dans nursery_access.
+    """
 
     __tablename__ = "app_user"
-    __table_args__ = (CheckConstraint("email = lower(email)", name="app_user_email_lowercase"),)
+    __table_args__ = (
+        CheckConstraint("email = lower(email)", name="app_user_email_lowercase"),
+        CheckConstraint("(role IN ('owner', 'employee')) = (enterprise_id IS NOT NULL)",
+                        name="app_user_enterprise_matches_role"),
+        # Cible de la clé étrangère composite de nursery_access.
+        UniqueConstraint("id", "enterprise_id", name="uq_app_user_id_enterprise"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, server_default=text("gen_random_uuid()"))
     # Stockée en minuscules : l'unicité ne dépend pas de la casse saisie.
@@ -46,6 +58,7 @@ class AppUser(Base):
     role: Mapped[UserRole] = mapped_column(
         Enum(UserRole, name="user_role", values_callable=lambda roles: [role.value for role in roles])
     )
+    enterprise_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("enterprise.id"), index=True)
     is_active: Mapped[bool] = mapped_column(Boolean, server_default=text("true"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     password_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

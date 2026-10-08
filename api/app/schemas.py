@@ -1,9 +1,8 @@
-"""Schémas Pydantic exposés par l'API (et donc par la documentation OpenAPI)."""
+"""Schémas Pydantic communs. Ceux d'un domaine sont dans son module (app/auth/, app/nurseries/)."""
 
-import uuid
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 
 
 class Health(BaseModel):
@@ -11,12 +10,3 @@ class Health(BaseModel):
     database: Literal["ok", "unreachable"]
     version: str
 
-
-class NurseryOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: uuid.UUID
-    enterprise_id: uuid.UUID
-    name: str
-    city: str
-    capacity: int
