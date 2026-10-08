@@ -1,7 +1,7 @@
 # TP Docker : Luniqo dans mon propre cloud, sans Docker Hub
 
-[Luniqo](../../README.md) est un logiciel de gestion de crèches. Ce TP, rangé
-dans `M2/Docker/` du dépôt [nursery-app](https://github.com/zharrow/nursery-app),
+[Luniqo](../README.md) est un logiciel de gestion de crèches. Ce TP, rangé
+dans `docker/` du dépôt [nursery-app](https://github.com/zharrow/nursery-app),
 le fait tourner dans une architecture de conteneurs orchestrés
 avec docker compose : une **passerelle web** (nginx), une **API** (FastAPI), une
 **base de données** (PostgreSQL) et le **front** (l'application Next.js). Toutes
@@ -32,7 +32,7 @@ Alpine, PyPI, npm et Google Fonts). Testé avec Docker 29. Premier build sans
 cache : 60 s mesurées pour les 5 images (sur un Mac Apple Silicon).
 
 ```sh
-git clone https://github.com/zharrow/nursery-app.git && cd nursery-app/M2/Docker
+git clone https://github.com/zharrow/nursery-app.git && cd nursery-app/docker
 docker compose up -d --build     # construit les images puis lance les services
 docker compose ps                # db, api, front et web doivent être "healthy"
 ```
@@ -69,7 +69,7 @@ FRONT_SUPABASE_URL=https://xxx.supabase.co FRONT_SUPABASE_ANON_KEY=... docker co
 │   └── db_password.dev    mot de passe de développement de la base (secret Docker)
 ├── base/                  image de base : Alpine depuis scratch + tini + utilisateur app
 ├── db/                    PostgreSQL 18
-├── api/                   image de l'API FastAPI (le code est dans ../../api)
+├── api/                   image de l'API FastAPI (le code est dans ../api)
 ├── front/                 image du front Next.js (le code est à la racine du dépôt)
 └── web/                   passerelle nginx, seul point d'entrée
 ```
@@ -88,8 +88,8 @@ flowchart LR
     base -- "+ python3 + venv" --> api["luniqo/api"]
     base -- "+ nginx" --> web["luniqo/web"]
     base -- "+ nodejs (+ pnpm au build)" --> front["luniqo/front"]
-    src["../../api<br/>code de l'API v2"] -. "contexte de build" .-> api
-    app["../../ (app/, lib/...)<br/>code Next.js v1"] -. "contexte de build" .-> front
+    src["../api<br/>code de l'API v2"] -. "contexte de build" .-> api
+    app["../ (app/, lib/...)<br/>code Next.js v1"] -. "contexte de build" .-> front
 ```
 
 | Image | Taille | Contenu ajouté |

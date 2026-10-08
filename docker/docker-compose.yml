@@ -76,7 +76,7 @@ services:
       additional_contexts:
         luniqo/base:1.0: service:base
         # Code de l'API : dossier api/ à la racine du dépôt nursery-app.
-        luniqo-api: ../../api
+        luniqo-api: ../api
     image: luniqo/api:0.1
     environment:
       API_WORKERS: ${API_WORKERS:-1}
@@ -115,8 +115,8 @@ services:
     build:
       # Contexte = racine du dépôt (le code Next.js). Dockerfile.dockerignore,
       # à côté du Dockerfile, n'en laisse passer que le code du front.
-      context: ../..
-      dockerfile: M2/Docker/front/Dockerfile
+      context: ..
+      dockerfile: docker/front/Dockerfile
       additional_contexts:
         luniqo/base:1.0: service:base
       # Inscrites dans le code du navigateur au build. Les valeurs réelles du

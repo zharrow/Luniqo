@@ -1,4 +1,4 @@
-// Sonde de santé du conteneur front (M2/Docker) : prouve que le serveur
+// Sonde de santé du conteneur front (docker/front) : prouve que le serveur
 // Next.js répond, sans appeler Supabase. Exclue du middleware (proxy.ts).
 export const dynamic = 'force-dynamic'
 

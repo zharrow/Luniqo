@@ -13,17 +13,17 @@ passerelle `web`, sous `/api/`.
 
 ## D'où vient le code ?
 
-Le code de l'API vit à la racine du dépôt, dans [`api/`](../../../api/), avec ses
-tests et sa documentation : ce dossier `M2/Docker/` ne contient que de quoi le
+Le code de l'API vit à la racine du dépôt, dans [`api/`](../../api/), avec ses
+tests et sa documentation : ce dossier `docker/` ne contient que de quoi le
 conteneuriser. Le compose fournit `api/` au build comme un **contexte nommé** :
 
 ```yaml
 additional_contexts:
-  luniqo-api: ../../api
+  luniqo-api: ../api
 ```
 
 Le Dockerfile y puise avec `COPY --from=luniqo-api`. Le contexte principal du
-build reste `M2/Docker/api/` (le Dockerfile et l'entrypoint).
+build reste `docker/api/` (le Dockerfile et l'entrypoint).
 
 ## Construction
 

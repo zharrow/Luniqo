@@ -142,7 +142,7 @@ Les modules hors parcours central (HACCP, facturation, RH, statistiques…) sont
 |---|---|---|---|
 | Docker | **0 image Docker Hub**, images personnalisées ; au moins 3 types (front, back, serveur web) ; arguments de ressources au run et dans le compose ; SIGTERM gérés ; ordre de démarrage ; schéma des communications ; choix documentés | 4 séances, la 2e est passée. Rendu : dernier commit avant la date butoir. Oral non confirmé | [M2/cours/docker.md](M2/cours/docker.md) |
 
-Le TP vit dans `M2/Docker/` de ce dépôt ; le lien rendu au prof est celui de `nursery-app`. Il remplace la première version (front/back/serveur de jeu sans lien avec Luniqo), dont l'historique reste sur l'ancien dépôt GitHub `zharrow/TP-Docker`, qui n'est plus utilisé.
+Le TP vit dans `docker/` à la racine du dépôt (le dossier `M2/` est réservé aux preuves RNCP) ; le lien rendu au prof est celui de `nursery-app`. Il remplace la première version (front/back/serveur de jeu sans lien avec Luniqo), dont l'historique reste sur l'ancien dépôt GitHub `zharrow/TP-Docker`, qui n'est plus utilisé.
 
 ## Arborescence de la documentation M2
 
@@ -157,9 +157,10 @@ M2/
 ├── management/                 équipe fictive, rituels, comptes rendus de sprint, Gantt Mermaid
 ├── decisions/                  ADR-001, ADR-002…
 ├── journal/                    journal de bord daté (travail réel, temps passé, assistance)
-├── cours/                      une fiche par travail de cours
-└── Docker/                     TP Docker : images, compose, documentation
+└── cours/                      une fiche par travail de cours
 ```
+
+Le dossier `M2/` ne contient que la documentation et les preuves du titre RNCP. Le code et l'infrastructure restent à la racine (`app/`, `api/`, `docker/`...).
 
 Statuts des preuves (repris du fil rouge) : à vérifier / absent / partiel / démontré / à actualiser. « Démontré » est un statut interne, pas une validation du jury.
 

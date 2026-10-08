@@ -55,7 +55,7 @@ COPY --from=build /src/public ./public
 # Next.js écrit son cache (images optimisées, données) dans .next/cache. Le
 # système de fichiers étant en lecture seule, ce dossier pointe vers /tmp.
 RUN ln -s /tmp/next-cache /app/.next/cache
-COPY --chmod=0755 M2/Docker/front/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY --chmod=0755 docker/front/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 # Valeurs par défaut, modifiables au run (-e) ou dans le compose.
 # NODE_HEAP_MB : taille maximum du tas JavaScript (voir entrypoint.sh).

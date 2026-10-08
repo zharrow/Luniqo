@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Serveur autonome (.next/standalone) : seules les dépendances réellement
-  // utilisées sont copiées, pour une image Docker légère (M2/Docker/front).
+  // utilisées sont copiées, pour une image Docker légère (docker/front).
   output: 'standalone',
 
   env: {

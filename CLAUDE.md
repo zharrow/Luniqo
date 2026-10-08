@@ -52,13 +52,13 @@ uvicorn app.main:app --reload   # Swagger sur /api/docs
 
 Stack v2 : Python 3.14, FastAPI, SQLAlchemy 2 asynchrone + psycopg 3, Alembic, pytest. Dépendances figées dans `api/requirements.txt` (voir [api/README.md](api/README.md)). Routes et accès base **asynchrones** : les routes synchrones ont été écartées après mesure (dépassement de la limite de processus du conteneur sous charge).
 
-### Pile Docker (TP, dépôt `M2/Docker/`)
+### Pile Docker (`docker/`)
 
 ```bash
-cd M2/Docker && docker compose up -d --build   # db, api, front, web ; http://localhost:8080
+cd docker && docker compose up -d --build   # db, api, front, web ; http://localhost:8080
 ```
 
-Le compose construit l'API directement depuis `../../api`.
+Le compose construit l'API depuis `../api` et le front depuis la racine du dépôt.
 
 `pnpm db:reset` lance le même script que `seed`. Ne jamais l'exécuter sans savoir quelle base est visée (voir règle 6 d'AGENTS.md).
 
@@ -81,7 +81,7 @@ scripts/seed.ts      jeu de données de démo
 proxy.ts             middleware Next 16 (ex-middleware.ts) → lib/supabase/middleware.ts
 docs/                documentation historique du produit (design system, phases, Stripe, PostHog)
 M2/                  travaux et preuves du M2 : décisions, anomalies, fiches de cours (voir AGENTS.md)
-M2/Docker/           TP Docker : images (base, db, api, web), compose, documentation
+docker/              conteneurisation : images (base, db, api, front, web), compose, documentation
 maquette/, marketing/  captures et contenus marketing (marketing/ est ignoré par git)
 ```
 

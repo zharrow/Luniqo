@@ -15,4 +15,4 @@
 !tsconfig.json
 !components.json
 !proxy.ts
-!M2/Docker/front/entrypoint.sh
+!docker/front/entrypoint.sh

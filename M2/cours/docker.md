@@ -3,9 +3,9 @@
 | | |
 |---|---|
 | Cours | Docker (M2, Ynov Toulouse) |
-| Sujet | TP « Projet - Docker Cloud » : images personnalisées orchestrées avec Compose (sujet complet : `M2/Docker/TP.md`, non versionné) |
+| Sujet | TP « Projet - Docker Cloud » : images personnalisées orchestrées avec Compose (sujet complet : `docker/TP.md`, non versionné) |
 | Échéance | Dernière des 4 séances. 2 séances passées au 2026-10-08 |
-| Rendu | Lien git, dernier commit avant la date butoir : dépôt public `zharrow/nursery-app`, dossier `M2/Docker/` |
+| Rendu | Lien git, dernier commit avant la date butoir : dépôt public `zharrow/nursery-app`, dossier `docker/` |
 | Oral | Non confirmé |
 | Compétences RNCP | C2.1.1 (environnements, déploiement), C1.5 (schéma d'architecture), C2.2.2 (tests), C2.2.3 (sécurité), C4.1.2 (healthchecks, première brique de supervision) |
 | Statut | **Exigences du sujet couvertes** (2026-10-08) : 5 images (base, db, api, front, web), toutes construites depuis `scratch`, mesurées et documentées. Reste : commit et tag de rendu |
@@ -28,16 +28,16 @@ Exclusions : pas de migration des données de la v1, pas de bascule du front ver
 
 | Élément | Où | État |
 |---|---|---|
-| Image de base `FROM scratch` (reprise du premier TP) | `M2/Docker/base/` | Fait |
-| Image `db` : PostgreSQL 18, init au premier démarrage, secret, arrêt `SIGINT` | `M2/Docker/db/` | Fait, mesuré |
-| Image `api` : FastAPI, multi-stage, migrations au démarrage | `M2/Docker/api/` | Fait, mesuré |
-| Image `web` : passerelle nginx, résolution DNS par requête, page d'indisponibilité | `M2/Docker/web/` | Fait, mesuré |
-| Compose, `.env`, secret, réseaux `edge` / `backend` | `M2/Docker/` | Fait |
-| Documentation : README principal + un README par image, schémas Mermaid, correspondance avec le barème | `M2/Docker/` | Fait |
+| Image de base `FROM scratch` (reprise du premier TP) | `docker/base/` | Fait |
+| Image `db` : PostgreSQL 18, init au premier démarrage, secret, arrêt `SIGINT` | `docker/db/` | Fait, mesuré |
+| Image `api` : FastAPI, multi-stage, migrations au démarrage | `docker/api/` | Fait, mesuré |
+| Image `web` : passerelle nginx, résolution DNS par requête, page d'indisponibilité | `docker/web/` | Fait, mesuré |
+| Compose, `.env`, secret, réseaux `edge` / `backend` | `docker/` | Fait |
+| Documentation : README principal + un README par image, schémas Mermaid, correspondance avec le barème | `docker/` | Fait |
 | Squelette de l'API v2 : modèle, migration Alembic, données synthétiques, 7 tests unitaires | `api/` (nursery-app) | Fait, tests au vert |
-| Image `front` : Next.js en serveur autonome ; `next.config.mjs` (`output: 'standalone'`), route `app/healthz/route.ts`, exclusion dans `proxy.ts` | `M2/Docker/front/`, racine | Fait, mesuré |
+| Image `front` : Next.js en serveur autonome ; `next.config.mjs` (`output: 'standalone'`), route `app/healthz/route.ts`, exclusion dans `proxy.ts` | `docker/front/`, racine | Fait, mesuré |
 
-L'architecture et les mesures détaillées sont dans le [README du TP](../Docker/README.md).
+L'architecture et les mesures détaillées sont dans le [README du TP](../../docker/README.md).
 
 ## Mesures `[RÉEL]` (2026-10-08, Mac Apple Silicon, OrbStack, Docker 29)
 
