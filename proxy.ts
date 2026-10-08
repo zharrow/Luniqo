@@ -12,9 +12,10 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - healthz (sonde de santé du conteneur, sans appel à Supabase)
      * - public folder
      * - api/stripe/webhooks (Stripe webhooks - no auth needed)
      */
-    '/((?!_next/static|_next/image|favicon.ico|api/stripe/webhooks|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|healthz|api/stripe/webhooks|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
