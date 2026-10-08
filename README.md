@@ -59,10 +59,11 @@ Navigateur ──HTTP :8080──▶ web (nginx) ──/──────▶ fr
 Tout le détail (architecture, choix, mesures, problèmes rencontrés) est dans
 [`docker/README.md`](docker/README.md).
 
-Le front utilise encore Supabase Cloud pour la connexion (v1). Sans
-configuration, les pages s'affichent mais la connexion échoue. Pour le relier au
-projet Supabase sans écrire les clés dans le dépôt :
-`FRONT_SUPABASE_URL=https://xxx.supabase.co FRONT_SUPABASE_ANON_KEY=... docker compose up -d --build`.
+Le front utilise encore Supabase Cloud pour la connexion (v1). Pour pouvoir se
+connecter, renseigner `NEXT_PUBLIC_SUPABASE_URL` et `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+dans le `.env` à la racine (non versionné), puis lancer depuis `docker/` :
+`docker compose --env-file .env --env-file ../.env up -d --build`. Sans ce
+fichier, les pages s'affichent mais la connexion échoue.
 
 ## 📦 Installation
 

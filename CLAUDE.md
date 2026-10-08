@@ -55,7 +55,7 @@ Stack v2 : Python 3.14, FastAPI, SQLAlchemy 2 asynchrone + psycopg 3, Alembic, p
 ### Pile Docker (`docker/`)
 
 ```bash
-cd docker && docker compose up -d --build   # db, api, front, web ; http://localhost:8080
+cd docker && docker compose --env-file .env --env-file ../.env up -d --build   # db, api, front, web ; http://localhost:8080
 ```
 
 Le compose construit l'API depuis `../api` et le front depuis la racine du dépôt.

@@ -49,13 +49,24 @@ docker compose ps                # db, api, front et web doivent être "healthy"
 
 Port 8080 déjà pris sur la machine : `WEB_PUBLISHED_PORT=8081 docker compose up -d`.
 
-Le front utilise encore Supabase Cloud pour la connexion (v1 de Luniqo). Sans
-configuration, toutes les pages s'affichent mais la connexion échoue. Pour le
-relier au projet Supabase, sans écrire les clés dans le dépôt :
+Le front utilise encore Supabase Cloud pour la connexion (v1 de Luniqo). Il lit
+l'URL et la clé publique du projet dans le `.env` de l'application, à la racine
+du dépôt (non versionné) :
 
 ```sh
-FRONT_SUPABASE_URL=https://xxx.supabase.co FRONT_SUPABASE_ANON_KEY=... docker compose up -d --build
+# ../.env (racine du dépôt)
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 ```
+
+On lance alors compose avec ce fichier en plus du sien :
+
+```sh
+docker compose --env-file .env --env-file ../.env up -d --build
+```
+
+Sans ce fichier, `docker compose up -d --build` fonctionne aussi : toutes les
+pages s'affichent, mais la connexion échoue (adresse Supabase factice).
 
 ## Architecture
 
@@ -219,7 +230,7 @@ utilisable sans `.env`.
 | `API_SEED_DEMO=true` | `environment: SEED_DEMO` | `-e SEED_DEMO=true` |
 | `FRONT_CPUS=1.0` / `FRONT_MEMORY=384M` / `FRONT_PIDS=48` | `deploy.resources.limits` | `--cpus 1.0 --memory 384m --pids-limit 48` |
 | `FRONT_NODE_HEAP_MB=192` | `environment: NODE_HEAP_MB` | `-e NODE_HEAP_MB=192` |
-| `FRONT_SUPABASE_URL`, `FRONT_SUPABASE_ANON_KEY` (commande) | `build.args` | `docker build --build-arg NEXT_PUBLIC_SUPABASE_URL=...` |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (`../.env`, via `--env-file`) | `build.args` | `docker build --build-arg NEXT_PUBLIC_SUPABASE_URL=...` |
 | `WEB_CPUS=0.25` / `WEB_MEMORY=32M` / `WEB_PIDS=16` | `deploy.resources.limits` | `--cpus 0.25 --memory 32m --pids-limit 16` |
 | `WEB_WORKER_PROCESSES=1` / `WEB_WORKER_CONNECTIONS=512` | `environment: NGINX_WORKER_*` | `-e NGINX_WORKER_PROCESSES=1 ...` |
 | `WEB_PUBLISHED_PORT=8080` | `ports: "8080:8080"` | `-p 8080:8080` |
