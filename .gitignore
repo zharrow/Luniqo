@@ -44,3 +44,13 @@ next-env.d.ts
 # *.md
 
 marketing
+# M2 : sujet du TP Docker (document du cours, non diffusé)
+M2/Docker/TP.md
+
+# Python (api/)
+__pycache__/
+.pytest_cache/
+.venv/
+
+# Arguments du TP Docker : aucun secret (le mot de passe est dans secrets/)
+!M2/Docker/.env
