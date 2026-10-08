@@ -120,12 +120,21 @@ services:
       additional_contexts:
         luniqo/base:1.0: service:base
       # Inscrites dans le code du navigateur au build. Les valeurs réelles du
-      # projet Supabase de la v1 se passent hors du dépôt (voir README).
+      # projet Supabase de la v1 viennent du .env de l'application (racine du
+      # dépôt, non versionné), passé à compose avec --env-file (voir README).
+      # Sans lui : valeurs factices, les pages s'affichent mais la connexion échoue.
       args:
-        NEXT_PUBLIC_SUPABASE_URL: ${FRONT_SUPABASE_URL:-http://127.0.0.1:54321}
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${FRONT_SUPABASE_ANON_KEY:-cle-publique-non-configuree}
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-http://127.0.0.1:54321}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-cle-publique-non-configuree}
         NEXT_PUBLIC_APP_URL: http://localhost:${WEB_PUBLISHED_PORT:-8080}
     image: luniqo/front:1.0
+    # Variables du serveur Next.js (actions serveur, clé service_role...) :
+    # celles de l'application, si les fichiers existent.
+    env_file:
+      - path: ../.env
+        required: false
+      - path: ../.env.local
+        required: false
     environment:
       NODE_HEAP_MB: ${FRONT_NODE_HEAP_MB:-192}
     # /tmp plus grand que pour les autres services : il reçoit le cache de
