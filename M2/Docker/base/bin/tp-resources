@@ -1,0 +1,37 @@
+#!/bin/sh
+# Affiche en JSON les ressources que le noyau alloue réellement au conteneur
+# courant (cgroup v2). Sert à vérifier, depuis l'intérieur du conteneur, que
+# les options --cpus, --memory et --pids-limit ont bien été appliquées.
+#
+# Exemple de sortie : {"cpus": 0.50, "memory_mb": 64, "pids": 64}
+# "null" signifie : aucune limite.
+set -eu
+
+CGROUP=/sys/fs/cgroup
+
+cpus=null
+if [ -r "$CGROUP/cpu.max" ]; then
+    # Format : "<quota> <période>" en microsecondes, ou "max <période>".
+    read -r quota period < "$CGROUP/cpu.max"
+    if [ "$quota" != "max" ]; then
+        cpus=$(awk -v q="$quota" -v p="$period" 'BEGIN { printf "%.2f", q / p }')
+    fi
+fi
+
+memory_mb=null
+if [ -r "$CGROUP/memory.max" ]; then
+    bytes=$(cat "$CGROUP/memory.max")
+    if [ "$bytes" != "max" ]; then
+        memory_mb=$((bytes / 1024 / 1024))
+    fi
+fi
+
+pids=null
+if [ -r "$CGROUP/pids.max" ]; then
+    value=$(cat "$CGROUP/pids.max")
+    if [ "$value" != "max" ]; then
+        pids=$value
+    fi
+fi
+
+printf '{"cpus": %s, "memory_mb": %s, "pids": %s}\n' "$cpus" "$memory_mb" "$pids"
