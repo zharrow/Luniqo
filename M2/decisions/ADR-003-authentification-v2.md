@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Statut | **Proposée** le 2026-10-08, à valider par Florent en relecture |
+| Statut | **Acceptée** le 2026-10-08 par Florent |
 | Date | 2026-10-08 |
 | Décideur | Florent `[RÉEL]`. Il a fixé le critère (« la solution qui respecte le mieux les règles de cybersécurité ») et délégué la proposition à l'assistant |
 | Ticket | LUN-002 |

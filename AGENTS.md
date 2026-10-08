@@ -127,8 +127,9 @@ Les modules hors parcours central (HACCP, facturation, RH, statistiques…) sont
 | ADR | Sujet | Statut |
 |---|---|---|
 | [ADR-001](M2/decisions/ADR-001-reecriture-backend.md) | Réécrire Luniqo avec un backend FastAPI | **Acceptée** le 2026-10-08 |
+| [Registre](M2/decisions/CHOIX-TECHNIQUES.md) | Tous les choix techniques, raisons, options écartées et sources (tenu à jour) | En continu |
 | ADR-002 | Front v2 : garder Next.js ou passer à React + Vite | À ouvrir après le TP Docker |
-| [ADR-003](M2/decisions/ADR-003-authentification-v2.md) | Authentification v2 : sessions opaques en base, Argon2id, TOTP pour les comptes à privilèges, PIN lié à une tablette enrôlée | **Proposée** le 2026-10-08, à valider par Florent |
+| [ADR-003](M2/decisions/ADR-003-authentification-v2.md) | Authentification v2 : sessions opaques en base, Argon2id, TOTP pour les comptes à privilèges, PIN lié à une tablette enrôlée | **Acceptée** le 2026-10-08 |
 
 ## Anomalies ouvertes
 
@@ -178,11 +179,11 @@ Statuts des preuves (repris du fil rouge) : à vérifier / absent / partiel / d�
 | 2026-10-08 | Un seul dépôt : `M2/Docker/` intégré au dépôt principal (ancien `.git` supprimé). Image `front` (Next.js standalone) ajoutée : les exigences du TP sont couvertes, 5 images, build sans cache en 60 s. 11 problèmes corrigés au total, consignés dans la fiche. Rien n'est commité | [RÉEL] |
 | 2026-10-08 | 25 commits poussés sur `feat/m2-docker-luniqo`. Conteneurisation déplacée de `M2/Docker/` vers `docker/` (M2 réservé au RNCP). Dépôt GitHub renommé `nursery-app` → `Luniqo`. README racine : section Docker pour le cours | [RÉEL] |
 | 2026-10-08 | PR #37 fusionnée dans `main` avant les 5 derniers commits de la branche (déplacement vers `docker/`, renommage, README, `.env` du front) : deuxième PR ouverte pour les intégrer. Dossier local renommé `Luniqo` | [RÉEL] |
-| 2026-10-08 | PR #38 fusionnée. Pile relancée depuis `main` (`e020a26`) : 4 conteneurs sains en 20 s, routes en 200. Tag `tp-docker-v1` posé et poussé. ADR-003 proposée (authentification v2), backlog provisoire `LUN-001` à `LUN-015` dans `M2/management/backlog.md` | [RÉEL] |
+| 2026-10-08 | PR #38 fusionnée. Pile relancée depuis `main` (`e020a26`) : 4 conteneurs sains en 20 s, routes en 200. Tag `tp-docker-v1` posé et poussé. ADR-003 acceptée (authentification v2), registre des choix techniques créé, backlog provisoire `LUN-001` à `LUN-015` dans `M2/management/backlog.md` | [RÉEL] |
 
 ### Prochaines actions
 
-1. **Florent** : relire ADR-003 et le backlog (PR de LUN-001 et LUN-002), valider ou corriger, fusionner.
+1. **Florent** : fusionner les PR de LUN-001 et LUN-002 (ADR-003 acceptée).
 2. LUN-003 : premier module de l'API v2 (comptes et sessions), selon le découpage de [M2/management/backlog.md](M2/management/backlog.md).
 3. LUN-014 : préparer l'oral du TP Docker avant la séance 4.
 4. LUN-012, LUN-013, LUN-015 : fiche de ménage dans le parcours central, Trello et squelette `M2/`, phase 0 (voir le backlog).
