@@ -1,0 +1,18 @@
+# Le contexte de build est la racine du dépôt : on ne garde que ce dont le
+# build Next.js a besoin (liste blanche). Ni node_modules, ni .git, ni .env*,
+# ni la documentation, ni l'API v2.
+*
+!app/
+!components/
+!hooks/
+!lib/
+!public/
+!types/
+!package.json
+!pnpm-lock.yaml
+!next.config.mjs
+!postcss.config.mjs
+!tsconfig.json
+!components.json
+!proxy.ts
+!M2/Docker/front/entrypoint.sh

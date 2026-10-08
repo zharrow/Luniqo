@@ -1,0 +1,197 @@
+# Orchestration de Luniqo. Lancement : docker compose up -d --build
+#
+# Les ${VARIABLE:-défaut} sont lues dans le fichier .env : c'est là qu'on règle
+# les ressources de chaque conteneur sans toucher à ce fichier.
+name: luniqo
+
+# Réglages communs aux services, réutilisés avec "<<: *common".
+x-common: &common
+  # Toujours construire depuis nos Dockerfiles, ne jamais tenter de pull.
+  pull_policy: build
+  # Redémarre le conteneur s'il plante, sauf si on l'a arrêté nous-mêmes.
+  restart: unless-stopped
+  # Système de fichiers de l'image en lecture seule. Seul /tmp (en mémoire,
+  # compté dans la limite mémoire) et les volumes sont modifiables.
+  read_only: true
+  tmpfs:
+    - /tmp:size=16m
+  # Aucun privilège noyau (capabilities) : les services n'en ont pas besoin.
+  cap_drop:
+    - ALL
+  # Interdit tout gain de privilèges (binaires setuid comme su).
+  security_opt:
+    - no-new-privileges:true
+
+services:
+  # Image de base : construite en premier (les autres partent d'elle) mais
+  # jamais lancée (scale: 0). network_mode: none évite à compose de créer un
+  # réseau "default" pour un service qui ne tourne pas.
+  base:
+    build:
+      context: ./base
+      args:
+        ALPINE_VERSION: ${ALPINE_VERSION:-3.24.2}
+    image: luniqo/base:1.0
+    pull_policy: build
+    scale: 0
+    network_mode: none
+
+  db:
+    <<: *common
+    build:
+      context: ./db
+      # "FROM luniqo/base:1.0" pointe vers l'image construite par le service
+      # base : compose la construit d'abord, rien n'est téléchargé.
+      additional_contexts:
+        luniqo/base:1.0: service:base
+    image: luniqo/db:1.0
+    environment:
+      DB_NAME: ${DB_NAME:-luniqo}
+      DB_USER: ${DB_USER:-luniqo}
+      DB_MAX_CONNECTIONS: ${DB_MAX_CONNECTIONS:-20}
+      DB_SHARED_BUFFERS: ${DB_SHARED_BUFFERS:-64MB}
+    # Le mot de passe arrive en fichier dans /run/secrets/db_password, pas en
+    # variable d'environnement (invisible dans docker inspect).
+    secrets:
+      - db_password
+    deploy:
+      resources:
+        limits:
+          cpus: "${DB_CPUS:-1.0}"
+          memory: ${DB_MEMORY:-256M}
+          pids: ${DB_PIDS:-48}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # Pas de "ports" : la base n'est joignable que depuis le réseau interne.
+    networks:
+      - backend
+    # Temps laissé à PostgreSQL pour son arrêt rapide (point de reprise)
+    # avant le SIGKILL.
+    stop_grace_period: 30s
+
+  api:
+    <<: *common
+    build:
+      context: ./api
+      additional_contexts:
+        luniqo/base:1.0: service:base
+        # Code de l'API : dossier api/ à la racine du dépôt nursery-app.
+        luniqo-api: ../../api
+    image: luniqo/api:0.1
+    environment:
+      API_WORKERS: ${API_WORKERS:-1}
+      DB_POOL_SIZE: ${API_DB_POOL_SIZE:-8}
+      DB_ADDR: db:5432
+      DB_NAME: ${DB_NAME:-luniqo}
+      DB_USER: ${DB_USER:-luniqo}
+      SEED_DEMO: ${API_SEED_DEMO:-true}
+    secrets:
+      - db_password
+    deploy:
+      resources:
+        limits:
+          cpus: "${API_CPUS:-0.5}"
+          memory: ${API_MEMORY:-128M}
+          pids: ${API_PIDS:-32}
+    networks:
+      - backend
+    # Base arrêtée : son nom disparaît du DNS de Docker, qui tente alors de
+    # relayer la requête vers l'extérieur, impossible sur le réseau interne.
+    # Le résolveur attendait 5 s (mesuré) : on le ramène à 1 s, une tentative,
+    # pour que /api/health réponde 503 dans le délai du healthcheck.
+    dns_opt:
+      - timeout:1
+      - attempts:1
+    # L'API applique les migrations au démarrage : la base doit répondre.
+    # restart: true relance l'API si compose recrée la base.
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+    stop_grace_period: 15s
+
+  front:
+    <<: *common
+    build:
+      # Contexte = racine du dépôt (le code Next.js). Dockerfile.dockerignore,
+      # à côté du Dockerfile, n'en laisse passer que le code du front.
+      context: ../..
+      dockerfile: M2/Docker/front/Dockerfile
+      additional_contexts:
+        luniqo/base:1.0: service:base
+      # Inscrites dans le code du navigateur au build. Les valeurs réelles du
+      # projet Supabase de la v1 se passent hors du dépôt (voir README).
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${FRONT_SUPABASE_URL:-http://127.0.0.1:54321}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${FRONT_SUPABASE_ANON_KEY:-cle-publique-non-configuree}
+        NEXT_PUBLIC_APP_URL: http://localhost:${WEB_PUBLISHED_PORT:-8080}
+    image: luniqo/front:1.0
+    environment:
+      NODE_HEAP_MB: ${FRONT_NODE_HEAP_MB:-192}
+    # /tmp plus grand que pour les autres services : il reçoit le cache de
+    # Next.js. Ce tmpfs est compté dans la limite mémoire.
+    tmpfs:
+      - /tmp:size=64m
+    deploy:
+      resources:
+        limits:
+          cpus: "${FRONT_CPUS:-1.0}"
+          memory: ${FRONT_MEMORY:-384M}
+          pids: ${FRONT_PIDS:-48}
+    # edge et non backend : le serveur Next.js appelle Supabase Cloud, il lui
+    # faut une sortie vers internet. Aucun port publié : on passe par web.
+    networks:
+      - edge
+    stop_grace_period: 10s
+
+  web:
+    <<: *common
+    build:
+      context: ./web
+      additional_contexts:
+        luniqo/base:1.0: service:base
+    image: luniqo/web:1.0
+    environment:
+      NGINX_WORKER_PROCESSES: ${WEB_WORKER_PROCESSES:-1}
+      NGINX_WORKER_CONNECTIONS: ${WEB_WORKER_CONNECTIONS:-512}
+      FRONT_ADDR: front:3000
+      API_ADDR: api:8000
+    deploy:
+      resources:
+        limits:
+          cpus: "${WEB_CPUS:-0.25}"
+          memory: ${WEB_MEMORY:-32M}
+          pids: ${WEB_PIDS:-16}
+    ports:
+      - "${WEB_PUBLISHED_PORT:-8080}:8080"
+    # edge : port publié sur l'hôte. backend : accès à l'API.
+    networks:
+      - edge
+      - backend
+    # La passerelle n'ouvre ses portes qu'une fois le front et l'API prêts.
+    depends_on:
+      front:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    stop_grace_period: 10s
+
+networks:
+  # Réseau exposé : port publié par web, sortie vers internet (front → Supabase).
+  edge:
+  # Réseau interne : pas de sortie vers l'extérieur, invisible depuis l'hôte.
+  backend:
+    internal: true
+
+volumes:
+  # Données PostgreSQL, conservées entre les redémarrages.
+  pgdata:
+
+secrets:
+  # Mot de passe du rôle applicatif. Un secret issu d'une variable
+  # d'environnement est refusé par compose sur un conteneur en lecture seule :
+  # il est donc lu dans un fichier. Par défaut, le fichier de développement
+  # versionné ; pour un vrai déploiement, DB_PASSWORD_FILE pointe vers un
+  # fichier hors du dépôt.
+  db_password:
+    file: ${DB_PASSWORD_FILE:-./secrets/db_password.dev}

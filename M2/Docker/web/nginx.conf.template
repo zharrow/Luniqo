@@ -1,0 +1,87 @@
+# Modèle de configuration nginx. entrypoint.sh remplace les marqueurs __XXX__
+# par les arguments reçus au run, puis écrit le résultat dans /tmp/nginx.
+
+# Nombre de processus workers. Fixé explicitement : "auto" compterait les
+# cœurs de la machine hôte, sans tenir compte de la limite CPU du conteneur.
+worker_processes __WORKER_PROCESSES__;
+
+# Le système de fichiers de l'image peut être en lecture seule : le PID va
+# dans /tmp (tmpfs), les logs sur la sortie standard récupérée par Docker.
+pid /tmp/nginx/nginx.pid;
+error_log /dev/stderr warn;
+
+events {
+    # Connexions simultanées maximum par worker.
+    worker_connections __WORKER_CONNECTIONS__;
+}
+
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+
+    access_log /dev/stdout;
+    sendfile on;
+    server_tokens off;
+    client_max_body_size 10m;
+
+    # Fichiers temporaires dans /tmp, accessible en écriture à l'utilisateur app.
+    client_body_temp_path /tmp/nginx/client_body;
+    proxy_temp_path /tmp/nginx/proxy;
+    fastcgi_temp_path /tmp/nginx/fastcgi;
+    uwsgi_temp_path /tmp/nginx/uwsgi;
+    scgi_temp_path /tmp/nginx/scgi;
+
+    # DNS interne de Docker. Les adresses des services sont mises dans des
+    # variables : nginx les résout à chaque requête (cache de 10 s) et non une
+    # seule fois au démarrage. Conséquences :
+    # - la passerelle démarre même si un service est absent (réponse 502) ;
+    # - un service recréé avec une nouvelle IP est retrouvé sans redémarrer nginx.
+    resolver 127.0.0.11 valid=10s ipv6=off;
+    resolver_timeout 2s;
+
+    # En-têtes de sécurité ajoutés à toutes les réponses.
+    add_header X-Content-Type-Options nosniff always;
+    add_header X-Frame-Options SAMEORIGIN always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
+
+    # En-têtes transmis aux services : hôte d'origine et adresse du client.
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_connect_timeout 2s;
+
+    server {
+        listen 8080;
+
+        set $front_upstream http://__FRONT_ADDR__;
+        set $api_upstream http://__API_ADDR__;
+
+        # Front Next.js : tout ce qui n'est pas /api/.
+        location / {
+            proxy_pass $front_upstream;
+            proxy_read_timeout 30s;
+        }
+
+        # API FastAPI. L'URI est transmise telle quelle : les routes de l'API
+        # commencent elles-mêmes par /api.
+        location /api/ {
+            proxy_pass $api_upstream;
+            proxy_read_timeout 30s;
+        }
+
+        # Service absent ou en erreur : page d'attente plutôt qu'une erreur brute.
+        error_page 502 503 504 /indisponible.html;
+        location = /indisponible.html {
+            root /srv/www;
+            internal;
+        }
+
+        # Utilisé par le healthcheck : ne dépend que de nginx.
+        location = /healthz {
+            access_log off;
+            default_type text/plain;
+            return 200 "ok\n";
+        }
+    }
+}
