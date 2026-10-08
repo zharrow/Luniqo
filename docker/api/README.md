@@ -47,7 +47,7 @@ L'image est construite en **deux étapes** (*multi-stage build*) :
 | `alembic` | Migrations versionnées du schéma. |
 
 Les versions exactes, dépendances transitives comprises, sont figées dans
-`api/requirements.txt` du dépôt nursery-app. Toutes existent en paquets
+`api/requirements.txt` du dépôt. Toutes existent en paquets
 précompilés pour musl (`musllinux`) et Python 3.14 : **aucun compilateur** n'est
 installé.
 

@@ -1,7 +1,7 @@
 # TP Docker : Luniqo dans mon propre cloud, sans Docker Hub
 
 [Luniqo](../README.md) est un logiciel de gestion de crèches. Ce TP, rangé
-dans `docker/` du dépôt [nursery-app](https://github.com/zharrow/nursery-app),
+dans `docker/` du dépôt [Luniqo](https://github.com/zharrow/Luniqo),
 le fait tourner dans une architecture de conteneurs orchestrés
 avec docker compose : une **passerelle web** (nginx), une **API** (FastAPI), une
 **base de données** (PostgreSQL) et le **front** (l'application Next.js). Toutes
@@ -32,7 +32,7 @@ Alpine, PyPI, npm et Google Fonts). Testé avec Docker 29. Premier build sans
 cache : 60 s mesurées pour les 5 images (sur un Mac Apple Silicon).
 
 ```sh
-git clone https://github.com/zharrow/nursery-app.git && cd nursery-app/docker
+git clone https://github.com/zharrow/Luniqo.git && cd Luniqo/docker
 docker compose up -d --build     # construit les images puis lance les services
 docker compose ps                # db, api, front et web doivent être "healthy"
 ```

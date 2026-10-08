@@ -75,7 +75,7 @@ services:
       context: ./api
       additional_contexts:
         luniqo/base:1.0: service:base
-        # Code de l'API : dossier api/ à la racine du dépôt nursery-app.
+        # Code de l'API : dossier api/ à la racine du dépôt.
         luniqo-api: ../api
     image: luniqo/api:0.1
     environment:

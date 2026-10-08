@@ -5,7 +5,7 @@
 | Cours | Docker (M2, Ynov Toulouse) |
 | Sujet | TP « Projet - Docker Cloud » : images personnalisées orchestrées avec Compose (sujet complet : `docker/TP.md`, non versionné) |
 | Échéance | Dernière des 4 séances. 2 séances passées au 2026-10-08 |
-| Rendu | Lien git, dernier commit avant la date butoir : dépôt public `zharrow/nursery-app`, dossier `docker/` |
+| Rendu | Lien git, dernier commit avant la date butoir : dépôt public `zharrow/Luniqo`, dossier `docker/` |
 | Oral | Non confirmé |
 | Compétences RNCP | C2.1.1 (environnements, déploiement), C1.5 (schéma d'architecture), C2.2.2 (tests), C2.2.3 (sécurité), C4.1.2 (healthchecks, première brique de supervision) |
 | Statut | **Exigences du sujet couvertes** (2026-10-08) : 5 images (base, db, api, front, web), toutes construites depuis `scratch`, mesurées et documentées. Reste : commit et tag de rendu |
@@ -34,7 +34,7 @@ Exclusions : pas de migration des données de la v1, pas de bascule du front ver
 | Image `web` : passerelle nginx, résolution DNS par requête, page d'indisponibilité | `docker/web/` | Fait, mesuré |
 | Compose, `.env`, secret, réseaux `edge` / `backend` | `docker/` | Fait |
 | Documentation : README principal + un README par image, schémas Mermaid, correspondance avec le barème | `docker/` | Fait |
-| Squelette de l'API v2 : modèle, migration Alembic, données synthétiques, 7 tests unitaires | `api/` (nursery-app) | Fait, tests au vert |
+| Squelette de l'API v2 : modèle, migration Alembic, données synthétiques, 7 tests unitaires | `api/` | Fait, tests au vert |
 | Image `front` : Next.js en serveur autonome ; `next.config.mjs` (`output: 'standalone'`), route `app/healthz/route.ts`, exclusion dans `proxy.ts` | `docker/front/`, racine | Fait, mesuré |
 
 L'architecture et les mesures détaillées sont dans le [README du TP](../../docker/README.md).
@@ -76,7 +76,7 @@ Matière directe pour la soutenance et pour le BC04 (anomalie → diagnostic →
 
 | Tâche | Quand | Détail |
 |---|---|---|
-| Relire et commiter le travail du 2026-10-08 dans `nursery-app` | Avant la séance 3 | Florent |
+| Relire puis fusionner la branche `feat/m2-docker-luniqo` dans `main` | Avant la date butoir | Florent ; le prof regardera probablement `main` |
 | Marquer la version rendue | Avant la date butoir | Tag `tp-docker-v1` |
 | Préparer l'explication orale | Avant la séance 4 | Les pannes 6 à 9 sont les meilleurs exemples à raconter |
 | Arrêter l'ancienne pile `tp-docker` | Quand Florent le souhaite | `docker compose -p tp-docker down` : libère les ports 8080 et 7777 |
@@ -86,7 +86,7 @@ Matière directe pour la soutenance et pour le BC04 (anomalie → diagnostic →
 | | Prévu | Réel |
 |---|---|---|
 | Temps de travail | à estimer avec Florent | session du 2026-10-08 (base, db, api, web, doc) |
-| Version de départ | `nursery-app` `3fef96a` (premier TP : ancien dépôt `TP-Docker` `897c76f`) | |
+| Version de départ | `3fef96a` (dépôt alors nommé nursery-app) (premier TP : ancien dépôt `TP-Docker` `897c76f`) | |
 | Version livrée | | non commité au 2026-10-08 |
 
 **Contribution et assistance** : le 2026-10-08, l'architecture a été définie et validée par Florent (choix de FastAPI, de la passerelle, de PostgreSQL). Le code des images, de l'API et la documentation de cette session ont été produits avec l'assistance de Claude Code, à partir de l'image de base et des conventions du premier TP de Florent. Les mesures et diagnostics ont été réellement exécutés. À compléter par Florent : ce qu'il a relu, modifié ou refait lui-même, et ce qu'il saura expliquer à l'oral.

@@ -183,7 +183,7 @@ Skills projet dans `.claude/skills/` : `database-helper`, `design-system-enforce
 
 ## Git
 
-- Dépôt : `github.com/zharrow/nursery-app`, branche principale `main`, une branche par ticket, fusion par PR.
+- Dépôt : `github.com/zharrow/Luniqo` (anciennement `nursery-app`), branche principale `main`, une branche par ticket, fusion par PR.
 - Conventions de tickets, de branches, de commits et de versions : voir AGENTS.md.
 - **Un seul dépôt** pour tout le projet (v1, v2, TP, documentation M2). L'ancien dépôt `zharrow/TP-Docker` n'est plus utilisé.
 - Le dépôt est **public** : aucun secret, aucune donnée réelle, pas d'autre personne réelle que celles citées dans AGENTS.md.

@@ -40,7 +40,7 @@ Luniqo, l'application de gestion de crèches de Florent, sert de **projet fil ro
 7. **Traçabilité.** Ticket `LUN-###` → branche → PR → version taguée → entrée du journal des versions. Chaque livrable M2 référence les compétences qu'il couvre.
 8. **Contraintes de cours respectées.** Une contrainte imposée par un sujet prime sur nos préférences. Si elle ne sert pas Luniqo, en discuter avec Florent plutôt que de la contourner.
 9. **Commanditaire réel, propos réels.** Bee a Baby et ses dirigeants sont réels : on ne leur attribue que ce qui a réellement été dit ou fait. Les revues et validations simulées sont tenues par la Product Owner fictive, qui représente le client (rôle normal en Scrum), jamais au nom de Simona. Un retour réel de la crèche est consigné comme tel, daté, avec son canal.
-10. **Dépôt public.** `zharrow/nursery-app` est public, et c'est le **seul dépôt du projet** (code, TP, documentation M2). Personnes réelles citées : Florent, et Simona (directrice de Bee a Baby) par choix de Florent ; personne d'autre. Aucune information sur les enfants accueillis ni sur la famille de Florent, aucun secret. Le détail d'une faille non corrigée reste sobre tant que la v1 est en ligne.
+10. **Dépôt public.** `zharrow/Luniqo` (anciennement `nursery-app`, renommé le 2026-10-08) est public, et c'est le **seul dépôt du projet** (code, TP, documentation M2). Personnes réelles citées : Florent, et Simona (directrice de Bee a Baby) par choix de Florent ; personne d'autre. Aucune information sur les enfants accueillis ni sur la famille de Florent, aucun secret. Le détail d'une faille non corrigée reste sobre tant que la v1 est en ligne.
 11. **Langue.** Documentation et échanges en français. Code, identifiants, noms de fichiers techniques en anglais (convention existante).
 
 ## Le scénario
@@ -96,7 +96,7 @@ Ces profils couvrent les critères BC03 : RACI, styles managériaux selon la mat
 | Backlog et sprints | **Trello** : colonnes Backlog → Prêt → Sprint → En cours → En revue → Recette → Terminé | Demandé par Florent, visuel, gratuit |
 | Étiquettes Trello | `BC01`–`BC04`, type (`feat`, `fix`, `infra`, `doc`), cours (`cours:docker`…) | Relie chaque carte à une compétence et à un cours |
 | Planning macro | **Diagramme de Gantt en Mermaid** versionné dans `M2/management/` + export image pour les oraux | Diffable : l'historique git montre la baseline et ses révisions (prévu/réel) |
-| Code, revues, CI/CD | GitHub (`zharrow/nursery-app`), PR obligatoires, GitHub Actions | Preuves horodatées de la chaîne ticket → déploiement |
+| Code, revues, CI/CD | GitHub (`zharrow/Luniqo`), PR obligatoires, GitHub Actions | Preuves horodatées de la chaîne ticket → déploiement |
 | Décisions | ADR (Architecture Decision Records) dans `M2/decisions/` | Trace des choix et des options écartées (C1.3.2, C3.2.2) |
 | Communication équipe | Canal écrit (Slack/Discord simulé), visio sous-titrée | Cohérent avec la situation de handicap |
 
@@ -142,7 +142,7 @@ Les modules hors parcours central (HACCP, facturation, RH, statistiques…) sont
 |---|---|---|---|
 | Docker | **0 image Docker Hub**, images personnalisées ; au moins 3 types (front, back, serveur web) ; arguments de ressources au run et dans le compose ; SIGTERM gérés ; ordre de démarrage ; schéma des communications ; choix documentés | 4 séances, la 2e est passée. Rendu : dernier commit avant la date butoir. Oral non confirmé | [M2/cours/docker.md](M2/cours/docker.md) |
 
-Le TP vit dans `docker/` à la racine du dépôt (le dossier `M2/` est réservé aux preuves RNCP) ; le lien rendu au prof est celui de `nursery-app`. Il remplace la première version (front/back/serveur de jeu sans lien avec Luniqo), dont l'historique reste sur l'ancien dépôt GitHub `zharrow/TP-Docker`, qui n'est plus utilisé.
+Le TP vit dans `docker/` à la racine du dépôt (le dossier `M2/` est réservé aux preuves RNCP) ; le lien rendu au prof est celui du dépôt `zharrow/Luniqo`. Il remplace la première version (front/back/serveur de jeu sans lien avec Luniqo), dont l'historique reste sur l'ancien dépôt GitHub `zharrow/TP-Docker`, qui n'est plus utilisé.
 
 ## Arborescence de la documentation M2
 
@@ -175,11 +175,12 @@ Statuts des preuves (repris du fil rouge) : à vérifier / absent / partiel / d�
 | 2026-10-08 | ANO-001 consignée, fiche du TP Docker rédigée, `M2/Docker/` ignoré par git | [RÉEL] |
 | 2026-10-08 | FastAPI et architecture du TP validés par Florent ; base v1 confirmée sans données réelles ; branche `origin/docker` supprimée (tag local `archive/origin-docker`) ; historique réel de Bee a Baby documenté | [RÉEL] |
 | 2026-10-08 | Squelette de l'API v2 (`api/`) : FastAPI asynchrone, Alembic, données synthétiques, 7 tests au vert. TP Docker : images base, db, api, web construites, mesurées (charge, arrêts, panne de la base) et documentées | [RÉEL] |
-| 2026-10-08 | Un seul dépôt : `M2/Docker/` intégré à nursery-app (ancien `.git` supprimé). Image `front` (Next.js standalone) ajoutée : les exigences du TP sont couvertes, 5 images, build sans cache en 60 s. 11 problèmes corrigés au total, consignés dans la fiche. Rien n'est commité | [RÉEL] |
+| 2026-10-08 | Un seul dépôt : `M2/Docker/` intégré au dépôt principal (ancien `.git` supprimé). Image `front` (Next.js standalone) ajoutée : les exigences du TP sont couvertes, 5 images, build sans cache en 60 s. 11 problèmes corrigés au total, consignés dans la fiche. Rien n'est commité | [RÉEL] |
+| 2026-10-08 | 25 commits poussés sur `feat/m2-docker-luniqo`. Conteneurisation déplacée de `M2/Docker/` vers `docker/` (M2 réservé au RNCP). Dépôt GitHub renommé `nursery-app` → `Luniqo`. README racine : section Docker pour le cours | [RÉEL] |
 
 ### Prochaines actions
 
-1. **Florent** : relire le travail du 2026-10-08, puis le commiter dans `nursery-app`.
+1. **Florent** : relire le travail du 2026-10-08 (branche `feat/m2-docker-luniqo`, poussée), puis le fusionner dans `main` par PR.
 2. TP Docker : tag de rendu et préparation de l'oral (voir « Reste à faire » dans [M2/cours/docker.md](M2/cours/docker.md)).
 3. Revoir le parcours central du fil rouge pour y intégrer la fiche de ménage (besoin réel d'origine).
 4. Créer le tableau Trello et le squelette `M2/` (README, management, journal).
