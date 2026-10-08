@@ -14,7 +14,7 @@ Ordre fixé par [ADR-001](../decisions/ADR-001-reecriture-backend.md) : socle (a
 | LUN-004 | Socle v2 : entreprises, crèches, droits d'accès par crèche, tests d'isolation | feat | BC02 (C2.2.2, C2.2.3) | LUN-003 | En revue |
 | LUN-005 | Tablette : enrôlement par la direction, PIN vérifié côté serveur, session d'action | feat | BC02 (C2.2.3), BC04 (C4.2.2, ANO-001) | LUN-004 | Backlog |
 | LUN-006 | Multifacteur TOTP obligatoire pour Developer et Owner | feat | BC02 (C2.2.3) | LUN-003 | Backlog |
-| LUN-007 | Tests d'intégration sur une vraie PostgreSQL (base de test jetable) | infra | BC02 (C2.2.2) | LUN-003 | Backlog |
+| LUN-007 | Tests d'intégration sur une vraie PostgreSQL (base de test jetable) | infra | BC02 (C2.2.2) | LUN-003 | En revue |
 | LUN-008 | Intégration continue : lint, typage, tests, build des images sur chaque PR | infra | BC02 (C2.1.2) | LUN-007 | Backlog |
 | LUN-009 | Enfants et familles (v2) | feat | BC02 | LUN-004 | Backlog |
 | LUN-010 | Pointage arrivée et départ (v2) | feat | BC02 (C2.2.2) | LUN-005, LUN-009 | Backlog |

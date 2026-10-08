@@ -45,7 +45,9 @@ pnpm seed          # ⚠️ écrit dans la base pointée par .env.local avec la 
 ```bash
 cd api && python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements-dev.txt
-pytest                          # tests unitaires, sans base
+pytest                          # tests unitaires, sans base (intégration ignorée)
+scripts/test-db.sh up           # base PostgreSQL jetable (image luniqo/db), puis exporter TEST_DB_*
+pytest -m integration           # tests sur la vraie base ; scripts/test-db.sh down ensuite
 alembic upgrade head            # migrations (DB_ADDR, DB_PASSWORD dans l'environnement)
 uvicorn app.main:app --reload   # Swagger sur /api/docs
 ```
