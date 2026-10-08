@@ -85,6 +85,12 @@ services:
       DB_NAME: ${DB_NAME:-luniqo}
       DB_USER: ${DB_USER:-luniqo}
       SEED_DEMO: ${API_SEED_DEMO:-true}
+      # Comptes de démonstration créés seulement si ce mot de passe est fourni
+      # (dans ../.env, non versionné) : aucun mot de passe dans le dépôt.
+      SEED_DEMO_PASSWORD: ${API_SEED_DEMO_PASSWORD:-}
+      # Origine de la passerelle : seule autorisée à envoyer des requêtes qui
+      # modifient des données (contrôle de l'en-tête Origin, ADR-003).
+      APP_ORIGINS: http://localhost:${WEB_PUBLISHED_PORT:-8080}
     secrets:
       - db_password
     deploy:

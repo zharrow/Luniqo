@@ -1,4 +1,5 @@
 from app.config import Settings, read_password
+from app.db import new_session
 
 
 def test_url_echappe_les_caracteres_speciaux_du_mot_de_passe():
@@ -18,3 +19,8 @@ def test_mot_de_passe_en_variable_sans_fichier(monkeypatch):
     monkeypatch.delenv("DB_PASSWORD_FILE", raising=False)
     monkeypatch.setenv("DB_PASSWORD", "dev")
     assert read_password() == "dev"
+
+
+def test_sessions_de_base_gardent_leurs_valeurs_apres_commit():
+    # Régression LUN-003 : connexion en erreur 500 (MissingGreenlet) sur la vraie base.
+    assert new_session().sync_session.expire_on_commit is False

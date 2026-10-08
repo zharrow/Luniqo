@@ -19,6 +19,13 @@ class Settings:
     db_user: str
     db_password: str
     db_pool_size: int
+    # Origines autorisées à envoyer des requêtes qui modifient des données
+    # (contrôle de l'en-tête Origin, ADR-003). Front et API partagent l'origine
+    # de la passerelle.
+    app_origins: tuple[str, ...] = ("http://localhost:8080",)
+    # Cookie de session Secure, préfixé __Host-. À désactiver seulement pour
+    # un développement local sur un navigateur qui refuse Secure en HTTP.
+    cookie_secure: bool = True
 
     @property
     def database_url(self) -> str:
@@ -49,4 +56,10 @@ def get_settings() -> Settings:
         db_user=os.environ.get("DB_USER", "luniqo"),
         db_password=read_password(),
         db_pool_size=int(os.environ.get("DB_POOL_SIZE", "5")),
+        app_origins=tuple(
+            origin.strip().rstrip("/")
+            for origin in os.environ.get("APP_ORIGINS", "http://localhost:8080").split(",")
+            if origin.strip()
+        ),
+        cookie_secure=os.environ.get("SESSION_COOKIE_SECURE", "true").lower() != "false",
     )

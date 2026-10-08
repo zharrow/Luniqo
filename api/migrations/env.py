@@ -6,6 +6,7 @@ from alembic import context
 from sqlalchemy import create_engine, pool
 
 from app.config import get_settings
+import app.auth.models  # noqa: F401  (enregistre les tables de l'authentification)
 from app.models import Base
 
 if context.config.config_file_name is not None:

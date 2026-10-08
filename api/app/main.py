@@ -7,17 +7,17 @@ sur /api/redoc, schéma OpenAPI sur /api/openapi.json.
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import Annotated
 
-from fastapi import Depends, FastAPI, Response, status
+from fastapi import FastAPI, Response, status
 from sqlalchemy import select, text
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import __version__
-from app.db import get_engine, get_session
+from app.auth.router import router as auth_router
+from app.db import SessionDep, get_engine
 from app.models import Nursery
 from app.schemas import Health, NurseryOut
+from app.security import OriginCheckMiddleware
 
 
 @asynccontextmanager
@@ -37,8 +37,8 @@ app = FastAPI(
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json",
 )
-
-SessionDep = Annotated[AsyncSession, Depends(get_session)]
+app.add_middleware(OriginCheckMiddleware)
+app.include_router(auth_router)
 
 
 @app.get(

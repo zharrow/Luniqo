@@ -80,6 +80,9 @@ installé.
 | `DB_NAME`, `DB_USER` | `luniqo` | identifiants | Base et rôle créés par l'image `db`. |
 | `DB_PASSWORD_FILE` | `/run/secrets/db_password` | fichier lisible non vide | Mot de passe (secret Docker), lu par l'application, jamais en variable. |
 | `SEED_DEMO` | `false` (`true` dans le compose) | `true`/`false` | Insère au démarrage un jeu de données **synthétique** (un groupe, deux crèches). Idempotent. |
+| `SEED_DEMO_PASSWORD` | vide | 15 caractères au moins (politique d'ADR-003) | Mot de passe des comptes de démonstration (`direction@demo.test`, `employe@demo.test`). Vide : aucun compte créé. Fourni par `API_SEED_DEMO_PASSWORD` dans le `.env` de l'application, jamais versionné. |
+| `APP_ORIGINS` | `http://localhost:8080` | origines séparées par des virgules | Seules origines acceptées pour les requêtes `POST`, `PUT`, `PATCH`, `DELETE` (protection CSRF). Le compose la cale sur le port publié. |
+| `SESSION_COOKIE_SECURE` | `true` | `true`/`false` | Cookie de session `Secure` et préfixé `__Host-`. `false` seulement pour un navigateur qui refuse `Secure` sur `http://localhost`. |
 
 ### Arguments Docker (ressources)
 
