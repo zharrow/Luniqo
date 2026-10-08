@@ -68,5 +68,6 @@ def test_delai_plafonne_a_une_minute_avant_le_blocage():
 def test_blocage_atteignable_dans_la_fenetre(throttle):
     # Sinon les délais imposés feraient sortir les premiers échecs de la
     # fenêtre avant le seuil, et le blocage ne se déclencherait jamais.
-    waits = sum(retry_after(FailureStats(count, T0), throttle, T0) for count in range(throttle.delay_from, throttle.block_from))
+    waits = sum(retry_after(FailureStats(count, T0), throttle, T0)
+                for count in range(throttle.delay_from, throttle.block_from))
     assert waits < FAILURE_WINDOW.total_seconds()

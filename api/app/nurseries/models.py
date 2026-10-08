@@ -29,7 +29,7 @@ class Enterprise(Base):
     name: Mapped[str] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
-    nurseries: Mapped[list["Nursery"]] = relationship(back_populates="enterprise")
+    nurseries: Mapped[list[Nursery]] = relationship(back_populates="enterprise")
 
 
 class Nursery(Base):
