@@ -65,7 +65,9 @@ api/
 │   ├── schemas.py     schémas Pydantic communs
 │   └── seed.py        données de démonstration synthétiques
 ├── migrations/        migrations Alembic
+├── scripts/test-db.sh base PostgreSQL jetable pour les tests d'intégration
 ├── tests/             tests unitaires (pytest) ; tests/auth/ et tests/nurseries/ utilisent des dépôts en mémoire
+│   └── integration/   tests sur une vraie PostgreSQL : migrations, contraintes, requêtes SQL, routes
 ├── requirements.in    dépendances directes
 ├── requirements.txt   versions exactes, dépendances transitives comprises
 └── requirements-dev.txt  outils de test
@@ -85,6 +87,11 @@ api/
 - **Authentification** : sessions opaques en base, Argon2id, contrôle `Origin`,
   limitation des tentatives. Règles et raisons : [ADR-003](../M2/decisions/ADR-003-authentification-v2.md) ;
   choix d'implémentation et mesures : [registre des choix techniques](../M2/decisions/CHOIX-TECHNIQUES.md).
+- **Deux niveaux de tests.** Unitaires avec des dépôts en mémoire (rapides,
+  sans base) ; intégration sur PostgreSQL : migrations réversibles et conformes
+  aux modèles, contraintes de la base, requêtes SQL, routes de bout en bout.
+  Chaque test d'intégration tourne dans une transaction annulée à la fin ; la
+  base doit s'appeler `*_test` (elle est vidée au début de la session).
 - **Dépendances FastAPI toujours `async def`** : une dépendance `def` est
   exécutée dans un thread, ce qui recrée le problème de limite de processus.
   Un test (`test_aucune_dependance_synchrone`) le vérifie.
@@ -116,6 +123,14 @@ python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements-dev.txt
 
 pytest                          # tests unitaires, sans base de données (134 au 2026-10-08)
+
+# Tests d'intégration sur une vraie PostgreSQL (31 au 2026-10-08), base jetable
+# construite avec l'image luniqo/db du TP Docker (cd ../docker && docker compose build db) :
+scripts/test-db.sh up           # affiche la ligne export TEST_DB_... à copier
+export TEST_DB_ADDR=127.0.0.1:55432 TEST_DB_NAME=luniqo_test TEST_DB_PASSWORD=luniqo-test
+pytest                          # unitaires + intégration
+pytest -m integration           # intégration seulement
+scripts/test-db.sh down
 
 # Avec une base PostgreSQL joignable depuis la machine (celle du TP Docker
 # n'est pas publiée sur l'hôte, elle est sur un réseau interne) :

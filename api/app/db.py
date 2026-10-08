@@ -11,7 +11,7 @@ from functools import lru_cache
 from typing import Annotated
 
 from fastapi import Depends
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, AsyncSession, create_async_engine
 
 from app.config import get_settings
 
@@ -32,11 +32,12 @@ def get_engine() -> AsyncEngine:
     )
 
 
-def new_session() -> AsyncSession:
+def new_session(bind: AsyncConnection | None = None, **options) -> AsyncSession:
+    """Session configurée comme dans l'application. Les tests d'intégration la lient à leur transaction."""
     # expire_on_commit=False : après un commit, les objets gardent leurs
     # valeurs. Sinon, lire un attribut relancerait une requête implicite,
     # impossible en asynchrone (MissingGreenlet, constaté sur la connexion).
-    return AsyncSession(get_engine(), expire_on_commit=False)
+    return AsyncSession(bind or get_engine(), expire_on_commit=False, **options)
 
 
 async def get_session() -> AsyncIterator[AsyncSession]:
