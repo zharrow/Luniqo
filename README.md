@@ -26,7 +26,7 @@ docker compose ps                # db, api, front et web doivent être "healthy"
 |---|---|
 | <http://localhost:8080> | l'application Luniqo (page de connexion) |
 | <http://localhost:8080/api/docs> | documentation Swagger de l'API |
-| <http://localhost:8080/api/v2/nurseries> | les crèches de démonstration (données fictives) |
+| <http://localhost:8080/api/health> | état de l'API et de sa base |
 
 ### Les conteneurs
 

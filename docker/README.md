@@ -41,7 +41,7 @@ docker compose ps                # db, api, front et web doivent être "healthy"
 |---|---|
 | Ouvrir Luniqo | <http://localhost:8080> (page de connexion) |
 | Voir l'état de l'API | <http://localhost:8080/api/health> |
-| Lister les crèches (données de démo) | <http://localhost:8080/api/v2/nurseries> |
+| Se connecter et lister les crèches (données de démo) | Swagger : `POST /api/v2/auth/login` puis `GET /api/v2/nurseries` (comptes créés si `API_SEED_DEMO_PASSWORD` est défini dans `../.env`) |
 | Documentation de l'API (Swagger) | <http://localhost:8080/api/docs> |
 | Lire les logs | `docker compose logs -f` |
 | Changer les ressources | modifier `.env` puis `docker compose up -d` |
@@ -254,7 +254,7 @@ Mesures du 2026-10-08 (`docker stats`, Mac Apple Silicon sous OrbStack) :
 | front | 1.0 | 384 Mo | 48 | 72 à 122 Mo, 12 pids | 151 Mo, 12 pids, 102 % CPU | Le rendu des pages côté serveur est le plus coûteux en CPU. Tas JavaScript plafonné à 192 Mo, plus le tmpfs de 64 Mo du cache Next.js. |
 | web | 0.25 | 32 Mo | 16 | 3 à 5 Mo, 3 pids | 4 à 6 Mo, 3 pids, 6 % CPU | nginx ne fait que relayer. |
 
-Charges : 3 000 requêtes `/api/v2/nurseries` à 60 simultanées (db, api, web) ;
+Charges : 3 000 requêtes `/api/v2/nurseries` (route alors ouverte ; protégée par session depuis LUN-004) à 60 simultanées (db, api, web) ;
 1 000 rendus de `/login` à 30 simultanés (front, web).
 
 Total : 2,75 cœurs et 800 Mo au maximum, pour une consommation réelle au repos

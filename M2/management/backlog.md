@@ -11,7 +11,7 @@ Ordre fixé par [ADR-001](../decisions/ADR-001-reecriture-backend.md) : socle (a
 | LUN-001 | Rendu du TP Docker : tag `tp-docker-v1`, fiche du cours à jour | doc, `cours:docker` | BC02 (C2.1.1) | | En revue |
 | LUN-002 | ADR-003 : authentification et sessions de la v2 | doc | BC01 (C1.3.2, C1.2.3), BC02 (C2.2.3) | | En revue |
 | LUN-003 | Socle v2 : comptes, mots de passe Argon2id, sessions, connexion et déconnexion | feat | BC02 (C2.2.2, C2.2.3) | LUN-002 | En revue |
-| LUN-004 | Socle v2 : entreprises, crèches, droits d'accès par crèche, tests d'isolation | feat | BC02 (C2.2.2, C2.2.3) | LUN-003 | Backlog |
+| LUN-004 | Socle v2 : entreprises, crèches, droits d'accès par crèche, tests d'isolation | feat | BC02 (C2.2.2, C2.2.3) | LUN-003 | En revue |
 | LUN-005 | Tablette : enrôlement par la direction, PIN vérifié côté serveur, session d'action | feat | BC02 (C2.2.3), BC04 (C4.2.2, ANO-001) | LUN-004 | Backlog |
 | LUN-006 | Multifacteur TOTP obligatoire pour Developer et Owner | feat | BC02 (C2.2.3) | LUN-003 | Backlog |
 | LUN-007 | Tests d'intégration sur une vraie PostgreSQL (base de test jetable) | infra | BC02 (C2.2.2) | LUN-003 | Backlog |
@@ -23,8 +23,9 @@ Ordre fixé par [ADR-001](../decisions/ADR-001-reecriture-backend.md) : socle (a
 | LUN-013 | Tableau Trello et squelette `M2/` (README, management, journal) | doc | BC03 (C3.1, C3.2.1) | | Backlog |
 | LUN-014 | Préparer l'oral du TP Docker | doc, `cours:docker` | BC02 | LUN-001 | Backlog |
 | LUN-015 | Phase 0 : installer la v1 sur une base de test isolée et classer le parcours central | infra | BC01 (C1.2.2) | | Backlog |
-| LUN-016 | Purge des sessions expirées et durée de conservation du journal `auth_event` (RGPD) | feat | BC02 (C2.2.3), BC04 | LUN-003 | Backlog |
-| LUN-017 | Changement de mot de passe et invitation (choix du premier mot de passe), avec révocation des sessions | feat | BC02 (C2.2.3) | LUN-003 | Backlog |
+| LUN-016 | Purge des sessions expirées et du journal `auth_event` au-delà de 6 mois (durée CNIL, décidée le 2026-10-08) | feat | BC02 (C2.2.3), BC04 | LUN-003 | Backlog |
+| LUN-017 | Changement de mot de passe et invitation (création des comptes employés par la direction, choix du premier mot de passe), avec révocation des sessions | feat | BC02 (C2.2.3) | LUN-004 | Backlog |
+| LUN-018 | Routes d'administration de l'éditeur (entreprises, métriques), sans accès aux données des crèches | feat | BC02 (C2.2.3) | LUN-004 | Backlog |
 
 ## Découpage de LUN-003 (premier module de l'API)
 

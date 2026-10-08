@@ -181,10 +181,11 @@ Statuts des preuves (repris du fil rouge) : à vérifier / absent / partiel / d�
 | 2026-10-08 | PR #37 fusionnée dans `main` avant les 5 derniers commits de la branche (déplacement vers `docker/`, renommage, README, `.env` du front) : deuxième PR ouverte pour les intégrer. Dossier local renommé `Luniqo` | [RÉEL] |
 | 2026-10-08 | PR #38 fusionnée. Pile relancée depuis `main` (`e020a26`) : 4 conteneurs sains en 20 s, routes en 200. Tag `tp-docker-v1` posé et poussé. ADR-003 acceptée (authentification v2), registre des choix techniques créé, backlog provisoire `LUN-001` à `LUN-015` dans `M2/management/backlog.md` | [RÉEL] |
 | 2026-10-08 | LUN-003 : module `app/auth/` de l'API v2 (comptes, Argon2id, sessions opaques, contrôle `Origin`, limitation des tentatives, journal), migration 0002, 73 tests au vert. Vérifié sur la pile Docker : migration, connexion, déconnexion, limitation, usurpation de `X-Forwarded-For` corrigée dans nginx, charge (60 connexions, 6 threads, limite mémoire jamais atteinte). Trois défauts trouvés et corrigés en cours de route (registre des choix techniques). Registre des choix techniques tenu à jour | [RÉEL] |
+| 2026-10-08 | Durée de conservation du journal des connexions fixée à 6 mois (CNIL), décision de Florent. LUN-004 : module `app/nurseries/` (crèches, accès du personnel, règle d'accès unique, isolation doublée en base), migration 0003, 134 tests ; tests d'isolation éprouvés par mutation ; vérifié sur la pile Docker (migration sur base existante, contraintes SQL, parcours HTTP) | [RÉEL] |
 
 ### Prochaines actions
 
 1. **Florent** : fusionner les PR de LUN-001 et LUN-002 (ADR-003 acceptée).
-2. **Florent** : relire la PR de LUN-003 (empilée sur LUN-002) et vérifier le cookie de session dans un navigateur (étape 8). Puis LUN-004 : entreprises, crèches et droits d'accès par crèche.
+2. **Florent** : relire les PR de LUN-003 et LUN-004 (empilées : #40 → #41 → LUN-004) et vérifier le cookie de session dans un navigateur. Suite proposée : LUN-007 (tests sur vraie PostgreSQL) puis LUN-005 (tablette et PIN), ou LUN-009 (enfants et familles).
 3. LUN-014 : préparer l'oral du TP Docker avant la séance 4.
 4. LUN-012, LUN-013, LUN-015 : fiche de ménage dans le parcours central, Trello et squelette `M2/`, phase 0 (voir le backlog).

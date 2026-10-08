@@ -160,7 +160,7 @@ Issus d'une lecture statique du code, sans exécution :
 
 Détails et choix dans AGENTS.md et les ADR de `M2/decisions/`.
 
-- **v2** : le squelette existe dans `api/` (voir « Commandes »). À venir : authentification, isolation par crèche, parcours central, client TypeScript généré depuis le schéma OpenAPI.
+- **v2** : `api/` (voir « Commandes » et [api/README.md](api/README.md)). Fait : authentification (ADR-003, LUN-003), entreprises, crèches et accès par crèche (LUN-004). À venir : tablette et PIN, TOTP, enfants et familles, pointage, client TypeScript généré depuis le schéma OpenAPI. Choix et sources : [M2/decisions/CHOIX-TECHNIQUES.md](M2/decisions/CHOIX-TECHNIQUES.md), à tenir à jour.
 - **Docker Compose** : passerelle nginx, front Next.js, API, PostgreSQL **fonctionnent** (TP Docker, [M2/cours/docker.md](M2/cours/docker.md)). Pour le front : `output: 'standalone'` dans `next.config.mjs` et une route `app/healthz` exclue du middleware ; ne pas les retirer. Images construites par nos soins (aucune image Docker Hub, base `FROM scratch`), arguments de ressources, healthchecks, gestion des signaux, non-root, lecture seule.
 - **CI** (GitHub Actions) : lint, typecheck, tests, build des images sur chaque PR.
 - **CD** : images publiées et taguées, déploiement sur VPS (recette puis production), retour arrière par tag.
