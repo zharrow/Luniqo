@@ -76,10 +76,10 @@ Matière directe pour la soutenance et pour le BC04 (anomalie → diagnostic →
 
 | Tâche | Quand | Détail |
 |---|---|---|
-| Relire puis fusionner la branche `feat/m2-docker-luniqo` dans `main` | Avant la date butoir | Florent ; le prof regardera probablement `main` |
-| Marquer la version rendue | Avant la date butoir | Tag `tp-docker-v1` |
+| ~~Relire puis fusionner la branche `feat/m2-docker-luniqo` dans `main`~~ | Fait le 2026-10-08 | PR #37 puis #38 (commits poussés après la fusion de la #37) |
+| ~~Marquer la version rendue~~ | Fait le 2026-10-08 | Tag annoté `tp-docker-v1` sur `e020a26`, poussé |
 | Préparer l'explication orale | Avant la séance 4 | Les pannes 6 à 9 sont les meilleurs exemples à raconter |
-| Arrêter l'ancienne pile `tp-docker` | Quand Florent le souhaite | `docker compose -p tp-docker down` : libère les ports 8080 et 7777 |
+| ~~Arrêter l'ancienne pile `tp-docker`~~ | Constaté le 2026-10-08 | `docker compose ls` ne liste plus que `luniqo` |
 
 ## Suivi
 
@@ -87,6 +87,6 @@ Matière directe pour la soutenance et pour le BC04 (anomalie → diagnostic →
 |---|---|---|
 | Temps de travail | à estimer avec Florent | session du 2026-10-08 (base, db, api, web, doc) |
 | Version de départ | `3fef96a` (dépôt alors nommé nursery-app) (premier TP : ancien dépôt `TP-Docker` `897c76f`) | |
-| Version livrée | | non commité au 2026-10-08 |
+| Version livrée | | tag `tp-docker-v1` (`e020a26`, `main`, 2026-10-08). Pile relancée depuis ce commit le jour même : 4 conteneurs sains en 20 s, `/healthz`, `/api/health`, `/api/docs` et `/api/v2/nurseries` en 200 |
 
 **Contribution et assistance** : le 2026-10-08, l'architecture a été définie et validée par Florent (choix de FastAPI, de la passerelle, de PostgreSQL). Le code des images, de l'API et la documentation de cette session ont été produits avec l'assistance de Claude Code, à partir de l'image de base et des conventions du premier TP de Florent. Les mesures et diagnostics ont été réellement exécutés. À compléter par Florent : ce qu'il a relu, modifié ou refait lui-même, et ce qu'il saura expliquer à l'oral.
