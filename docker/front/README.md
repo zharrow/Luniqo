@@ -5,7 +5,8 @@ dépôt), servie par le serveur autonome de Next.js. On y accède par la passere
 `web`, pour tout ce qui n'est pas `/api/`.
 
 Le front utilise encore **Supabase Cloud** pour la connexion et les données
-(v1) : ce sont les variables `FRONT_SUPABASE_*` qui le relient au projet Supabase.
+(v1) : les variables `NEXT_PUBLIC_SUPABASE_*` du `.env` de l'application le relient
+au projet Supabase.
 Sans elles, toutes les pages s'affichent mais la connexion échoue.
 
 ## Adaptations de l'application pour le TP
@@ -70,15 +71,25 @@ la même raison, le build appelle `next build` directement plutôt que
 
 | Argument | Variable du `.env` / de la commande | Défaut | Rôle |
 |---|---|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | `FRONT_SUPABASE_URL` | `http://127.0.0.1:54321` (aucun Supabase) | URL du projet Supabase de la v1. |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `FRONT_SUPABASE_ANON_KEY` | valeur factice | Clé publique du projet. |
+| `NEXT_PUBLIC_SUPABASE_URL` | même nom, dans `../.env` | `http://127.0.0.1:54321` (aucun Supabase) | URL du projet Supabase de la v1. |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | même nom, dans `../.env` | valeur factice | Clé publique du projet. |
 | `NEXT_PUBLIC_APP_URL` | dérivée de `WEB_PUBLISHED_PORT` | `http://localhost:8080` | Adresse publique de l'application. |
 
-Les valeurs réelles ne sont pas écrites dans le dépôt : on les passe à la commande.
+Les valeurs réelles ne sont pas écrites dans le dépôt : elles sont lues dans le
+`.env` de l'application (racine, non versionné), que l'on donne à compose en plus
+du sien :
 
 ```sh
-FRONT_SUPABASE_URL=https://xxx.supabase.co FRONT_SUPABASE_ANON_KEY=... docker compose up -d --build
+docker compose --env-file .env --env-file ../.env up -d --build
 ```
+
+À l'exécution, le compose transmet aussi ce `.env` (et `.env.local` s'il existe)
+au serveur Next.js (`env_file`, facultatif) : les actions serveur y trouvent par
+exemple `SUPABASE_SERVICE_ROLE_KEY`.
+
+Erreur rencontrée sans ces valeurs (2026-10-08) : le navigateur tente de joindre
+`http://127.0.0.1:54321/auth/v1/token` (adresse factice) et la connexion échoue
+avec « Supabase Auth failed: AuthRetryableFetchError ».
 
 ### Arguments de l'application (run)
 

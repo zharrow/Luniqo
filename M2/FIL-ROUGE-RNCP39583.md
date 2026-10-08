@@ -138,7 +138,7 @@ Adapter ces jalons aux sujets, à la charge disponible et aux dates de remise r�
 
 ## Sources et degré de confiance
 
-- Dépôt : https://github.com/zharrow/nursery-app, commit indiqué en tête. Sources de constats : package.json, README.md, docs/phases/README.md, lib/services, lib/providers/PostHogProvider.tsx et supabase/migrations. Confiance élevée pour la présence des fichiers, limitée pour leur comportement réel.
+- Dépôt : https://github.com/zharrow/Luniqo (nommé nursery-app au moment de cet état des lieux), commit indiqué en tête. Sources de constats : package.json, README.md, docs/phases/README.md, lib/services, lib/providers/PostHogProvider.tsx et supabase/migrations. Confiance élevée pour la présence des fichiers, limitée pour leur comportement réel.
 - Fiche nationale : https://www.francecompetences.fr/recherche/rncp/39583
 - Référentiel officiel détaillé, 17 pages : https://www.francecompetences.fr/wp-json/api/v1/activity/export/26524/541984. Accessible le 8 octobre 2026. Les identifiants ci-dessus constituent un index de travail ; consulter les critères originaux et contrôler toute modification ultérieure.
 - Consignes locales : informations rapportées par Florent dans cette conversation ; grilles, formats et dates non disponibles.

@@ -87,5 +87,5 @@ régénérer `requirements.txt` avec `pip freeze`.
 
 ## Exécution en conteneur
 
-L'image est construite par le TP Docker (`M2/Docker/`),
+L'image est construite par le TP Docker (`docker/`),
 qui récupère ce dossier comme contexte de build. Voir son `api/README.md`.

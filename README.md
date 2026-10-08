@@ -9,6 +9,62 @@ Application moderne de gestion de crèche avec traçabilité HACCP, développée
 - **Backend** : Supabase (PostgreSQL + Auth + Storage + Realtime)
 - **Déploiement** : Vercel (ready to deploy)
 
+## 🐳 Lancer Luniqo avec Docker (cours Docker, M2)
+
+Le dossier [`docker/`](docker/) fait tourner tout Luniqo dans des conteneurs, en
+une commande. Il répond au TP « Projet - Docker Cloud » du M2 (Ynov Toulouse) :
+concevoir ses propres images, sans Docker Hub, et les orchestrer avec
+docker compose.
+
+```bash
+git clone https://github.com/zharrow/Luniqo.git && cd Luniqo/docker
+docker compose up -d --build     # construit les 5 images et lance les 4 services
+docker compose ps                # db, api, front et web doivent être "healthy"
+```
+
+| Adresse | Contenu |
+|---|---|
+| <http://localhost:8080> | l'application Luniqo (page de connexion) |
+| <http://localhost:8080/api/docs> | documentation Swagger de l'API |
+| <http://localhost:8080/api/v2/nurseries> | les crèches de démonstration (données fictives) |
+
+### Les conteneurs
+
+```
+Navigateur ──HTTP :8080──▶ web (nginx) ──/──────▶ front (Next.js)  ──▶ Supabase Cloud (v1)
+                                       └─/api/──▶ api (FastAPI) ──SQL──▶ db (PostgreSQL)
+```
+
+| Image | Rôle pour le TP | Contenu |
+|---|---|---|
+| `base` | socle commun | Alpine Linux construit depuis `scratch`, tini, utilisateur non-root |
+| `web` | **serveur web** | nginx, seul point d'entrée, relaie vers le front et l'API |
+| `front` | **front** | l'application Next.js de ce dépôt, en serveur autonome |
+| `api` | **back** | l'API FastAPI de la v2 (dossier [`api/`](api/)) |
+| `db` | base de données | PostgreSQL 18, données dans un volume |
+
+### Exigences du TP et où les trouver
+
+| Exigence | Réponse |
+|---|---|
+| Aucune image Docker Hub | Toutes les images partent de `scratch` (archive officielle d'Alpine) ou de notre image `base` ; compose ne fait jamais de `pull` |
+| Au moins un front, un back et un serveur web | `front`, `api` et `web`, plus `db` |
+| Arguments de ressources au run et dans le compose | Limites CPU, mémoire et processus réglées dans [`docker/.env`](docker/.env), plus des arguments applicatifs alignés sur ces limites (workers, connexions, mémoire de Node.js...) |
+| Dépendances, manipulations sur l'OS, arguments, entrypoints expliqués | Un README par image : [base](docker/base/README.md), [db](docker/db/README.md), [api](docker/api/README.md), [front](docker/front/README.md), [web](docker/web/README.md) |
+| Limitations de ressources expliquées | Justifiées par des mesures réelles (repos et charge) dans le [README du dossier docker](docker/README.md) |
+| SIGTERM gérés | Chaque service s'arrête proprement (signal adapté à chaque programme) ; toute la pile s'arrête en moins d'une seconde |
+| Ordre de démarrage | `db` et `front` en parallèle, puis `api` quand la base est saine, puis `web` quand l'API et le front sont sains (healthchecks) |
+| Schéma des communications | Dans le [README du dossier docker](docker/README.md), avec les réseaux et les ports |
+
+Tout le détail (architecture, choix, mesures, problèmes rencontrés) est dans
+[`docker/README.md`](docker/README.md).
+
+Le front utilise encore Supabase Cloud pour la connexion (v1). Pour pouvoir se
+connecter, renseigner `NEXT_PUBLIC_SUPABASE_URL` et `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+dans le `.env` à la racine (non versionné), puis lancer depuis `docker/` :
+`docker compose --env-file .env --env-file ../.env up -d --build`. Sans ce
+fichier, les pages s'affichent mais la connexion échoue.
+
 ## 📦 Installation
 
 ### Prérequis
