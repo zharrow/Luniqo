@@ -13,6 +13,7 @@ from sqlalchemy import (
     ForeignKey,
     Identity,
     Index,
+    Integer,
     LargeBinary,
     String,
     UniqueConstraint,
@@ -62,12 +63,28 @@ class AppUser(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, server_default=text("true"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     password_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # PIN de la tablette (employés) : haché Argon2id, jamais renvoyé par l'API.
+    # Bloqué après 3 échecs consécutifs (CNIL, secret court lié à un matériel).
+    pin_hash: Mapped[str | None] = mapped_column(String(255))
+    pin_failed_attempts: Mapped[int] = mapped_column(Integer, server_default=text("0"))
+    pin_locked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class SessionKind(enum.StrEnum):
+    WEB = "web"
+    # Session d'action ouverte par PIN sur une tablette : 2 minutes, une crèche,
+    # gestes de terrain seulement. Refusée par toutes les routes de l'espace web.
+    TABLET = "tablet"
 
 
 class UserSession(Base):
     """Session ouverte. Seule l'empreinte SHA-256 du jeton est stockée."""
 
     __tablename__ = "user_session"
+    __table_args__ = (
+        CheckConstraint("kind IN ('web', 'tablet')", name="user_session_kind_valid"),
+        CheckConstraint("(kind = 'tablet') = (tablet_id IS NOT NULL)", name="user_session_tablet_matches_kind"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, server_default=text("gen_random_uuid()"))
     token_digest: Mapped[bytes] = mapped_column(LargeBinary(32), unique=True)
@@ -76,6 +93,9 @@ class UserSession(Base):
     last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     ip: Mapped[str | None] = mapped_column(String(45))
     user_agent: Mapped[str | None] = mapped_column(String(255))
+    kind: Mapped[str] = mapped_column(String(16), server_default=text("'web'"))
+    tablet_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("tablet_device.id", ondelete="CASCADE"),
+                                                       index=True)
 
 
 class AuthEventType(enum.StrEnum):
@@ -85,6 +105,16 @@ class AuthEventType(enum.StrEnum):
     LOGOUT = "logout"
     SESSION_EXPIRED = "session_expired"
     SESSIONS_REVOKED = "sessions_revoked"
+    TABLET_ENROLLED = "tablet_enrolled"
+    TABLET_REVOKED = "tablet_revoked"
+    PIN_SET = "pin_set"
+    PIN_SET_REFUSED = "pin_set_refused"
+    PIN_SUCCEEDED = "pin_succeeded"
+    PIN_FAILED = "pin_failed"
+    PIN_LOCKED = "pin_locked"
+    PIN_UNLOCKED = "pin_unlocked"
+    PIN_THROTTLED = "pin_throttled"
+    TABLET_SESSION_ENDED = "tablet_session_ended"
 
 
 class AuthEvent(Base):
@@ -97,6 +127,7 @@ class AuthEvent(Base):
     __table_args__ = (
         Index("ix_auth_event_email_occurred_at", "email", "occurred_at"),
         Index("ix_auth_event_ip_occurred_at", "ip", "occurred_at"),
+        Index("ix_auth_event_tablet_id_occurred_at", "tablet_id", "occurred_at"),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
@@ -109,3 +140,5 @@ class AuthEvent(Base):
     ip: Mapped[str | None] = mapped_column(String(45))
     user_agent: Mapped[str | None] = mapped_column(String(255))
     detail: Mapped[str | None] = mapped_column(String(64))
+    # Tablette d'où vient l'événement : les échecs de PIN sont aussi comptés par tablette.
+    tablet_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("tablet_device.id", ondelete="SET NULL"))

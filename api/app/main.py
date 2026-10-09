@@ -18,6 +18,7 @@ from app.db import SessionDep, get_engine
 from app.nurseries.router import router as nurseries_router
 from app.schemas import Health
 from app.security import OriginCheckMiddleware
+from app.tablets.router import router as tablets_router
 
 
 @asynccontextmanager
@@ -40,6 +41,7 @@ app = FastAPI(
 app.add_middleware(OriginCheckMiddleware)
 app.include_router(auth_router)
 app.include_router(nurseries_router)
+app.include_router(tablets_router)
 
 
 @app.get(
