@@ -17,7 +17,7 @@ pytestmark = pytest.mark.anyio
 
 async def test_migrations_a_jour_et_reversibles(db):
     # La fixture de session a déjà appliqué, annulé puis réappliqué toutes les migrations.
-    assert (await db.execute(text("SELECT version_num FROM alembic_version"))).scalar_one() == "0004"
+    assert (await db.execute(text("SELECT version_num FROM alembic_version"))).scalar_one() == "0005"
 
 
 async def test_migrations_conformes_aux_modeles(db):

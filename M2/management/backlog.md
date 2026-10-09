@@ -16,7 +16,7 @@ Ordre fixé par [ADR-001](../decisions/ADR-001-reecriture-backend.md) : socle (a
 | LUN-006 | Multifacteur TOTP obligatoire pour Developer et Owner | feat | BC02 (C2.2.3) | LUN-003 | Backlog |
 | LUN-007 | Tests d'intégration sur une vraie PostgreSQL (base de test jetable) | infra | BC02 (C2.2.2) | LUN-003 | En revue |
 | LUN-008 | Intégration continue : lint, typage, tests, build des images sur chaque PR | infra | BC02 (C2.1.2) | LUN-007 | En revue |
-| LUN-009 | Enfants et familles (v2) | feat | BC02 | LUN-004 | Backlog |
+| LUN-009 | Enfants et familles (v2) | feat | BC02 (C2.2.3) | LUN-004 | En revue |
 | LUN-010 | Pointage arrivée et départ (v2) | feat | BC02 (C2.2.2) | LUN-005, LUN-009 | Backlog |
 | LUN-011 | Consultation famille : un parent ne voit que ses enfants | feat | BC02 (C2.2.3) | LUN-009 | Backlog |
 | LUN-012 | Revoir le parcours central pour y intégrer la fiche de ménage | doc | BC01 (C1.1.2), BC03 (C3.2.2) | | Backlog |
@@ -26,6 +26,7 @@ Ordre fixé par [ADR-001](../decisions/ADR-001-reecriture-backend.md) : socle (a
 | LUN-016 | Purge des sessions expirées et du journal `auth_event` au-delà de 6 mois (durée CNIL, décidée le 2026-10-08) | feat | BC02 (C2.2.3), BC04 | LUN-003 | Backlog |
 | LUN-017 | Changement de mot de passe et invitation (création des comptes employés par la direction, choix du premier mot de passe), avec révocation des sessions | feat | BC02 (C2.2.3) | LUN-004 | Backlog |
 | LUN-018 | Routes d'administration de l'éditeur (entreprises, métriques), sans accès aux données des crèches | feat | BC02 (C2.2.3) | LUN-004 | Backlog |
+| LUN-019 | Données de santé des enfants (allergies, PAI) : analyse RGPD et hébergement HDS, puis module dédié (accès restreint, journal des consultations) | doc + feat | BC01 (C1.2.1, C1.2.3), BC02 (C2.2.3) | LUN-009 | Backlog |
 
 ## Découpage de LUN-003 (premier module de l'API)
 
