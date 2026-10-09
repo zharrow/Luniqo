@@ -148,6 +148,7 @@ Les modules hors parcours central (HACCP, facturation, RH, statistiques…) sont
 |---|---|---|---|
 | [ANO-001](M2/bloc-4-maintien-operationnel/anomalies/ANO-001-pin-tablette.md) | Profils et hachés de PIN lisibles depuis le navigateur (v1) | Critique par conception ; aucune donnée réelle exposée (base v1 de test) | v1 : ouverte, non reproduite. **v2 : corrigée par conception** (LUN-005) |
 | [ANO-002](M2/bloc-4-maintien-operationnel/anomalies/ANO-002-lint-v1.md) | Le lint de la v1 ne démarre pas (ESLint 8 face à `eslint-config-next` 16) | Mineure, sans effet utilisateur | Ouverte, reproduite ; non corrigée (v1 gelée) |
+| [ANO-003](M2/bloc-4-maintien-operationnel/anomalies/ANO-003-vercel-fonctions-api.md) | Déploiement Vercel du front v1 refusé : `api/` (v2) compté comme fonctions serverless, limite de 12 dépassée | Majeure pour l'exploitation, sans effet sur la version en ligne | **Corrigée et vérifiée** le 2026-10-09 (`.vercelignore`, PR #50) |
 
 ## Cours en cours
 
@@ -201,6 +202,7 @@ Statuts des preuves (repris du fil rouge) : à vérifier / absent / partiel / d�
 | 2026-10-09 | #47 fusionnée (LUN-009 dans `main`). Double authentification revue avec Florent : il propose SMS, e-mail et Face ID ; comparaison sourcée (ANSSI, NIST, CNIL) ; ADR-004 acceptée : passkeys en principal, TOTP en alternative, codes de secours, pas de SMS, e-mail pour la récupération seulement. *(Ligne perdue lors de la résolution d'un conflit à la fusion de #49, restaurée avec LUN-011.)* | [RÉEL] |
 | 2026-10-09 | LUN-010 : module `app/attendance/` (pointage depuis la tablette par PIN, départ refusé si la personne n'est pas autorisée, une présence ouverte par enfant garantie en base, jour en heure de Paris, suivi web), migration 0006, `tzdata` ajouté (absent de l'image Alpine), 246 tests ; cinq mutations détectées ; vérifié sur la pile Docker. Parcours central : il ne reste que la consultation famille (LUN-011) | [RÉEL] |
 | 2026-10-09 | LUN-011 : module `app/family/` (invitation des parents par lien à usage unique, compte famille, consultation réservée à l'autorité parentale, contacts sans coordonnées, un compte pour plusieurs fiches), migration 0007, 261 tests ; cinq mutations détectées. **Parcours central complet au niveau de l'API**, rejoué sur la pile Docker ; pas encore dans l'interface (front v1 sur Supabase) | [RÉEL] |
+| 2026-10-09 | ANO-003 : contrôle Vercel en échec sur la PR #50 (limite de 12 fonctions serverless du plan Hobby, l'API v2 de `api/` comptée comme fonctions). Cause lue dans l'API Vercel, `.vercelignore` ajouté, déploiement de prévisualisation vérifié (`Ready`, plus aucune fonction Python) | [RÉEL] |
 
 ### Prochaines actions
 
@@ -213,7 +215,7 @@ Statuts des preuves (repris du fil rouge) : à vérifier / absent / partiel / d�
 
 > Mis à jour le 2026-10-09, fin de session. Lire ceci quand Florent dit « continue ».
 
-**Où on en est.** Le parcours central fonctionne au niveau de l'API v2 (LUN-003 à LUN-011). Dans `main` : LUN-001 à LUN-010 et ADR-004. **En attente** : PR #50 (LUN-011, comptes et consultation famille, migration 0007), CI verte, à fusionner par Florent.
+**Où on en est.** Le parcours central fonctionne au niveau de l'API v2 (LUN-003 à LUN-011). Dans `main` : LUN-001 à LUN-010 et ADR-004. **En attente** : PR #50 (LUN-011, comptes et consultation famille, migration 0007, plus le correctif d'ANO-003 : `.vercelignore`), tous les contrôles verts (CI et Vercel), à fusionner par Florent.
 
 **Prochaine tâche : LUN-006**, double authentification selon [ADR-004](M2/decisions/ADR-004-double-authentification.md) : passkeys (WebAuthn, bibliothèque candidate `webauthn`), TOTP (`pyotp`) chiffré en base, codes de secours, obligatoire pour `owner` et `developer` (à la première connexion, rien d'autre possible qu'enregistrer un facteur). Migration **0008**, qui suit la 0007 de la #50 : ne pas commencer avant la fusion de la #50 (vérifier avec `git merge-base --is-ancestor`), puis partir de `main`. Ajouter les bibliothèques sous contrainte des versions actuelles (voir `api/README.md`) et les inscrire au registre.
 
