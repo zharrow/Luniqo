@@ -46,6 +46,8 @@ next-env.d.ts
 marketing
 # M2 : sujet du TP Docker (document du cours, non diffusé)
 docker/TP.md
+# M2 : sujet du cours Coordination Front & Back et brouillons de l'équipe (repris dans CONTRIBUTING.md)
+coordination/
 
 # Python (api/)
 __pycache__/

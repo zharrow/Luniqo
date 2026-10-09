@@ -1,0 +1,54 @@
+# Conventions des pull requests (CONTRIBUTING.md, LUN-22).
+#
+# Refuse une PR qui ne respecte pas la stratégie de branches :
+#   feat/, fix/, docs/, infra/, chore/LUN-<n>-<description>  → develop
+#   hotfix/LUN-<n>-<description>                             → main
+#   develop → staging (promotion en recette), staging → main (mise en production)
+#   main → staging ou develop (report d'un correctif urgent)
+# et, pour une PR de ticket, un titre sans clé Jira (LUN-<n>) : la clé relie
+# la PR au ticket dans Jira (numéro sans zéro devant : Jira écrit LUN-6, pas
+# LUN-006). Les PR de promotion n'ont pas de ticket propre.
+#
+# Aucune action tierce : un script shell suffit. Les valeurs fournies par
+# l'auteur de la PR (nom de branche, titre) passent par des variables
+# d'environnement, jamais directement dans le script (injection de commandes).
+name: Conventions de PR
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  conventions:
+    name: Branche, cible et titre
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Vérifier la branche, la cible et le titre
+        env:
+          HEAD: ${{ github.head_ref }}
+          BASE: ${{ github.base_ref }}
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          fail() { echo "::error::$1"; exit 1; }
+          ticket='LUN-[1-9][0-9]*-[a-z0-9]+(-[a-z0-9]+)*'
+          case "$BASE/$HEAD" in
+            develop/main | staging/main | staging/develop | main/staging)
+              # Promotion ou report d'un correctif : pas de ticket propre.
+              echo "Promotion ou report : $HEAD → $BASE"; exit 0 ;;
+            develop/*)
+              echo "$HEAD" | grep -Eq "^(feat|fix|docs|infra|chore)/$ticket$" \
+                || fail "Branche « $HEAD » : attendu feat|fix|docs|infra|chore/LUN-<n>-<description-en-minuscules> (CONTRIBUTING.md)" ;;
+            main/*)
+              echo "$HEAD" | grep -Eq "^hotfix/$ticket$" \
+                || fail "Seules staging (mise en production) et hotfix/LUN-<n>-… entrent dans main" ;;
+            staging/*)
+              fail "Seules develop (promotion) et main (report d'un correctif) entrent dans staging" ;;
+            *)
+              fail "Cible « $BASE » inattendue : develop, staging ou main" ;;
+          esac
+          echo "$TITLE" | grep -Eq 'LUN-[1-9][0-9]*' || fail "Le titre doit contenir la clé Jira du ticket, par exemple (LUN-22)"
+          echo "Conventions respectées : $HEAD → $BASE"
