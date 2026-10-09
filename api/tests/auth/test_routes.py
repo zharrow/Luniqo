@@ -244,3 +244,11 @@ def test_blocage_par_ip_sur_plusieurs_comptes(client, repo, clock):
     response = login(client)
     assert response.status_code == 429
     assert response.headers["retry-after"] == "900"
+
+
+def test_session_de_tablette_refusee_comme_session_web(client, repo):
+    # Une session d'action de tablette (LUN-005) ne donne jamais accès à l'espace web.
+    login(client)
+    (stored,) = repo.sessions.values()
+    stored.kind = "tablet"
+    assert client.get("/api/v2/auth/me").status_code == 401

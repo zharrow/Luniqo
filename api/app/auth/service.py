@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from app.auth import passwords, policy
-from app.auth.models import AppUser, AuthEvent, AuthEventType, UserSession
+from app.auth.models import AppUser, AuthEvent, AuthEventType, SessionKind, UserSession
 from app.auth.repository import AuthRepository
 from app.auth.tokens import new_token, token_digest
 
@@ -81,7 +81,8 @@ async def login(repo: AuthRepository, email: str, password: str, client: Client,
         await repo.delete_session(token_digest(previous_token))
     token = new_token()
     repo.add_session(UserSession(token_digest=token_digest(token), user_id=user.id, created_at=now,
-                                 last_seen_at=now, ip=client.ip, user_agent=client.user_agent))
+                                 last_seen_at=now, ip=client.ip, user_agent=client.user_agent,
+                                 kind=SessionKind.WEB.value))
     repo.add_event(_event(AuthEventType.LOGIN_SUCCEEDED, client, now, user_id=user.id, email=email))
     await repo.commit()
     return LoginResult(user=user, token=token)
@@ -93,6 +94,10 @@ async def authenticate(repo: AuthRepository, token: str, client: Client, now: da
     if found is None:
         return None
     session, user = found
+    if session.kind != SessionKind.WEB.value:
+        # Jeton d'une session de tablette présenté comme session web : refusé,
+        # la session d'action ne donne jamais accès à l'espace web.
+        return None
     if not user.is_active or policy.session_expired(session.created_at, session.last_seen_at, now):
         await repo.delete_session(session.token_digest)
         repo.add_event(_event(AuthEventType.SESSION_EXPIRED, client, now, user_id=user.id,

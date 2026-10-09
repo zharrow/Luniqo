@@ -23,6 +23,12 @@ exposer en dehors d'un environnement de test.
 | `GET /api/v2/nurseries/{id}/staff` | Employés ayant accès à la crèche (direction) |
 | `PUT`, `DELETE /api/v2/nurseries/{id}/staff/{user_id}` | Accorder, retirer l'accès d'un employé de l'entreprise (direction) ; effet immédiat |
 | `GET /api/v2/staff` | Employés de l'entreprise et crèches accessibles à chacun (direction) |
+| `POST`, `GET /api/v2/nurseries/{id}/tablets` | Enrôler **l'appareil qui fait la requête** comme tablette de la crèche (cookie d'appareil 90 jours), lister (direction) |
+| `DELETE /api/v2/nurseries/{id}/tablets/{tablet_id}` | Révoquer une tablette ; ses sessions sont fermées (direction) |
+| `PUT /api/v2/auth/me/pin` | L'employé choisit son PIN (4 chiffres, mot de passe confirmé) ; débloque le PIN |
+| `POST /api/v2/staff/{user_id}/pin/unlock` | Débloquer le PIN d'un employé (direction) |
+| `GET /api/v2/tablet` | Sur la tablette : crèche et personnel (prénom, initiale) |
+| `POST`, `GET`, `DELETE /api/v2/tablet/session` | Ouvrir par PIN une session d'action de 2 minutes, la consulter, la fermer |
 
 ### Qui accède à quoi
 
@@ -58,6 +64,7 @@ api/
 │   │   └── schemas.py       schémas Pydantic
 │   ├── nurseries/     entreprises, crèches, accès du personnel (même découpage)
 │   │   └── access.py        règle d'accès à une crèche (fonction pure)
+│   ├── tablets/       tablettes enrôlées, PIN, sessions d'action (routes testées sur PostgreSQL)
 │   ├── security.py    contrôle de l'en-tête Origin (CSRF)
 │   ├── config.py      configuration lue dans l'environnement
 │   ├── db.py          moteur SQLAlchemy asynchrone, session par requête
@@ -122,9 +129,9 @@ cd api
 python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements-dev.txt
 
-pytest                          # tests unitaires, sans base de données (134 au 2026-10-08)
+pytest                          # tests unitaires, sans base de données (155 au 2026-10-09)
 
-# Tests d'intégration sur une vraie PostgreSQL (31 au 2026-10-08), base jetable
+# Tests d'intégration sur une vraie PostgreSQL (56 au 2026-10-09), base jetable
 # construite avec l'image luniqo/db du TP Docker (cd ../docker && docker compose build db) :
 scripts/test-db.sh up           # affiche la ligne export TEST_DB_... à copier
 export TEST_DB_ADDR=127.0.0.1:55432 TEST_DB_NAME=luniqo_test TEST_DB_PASSWORD=luniqo-test

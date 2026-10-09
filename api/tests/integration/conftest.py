@@ -97,6 +97,28 @@ async def http(db: AsyncSession) -> AsyncIterator[httpx2.AsyncClient]:
     app.dependency_overrides.clear()
 
 
+@pytest.fixture
+async def clients(db: AsyncSession) -> AsyncIterator:
+    """Fabrique de clients HTTP indépendants (un par appareil : tablette, poste de la direction…)."""
+
+    async def override_session():
+        yield db
+
+    app.dependency_overrides[get_session] = override_session
+    opened: list[httpx2.AsyncClient] = []
+
+    def make() -> httpx2.AsyncClient:
+        client = httpx2.AsyncClient(transport=httpx2.ASGITransport(app=app), base_url="https://testserver",
+                                    headers=ORIGIN)
+        opened.append(client)
+        return client
+
+    yield make
+    for client in opened:
+        await client.aclose()
+    app.dependency_overrides.clear()
+
+
 async def login(client: httpx2.AsyncClient, email: str, password: str = PASSWORD) -> httpx2.Response:
     return await client.post("/api/v2/auth/login", json={"email": email, "password": password})
 
