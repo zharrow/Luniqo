@@ -1,6 +1,8 @@
 # Backlog provisoire
 
-Tenu ici en attendant le tableau Trello. Les numéros `LUN-###` sont définitifs : ils seront repris tels quels sur les cartes Trello, dans les branches, les commits et le journal des versions.
+> **Archivé le 2026-10-09** : le backlog vit désormais dans **Jira** (projet `LUN`, voir [docs/projet/JIRA.md](../../docs/projet/JIRA.md)). Les tickets ci-dessous y sont importés avec le même numéro, sans zéro devant (`LUN-006` → `LUN-6`). Les statuts ci-dessous ne sont plus tenus à jour.
+
+Tenu ici en attendant l'outil de suivi. Les numéros `LUN-###` sont définitifs : ils sont repris dans les branches, les commits et le journal des versions.
 
 > Créé le 2026-10-08 `[RÉEL]`. Priorisation proposée par l'assistant, à valider par Florent ; dans les rituels simulés, la Product Owner (Inès) la porte.
 

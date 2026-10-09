@@ -164,6 +164,7 @@ Détails et choix dans AGENTS.md et les ADR de `M2/decisions/`.
 
 - **v2** : `api/` (voir « Commandes » et [api/README.md](api/README.md)). Fait : authentification (ADR-003, LUN-003), entreprises, crèches et accès par crèche (LUN-004), tablette et PIN (LUN-005, corrige ANO-001 en v2), familles et enfants sans données de santé (LUN-009), pointage depuis la tablette (LUN-010), comptes et consultation famille (LUN-011) : le parcours central est complet côté API. Second facteur obligatoire pour la direction et l'éditeur : TOTP chiffré et codes de secours (LUN-006, partie 1). À venir : passkeys (LUN-006, partie 2), données de santé après analyse RGPD/HDS (LUN-019), enfants et familles, pointage, client TypeScript généré depuis le schéma OpenAPI. Choix et sources : [M2/decisions/CHOIX-TECHNIQUES.md](M2/decisions/CHOIX-TECHNIQUES.md), à tenir à jour.
 - **Docker Compose** : passerelle nginx, front Next.js, API, PostgreSQL **fonctionnent** (TP Docker, [M2/cours/docker.md](M2/cours/docker.md)). Pour le front : `output: 'standalone'` dans `next.config.mjs` et une route `app/healthz` exclue du middleware ; ne pas les retirer. Images construites par nos soins (aucune image Docker Hub, base `FROM scratch`), arguments de ressources, healthchecks, gestion des signaux, non-root, lecture seule.
+- **Automatisations GitHub** : conventions de PR (`pr-conventions.yml`), étiquettes selon les fichiers (`labels.yml`), modèle de PR.
 - **CI** (GitHub Actions, `.github/workflows/ci.yml`) : ruff, tests unitaires et d'intégration de l'API, build des 5 images, démarrage de la pile et sondes, sur chaque PR et push sur `main`.
 - **CD** : images publiées et taguées, déploiement sur VPS (recette puis production), retour arrière par tag.
 - **Exploitation** : sondes sur le parcours critique, alertes, sauvegardes PostgreSQL, journal des versions (`CHANGELOG.md`).
@@ -179,13 +180,15 @@ Détails et choix dans AGENTS.md et les ADR de `M2/decisions/`.
 | [supabase/README.md](supabase/README.md) | Schéma de base, état janvier 2026 |
 | [docs/POSTHOG.md](docs/POSTHOG.md), docs/STRIPE-*.md | Intégrations, à vérifier |
 | [docs/phases/](docs/phases/) | Historique des phases 0–9, pourcentages non vérifiés |
-| README.md, docs/INDEX.md, plan.md | Obsolètes : à réécrire ou archiver |
+| [README.md](README.md), [CONTRIBUTING.md](CONTRIBUTING.md), [CHANGELOG.md](CHANGELOG.md) | Réécrits le 2026-10-09 (LUN-22), à jour. Ancien README : [docs/archive/README-legacy.md](docs/archive/README-legacy.md) |
+| [docs/projet/JIRA.md](docs/projet/JIRA.md) | Mise en place de Jira (projet LUN) et de son lien avec GitHub |
+| docs/INDEX.md, plan.md | Obsolètes : à réécrire ou archiver |
 
 Skills projet dans `.claude/skills/` : `database-helper`, `design-system-enforcer`, `frontend-design`, `lucide-animated`, `luniqo-security-audit`, `stripe-integration`.
 
 ## Git
 
-- Dépôt : `github.com/zharrow/Luniqo` (anciennement `nursery-app`), branche principale `main`, une branche par ticket, fusion par PR.
+- Dépôt : `github.com/zharrow/Luniqo` (anciennement `nursery-app`). Branches durables `develop` (INT) → `staging` (PRÉ-PROD) → `main` (PROD) depuis le 2026-10-09 : une branche par ticket **depuis `develop`**, PR vers `develop`, promotions par PR. Règles : [CONTRIBUTING.md](CONTRIBUTING.md).
 - Conventions de tickets, de branches, de commits et de versions : voir AGENTS.md.
 - **Un seul dépôt** pour tout le projet (v1, v2, TP, documentation M2). L'ancien dépôt `zharrow/TP-Docker` n'est plus utilisé.
 - Le dépôt est **public** : aucun secret, aucune donnée réelle, pas d'autre personne réelle que celles citées dans AGENTS.md.
