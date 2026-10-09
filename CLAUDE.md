@@ -180,7 +180,7 @@ Détails et choix dans AGENTS.md et les ADR de `M2/decisions/`.
 | [supabase/README.md](supabase/README.md) | Schéma de base, état janvier 2026 |
 | [docs/POSTHOG.md](docs/POSTHOG.md), docs/STRIPE-*.md | Intégrations, à vérifier |
 | [docs/phases/](docs/phases/) | Historique des phases 0–9, pourcentages non vérifiés |
-| [README.md](README.md), [CONTRIBUTING.md](CONTRIBUTING.md), [CHANGELOG.md](CHANGELOG.md) | Réécrits le 2026-10-09 (LUN-22), à jour. Ancien README : [docs/archive/README-legacy.md](docs/archive/README-legacy.md) |
+| [README.md](README.md), [CONTRIBUTING.md](CONTRIBUTING.md), [CHANGELOG.md](CHANGELOG.md) | Réécrits le 2026-10-09 (LUN-60), à jour. Ancien README : [docs/archive/README-legacy.md](docs/archive/README-legacy.md) |
 | [docs/projet/JIRA.md](docs/projet/JIRA.md) | Mise en place de Jira (projet LUN) et de son lien avec GitHub |
 | docs/INDEX.md, plan.md | Obsolètes : à réécrire ou archiver |
 

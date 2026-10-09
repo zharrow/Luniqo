@@ -1,4 +1,4 @@
-# Conventions des pull requests (CONTRIBUTING.md, LUN-22).
+# Conventions des pull requests (CONTRIBUTING.md, LUN-60).
 #
 # Refuse une PR qui ne respecte pas la stratégie de branches :
 #   feat/, fix/, docs/, infra/, chore/LUN-<n>-<description>  → develop
@@ -6,8 +6,8 @@
 #   develop → staging (promotion en recette), staging → main (mise en production)
 #   main → staging ou develop (report d'un correctif urgent)
 # et, pour une PR de ticket, un titre sans clé Jira (LUN-<n>) : la clé relie
-# la PR au ticket dans Jira (numéro sans zéro devant : Jira écrit LUN-6, pas
-# LUN-006). Les PR de promotion n'ont pas de ticket propre.
+# la PR au ticket dans Jira (numéro sans zéro devant : Jira écrit LUN-60, pas
+# LUN-060). Les PR de promotion n'ont pas de ticket propre.
 #
 # Aucune action tierce : un script shell suffit. Les valeurs fournies par
 # l'auteur de la PR (nom de branche, titre) passent par des variables
@@ -50,5 +50,5 @@ jobs:
             *)
               fail "Cible « $BASE » inattendue : develop, staging ou main" ;;
           esac
-          echo "$TITLE" | grep -Eq 'LUN-[1-9][0-9]*' || fail "Le titre doit contenir la clé Jira du ticket, par exemple (LUN-22)"
+          echo "$TITLE" | grep -Eq 'LUN-[1-9][0-9]*' || fail "Le titre doit contenir la clé Jira du ticket, par exemple (LUN-60)"
           echo "Conventions respectées : $HEAD → $BASE"

@@ -11,7 +11,7 @@ alimentent la [story map](STORY-MAP.md).
 > crèches. Aucun propos n'est attribué à une personne réelle. Chaque persona
 > porte des **hypothèses à vérifier** auprès de vrais utilisateurs.
 
-Rédigé le 2026-10-09 (LUN-22, bonus du cours « Coordination Front & Back »).
+Rédigé le 2026-10-09 (LUN-60, bonus du cours « Coordination Front & Back »).
 
 | | Persona | Rôle dans Luniqo | Appareil principal | Fréquence |
 |---|---|---|---|---|

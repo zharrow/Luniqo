@@ -86,8 +86,8 @@ livraison »). D'ici là, `staging` et `main` sont vérifiées par la même CI.
 | `hotfix/` | un défaut **en production** | `main` | `main`, puis report |
 
 Nom : `<préfixe>/LUN-<n>-<description-en-minuscules-avec-tirets>`, par exemple
-`feat/LUN-34-mode-tablette`. La clé `LUN-<n>` s'écrit comme dans Jira, **sans
-zéro devant** (`LUN-6`, pas `LUN-006`) : c'est elle qui relie la branche, ses
+`feat/LUN-72-mode-tablette`. La clé `LUN-<n>` s'écrit comme dans Jira, **sans
+zéro devant** (`LUN-60`, jamais `LUN-060`) : c'est elle qui relie la branche, ses
 commits et sa PR au ticket. Une branche de travail est supprimée après sa fusion.
 
 ### Seul ce qui est fini entre dans `develop`
@@ -111,30 +111,30 @@ gitGraph
     branch staging
     checkout main
     branch develop
-    branch feat/LUN-34-mode-tablette
+    branch feat/LUN-72-mode-tablette
     commit id: "écran PIN"
     commit id: "pointage"
     checkout develop
-    merge feat/LUN-34-mode-tablette id: "PR feat LUN-34"
-    branch feat/LUN-38-pieces-menage
+    merge feat/LUN-72-mode-tablette id: "PR feat LUN-72"
+    branch feat/LUN-76-pieces-menage
     commit id: "pièces et tâches"
     checkout develop
-    merge feat/LUN-38-pieces-menage id: "PR feat LUN-38"
+    merge feat/LUN-76-pieces-menage id: "PR feat LUN-76"
     checkout staging
     merge develop id: "promotion rc.1" tag: "v0.2.0-rc.1"
     checkout develop
-    branch fix/LUN-81-heure-depart
+    branch fix/LUN-125-heure-depart
     commit id: "correction recette"
     checkout develop
-    merge fix/LUN-81-heure-depart id: "PR fix LUN-81"
+    merge fix/LUN-125-heure-depart id: "PR fix LUN-125"
     checkout staging
     merge develop id: "promotion rc.2" tag: "v0.2.0-rc.2"
     checkout main
     merge staging id: "mise en production" tag: "v0.2.0"
-    branch hotfix/LUN-90-pin-bloque
+    branch hotfix/LUN-126-pin-bloque
     commit id: "correctif urgent"
     checkout main
-    merge hotfix/LUN-90-pin-bloque id: "PR hotfix LUN-90" tag: "v0.2.1"
+    merge hotfix/LUN-126-pin-bloque id: "PR hotfix LUN-126" tag: "v0.2.1"
     checkout staging
     merge main id: "report dans staging"
     checkout develop
@@ -212,9 +212,9 @@ Une seule version pour tout le dépôt, au format `MAJEUR.MINEUR.CORRECTIF`
 en français, avec la clé du ticket :
 
 ```
-feat(api): pointage groupé pour une fratrie (LUN-34)
-fix(tablette): heure de départ en heure de Paris (LUN-81)
-docs: stratégie de branches (LUN-22)
+feat(api): pointage groupé pour une fratrie (LUN-72)
+fix(tablette): heure de départ en heure de Paris (LUN-125)
+docs: stratégie de branches (LUN-60)
 ```
 
 Types : `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `ci`. Portée
