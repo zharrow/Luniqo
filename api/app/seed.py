@@ -58,6 +58,10 @@ DEMO_FAMILIES = (
 )
 
 
+# Comptes famille fictifs, reliés à leur fiche de responsable (consultation famille, LUN-011).
+DEMO_GUARDIAN_ACCOUNTS = ("alice.garnier@famille.test", "claire.temoin@famille.test")
+
+
 def seed(session: Session) -> int:
     """Crée les entreprises et crèches manquantes. Renvoie le nombre de crèches créées."""
     created = 0
@@ -121,6 +125,17 @@ def seed_users(session: Session, password: str) -> int:
                                                                  Nursery.name == nursery_name))
             if session.get(NurseryAccess, (user.id, nursery_id)) is None:
                 session.add(NurseryAccess(user_id=user.id, nursery_id=nursery_id, enterprise_id=enterprise.id))
+    for email in DEMO_GUARDIAN_ACCOUNTS:
+        guardian = session.scalar(select(Guardian).where(Guardian.email == email))
+        if guardian is None or session.scalar(select(AppUser.id).where(AppUser.email == email)):
+            continue
+        check_policy(password, email)
+        user = AppUser(email=email, password_hash=hash_password_sync(password), first_name=guardian.first_name,
+                       last_name=guardian.last_name, role=UserRole.GUARDIAN)
+        session.add(user)
+        session.flush()
+        guardian.user_id = user.id
+        created += 1
     session.commit()
     return created
 

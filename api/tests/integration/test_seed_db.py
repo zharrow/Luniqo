@@ -34,12 +34,12 @@ def counts(session):
 def test_seed_cree_les_donnees_puis_ne_fait_plus_rien(sync_session):
     assert seed(sync_session) == 3
     assert seed_families(sync_session) == 4
-    assert seed_users(sync_session, DEMO_PASSWORD) == 4
-    assert counts(sync_session) == (2, 3, 4, 2, 4, 5, 6, 8)
+    assert seed_users(sync_session, DEMO_PASSWORD) == 6
+    assert counts(sync_session) == (2, 3, 6, 2, 4, 5, 6, 8)
     assert seed(sync_session) == 0
     assert seed_families(sync_session) == 0
     assert seed_users(sync_session, DEMO_PASSWORD) == 0
-    assert counts(sync_session) == (2, 3, 4, 2, 4, 5, 6, 8)
+    assert counts(sync_session) == (2, 3, 6, 2, 4, 5, 6, 8)
 
 
 def test_seed_isole_les_deux_entreprises(sync_session):

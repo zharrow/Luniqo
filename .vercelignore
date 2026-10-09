@@ -1,0 +1,5 @@
+# Vercel ne déploie que le front v1 (Next.js).
+# Sans cette ligne, il prend chaque module Python de l'API v2 (dossier api/ à la
+# racine) pour une fonction serverless et dépasse la limite de 12 fonctions du
+# plan Hobby (ANO-003). Ne concerne pas app/api/ (routes Stripe de la v1).
+/api

@@ -15,6 +15,16 @@ Luniqo, l'application de gestion de crèches de Florent, sert de **projet fil ro
 3. Lire les décisions ([M2/decisions/](M2/decisions/)), les anomalies ouvertes et l'état d'avancement ci-dessous.
 4. Identifier la ou les compétences RNCP visées par la tâche (ex. `C2.1.2`) et le ticket correspondant (`LUN-###`). S'il n'y en a pas, le proposer avant de coder.
 5. Si la tâche vient d'un cours, appliquer les contraintes de son sujet (voir « Cours en cours » et `M2/cours/`).
+6. Si Florent dit seulement « continue » au début d'une conversation : reprendre au **Point de reprise** (fin de ce fichier), après avoir vérifié sur GitHub l'état des PR qui y sont citées.
+
+## « Mets ta mémoire à jour » : comportement attendu
+
+Quand Florent demande de mettre la mémoire à jour, l'assistant fait **les deux** :
+
+1. **Sa mémoire persistante** (hors dépôt) : point de reprise exact, décisions et préférences nouvelles, leçons apprises.
+2. **Ce fichier** : tableau « État d'avancement », « Prochaines actions » et **« Point de reprise »** réécrit pour qu'un « continue » dans une nouvelle conversation reprenne exactement là où le travail s'est arrêté : PR ouvertes et leur état, branche locale non poussée éventuelle, tâche suivante et ce qui la bloque, actions attendues de Florent. Ce fichier est versionné : la mise à jour passe par la PR en cours (ou une PR dédiée), jamais par un commit direct sur `main`.
+
+Rien de secret ni de personnel dans ce fichier (dépôt public, règle 10).
 
 ## Le diplôme et les 4 blocs
 
@@ -138,6 +148,7 @@ Les modules hors parcours central (HACCP, facturation, RH, statistiques…) sont
 |---|---|---|---|
 | [ANO-001](M2/bloc-4-maintien-operationnel/anomalies/ANO-001-pin-tablette.md) | Profils et hachés de PIN lisibles depuis le navigateur (v1) | Critique par conception ; aucune donnée réelle exposée (base v1 de test) | v1 : ouverte, non reproduite. **v2 : corrigée par conception** (LUN-005) |
 | [ANO-002](M2/bloc-4-maintien-operationnel/anomalies/ANO-002-lint-v1.md) | Le lint de la v1 ne démarre pas (ESLint 8 face à `eslint-config-next` 16) | Mineure, sans effet utilisateur | Ouverte, reproduite ; non corrigée (v1 gelée) |
+| [ANO-003](M2/bloc-4-maintien-operationnel/anomalies/ANO-003-vercel-fonctions-api.md) | Déploiement Vercel du front v1 refusé : `api/` (v2) compté comme fonctions serverless, limite de 12 dépassée | Majeure pour l'exploitation, sans effet sur la version en ligne | **Corrigée et vérifiée** le 2026-10-09 (`.vercelignore`, PR #50) |
 
 ## Cours en cours
 
@@ -188,11 +199,30 @@ Statuts des preuves (repris du fil rouge) : à vérifier / absent / partiel / d�
 | 2026-10-08 | LUN-008 : CI GitHub Actions (API : ruff + tests unitaires et d'intégration ; images : build des 5 images, démarrage, sondes), actions épinglées par SHA. **Première exécution verte** sur la PR #44 (run `37842997099`) : 165 tests dont 31 d'intégration, 5 images construites, sondes 200 et 401 sans session, rapport JUnit conservé jusqu'au 2027-01-06. ANO-002 consignée (lint v1 cassé) | [RÉEL] |
 | 2026-10-09 | PR #41 à #44 fusionnées chacune dans la branche de la précédente (PR empilées) : code absent de `main`, rattrapé par la PR #45 (CI verte, fusionnée le 2026-10-09). LUN-005 : module `app/tablets/` (enrôlement, PIN, sessions d'action de 2 min refusées par l'espace web), migration 0004, 211 tests ; cinq mutations détectées ; parcours vérifié sur la pile Docker. ANO-001 corrigée par conception en v2 | [RÉEL] |
 | 2026-10-09 | #45 et #46 fusionnées (LUN-003 à LUN-008 et LUN-005 dans `main`, vérifié) ; six branches empilées supprimées. LUN-009 : module `app/children/` (familles, enfants, responsables, liens avec autorisations), cohérence famille ↔ crèche imposée en base, aucune donnée de santé (LUN-019 créé), migration 0005, 221 tests ; quatre mutations détectées ; vérifié sur la pile Docker | [RÉEL] |
+| 2026-10-09 | #47 fusionnée (LUN-009 dans `main`). Double authentification revue avec Florent : il propose SMS, e-mail et Face ID ; comparaison sourcée (ANSSI, NIST, CNIL) ; ADR-004 acceptée : passkeys en principal, TOTP en alternative, codes de secours, pas de SMS, e-mail pour la récupération seulement. *(Ligne perdue lors de la résolution d'un conflit à la fusion de #49, restaurée avec LUN-011.)* | [RÉEL] |
 | 2026-10-09 | LUN-010 : module `app/attendance/` (pointage depuis la tablette par PIN, départ refusé si la personne n'est pas autorisée, une présence ouverte par enfant garantie en base, jour en heure de Paris, suivi web), migration 0006, `tzdata` ajouté (absent de l'image Alpine), 246 tests ; cinq mutations détectées ; vérifié sur la pile Docker. Parcours central : il ne reste que la consultation famille (LUN-011) | [RÉEL] |
+| 2026-10-09 | LUN-011 : module `app/family/` (invitation des parents par lien à usage unique, compte famille, consultation réservée à l'autorité parentale, contacts sans coordonnées, un compte pour plusieurs fiches), migration 0007, 261 tests ; cinq mutations détectées. **Parcours central complet au niveau de l'API**, rejoué sur la pile Docker ; pas encore dans l'interface (front v1 sur Supabase) | [RÉEL] |
+| 2026-10-09 | ANO-003 : contrôle Vercel en échec sur la PR #50 (limite de 12 fonctions serverless du plan Hobby, l'API v2 de `api/` comptée comme fonctions). Cause lue dans l'API Vercel, `.vercelignore` ajouté, déploiement de prévisualisation vérifié (`Ready`, plus aucune fonction Python) | [RÉEL] |
 
 ### Prochaines actions
 
-1. **Florent** : relire et fusionner les PR d'ADR-004 (#48) et de LUN-010.
-2. Suite proposée : LUN-011 (consultation famille : un parent ne voit que ses enfants, dernière étape du parcours central), puis LUN-006 (double authentification, ADR-004). LUN-019 (santé, RGPD/HDS) avant toute donnée réelle.
+1. **Florent** : relire et fusionner la PR de LUN-011 (#48 et #49 fusionnées le 2026-10-09).
+2. Suite proposée : LUN-006 (double authentification, ADR-004), puis ouvrir ADR-002 (front v2) pour rendre le parcours central utilisable depuis l'interface. LUN-019 (santé) et LUN-021 (envoi d'e-mails) avant toute donnée réelle.
 3. LUN-014 : préparer l'oral du TP Docker avant la séance 4.
 4. LUN-012, LUN-013, LUN-015 : fiche de ménage dans le parcours central, Trello et squelette `M2/`, phase 0 (voir le backlog).
+
+## Point de reprise
+
+> Mis à jour le 2026-10-09, fin de session. Lire ceci quand Florent dit « continue ».
+
+**Où on en est.** Le parcours central fonctionne au niveau de l'API v2 (LUN-003 à LUN-011). Dans `main` : LUN-001 à LUN-010 et ADR-004. **En attente** : PR #50 (LUN-011, comptes et consultation famille, migration 0007, plus le correctif d'ANO-003 : `.vercelignore`), tous les contrôles verts (CI et Vercel), à fusionner par Florent.
+
+**Prochaine tâche : LUN-006**, double authentification selon [ADR-004](M2/decisions/ADR-004-double-authentification.md) : passkeys (WebAuthn, bibliothèque candidate `webauthn`), TOTP (`pyotp`) chiffré en base, codes de secours, obligatoire pour `owner` et `developer` (à la première connexion, rien d'autre possible qu'enregistrer un facteur). Migration **0008**, qui suit la 0007 de la #50 : ne pas commencer avant la fusion de la #50 (vérifier avec `git merge-base --is-ancestor`), puis partir de `main`. Ajouter les bibliothèques sous contrainte des versions actuelles (voir `api/README.md`) et les inscrire au registre.
+
+**Ensuite** : ouvrir ADR-002 (front v2) pour rendre le parcours central utilisable dans l'interface ; puis LUN-019 (santé, RGPD/HDS) et LUN-021 (envoi d'e-mails) avant toute donnée réelle. Autres tickets au [backlog](M2/management/backlog.md) (LUN-012 à LUN-018, LUN-020).
+
+**Méthode suivie à chaque ticket** : branche depuis `main` → module `api/app/<domaine>/` (règles pures dans `policy.py`) → migration numérotée suivante → tests unitaires et d'intégration (`api/scripts/test-db.sh up`) → mutations (introduire chaque faille visée, vérifier qu'un test échoue, restaurer) → parcours sur la pile Docker → registre des choix techniques (raisons + sources), backlog, `api/README.md`, `CLAUDE.md`, ce fichier → PR vers `main`, suivi de la CI. Florent relit et fusionne. Ne pas empiler les PR.
+
+**En attente de Florent** : fusion de la #50 ; vérifier une fois le cookie de session dans un navigateur (Swagger `/api/docs`, voir PR #41) ; option GitHub « Automatically delete head branches » à activer.
+
+**Environnement local** : les comptes de démonstration de la base locale ont été créés avec un mot de passe généré pendant la session du 2026-10-09, non conservé. Pour rejouer les parcours : définir `API_SEED_DEMO_PASSWORD` dans le `.env` de l'application puis recréer la base (`cd docker && docker compose down -v && docker compose --env-file .env --env-file ../.env up -d --build`), ou demander le mot de passe à Florent s'il l'a défini lui-même.
