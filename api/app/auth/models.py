@@ -96,6 +96,16 @@ class UserSession(Base):
     kind: Mapped[str] = mapped_column(String(16), server_default=text("'web'"))
     tablet_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("tablet_device.id", ondelete="CASCADE"),
                                                        index=True)
+    # Second facteur (ADR-004). Fixé à la connexion : vrai pour la direction et
+    # l'éditeur, et pour tout compte qui a activé un facteur. Tant que
+    # mfa_verified_at est vide, la session n'ouvre que /me, la déconnexion et
+    # les routes du second facteur.
+    mfa_required: Mapped[bool] = mapped_column(Boolean, server_default=text("false"))
+    mfa_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    @property
+    def mfa_pending(self) -> bool:
+        return self.mfa_required and self.mfa_verified_at is None
 
 
 class AuthEventType(enum.StrEnum):
@@ -117,6 +127,14 @@ class AuthEventType(enum.StrEnum):
     TABLET_SESSION_ENDED = "tablet_session_ended"
     INVITATION_CREATED = "invitation_created"
     INVITATION_ACCEPTED = "invitation_accepted"
+    # Second facteur (ADR-004). detail : totp ou backup_code ; pour un échec,
+    # aussi replay (code TOTP déjà utilisé) ou locked (TOTP bloqué).
+    MFA_SUCCEEDED = "mfa_succeeded"
+    MFA_FAILED = "mfa_failed"
+    MFA_THROTTLED = "mfa_throttled"
+    TOTP_ENABLED = "totp_enabled"
+    TOTP_REMOVED = "totp_removed"
+    BACKUP_CODES_GENERATED = "backup_codes_generated"
 
 
 class AuthEvent(Base):
@@ -130,6 +148,8 @@ class AuthEvent(Base):
         Index("ix_auth_event_email_occurred_at", "email", "occurred_at"),
         Index("ix_auth_event_ip_occurred_at", "ip", "occurred_at"),
         Index("ix_auth_event_tablet_id_occurred_at", "tablet_id", "occurred_at"),
+        # Échecs du second facteur, comptés par compte.
+        Index("ix_auth_event_user_id_occurred_at", "user_id", "occurred_at"),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)

@@ -6,5 +6,7 @@ sqlalchemy[asyncio]==2.1.4
 psycopg[binary]==3.3.6
 alembic==1.20.0
 argon2-cffi==25.1.0
+# AES-256-GCM des secrets TOTP (ADR-004) ; servira aussi aux passkeys (webauthn en dépend).
+cryptography==50.0.2
 # Base des fuseaux horaires : l'image Alpine n'en a pas, ZoneInfo("Europe/Paris") y échouerait.
 tzdata==2026.5

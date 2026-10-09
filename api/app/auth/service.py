@@ -8,6 +8,7 @@ from app.auth import passwords, policy
 from app.auth.models import AppUser, AuthEvent, AuthEventType, SessionKind, UserSession
 from app.auth.repository import AuthRepository
 from app.auth.tokens import new_token, token_digest
+from app.mfa import policy as mfa_policy
 
 
 class InvalidCredentials(Exception):
@@ -37,6 +38,16 @@ class Client:
 class LoginResult:
     user: AppUser
     token: str
+    session: UserSession
+    has_factor: bool
+
+
+@dataclass(frozen=True)
+class WebSession:
+    """Session web valable, second facteur présenté ou non (voir `session.mfa_pending`)."""
+
+    user: AppUser
+    session: UserSession
 
 
 def normalize_email(email: str) -> str:
@@ -80,16 +91,24 @@ async def login(repo: AuthRepository, email: str, password: str, client: Client,
     if previous_token:
         await repo.delete_session(token_digest(previous_token))
     token = new_token()
-    repo.add_session(UserSession(token_digest=token_digest(token), user_id=user.id, created_at=now,
-                                 last_seen_at=now, ip=client.ip, user_agent=client.user_agent,
-                                 kind=SessionKind.WEB.value))
+    # Mot de passe correct : si un second facteur est exigé, la session reste
+    # en attente jusqu'à ce qu'il soit présenté (ADR-004).
+    has_factor = await repo.has_second_factor(user.id)
+    session = UserSession(token_digest=token_digest(token), user_id=user.id, created_at=now, last_seen_at=now,
+                          ip=client.ip, user_agent=client.user_agent, kind=SessionKind.WEB.value,
+                          mfa_required=mfa_policy.second_factor_required(user.role, has_factor))
+    repo.add_session(session)
     repo.add_event(_event(AuthEventType.LOGIN_SUCCEEDED, client, now, user_id=user.id, email=email))
     await repo.commit()
-    return LoginResult(user=user, token=token)
+    return LoginResult(user=user, token=token, session=session, has_factor=has_factor)
 
 
-async def authenticate(repo: AuthRepository, token: str, client: Client, now: datetime) -> AppUser | None:
-    """Utilisateur de la session portée par ce jeton, ou None si elle n'est pas (ou plus) valable."""
+async def authenticate(repo: AuthRepository, token: str, client: Client, now: datetime) -> WebSession | None:
+    """Session web portée par ce jeton, ou None si elle n'est pas (ou plus) valable.
+
+    Le second facteur n'est pas vérifié ici : c'est le rôle des dépendances
+    (`CurrentUser` l'exige, `CurrentWebSession` non).
+    """
     found = await repo.get_session(token_digest(token))
     if found is None:
         return None
@@ -107,7 +126,7 @@ async def authenticate(repo: AuthRepository, token: str, client: Client, now: da
     if policy.needs_touch(session.last_seen_at, now):
         session.last_seen_at = now
         await repo.commit()
-    return user
+    return WebSession(user=user, session=session)
 
 
 async def logout(repo: AuthRepository, token: str, client: Client, now: datetime) -> None:

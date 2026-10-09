@@ -93,6 +93,8 @@ services:
       APP_ORIGINS: http://localhost:${WEB_PUBLISHED_PORT:-8080}
     secrets:
       - db_password
+      # Clé AES-256 qui chiffre les secrets TOTP en base (ADR-004, LUN-006).
+      - mfa_key
     deploy:
       resources:
         limits:
@@ -210,3 +212,9 @@ secrets:
   # fichier hors du dépôt.
   db_password:
     file: ${DB_PASSWORD_FILE:-./secrets/db_password.dev}
+  # Clé de chiffrement des seconds facteurs : même principe. La copie de la
+  # base ne suffit pas à lire les secrets TOTP, il faut aussi cette clé. Celle
+  # du dépôt ne sert qu'au développement ; hors TP, MFA_KEY_FILE pointe vers
+  # un fichier hors du dépôt (openssl rand -base64 32).
+  mfa_key:
+    file: ${MFA_KEY_FILE:-./secrets/mfa_key.dev}

@@ -1,7 +1,10 @@
 """Dépendances FastAPI : dépôt, horloge, client et utilisateur connecté.
 
 `CurrentUser` est le point unique de vérification de session : une route qui
-le déclare n'est jamais exécutée sans session valable.
+le déclare n'est jamais exécutée sans session valable, ni avant que le second
+facteur exigé ait été présenté (ADR-004). Seules /me, la déconnexion et les
+routes du second facteur déclarent `CurrentWebSession`, qui accepte une
+session en attente du second facteur.
 
 Toutes les dépendances sont `async def`, même sans attente : FastAPI exécute
 une dépendance `def` dans un thread, et sous charge ces threads dépassaient la
@@ -16,7 +19,7 @@ from fastapi import Depends, HTTPException, Request, status
 
 from app.auth.models import AppUser
 from app.auth.repository import AuthRepository, SqlAuthRepository
-from app.auth.service import Client, authenticate
+from app.auth.service import Client, WebSession, authenticate
 from app.config import get_settings
 from app.db import SessionDep
 
@@ -47,12 +50,23 @@ NowDep = Annotated[datetime, Depends(get_now)]
 ClientDep = Annotated[Client, Depends(get_client)]
 
 
-async def current_user(request: Request, repo: RepositoryDep, client: ClientDep, now: NowDep) -> AppUser:
+async def current_web_session(request: Request, repo: RepositoryDep, client: ClientDep,
+                              now: NowDep) -> WebSession:
     token = request.cookies.get(cookie_name())
-    user = await authenticate(repo, token, client, now) if token else None
-    if user is None:
+    web = await authenticate(repo, token, client, now) if token else None
+    if web is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Authentification requise")
-    return user
+    return web
+
+
+CurrentWebSession = Annotated[WebSession, Depends(current_web_session)]
+
+
+async def current_user(web: CurrentWebSession) -> AppUser:
+    if web.session.mfa_pending:
+        # 403 et non 401 : la session existe, il lui manque le second facteur.
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Second facteur requis")
+    return web.user
 
 
 CurrentUser = Annotated[AppUser, Depends(current_user)]

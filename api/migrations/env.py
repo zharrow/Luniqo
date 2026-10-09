@@ -9,6 +9,7 @@ import app.attendance.models  # noqa: F401  (enregistre les tables de chaque dom
 import app.auth.models  # noqa: F401
 import app.children.models  # noqa: F401
 import app.family.models  # noqa: F401
+import app.mfa.models  # noqa: F401
 import app.nurseries.models  # noqa: F401
 import app.tablets.models  # noqa: F401
 from app.config import get_settings

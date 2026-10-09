@@ -13,6 +13,8 @@ class InMemoryAuthRepository:
         self.sessions: dict[bytes, UserSession] = {}
         self.events: list[AuthEvent] = []
         self.commits = 0
+        # Comptes qui ont un second facteur confirmé (son contenu est testé sur PostgreSQL).
+        self.with_factor: set[uuid.UUID] = set()
 
     def add_user(self, user: AppUser) -> AppUser:
         self.users[user.email] = user
@@ -23,6 +25,13 @@ class InMemoryAuthRepository:
 
     async def get_user_by_email(self, email: str) -> AppUser | None:
         return self.users.get(email)
+
+    async def has_second_factor(self, user_id: uuid.UUID) -> bool:
+        return user_id in self.with_factor
+
+    def complete_second_factor(self, token_digest: bytes, now: datetime) -> None:
+        """Raccourci de test : la session a présenté son second facteur (parcours testé dans test_mfa_db.py)."""
+        self.sessions[token_digest].mfa_verified_at = now
 
     async def get_session(self, token_digest: bytes) -> tuple[UserSession, AppUser] | None:
         session = self.sessions.get(token_digest)
@@ -38,8 +47,9 @@ class InMemoryAuthRepository:
     async def delete_session(self, token_digest: bytes) -> UserSession | None:
         return self.sessions.pop(token_digest, None)
 
-    async def delete_user_sessions(self, user_id: uuid.UUID) -> int:
-        doomed = [digest for digest, session in self.sessions.items() if session.user_id == user_id]
+    async def delete_user_sessions(self, user_id: uuid.UUID, *, keep: uuid.UUID | None = None) -> int:
+        doomed = [digest for digest, session in self.sessions.items()
+                  if session.user_id == user_id and session.id != keep]
         for digest in doomed:
             del self.sessions[digest]
         return len(doomed)

@@ -4,6 +4,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.auth.models import UserRole
 from app.auth.passwords import MAX_LENGTH
+from app.mfa.policy import MfaState
 
 
 class LoginIn(BaseModel):
@@ -21,3 +22,13 @@ class UserOut(BaseModel):
     last_name: str
     role: UserRole
     enterprise_id: uuid.UUID | None
+
+
+class SessionOut(UserOut):
+    """Utilisateur connecté et état du second facteur pour cette session.
+
+    `mfa` : not_required ou verified, la session est complète ; setup_required,
+    elle doit enregistrer un facteur ; required, elle doit le présenter.
+    """
+
+    mfa: MfaState

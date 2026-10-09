@@ -11,19 +11,23 @@ ignorés, pour que `pytest` reste utilisable sans base.
   les tests ne laissent rien et ne se voient pas entre eux.
 """
 
+import base64
 import os
 import uuid
 from collections.abc import AsyncIterator
+from datetime import UTC, datetime
 
 import httpx2
 import pytest
 from alembic import command
 from alembic.config import Config
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.pool import NullPool
 
-from app.auth.models import AppUser, UserRole
+from app.auth.models import AppUser, UserRole, UserSession
 from app.auth.passwords import hash_password_sync
+from app.auth.tokens import token_digest
 from app.config import get_settings
 from app.db import get_engine, get_session, new_session
 from app.main import app
@@ -32,6 +36,11 @@ from tests.auth.conftest import ORIGIN, PASSWORD
 
 API_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 PASSWORD_HASH = hash_password_sync(PASSWORD)
+WEB_COOKIE = "__Host-luniqo_session"
+# Clé de chiffrement des secrets TOTP pour les tests (aucune donnée réelle).
+TEST_MFA_KEY = base64.b64encode(b"cle-de-test-luniqo-32-octets-ok!").decode()
+# Session SQL du test en cours : `login` s'en sert pour son raccourci de second facteur.
+_current: dict[str, AsyncSession] = {}
 
 
 def pytest_collection_modifyitems(config, items):
@@ -56,8 +65,10 @@ def database_url() -> str:
         "DB_NAME": name,
         "DB_USER": os.environ.get("TEST_DB_USER", "luniqo"),
         "DB_PASSWORD": os.environ.get("TEST_DB_PASSWORD", ""),
+        "MFA_KEY": TEST_MFA_KEY,
     })
     os.environ.pop("DB_PASSWORD_FILE", None)
+    os.environ.pop("MFA_KEY_FILE", None)
     get_settings.cache_clear()
     get_engine.cache_clear()
     alembic = Config(os.path.join(API_DIR, "alembic.ini"))
@@ -75,9 +86,11 @@ async def db(database_url: str) -> AsyncIterator[AsyncSession]:
         transaction = await connection.begin()
         # Même fabrique que l'application : un réglage de session défaillant se voit ici.
         session = new_session(connection, join_transaction_mode="create_savepoint")
+        _current["db"] = session
         try:
             yield session
         finally:
+            _current.clear()
             await session.close()
             await transaction.rollback()
     await engine.dispose()
@@ -119,8 +132,23 @@ async def clients(db: AsyncSession) -> AsyncIterator:
     app.dependency_overrides.clear()
 
 
-async def login(client: httpx2.AsyncClient, email: str, password: str = PASSWORD) -> httpx2.Response:
-    return await client.post("/api/v2/auth/login", json={"email": email, "password": password})
+async def login(client: httpx2.AsyncClient, email: str, password: str = PASSWORD, *,
+                complete_mfa: bool = True) -> httpx2.Response:
+    """Connexion par mot de passe.
+
+    Avec `complete_mfa` (par défaut), le second facteur exigé de la direction
+    et de l'éditeur est marqué comme présenté directement en base : raccourci
+    pour les tests qui ne portent pas sur lui. Le parcours réel (TOTP, codes de
+    secours) est testé dans test_mfa_db.py, avec complete_mfa=False.
+    """
+    response = await client.post("/api/v2/auth/login", json={"email": email, "password": password})
+    if complete_mfa and response.status_code == 200 and response.json()["mfa"] in ("required", "setup_required"):
+        db = _current["db"]
+        session = await db.scalar(select(UserSession).where(
+            UserSession.token_digest == token_digest(client.cookies[WEB_COOKIE])))
+        session.mfa_verified_at = datetime.now(UTC)
+        await db.flush()
+    return response
 
 
 class Data:
