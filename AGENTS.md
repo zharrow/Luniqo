@@ -129,7 +129,8 @@ Les modules hors parcours central (HACCP, facturation, RH, statistiques…) sont
 | [ADR-001](M2/decisions/ADR-001-reecriture-backend.md) | Réécrire Luniqo avec un backend FastAPI | **Acceptée** le 2026-10-08 |
 | [Registre](M2/decisions/CHOIX-TECHNIQUES.md) | Tous les choix techniques, raisons, options écartées et sources (tenu à jour) | En continu |
 | ADR-002 | Front v2 : garder Next.js ou passer à React + Vite | À ouvrir après le TP Docker |
-| [ADR-003](M2/decisions/ADR-003-authentification-v2.md) | Authentification v2 : sessions opaques en base, Argon2id, TOTP pour les comptes à privilèges, PIN lié à une tablette enrôlée | **Acceptée** le 2026-10-08 |
+| [ADR-003](M2/decisions/ADR-003-authentification-v2.md) | Authentification v2 : sessions opaques en base, Argon2id, PIN lié à une tablette enrôlée | **Acceptée** le 2026-10-08 ; partie multifacteur remplacée par ADR-004 |
+| [ADR-004](M2/decisions/ADR-004-double-authentification.md) | Double authentification : passkeys (Face ID…) en principal, TOTP en alternative, codes de secours, pas de SMS | **Acceptée** le 2026-10-09 |
 
 ## Anomalies ouvertes
 

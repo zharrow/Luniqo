@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Statut | **Acceptée** le 2026-10-08 par Florent |
+| Statut | **Acceptée** le 2026-10-08 par Florent. Partie « Multifacteur » **remplacée** le 2026-10-09 par [ADR-004](ADR-004-double-authentification.md) (passkeys, TOTP, codes de secours) |
 | Date | 2026-10-08 |
 | Décideur | Florent `[RÉEL]`. Il a fixé le critère (« la solution qui respecte le mieux les règles de cybersécurité ») et délégué la proposition à l'assistant |
 | Ticket | LUN-002 |
@@ -77,7 +77,7 @@ Le 2026-10-08, les valeurs chiffrées (OWASP hachage, NIST, CNIL) et l'adresse d
 
 - Par compte et par adresse IP, comptées en base (pas de Redis à ce stade) : délai croissant après 5 échecs, blocage temporaire de 15 minutes après 10. Ces seuils seront ajustés après les tests.
 
-**Multifacteur (TOTP)**
+**Multifacteur (TOTP)** — *remplacé par [ADR-004](ADR-004-double-authentification.md) : passkey (Face ID, Touch ID…) en méthode principale, TOTP en alternative, codes de secours, pas de SMS. Texte d'origine conservé ci-dessous pour l'historique.*
 
 - **Obligatoire** pour Developer et Owner, qui voient les données de santé de toutes les crèches de l'entreprise (ANSSI : comptes à privilèges). Proposé aux employés et aux parents.
 - Secret TOTP chiffré en base, codes de secours à usage unique hachés.
