@@ -33,6 +33,8 @@ Parcours central : une direction crée une crèche et ses accès ; un employé e
 
 Ce parcours doit fonctionner sur un jeu de données synthétiques, pour deux crèches, avec des comptes de rôles différents. Un refus d'accès à la mauvaise crèche doit être démontrable. La facturation et HACCP restent des extensions candidates pour les cours ; leur présence n'impose pas de les ajouter au parcours central.
 
+**État au 2026-10-09** `[RÉEL]` : les cinq étapes fonctionnent **au niveau de l'API v2** (LUN-003 à LUN-011), testées (unitaires, intégration PostgreSQL, mutations) et rejouées sur la pile Docker avec les données synthétiques (deux entreprises, trois crèches, tous les rôles). Elles ne sont **pas encore utilisables depuis l'interface** : le front est toujours celui de la v1, branché sur Supabase (bascule lot par lot, ADR-001 ; choix du front, ADR-002).
+
 Les exigences, objectifs de performance, capacité attendue et critères de réussite seront fixés avant les mesures. Aucun seuil de performance universel n'est présumé. La couverture des tests devra ensuite être rapprochée des critères officiels, pas limitée au seul scénario de démonstration.
 
 ## Matrice initiale des preuves
