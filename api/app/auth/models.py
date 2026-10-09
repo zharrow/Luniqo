@@ -115,6 +115,8 @@ class AuthEventType(enum.StrEnum):
     PIN_UNLOCKED = "pin_unlocked"
     PIN_THROTTLED = "pin_throttled"
     TABLET_SESSION_ENDED = "tablet_session_ended"
+    INVITATION_CREATED = "invitation_created"
+    INVITATION_ACCEPTED = "invitation_accepted"
 
 
 class AuthEvent(Base):

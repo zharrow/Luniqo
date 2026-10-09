@@ -39,6 +39,9 @@ exposer en dehors d'un environnement de test.
 | `POST /api/v2/tablet/children/{child_id}/arrival` | Pointer l'arrivée (heure du serveur), avec le responsable qui dépose l'enfant si connu |
 | `POST /api/v2/tablet/children/{child_id}/departure` | Pointer le départ ; refusé si la personne n'est pas autorisée à venir chercher l'enfant |
 | `GET /api/v2/nurseries/{id}/attendance`, `…/attendance/present` | Présences d'un jour (`?day=`, aujourd'hui à Paris par défaut), enfants présents maintenant |
+| `POST /api/v2/nurseries/{id}/guardians/{guardian_id}/invitation` | Inviter un responsable à créer son compte famille : lien à usage unique, 7 jours (direction) |
+| `POST /api/v2/invitations/lookup`, `POST /api/v2/invitations/accept` | Sans session : lire l'invitation, créer le compte (ou relier un compte famille existant) ; jeton dans le corps |
+| `GET /api/v2/family/children`, `GET /api/v2/family/children/{child_id}` | Parent connecté : ses enfants (autorité parentale requise), présence du jour, présences récentes (`?days=`, 62 au plus), contacts sans coordonnées |
 
 ### Qui accède à quoi
 
@@ -77,6 +80,7 @@ api/
 │   ├── tablets/       tablettes enrôlées, PIN, sessions d'action (routes testées sur PostgreSQL)
 │   ├── children/      familles, enfants, responsables (aucune donnée de santé : LUN-019)
 │   ├── attendance/    pointage depuis la tablette, suivi des présences
+│   ├── family/        invitations des parents, consultation famille
 │   ├── security.py    contrôle de l'en-tête Origin (CSRF)
 │   ├── config.py      configuration lue dans l'environnement
 │   ├── db.py          moteur SQLAlchemy asynchrone, session par requête
@@ -143,7 +147,7 @@ pip install -r requirements-dev.txt
 
 pytest                          # tests unitaires, sans base de données (166 au 2026-10-09)
 
-# Tests d'intégration sur une vraie PostgreSQL (80 au 2026-10-09), base jetable
+# Tests d'intégration sur une vraie PostgreSQL (95 au 2026-10-09), base jetable
 # construite avec l'image luniqo/db du TP Docker (cd ../docker && docker compose build db) :
 scripts/test-db.sh up           # affiche la ligne export TEST_DB_... à copier
 export TEST_DB_ADDR=127.0.0.1:55432 TEST_DB_NAME=luniqo_test TEST_DB_PASSWORD=luniqo-test

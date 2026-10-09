@@ -42,6 +42,7 @@ def require_role(*roles: UserRole) -> Callable[[AppUser], Awaitable[AppUser]]:
 
 StaffUser = Annotated[AppUser, Depends(require_role(UserRole.OWNER, UserRole.EMPLOYEE))]
 OwnerUser = Annotated[AppUser, Depends(require_role(UserRole.OWNER))]
+GuardianUser = Annotated[AppUser, Depends(require_role(UserRole.GUARDIAN))]
 
 
 @dataclass(frozen=True)

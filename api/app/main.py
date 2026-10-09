@@ -17,6 +17,7 @@ from app.attendance.router import router as attendance_router
 from app.auth.router import router as auth_router
 from app.children.router import router as children_router
 from app.db import SessionDep, get_engine
+from app.family.router import router as family_router
 from app.nurseries.router import router as nurseries_router
 from app.schemas import Health
 from app.security import OriginCheckMiddleware
@@ -46,6 +47,7 @@ app.include_router(nurseries_router)
 app.include_router(tablets_router)
 app.include_router(children_router)
 app.include_router(attendance_router)
+app.include_router(family_router)
 
 
 @app.get(
