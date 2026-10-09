@@ -83,14 +83,23 @@ Fichier : [jira-import.csv](jira-import.csv), 80 lignes :
    | Labels (×4) | Étiquettes |
    | Fix versions | Versions corrigées (*Fix versions*) |
 
+   **Vérifier chaque ligne avant de valider.** Une erreur ne bloque pas
+   l'import, elle le fausse : le 2026-10-09, une colonne `Labels` associée au
+   Résumé a donné des titres comme « tablette », et les 49 lignes sans
+   étiquette ont été rejetées faute de titre (31 tickets importés sur 80,
+   numéros décalés). Dans ce cas, seule la suppression définitive du projet
+   (corbeille comprise) permet de repartir de `LUN-1` : Jira ne réutilise
+   jamais un numéro.
+
 5. Correspondance des valeurs, si Jira la demande : types `Epic`, `Story`,
    `Task`, `Sub-task` vers leurs équivalents (Epic, Story, Tâche, Sous-tâche) ;
    statuts `À faire`, `En cours`, `Terminé` vers les statuts du workflow ;
    priorités `Highest`, `High`, `Medium` vers Plus élevée, Élevée, Moyenne.
-6. Lancer l'import, puis **vérifier** : `LUN-6` doit être « Double
-   authentification (ADR-004)… » et `LUN-22` « TD Coordination… ». Si les
-   numéros sont décalés, ne rien créer et prévenir : il faudra ajuster les
-   branches.
+6. Lancer l'import, puis **vérifier** : **80 tickets** créés (le journal de
+   l'import liste les lignes rejetées), `LUN-6` = « Double authentification
+   (ADR-004)… », `LUN-22` = « TD Coordination… », `LUN-25` = « Pointage sur
+   tablette » avec deux tickets enfants (`LUN-34`, `LUN-35`). Sinon, ne rien
+   créer à la main avant d'avoir corrigé.
 
 ### Rattacher les tickets d'origine à leur épic
 
