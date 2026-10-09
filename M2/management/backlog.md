@@ -1,6 +1,6 @@
 # Backlog provisoire
 
-> **Archivé le 2026-10-09** : le backlog vit désormais dans **Jira** (projet `LUN`, voir [docs/projet/JIRA.md](../../docs/projet/JIRA.md)). Les tickets ci-dessous y sont importés avec le même numéro, sans zéro devant (`LUN-006` → `LUN-6`). Les statuts ci-dessous ne sont plus tenus à jour.
+> **Archivé le 2026-10-09** : le backlog vit désormais dans **Jira** (projet `LUN`, voir [docs/projet/JIRA.md](../../docs/projet/JIRA.md)). Les tickets ci-dessous y sont importés avec une clé décalée de 38 (`LUN-001` → `LUN-39`, `LUN-006` → `LUN-44`, `LUN-021` → `LUN-59`) : le premier import a raté et Jira ne réutilise pas les numéros. L'ancien numéro est écrit dans la description de chaque ticket. Les statuts ci-dessous ne sont plus tenus à jour.
 
 Tenu ici en attendant l'outil de suivi. Les numéros `LUN-###` sont définitifs : ils sont repris dans les branches, les commits et le journal des versions.
 

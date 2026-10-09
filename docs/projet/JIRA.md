@@ -2,13 +2,20 @@
 
 Guide pas à pas pour créer le projet Jira de Luniqo, importer le backlog, le
 relier à GitHub et automatiser le cycle de vie des tickets décrit dans
-[CONTRIBUTING.md](../../CONTRIBUTING.md). Rédigé le 2026-10-09 (LUN-22). Les
+[CONTRIBUTING.md](../../CONTRIBUTING.md). Rédigé le 2026-10-09 (LUN-60). Les
 noms de menus peuvent varier légèrement selon la langue de l'interface : les
 deux sont donnés quand ils diffèrent.
 
 **Ordre à respecter** : créer le projet (1), préparer les statuts et les champs
-(2), importer le CSV (3) **avant de créer le moindre ticket à la main**, sinon
-les numéros ne correspondront plus à ceux du dépôt.
+(2), importer le CSV (3) **avant de créer le moindre ticket à la main**.
+
+> **Clés réelles du projet** `[RÉEL]` : le premier import du 2026-10-09 a raté
+> et ses 31 tickets ont été supprimés ; Jira ne réutilisant jamais un numéro,
+> le second import a commencé à `LUN-39`. **La ligne n du CSV est le ticket
+> `LUN-(n+38)`**, et un ticket du backlog d'origine `LUN-0nn` est devenu
+> `LUN-(nn+38)` (`LUN-006` → `LUN-44`). L'ancien numéro reste écrit dans la
+> description de chaque ticket d'origine. Les clés citées ici sont les clés
+> réelles.
 
 ## 1. Créer le site et le projet
 
@@ -54,13 +61,13 @@ fonctionnent.
 
 Fichier : [jira-import.csv](jira-import.csv), 80 lignes :
 
-| Lignes | Contenu | Clés attendues |
+| Lignes | Contenu | Clés obtenues |
 |---|---|---|
-| 1 à 21 | le backlog d'origine, dans l'ordre | `LUN-1` à `LUN-21` (= `LUN-001` à `LUN-021`) |
-| 22 | le ticket de ce TD | `LUN-22` |
-| 23 à 29 | 7 épics | `LUN-23` à `LUN-29` |
-| 30 à 42 | 13 stories, chacune dans son épic | `LUN-30` à `LUN-42` |
-| 43 à 80 | 38 sous-tâches `[Front]`, `[Back]`, `[Infra]`, `[Doc]` | `LUN-43` à `LUN-80` |
+| 1 à 21 | le backlog d'origine, dans l'ordre | `LUN-39` à `LUN-59` (= `LUN-001` à `LUN-021`) |
+| 22 | le ticket de ce TD | `LUN-60` |
+| 23 à 29 | 7 épics | `LUN-61` à `LUN-67` |
+| 30 à 42 | 13 stories, chacune dans son épic | `LUN-68` à `LUN-80` |
+| 43 à 80 | 38 sous-tâches `[Front]`, `[Back]`, `[Infra]`, `[Doc]` | `LUN-81` à `LUN-118` |
 
 Import réalisé le 2026-10-09 par l'outil **« Création groupée »** (import CSV
 proposé depuis la recherche de tickets), au deuxième essai. Ce qui suit décrit
@@ -96,8 +103,9 @@ simple avertissement.
    l'import, elle le fausse : au premier essai, la colonne `Labels` associée au
    Résumé a donné des titres comme « tablette », et les 49 lignes sans
    étiquette ont été rejetées faute de titre (31 tickets sur 80, numéros
-   décalés). Seule la suppression définitive du projet (corbeille comprise)
-   permet alors de repartir de `LUN-1` : Jira ne réutilise jamais un numéro.
+   décalés). Supprimer ces tickets ne remet pas le compteur à zéro : Jira ne
+   réutilise jamais un numéro. C'est pourquoi les clés réelles commencent à
+   `LUN-39`.
 
 4. **Mapper les valeurs** : High → High, Medium → Medium, Epic → Epic,
    Story → Story, Sub-task → Sous-tâche, Task → Tâche.
@@ -105,9 +113,9 @@ simple avertissement.
    ne compte pas les sous-tâches : il annonce **42** tickets alors que les
    **80** sont créés. Enregistrer le fichier de configuration proposé, utile
    pour un nouvel import.
-6. **Vérifier** : 80 tickets, `LUN-6` = « Double authentification
-   (ADR-004)… », `LUN-22` = « TD Coordination… », `LUN-25` = « Pointage sur
-   tablette » avec deux tickets enfants (`LUN-34`, `LUN-35`), `LUN-34` avec
+6. **Vérifier** : 80 tickets, `LUN-44` = « Double authentification
+   (ADR-004)… », `LUN-60` = « TD Coordination… », `LUN-63` = « Pointage sur
+   tablette » avec deux tickets enfants (`LUN-72`, `LUN-73`), `LUN-72` avec
    quatre sous-tâches et les composants Back et Front.
 
 ### Après l'import : statuts et estimations
@@ -116,18 +124,18 @@ Tous les tickets arrivent « À faire ». Modification groupée → **Transition
 
 | JQL | Statut |
 |---|---|
-| `key in (LUN-1, LUN-2, LUN-3, LUN-4, LUN-5, LUN-7, LUN-8, LUN-9, LUN-10, LUN-11)` | Terminé |
-| `key in (LUN-6, LUN-22)` | En cours |
+| `key in (LUN-39, LUN-40, LUN-41, LUN-42, LUN-43, LUN-45, LUN-46, LUN-47, LUN-48, LUN-49)` | Terminé |
+| `key in (LUN-44, LUN-60)` | En cours |
 
 Story Points à saisir à la main (propositions, à revoir en planning poker) :
-LUN-22 : 5 · LUN-30 : 5 · LUN-31 : 8 · LUN-32 : 5 · LUN-33 : 3 · LUN-34 : 8 ·
-LUN-35 : 5 · LUN-36 : 5 · LUN-37 : 5 · LUN-38 : 5 · LUN-39 : 8 · LUN-40 : 5 ·
-LUN-41 : 8 · LUN-42 : 8.
+LUN-60 : 5 · LUN-68 : 5 · LUN-69 : 8 · LUN-70 : 5 · LUN-71 : 3 · LUN-72 : 8 ·
+LUN-73 : 5 · LUN-74 : 5 · LUN-75 : 5 · LUN-76 : 5 · LUN-77 : 8 · LUN-78 : 5 ·
+LUN-79 : 8 · LUN-80 : 8.
 
 ### Rattacher les tickets d'origine à leur épic
 
 Le CSV ne peut pas le faire (un parent doit précéder ses enfants dans le
-fichier, et les tickets d'origine passent en premier pour garder leur numéro).
+fichier, et les tickets d'origine passent en premier).
 Dans la modification groupée, le champ **Parent apparaît mais reste grisé** :
 passer par le **backlog** (panneau Épics activé), sélectionner les tickets
 avec Cmd+clic puis les glisser sur l'épic, ou ajouter les tickets existants
@@ -135,13 +143,13 @@ depuis la section « Tickets enfant » de l'épic.
 
 | Tickets | Épic |
 |---|---|
-| `key in (LUN-2, LUN-3, LUN-6, LUN-16, LUN-17)` | LUN-23 Authentification et sécurité des comptes |
-| `key in (LUN-4, LUN-18)` | LUN-24 Crèches et personnel |
-| `key in (LUN-5, LUN-10, LUN-20)` | LUN-25 Pointage sur tablette |
-| `key in (LUN-9, LUN-11, LUN-19, LUN-21)` | LUN-26 Enfants et familles |
-| `key in (LUN-12)` | LUN-27 Fiche de ménage |
-| `key in (LUN-1, LUN-7, LUN-8, LUN-14, LUN-15)` | LUN-28 Socle technique et livraison |
-| `key in (LUN-13, LUN-22)` | LUN-29 Pilotage du projet |
+| `key in (LUN-40, LUN-41, LUN-44, LUN-54, LUN-55)` | LUN-61 Authentification et sécurité des comptes |
+| `key in (LUN-42, LUN-56)` | LUN-62 Crèches et personnel |
+| `key in (LUN-43, LUN-48, LUN-58)` | LUN-63 Pointage sur tablette |
+| `key in (LUN-47, LUN-49, LUN-57, LUN-59)` | LUN-64 Enfants et familles |
+| `key in (LUN-50)` | LUN-65 Fiche de ménage |
+| `key in (LUN-39, LUN-45, LUN-46, LUN-52, LUN-53)` | LUN-66 Socle technique et livraison |
+| `key in (LUN-51, LUN-60)` | LUN-67 Pilotage du projet |
 
 ## 4. Boards et filtres
 
@@ -185,18 +193,18 @@ Il faut être administrateur du site Jira et propriétaire du dépôt GitHub
    repositories** → `Luniqo` seulement (moindre privilège), puis accepter les
    permissions demandées.
 5. Attendre la fin de la synchronisation de l'historique (*backfill*).
-   Vérification : ouvrir `LUN-6` ; le panneau **Développement** doit montrer la
-   branche `feat/LUN-006-mfa` et ses PR. Les anciennes branches ont des zéros
-   devant le numéro : si elles n'apparaissent pas, ce n'est pas grave, les
-   nouvelles s'écrivent sans zéro.
+   Vérification : ouvrir `LUN-60` ; le panneau **Développement** doit montrer la
+   branche `docs/LUN-60-poc-coordination` et la PR #52. Les branches d'avant
+   Jira (`feat/LUN-006-mfa`…) portent l'ancienne numérotation : elles ne sont
+   reliées à aucun ticket, c'est normal.
 
 Désormais, tout ce qui contient une clé `LUN-<n>` est relié au ticket :
 
 | Où | Exemple |
 |---|---|
-| Nom de branche | `feat/LUN-34-mode-tablette` |
-| Message de commit | `feat(api): pointage groupé (LUN-34)` |
-| Titre de PR | `feat(api): pointage groupé (LUN-34)` |
+| Nom de branche | `feat/LUN-72-mode-tablette` |
+| Message de commit | `feat(api): pointage groupé (LUN-72)` |
+| Titre de PR | `feat(api): pointage groupé (LUN-72)` |
 
 ## 6. Règles d'automatisation
 

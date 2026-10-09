@@ -7,7 +7,7 @@
 | Équipe | **Équipe réelle de 4 personnes, constituée pour ce cours seulement** : Florent (chef de projet), Thomas (fullstack), Pauline (front), Julien (back). Elle est distincte de l'équipe fictive du dossier RNCP |
 | Échéance | Probablement février 2027 (à confirmer). Le TD sert de base aux travaux suivants (vision produit, MVP) |
 | Rendu | Lien du dépôt `zharrow/Luniqo` et lien du projet Jira, sur la feuille de suivi du cours |
-| Ticket | LUN-22 |
+| Ticket | LUN-60 |
 | Compétences RNCP | C3.1 (méthode et organisation), C3.2.1 (outil de suivi), C2.1.2 (protocole d'intégration continue) |
 | Statut | En cours (2026-10-09) |
 
