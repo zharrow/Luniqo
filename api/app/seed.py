@@ -45,7 +45,8 @@ def seed(session: Session) -> int:
             session.add(enterprise)
             session.flush()
         for name, city, capacity in nurseries:
-            exists = session.scalar(select(Nursery.id).where(Nursery.enterprise_id == enterprise.id, Nursery.name == name))
+            exists = session.scalar(
+                select(Nursery.id).where(Nursery.enterprise_id == enterprise.id, Nursery.name == name))
             if not exists:
                 session.add(Nursery(enterprise_id=enterprise.id, name=name, city=city, capacity=capacity))
                 created += 1
@@ -79,7 +80,10 @@ if __name__ == "__main__":
     # Script lancé une fois avant le serveur : connexion synchrone suffisante.
     with Session(create_engine(get_settings().database_url)) as session:
         created = seed(session)
-        print(f"[api] données de démonstration : {created} crèche(s) créée(s)" if created else "[api] données de démonstration déjà présentes")
+        if created:
+            print(f"[api] données de démonstration : {created} crèche(s) créée(s)")
+        else:
+            print("[api] données de démonstration déjà présentes")
         demo_password = os.environ.get("SEED_DEMO_PASSWORD")
         if demo_password:
             try:

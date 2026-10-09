@@ -60,7 +60,8 @@ def world() -> World:
     for user_key, nursery_key in (("employee_nord", "nord"), ("employee_nord", "fermee"),
                                   ("employee_sud", "sud"), ("employee_b", "temoin")):
         nursery = nurseries[nursery_key]
-        repo.grant(NurseryAccess(user_id=users[user_key].id, nursery_id=nursery.id, enterprise_id=nursery.enterprise_id))
+        repo.grant(NurseryAccess(user_id=users[user_key].id, nursery_id=nursery.id,
+                                 enterprise_id=nursery.enterprise_id))
     return World(auth, repo, a, b, nurseries, users)
 
 

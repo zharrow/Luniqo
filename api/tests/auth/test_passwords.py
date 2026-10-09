@@ -46,7 +46,8 @@ async def test_hachage_argon2id_avec_les_parametres_owasp():
 @pytest.mark.anyio
 async def test_deux_hachages_du_meme_mot_de_passe_different():
     # Sel aléatoire : deux comptes au même mot de passe n'ont pas le même haché.
-    assert await hash_password("une phrase de passe assez longue") != await hash_password("une phrase de passe assez longue")
+    password = "une phrase de passe assez longue"
+    assert await hash_password(password) != await hash_password(password)
 
 
 @pytest.mark.anyio

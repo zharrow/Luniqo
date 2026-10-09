@@ -31,8 +31,9 @@ def clock() -> Clock:
 @pytest.fixture
 def repo() -> InMemoryAuthRepository:
     repository = InMemoryAuthRepository()
-    repository.add_user(AppUser(id=uuid.uuid4(), email="direction@demo.test", password_hash=hash_password_sync(PASSWORD),
-                                first_name="Camille", last_name="Martin", role=UserRole.OWNER, is_active=True))
+    repository.add_user(AppUser(id=uuid.uuid4(), email="direction@demo.test",
+                                password_hash=hash_password_sync(PASSWORD), first_name="Camille", last_name="Martin",
+                                role=UserRole.OWNER, is_active=True))
     return repository
 
 

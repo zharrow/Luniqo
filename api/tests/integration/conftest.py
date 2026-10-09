@@ -39,6 +39,9 @@ def pytest_collection_modifyitems(config, items):
         if "tests/integration/" in item.nodeid:
             item.add_marker(pytest.mark.integration)
             if not os.environ.get("TEST_DB_ADDR"):
+                if os.environ.get("CI"):
+                    # En CI, des tests d'intégration ignorés en silence donneraient une CI verte à tort.
+                    pytest.exit("TEST_DB_ADDR absent en CI : les tests d'intégration doivent tourner", returncode=2)
                 item.add_marker(pytest.mark.skip(reason="TEST_DB_ADDR absent : lancer scripts/test-db.sh up"))
 
 

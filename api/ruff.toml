@@ -1,0 +1,14 @@
+# Lint de l'API (LUN-008), lancé par la CI sur chaque PR : `ruff check .`
+target-version = "py314"
+line-length = 120
+
+[lint]
+# E/W : style PEP 8 · F : erreurs (noms inconnus, imports inutiles) · I : ordre des imports
+# B : pièges courants (bugbear) · UP : syntaxe Python à jour · S : sécurité (règles de Bandit)
+select = ["E", "W", "F", "I", "B", "UP", "S"]
+
+[lint.per-file-ignores]
+# Tests : assert est l'outil de pytest (S101) ; mots de passe de test en clair (S105, S106).
+"tests/**" = ["S101", "S105", "S106"]
+# Migrations : SQL écrit à la main, sans paramètre fourni par un utilisateur (S608).
+"migrations/**" = ["S608"]
