@@ -100,24 +100,45 @@ Ainsi, `develop` peut être promue à tout moment.
 
 ### Promotion et recette
 
+Le circuit complet, d'une version à la suivante : deux fonctionnalités
+intégrées, une première version candidate refusée en recette, corrigée sur
+`develop` puis promue à nouveau, la mise en production, puis un correctif
+urgent et son report.
+
 ```mermaid
 gitGraph
     commit id: "v0.1.0" tag: "v0.1.0"
     branch staging
+    checkout main
     branch develop
     branch feat/LUN-34-mode-tablette
     commit id: "écran PIN"
     commit id: "pointage"
     checkout develop
-    merge feat/LUN-34-mode-tablette id: "PR #60"
-    branch fix/LUN-81-heure-depart
-    commit id: "correctif"
+    merge feat/LUN-34-mode-tablette id: "PR feat LUN-34"
+    branch feat/LUN-38-pieces-menage
+    commit id: "pièces et tâches"
     checkout develop
-    merge fix/LUN-81-heure-depart id: "PR #61"
+    merge feat/LUN-38-pieces-menage id: "PR feat LUN-38"
     checkout staging
-    merge develop id: "promotion" tag: "v0.2.0-rc.1"
+    merge develop id: "promotion rc.1" tag: "v0.2.0-rc.1"
+    checkout develop
+    branch fix/LUN-81-heure-depart
+    commit id: "correction recette"
+    checkout develop
+    merge fix/LUN-81-heure-depart id: "PR fix LUN-81"
+    checkout staging
+    merge develop id: "promotion rc.2" tag: "v0.2.0-rc.2"
     checkout main
     merge staging id: "mise en production" tag: "v0.2.0"
+    branch hotfix/LUN-90-pin-bloque
+    commit id: "correctif urgent"
+    checkout main
+    merge hotfix/LUN-90-pin-bloque id: "PR hotfix LUN-90" tag: "v0.2.1"
+    checkout staging
+    merge main id: "report dans staging"
+    checkout develop
+    merge main id: "report dans develop"
 ```
 
 ```mermaid

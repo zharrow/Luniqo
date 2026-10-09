@@ -57,4 +57,5 @@ par l'équipe en suivant le guide.
 - [ ] Relier Jira à GitHub et vérifier le panneau Développement.
 - [ ] Protections des branches et branche par défaut `develop` (Florent).
 - [ ] Première version `v0.1.0` par le circuit complet : préparation → `develop` → `staging` (`v0.1.0-rc.1`) → `main` (`v0.1.0`).
-- [ ] Bonus : personas (fictifs) pour la séance sur la vision produit.
+- [x] Bonus du prof : [personas](../../docs/produit/PERSONAS.md) (4, fictifs) et [story map](../../docs/produit/STORY-MAP.md) avec la découpe du MVP (2026-10-09).
+- [x] Diagrammes Mermaid de la stratégie de branches, suggérés par le prof : cycle du ticket, circuit complet (`gitGraph` avec recette refusée et correctif urgent), flux entre environnements, dans [CONTRIBUTING.md](../../CONTRIBUTING.md). Rendu vérifié avec mermaid-cli 12.0.0.

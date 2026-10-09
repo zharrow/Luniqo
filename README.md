@@ -136,6 +136,7 @@ d'administration.
 | Tickets, sprints, boards | Jira, projet **LUN** (lien communiqué à l'équipe) |
 | Configuration de Jira et de son lien avec GitHub | [docs/projet/JIRA.md](docs/projet/JIRA.md) |
 | Versions publiées | [CHANGELOG.md](CHANGELOG.md) et les tags `vX.Y.Z` |
+| Personas et story map (vision produit, MVP) | [docs/produit/](docs/produit/) : [personas](docs/produit/PERSONAS.md), [story map](docs/produit/STORY-MAP.md) |
 | Choix techniques et leurs raisons | [M2/decisions/](M2/decisions/), dont le [registre](M2/decisions/CHOIX-TECHNIQUES.md) |
 
 ### Équipe du cours « Coordination Front & Back »
@@ -192,6 +193,7 @@ docker/                   conteneurisation : 5 images, compose
 supabase/                 migrations SQL de la v1
 .github/                  CI, conventions de PR, étiquettes, modèle de PR
 docs/projet/              organisation du projet : Jira, import du backlog
+docs/produit/             vision produit : personas, story map
 docs/                     documentation historique de la v1 (à vérifier)
 M2/                       preuves du diplôme : décisions (ADR), anomalies, cours
 ```
