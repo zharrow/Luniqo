@@ -129,7 +129,8 @@ Les modules hors parcours central (HACCP, facturation, RH, statistiques…) sont
 | [ADR-001](M2/decisions/ADR-001-reecriture-backend.md) | Réécrire Luniqo avec un backend FastAPI | **Acceptée** le 2026-10-08 |
 | [Registre](M2/decisions/CHOIX-TECHNIQUES.md) | Tous les choix techniques, raisons, options écartées et sources (tenu à jour) | En continu |
 | ADR-002 | Front v2 : garder Next.js ou passer à React + Vite | À ouvrir après le TP Docker |
-| [ADR-003](M2/decisions/ADR-003-authentification-v2.md) | Authentification v2 : sessions opaques en base, Argon2id, TOTP pour les comptes à privilèges, PIN lié à une tablette enrôlée | **Acceptée** le 2026-10-08 |
+| [ADR-003](M2/decisions/ADR-003-authentification-v2.md) | Authentification v2 : sessions opaques en base, Argon2id, PIN lié à une tablette enrôlée | **Acceptée** le 2026-10-08 ; partie multifacteur remplacée par ADR-004 |
+| [ADR-004](M2/decisions/ADR-004-double-authentification.md) | Double authentification : passkeys (Face ID…) en principal, TOTP en alternative, codes de secours, pas de SMS | **Acceptée** le 2026-10-09 |
 
 ## Anomalies ouvertes
 
@@ -187,10 +188,11 @@ Statuts des preuves (repris du fil rouge) : à vérifier / absent / partiel / d�
 | 2026-10-08 | LUN-008 : CI GitHub Actions (API : ruff + tests unitaires et d'intégration ; images : build des 5 images, démarrage, sondes), actions épinglées par SHA. **Première exécution verte** sur la PR #44 (run `37842997099`) : 165 tests dont 31 d'intégration, 5 images construites, sondes 200 et 401 sans session, rapport JUnit conservé jusqu'au 2027-01-06. ANO-002 consignée (lint v1 cassé) | [RÉEL] |
 | 2026-10-09 | PR #41 à #44 fusionnées chacune dans la branche de la précédente (PR empilées) : code absent de `main`, rattrapé par la PR #45 (CI verte, fusionnée le 2026-10-09). LUN-005 : module `app/tablets/` (enrôlement, PIN, sessions d'action de 2 min refusées par l'espace web), migration 0004, 211 tests ; cinq mutations détectées ; parcours vérifié sur la pile Docker. ANO-001 corrigée par conception en v2 | [RÉEL] |
 | 2026-10-09 | #45 et #46 fusionnées (LUN-003 à LUN-008 et LUN-005 dans `main`, vérifié) ; six branches empilées supprimées. LUN-009 : module `app/children/` (familles, enfants, responsables, liens avec autorisations), cohérence famille ↔ crèche imposée en base, aucune donnée de santé (LUN-019 créé), migration 0005, 221 tests ; quatre mutations détectées ; vérifié sur la pile Docker | [RÉEL] |
+| 2026-10-09 | #47 fusionnée (LUN-009 dans `main`). Double authentification revue avec Florent : il propose SMS, e-mail et Face ID ; comparaison sourcée (ANSSI, NIST, CNIL) ; ADR-004 acceptée : passkeys en principal, TOTP en alternative, codes de secours, pas de SMS, e-mail pour la récupération seulement | [RÉEL] |
 
 ### Prochaines actions
 
-1. **Florent** : relire et fusionner la PR de LUN-009 (base `main`).
-2. Suite proposée : LUN-010 (pointage arrivée et départ, par la session de tablette, avec vérification de la personne qui vient chercher l'enfant) ; LUN-006 (TOTP direction) et LUN-019 (santé, RGPD/HDS) avant toute donnée réelle.
+1. **Florent** : relire et fusionner la PR d'ADR-004 (LUN-006).
+2. Suite proposée : LUN-010 (pointage arrivée et départ, par la session de tablette, avec vérification de la personne qui vient chercher l'enfant) ; LUN-006 (double authentification, ADR-004) et LUN-019 (santé, RGPD/HDS) avant toute donnée réelle.
 3. LUN-014 : préparer l'oral du TP Docker avant la séance 4.
 4. LUN-012, LUN-013, LUN-015 : fiche de ménage dans le parcours central, Trello et squelette `M2/`, phase 0 (voir le backlog).
