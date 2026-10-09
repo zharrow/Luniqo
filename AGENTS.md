@@ -188,11 +188,11 @@ Statuts des preuves (repris du fil rouge) : à vérifier / absent / partiel / d�
 | 2026-10-08 | LUN-008 : CI GitHub Actions (API : ruff + tests unitaires et d'intégration ; images : build des 5 images, démarrage, sondes), actions épinglées par SHA. **Première exécution verte** sur la PR #44 (run `37842997099`) : 165 tests dont 31 d'intégration, 5 images construites, sondes 200 et 401 sans session, rapport JUnit conservé jusqu'au 2027-01-06. ANO-002 consignée (lint v1 cassé) | [RÉEL] |
 | 2026-10-09 | PR #41 à #44 fusionnées chacune dans la branche de la précédente (PR empilées) : code absent de `main`, rattrapé par la PR #45 (CI verte, fusionnée le 2026-10-09). LUN-005 : module `app/tablets/` (enrôlement, PIN, sessions d'action de 2 min refusées par l'espace web), migration 0004, 211 tests ; cinq mutations détectées ; parcours vérifié sur la pile Docker. ANO-001 corrigée par conception en v2 | [RÉEL] |
 | 2026-10-09 | #45 et #46 fusionnées (LUN-003 à LUN-008 et LUN-005 dans `main`, vérifié) ; six branches empilées supprimées. LUN-009 : module `app/children/` (familles, enfants, responsables, liens avec autorisations), cohérence famille ↔ crèche imposée en base, aucune donnée de santé (LUN-019 créé), migration 0005, 221 tests ; quatre mutations détectées ; vérifié sur la pile Docker | [RÉEL] |
-| 2026-10-09 | #47 fusionnée (LUN-009 dans `main`). Double authentification revue avec Florent : il propose SMS, e-mail et Face ID ; comparaison sourcée (ANSSI, NIST, CNIL) ; ADR-004 acceptée : passkeys en principal, TOTP en alternative, codes de secours, pas de SMS, e-mail pour la récupération seulement | [RÉEL] |
+| 2026-10-09 | LUN-010 : module `app/attendance/` (pointage depuis la tablette par PIN, départ refusé si la personne n'est pas autorisée, une présence ouverte par enfant garantie en base, jour en heure de Paris, suivi web), migration 0006, `tzdata` ajouté (absent de l'image Alpine), 246 tests ; cinq mutations détectées ; vérifié sur la pile Docker. Parcours central : il ne reste que la consultation famille (LUN-011) | [RÉEL] |
 
 ### Prochaines actions
 
-1. **Florent** : relire et fusionner la PR d'ADR-004 (LUN-006).
-2. Suite proposée : LUN-010 (pointage arrivée et départ, par la session de tablette, avec vérification de la personne qui vient chercher l'enfant) ; LUN-006 (double authentification, ADR-004) et LUN-019 (santé, RGPD/HDS) avant toute donnée réelle.
+1. **Florent** : relire et fusionner les PR d'ADR-004 (#48) et de LUN-010.
+2. Suite proposée : LUN-011 (consultation famille : un parent ne voit que ses enfants, dernière étape du parcours central), puis LUN-006 (double authentification, ADR-004). LUN-019 (santé, RGPD/HDS) avant toute donnée réelle.
 3. LUN-014 : préparer l'oral du TP Docker avant la séance 4.
 4. LUN-012, LUN-013, LUN-015 : fiche de ménage dans le parcours central, Trello et squelette `M2/`, phase 0 (voir le backlog).

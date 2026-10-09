@@ -5,7 +5,8 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import create_engine, pool
 
-import app.auth.models  # noqa: F401  (enregistre les tables de chaque domaine)
+import app.attendance.models  # noqa: F401  (enregistre les tables de chaque domaine)
+import app.auth.models  # noqa: F401
 import app.children.models  # noqa: F401
 import app.nurseries.models  # noqa: F401
 import app.tablets.models  # noqa: F401
