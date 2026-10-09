@@ -62,53 +62,78 @@ Fichier : [jira-import.csv](jira-import.csv), 80 lignes :
 | 30 à 42 | 13 stories, chacune dans son épic | `LUN-30` à `LUN-42` |
 | 43 à 80 | 38 sous-tâches `[Front]`, `[Back]`, `[Infra]`, `[Doc]` | `LUN-43` à `LUN-80` |
 
-1. ⚙ **Paramètres** → **Système** → **Importer et exporter** → **Importation
-   de système externe** (*External System Import*) → **CSV**. Réservé à
-   l'administrateur du site.
-2. Choisir le fichier ; encodage **UTF-8**, séparateur **virgule**.
-3. Projet de destination : **Luniqo (LUN)**.
-4. Correspondance des colonnes :
+Import réalisé le 2026-10-09 par l'outil **« Création groupée »** (import CSV
+proposé depuis la recherche de tickets), au deuxième essai. Ce qui suit décrit
+le chemin qui a fonctionné.
 
-   | Colonne du CSV | Champ Jira |
-   |---|---|
-   | Work item ID | *Work item ID* (ou *Issue Id*) |
-   | Work type | Type de ticket (*Work type*) |
-   | Summary | Résumé |
-   | Description | Description |
-   | Parent | *Parent* (ou *Parent Id*) |
-   | Status | Statut |
-   | Priority | Priorité |
-   | Story Points | Story Points (ou *Story point estimate*) |
-   | Component (×3) | Composants |
-   | Labels (×4) | Étiquettes |
-   | Fix versions | Versions corrigées (*Fix versions*) |
+**Avant l'import** : les composants `Front`, `Back`, `Infra`, `Doc` doivent
+exister dans le projet, **avec exactement cette casse**. La Création groupée ne
+crée pas de composant : un nom qui ne correspond pas est ignoré, avec un
+simple avertissement.
 
-   **Vérifier chaque ligne avant de valider.** Une erreur ne bloque pas
-   l'import, elle le fausse : le 2026-10-09, une colonne `Labels` associée au
+1. **Configuration** : choisir le fichier ; ne pas cocher « Utiliser un
+   fichier de configuration existant » au premier import.
+2. **Paramètres** : projet **Luniqo (LUN)**, encodage **UTF-8**, délimiteur
+   **`,`** ; le format de date est sans effet (aucune date dans le fichier).
+3. **Mapper les champs** (une ligne par nom de colonne : les 3 `Component` et
+   les 4 `Labels` sont regroupées) :
+
+   | Colonne du CSV | Champ Jira | « Mapper la valeur » |
+   |---|---|---|
+   | Component | Composants | non |
+   | Description | Description | non |
+   | Fix versions | Versions corrigées | non |
+   | Labels | Étiquettes | non |
+   | Parent | Parent | non |
+   | Priority | Priorité | oui |
+   | Status | **Ne pas mapper** (champ absent de la Création groupée) | — |
+   | Story Points | **Ne pas mapper** (champ absent, voir après l'import) | — |
+   | Summary | Résumé | non |
+   | Work item ID | ID de ticket | non |
+   | Work type | Type de ticket | oui |
+
+   **Vérifier chaque ligne avant de continuer.** Une erreur ne bloque pas
+   l'import, elle le fausse : au premier essai, la colonne `Labels` associée au
    Résumé a donné des titres comme « tablette », et les 49 lignes sans
-   étiquette ont été rejetées faute de titre (31 tickets importés sur 80,
-   numéros décalés). Dans ce cas, seule la suppression définitive du projet
-   (corbeille comprise) permet de repartir de `LUN-1` : Jira ne réutilise
-   jamais un numéro.
+   étiquette ont été rejetées faute de titre (31 tickets sur 80, numéros
+   décalés). Seule la suppression définitive du projet (corbeille comprise)
+   permet alors de repartir de `LUN-1` : Jira ne réutilise jamais un numéro.
 
-5. Correspondance des valeurs, si Jira la demande : types `Epic`, `Story`,
-   `Task`, `Sub-task` vers leurs équivalents (Epic, Story, Tâche, Sous-tâche) ;
-   statuts `À faire`, `En cours`, `Terminé` vers les statuts du workflow ;
-   priorités `Highest`, `High`, `Medium` vers Plus élevée, Élevée, Moyenne.
-6. Lancer l'import, puis **vérifier** : **80 tickets** créés (le journal de
-   l'import liste les lignes rejetées), `LUN-6` = « Double authentification
+4. **Mapper les valeurs** : High → High, Medium → Medium, Epic → Epic,
+   Story → Story, Sub-task → Sous-tâche, Task → Tâche.
+5. **Valider**, puis **Démarrer l'importation**. Le compteur de la validation
+   ne compte pas les sous-tâches : il annonce **42** tickets alors que les
+   **80** sont créés. Enregistrer le fichier de configuration proposé, utile
+   pour un nouvel import.
+6. **Vérifier** : 80 tickets, `LUN-6` = « Double authentification
    (ADR-004)… », `LUN-22` = « TD Coordination… », `LUN-25` = « Pointage sur
-   tablette » avec deux tickets enfants (`LUN-34`, `LUN-35`). Sinon, ne rien
-   créer à la main avant d'avoir corrigé.
+   tablette » avec deux tickets enfants (`LUN-34`, `LUN-35`), `LUN-34` avec
+   quatre sous-tâches et les composants Back et Front.
+
+### Après l'import : statuts et estimations
+
+Tous les tickets arrivent « À faire ». Modification groupée → **Transition** :
+
+| JQL | Statut |
+|---|---|
+| `key in (LUN-1, LUN-2, LUN-3, LUN-4, LUN-5, LUN-7, LUN-8, LUN-9, LUN-10, LUN-11)` | Terminé |
+| `key in (LUN-6, LUN-22)` | En cours |
+
+Story Points à saisir à la main (propositions, à revoir en planning poker) :
+LUN-22 : 5 · LUN-30 : 5 · LUN-31 : 8 · LUN-32 : 5 · LUN-33 : 3 · LUN-34 : 8 ·
+LUN-35 : 5 · LUN-36 : 5 · LUN-37 : 5 · LUN-38 : 5 · LUN-39 : 8 · LUN-40 : 5 ·
+LUN-41 : 8 · LUN-42 : 8.
 
 ### Rattacher les tickets d'origine à leur épic
 
 Le CSV ne peut pas le faire (un parent doit précéder ses enfants dans le
 fichier, et les tickets d'origine passent en premier pour garder leur numéro).
-Pour chaque ligne : recherche avancée (JQL) → **Modification groupée** (*Bulk
-change*) → Modifier → **Parent** → l'épic.
+Dans la modification groupée, le champ **Parent apparaît mais reste grisé** :
+passer par le **backlog** (panneau Épics activé), sélectionner les tickets
+avec Cmd+clic puis les glisser sur l'épic, ou ajouter les tickets existants
+depuis la section « Tickets enfant » de l'épic.
 
-| JQL | Épic |
+| Tickets | Épic |
 |---|---|
 | `key in (LUN-2, LUN-3, LUN-6, LUN-16, LUN-17)` | LUN-23 Authentification et sécurité des comptes |
 | `key in (LUN-4, LUN-18)` | LUN-24 Crèches et personnel |
