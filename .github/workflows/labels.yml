@@ -1,0 +1,22 @@
+# Étiquettes posées automatiquement sur chaque PR selon les fichiers modifiés
+# (front, back, infra, doc ; règles dans .github/labeler.yml, LUN-22). Elles
+# permettent de filtrer les PR et indiquent qui doit relire.
+name: Étiquettes de PR
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  label:
+    name: Étiquettes selon les fichiers
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - uses: actions/labeler@bf12e9b00b37c5c0ca2b87b79b2daf7891dbda13 # v7.0.0
+        with:
+          sync-labels: true

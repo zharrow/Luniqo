@@ -1,6 +1,7 @@
 # Intégration continue de Luniqo (LUN-008, compétence C2.1.2).
 #
-# À chaque PR et à chaque push sur main :
+# À chaque PR et à chaque push sur les branches durables (develop = INT,
+# staging = PRÉ-PROD, main = PROD ; voir CONTRIBUTING.md) :
 #   api     lint (ruff), tests unitaires et tests d'intégration sur une vraie PostgreSQL
 #   images  construction des 5 images Docker (le front y passe par next build, donc
 #           par la vérification TypeScript), puis démarrage de la pile et sondes
@@ -12,7 +13,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [develop, staging, main]
 
 # Lecture seule : la CI ne publie rien et n'écrit pas dans le dépôt.
 permissions:
