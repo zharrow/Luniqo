@@ -80,6 +80,7 @@ installé.
 | `DB_ADDR` | `db:5432` | forme `hôte:port` | Adresse de la base. |
 | `DB_NAME`, `DB_USER` | `luniqo` | identifiants | Base et rôle créés par l'image `db`. |
 | `DB_PASSWORD_FILE` | `/run/secrets/db_password` | fichier lisible non vide | Mot de passe (secret Docker), lu par l'application, jamais en variable. |
+| `MFA_KEY_FILE` | `/run/secrets/mfa_key` | 32 octets en base64 | Clé AES-256 qui chiffre les secrets TOTP en base (ADR-004). Fichier introuvable ou clé mal formée : l'API ne démarre pas. Sans `MFA_KEY_FILE` ni `MFA_KEY` : les routes du second facteur répondent 503, la direction ne peut plus terminer sa connexion. |
 | `SEED_DEMO` | `false` (`true` dans le compose) | `true`/`false` | Insère au démarrage un jeu de données **synthétique** (un groupe, deux crèches). Idempotent. |
 | `SEED_DEMO_PASSWORD` | vide | 15 caractères au moins (politique d'ADR-003) | Mot de passe des comptes de démonstration (`direction@demo.test`, `employe@demo.test`). Vide : aucun compte créé. Fourni par `API_SEED_DEMO_PASSWORD` dans le `.env` de l'application, jamais versionné. |
 | `APP_ORIGINS` | `http://localhost:8080` | origines séparées par des virgules | Seules origines acceptées pour les requêtes `POST`, `PUT`, `PATCH`, `DELETE` (protection CSRF). Le compose la cale sur le port publié. |

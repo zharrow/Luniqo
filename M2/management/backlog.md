@@ -13,7 +13,7 @@ Ordre fixé par [ADR-001](../decisions/ADR-001-reecriture-backend.md) : socle (a
 | LUN-003 | Socle v2 : comptes, mots de passe Argon2id, sessions, connexion et déconnexion | feat | BC02 (C2.2.2, C2.2.3) | LUN-002 | En revue |
 | LUN-004 | Socle v2 : entreprises, crèches, droits d'accès par crèche, tests d'isolation | feat | BC02 (C2.2.2, C2.2.3) | LUN-003 | En revue |
 | LUN-005 | Tablette : enrôlement par la direction, PIN vérifié côté serveur, session d'action | feat | BC02 (C2.2.3), BC04 (C4.2.2, ANO-001) | LUN-004 | En revue |
-| LUN-006 | Double authentification (ADR-004) : passkeys, TOTP, codes de secours ; obligatoire pour Developer et Owner | feat | BC02 (C2.2.3) | LUN-003 | Prêt (ADR-004 acceptée) |
+| LUN-006 | Double authentification (ADR-004) : passkeys, TOTP, codes de secours ; obligatoire pour Developer et Owner. Partie 1 : session en deux temps, TOTP, codes de secours ; partie 2 : passkeys | feat | BC02 (C2.2.3) | LUN-003 | Partie 1 en revue |
 | LUN-007 | Tests d'intégration sur une vraie PostgreSQL (base de test jetable) | infra | BC02 (C2.2.2) | LUN-003 | En revue |
 | LUN-008 | Intégration continue : lint, typage, tests, build des images sur chaque PR | infra | BC02 (C2.1.2) | LUN-007 | En revue |
 | LUN-009 | Enfants et familles (v2) | feat | BC02 (C2.2.3) | LUN-004 | En revue |
