@@ -13,6 +13,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from app import __version__
+from app.attendance.router import router as attendance_router
 from app.auth.router import router as auth_router
 from app.children.router import router as children_router
 from app.db import SessionDep, get_engine
@@ -44,6 +45,7 @@ app.include_router(auth_router)
 app.include_router(nurseries_router)
 app.include_router(tablets_router)
 app.include_router(children_router)
+app.include_router(attendance_router)
 
 
 @app.get(

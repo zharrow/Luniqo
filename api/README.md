@@ -35,6 +35,10 @@ exposer en dehors d'un environnement de test.
 | `GET`, `PATCH …/children/{child_id}` | Fiche de l'enfant avec ses responsables et leurs autorisations ; modifier, déclarer un départ (direction) |
 | `PATCH …/guardians/{guardian_id}` | Modifier un responsable (direction) |
 | `PUT`, `DELETE …/children/{child_id}/guardians/{guardian_id}` | Relier un responsable **de la même famille** avec ses autorisations, retirer le lien (direction) |
+| `GET /api/v2/tablet/children` | Sur la tablette (session par PIN) : enfants attendus aujourd'hui, état de présence, personnes autorisées |
+| `POST /api/v2/tablet/children/{child_id}/arrival` | Pointer l'arrivée (heure du serveur), avec le responsable qui dépose l'enfant si connu |
+| `POST /api/v2/tablet/children/{child_id}/departure` | Pointer le départ ; refusé si la personne n'est pas autorisée à venir chercher l'enfant |
+| `GET /api/v2/nurseries/{id}/attendance`, `…/attendance/present` | Présences d'un jour (`?day=`, aujourd'hui à Paris par défaut), enfants présents maintenant |
 
 ### Qui accède à quoi
 
@@ -72,6 +76,7 @@ api/
 │   │   └── access.py        règle d'accès à une crèche (fonction pure)
 │   ├── tablets/       tablettes enrôlées, PIN, sessions d'action (routes testées sur PostgreSQL)
 │   ├── children/      familles, enfants, responsables (aucune donnée de santé : LUN-019)
+│   ├── attendance/    pointage depuis la tablette, suivi des présences
 │   ├── security.py    contrôle de l'en-tête Origin (CSRF)
 │   ├── config.py      configuration lue dans l'environnement
 │   ├── db.py          moteur SQLAlchemy asynchrone, session par requête
@@ -136,9 +141,9 @@ cd api
 python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements-dev.txt
 
-pytest                          # tests unitaires, sans base de données (155 au 2026-10-09)
+pytest                          # tests unitaires, sans base de données (166 au 2026-10-09)
 
-# Tests d'intégration sur une vraie PostgreSQL (66 au 2026-10-09), base jetable
+# Tests d'intégration sur une vraie PostgreSQL (80 au 2026-10-09), base jetable
 # construite avec l'image luniqo/db du TP Docker (cd ../docker && docker compose build db) :
 scripts/test-db.sh up           # affiche la ligne export TEST_DB_... à copier
 export TEST_DB_ADDR=127.0.0.1:55432 TEST_DB_NAME=luniqo_test TEST_DB_PASSWORD=luniqo-test

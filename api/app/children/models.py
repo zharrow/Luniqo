@@ -68,6 +68,8 @@ class Child(Base):
         ForeignKeyConstraint(["family_id", "nursery_id"], ["family.id", "family.nursery_id"],
                              name="fk_child_family_nursery", ondelete="CASCADE"),
         UniqueConstraint("id", "family_id", name="uq_child_id_family"),
+        # Cible de la clé composite de attendance : une présence est dans la crèche de l'enfant.
+        UniqueConstraint("id", "nursery_id", name="uq_child_id_nursery"),
         CheckConstraint("enrollment_date >= birth_date", name="child_enrolled_after_birth"),
         CheckConstraint("exit_date IS NULL OR exit_date >= enrollment_date", name="child_exit_after_enrollment"),
         CheckConstraint("(status = 'departed') = (exit_date IS NOT NULL)", name="child_departed_has_exit_date"),
