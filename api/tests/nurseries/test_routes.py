@@ -209,3 +209,31 @@ def test_liste_du_personnel_reservee_a_la_direction(as_user, key):
 
 def test_me_indique_l_entreprise(as_user, world):
     assert as_user("employee_nord").get("/api/v2/auth/me").json()["enterprise_id"] == str(world.enterprise_a)
+
+
+# --- Second facteur (ADR-004) ----------------------------------------------------
+
+@pytest.mark.parametrize("key", ["owner_a", "developer"])
+def test_routes_metier_fermees_tant_que_le_second_facteur_manque(as_user, world, key):
+    client = as_user(key, complete_mfa=False)
+    assert client.get("/api/v2/auth/me").json()["mfa"] == "setup_required"
+    response = client.get("/api/v2/nurseries")
+    assert response.status_code == 403
+    assert response.json() == {"detail": "Second facteur requis"}
+    response = client.post("/api/v2/nurseries", json={"name": "Nouvelle", "city": "Albi", "capacity": 10},
+                           headers=ORIGIN)
+    assert response.status_code == 403
+    assert len(world.repo.nurseries) == 4
+
+
+def test_employe_sans_facteur_n_a_rien_a_presenter(as_user):
+    client = as_user("employee_nord", complete_mfa=False)
+    assert client.get("/api/v2/auth/me").json()["mfa"] == "not_required"
+    assert client.get("/api/v2/nurseries").status_code == 200
+
+
+def test_employe_qui_a_active_un_facteur_doit_le_presenter(as_user, world):
+    world.auth.with_factor.add(world.users["employee_nord"].id)
+    client = as_user("employee_nord", complete_mfa=False)
+    assert client.get("/api/v2/auth/me").json()["mfa"] == "required"
+    assert client.get("/api/v2/nurseries").status_code == 403

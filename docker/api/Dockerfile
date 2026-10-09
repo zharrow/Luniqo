@@ -46,6 +46,7 @@ ENV PATH=/opt/venv/bin:$PATH \
     DB_NAME=luniqo \
     DB_USER=luniqo \
     DB_PASSWORD_FILE=/run/secrets/db_password \
+    MFA_KEY_FILE=/run/secrets/mfa_key \
     SEED_DEMO=false
 
 EXPOSE 8000/tcp

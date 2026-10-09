@@ -8,19 +8,21 @@ import uuid
 from datetime import datetime
 from typing import Protocol
 
-from sqlalchemy import delete, false, func, or_, select
+from sqlalchemy import delete, exists, false, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.models import AppUser, AuthEvent, AuthEventType, UserSession
 from app.auth.policy import FailureStats
+from app.mfa.models import TotpFactor
 
 
 class AuthRepository(Protocol):
     async def get_user_by_email(self, email: str) -> AppUser | None: ...
+    async def has_second_factor(self, user_id: uuid.UUID) -> bool: ...
     async def get_session(self, token_digest: bytes) -> tuple[UserSession, AppUser] | None: ...
     def add_session(self, session: UserSession) -> None: ...
     async def delete_session(self, token_digest: bytes) -> UserSession | None: ...
-    async def delete_user_sessions(self, user_id: uuid.UUID) -> int: ...
+    async def delete_user_sessions(self, user_id: uuid.UUID, *, keep: uuid.UUID | None = None) -> int: ...
     def add_event(self, event: AuthEvent) -> None: ...
     async def login_failures(
         self, *, email: str, ip: str | None, since: datetime
@@ -34,6 +36,12 @@ class SqlAuthRepository:
 
     async def get_user_by_email(self, email: str) -> AppUser | None:
         return await self.session.scalar(select(AppUser).where(AppUser.email == email))
+
+    async def has_second_factor(self, user_id: uuid.UUID) -> bool:
+        """Le compte a-t-il un facteur confirmé ? Les codes de secours n'en sont pas un (récupération)."""
+        return bool(await self.session.scalar(
+            select(exists().where(TotpFactor.user_id == user_id, TotpFactor.confirmed_at.is_not(None)))
+        ))
 
     async def get_session(self, token_digest: bytes) -> tuple[UserSession, AppUser] | None:
         row = (
@@ -53,8 +61,12 @@ class SqlAuthRepository:
             delete(UserSession).where(UserSession.token_digest == token_digest).returning(UserSession)
         )
 
-    async def delete_user_sessions(self, user_id: uuid.UUID) -> int:
-        result = await self.session.execute(delete(UserSession).where(UserSession.user_id == user_id))
+    async def delete_user_sessions(self, user_id: uuid.UUID, *, keep: uuid.UUID | None = None) -> int:
+        """Supprime les sessions du compte, sauf `keep` (la session en cours, quand c'est elle qui demande)."""
+        statement = delete(UserSession).where(UserSession.user_id == user_id)
+        if keep is not None:
+            statement = statement.where(UserSession.id != keep)
+        result = await self.session.execute(statement)
         return result.rowcount
 
     def add_event(self, event: AuthEvent) -> None:

@@ -77,7 +77,8 @@ pages s'affichent, mais la connexion échoue (adresse Supabase factice).
 ├── docker-compose.yml     orchestration des services
 ├── .env                   arguments de ressources de chaque conteneur
 ├── secrets/
-│   └── db_password.dev    mot de passe de développement de la base (secret Docker)
+│   ├── db_password.dev    mot de passe de développement de la base (secret Docker)
+│   └── mfa_key.dev        clé de développement qui chiffre les secrets TOTP (secret Docker)
 ├── base/                  image de base : Alpine depuis scratch + tini + utilisateur app
 ├── db/                    PostgreSQL 18
 ├── api/                   image de l'API FastAPI (le code est dans ../api)
@@ -128,6 +129,7 @@ flowchart LR
         end
         vol[("volume pgdata")]
         secret[/"secret db_password"/]
+        mfakey[/"secret mfa_key"/]
     end
 
     browser -- "① HTTP :8080" --> web
@@ -140,6 +142,7 @@ flowchart LR
     db --- vol
     secret -.-> db
     secret -.-> api
+    mfakey -.-> api
 ```
 
 | # | De | Vers | Protocole | Réseau | Rôle |
@@ -224,6 +227,7 @@ utilisable sans `.env`.
 | `DB_MAX_CONNECTIONS=20` | `environment: DB_MAX_CONNECTIONS` | `-e DB_MAX_CONNECTIONS=20` |
 | `DB_SHARED_BUFFERS=64MB` | `environment: DB_SHARED_BUFFERS` | `-e DB_SHARED_BUFFERS=64MB` |
 | `DB_PASSWORD_FILE` (optionnel) | `secrets: db_password: file:` | `-v fichier:/run/secrets/db_password:ro` |
+| `MFA_KEY_FILE` (optionnel) | `secrets: mfa_key: file:` | `-v fichier:/run/secrets/mfa_key:ro` |
 | `API_CPUS=0.5` / `API_MEMORY=128M` / `API_PIDS=32` | `deploy.resources.limits` | `--cpus 0.5 --memory 128m --pids-limit 32` |
 | `API_WORKERS=1` | `environment: API_WORKERS` | `-e API_WORKERS=1` |
 | `API_DB_POOL_SIZE=8` | `environment: DB_POOL_SIZE` | `-e DB_POOL_SIZE=8` |
@@ -284,7 +288,9 @@ ni dans l'environnement des processus. Compose refuse un secret issu d'une
 variable d'environnement sur un conteneur en lecture seule (`file is the sole
 supported option`), d'où le fichier `secrets/db_password.dev`. C'est une valeur
 de développement, versionnée pour que le projet démarre tel quel. Hors TP,
-`DB_PASSWORD_FILE` pointe vers un fichier hors du dépôt.
+`DB_PASSWORD_FILE` pointe vers un fichier hors du dépôt. La clé qui chiffre les
+secrets TOTP (`secrets/mfa_key.dev`, LUN-006) suit le même principe, avec
+`MFA_KEY_FILE`.
 
 ### Gestion de SIGTERM
 

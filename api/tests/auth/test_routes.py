@@ -16,6 +16,8 @@ def test_connexion_reussie_pose_un_cookie_de_session_durci(client, repo):
     assert response.status_code == 200
     assert response.json()["email"] == "direction@demo.test"
     assert response.json()["role"] == "owner"
+    # Direction sans facteur enregistré : elle doit en enregistrer un (ADR-004).
+    assert response.json()["mfa"] == "setup_required"
     assert "password_hash" not in response.json()
     set_cookie = response.headers["set-cookie"]
     assert set_cookie.startswith(f"{COOKIE}=")
@@ -94,6 +96,20 @@ def test_me_renvoie_l_utilisateur_de_la_session(client):
     assert response.status_code == 200
     assert response.json()["first_name"] == "Camille"
     assert response.headers["cache-control"] == "no-store"
+
+
+def test_me_ouvert_a_une_session_en_attente_du_second_facteur(client, repo):
+    repo.with_factor.add(repo.users["direction@demo.test"].id)
+    assert login(client).json()["mfa"] == "required"
+    (stored,) = repo.sessions.values()
+    assert stored.mfa_required and stored.mfa_verified_at is None
+    assert client.get("/api/v2/auth/me").json()["mfa"] == "required"
+
+
+def test_me_indique_un_second_facteur_presente(client, repo, clock):
+    login(client)
+    repo.complete_second_factor(hashlib.sha256(client.cookies[COOKIE].encode()).digest(), clock.now)
+    assert client.get("/api/v2/auth/me").json()["mfa"] == "verified"
 
 
 def test_session_prolongee_par_l_activite(client, repo, clock):

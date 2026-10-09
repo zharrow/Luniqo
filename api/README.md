@@ -3,10 +3,11 @@
 API de la v2 de Luniqo, en FastAPI ([ADR-001](../M2/decisions/ADR-001-reecriture-backend.md)).
 Elle remplace progressivement l'accès direct du navigateur à Supabase de la v1.
 
-État au 2026-10-08 : **socle en cours**. Comptes et sessions
-([ADR-003](../M2/decisions/ADR-003-authentification-v2.md), LUN-003), entreprises,
-crèches et accès par crèche (LUN-004). Pas encore de TOTP (LUN-006) : ne pas
-exposer en dehors d'un environnement de test.
+État au 2026-10-09 : **parcours central complet côté API** (LUN-003 à LUN-011).
+Second facteur obligatoire pour la direction et l'éditeur
+([ADR-004](../M2/decisions/ADR-004-double-authentification.md), LUN-006) : TOTP
+et codes de secours ; les passkeys suivent. Pas encore de données réelles
+(LUN-019, LUN-021) : ne pas exposer en dehors d'un environnement de test.
 
 ## Routes
 
@@ -15,7 +16,13 @@ exposer en dehors d'un environnement de test.
 | `GET /api/health` | État de l'API et de la base (200, ou 503 si la base est injoignable) |
 | `POST /api/v2/auth/login` | Connexion : pose le cookie de session `__Host-luniqo_session`. 401 si refusée, 429 + `Retry-After` si trop de tentatives |
 | `POST /api/v2/auth/logout` | Déconnexion : supprime la session en base et le cookie |
-| `GET /api/v2/auth/me` | Utilisateur de la session (401 sans session valable) |
+| `GET /api/v2/auth/me` | Utilisateur de la session et état du second facteur `mfa` (401 sans session valable) |
+| `GET /api/v2/auth/mfa` | État du second facteur : TOTP actif, activation en cours, codes de secours restants |
+| `POST /api/v2/auth/mfa/totp` | Commencer l'activation (ou le remplacement) d'un TOTP : secret et URI du QR code, renvoyés une seule fois |
+| `POST /api/v2/auth/mfa/totp/confirm` | Confirmer avec un premier code ; renvoie 10 codes de secours si le compte n'en avait pas ; ferme les autres sessions |
+| `POST /api/v2/auth/mfa/verify` | Présenter le second facteur (code TOTP ou code de secours) : la session devient complète. 429 si trop de tentatives |
+| `DELETE /api/v2/auth/mfa/totp` | Retirer le TOTP (comptes où il est facultatif ; 409 pour la direction) |
+| `POST /api/v2/auth/mfa/backup-codes` | Nouveaux codes de secours, les anciens sont annulés |
 | `GET /api/v2/nurseries` | Crèches accessibles : toutes celles de l'entreprise (direction, `?include_inactive=true` pour les fermées), celles accordées (employé) |
 | `POST /api/v2/nurseries` | Créer une crèche dans son entreprise (direction) |
 | `GET /api/v2/nurseries/{id}` | Lire une crèche (404 si inexistante **ou** inaccessible) |
@@ -42,6 +49,21 @@ exposer en dehors d'un environnement de test.
 | `POST /api/v2/nurseries/{id}/guardians/{guardian_id}/invitation` | Inviter un responsable à créer son compte famille : lien à usage unique, 7 jours (direction) |
 | `POST /api/v2/invitations/lookup`, `POST /api/v2/invitations/accept` | Sans session : lire l'invitation, créer le compte (ou relier un compte famille existant) ; jeton dans le corps |
 | `GET /api/v2/family/children`, `GET /api/v2/family/children/{child_id}` | Parent connecté : ses enfants (autorité parentale requise), présence du jour, présences récentes (`?days=`, 62 au plus), contacts sans coordonnées |
+
+### Second facteur (ADR-004)
+
+Après le mot de passe, `/login` renvoie `mfa` :
+
+| `mfa` | Signification | Ce que la session peut faire |
+|---|---|---|
+| `not_required` | Compte sans second facteur (employé, famille) | tout ce que son rôle permet |
+| `setup_required` | Direction ou éditeur sans facteur enregistré | `/me`, déconnexion, activer un TOTP |
+| `required` | Un facteur existe et doit être présenté | `/me`, déconnexion, `/mfa/verify` |
+| `verified` | Second facteur présenté | tout ce que son rôle permet |
+
+Toute autre route répond **403 « Second facteur requis »** tant que la session est en
+attente : le contrôle est dans `CurrentUser`. Ajouter, changer ou retirer un facteur
+exige une preuve d'identité de moins de 15 minutes et ferme les autres sessions.
 
 ### Qui accède à quoi
 
@@ -72,7 +94,7 @@ api/
 │   │   ├── tokens.py        jetons de session et leur empreinte
 │   │   ├── repository.py    accès à la base (contrat + implémentation SQL)
 │   │   ├── service.py       connexion, vérification de session, déconnexion
-│   │   ├── dependencies.py  CurrentUser : point unique de vérification de session
+│   │   ├── dependencies.py  CurrentUser : point unique de vérification de session et du second facteur
 │   │   ├── router.py        routes /api/v2/auth/*
 │   │   └── schemas.py       schémas Pydantic
 │   ├── nurseries/     entreprises, crèches, accès du personnel (même découpage)
@@ -81,6 +103,7 @@ api/
 │   ├── children/      familles, enfants, responsables (aucune donnée de santé : LUN-019)
 │   ├── attendance/    pointage depuis la tablette, suivi des présences
 │   ├── family/        invitations des parents, consultation famille
+│   ├── mfa/           second facteur : TOTP chiffré (crypto.py), codes de secours, règles pures (policy.py)
 │   ├── security.py    contrôle de l'en-tête Origin (CSRF)
 │   ├── config.py      configuration lue dans l'environnement
 │   ├── db.py          moteur SQLAlchemy asynchrone, session par requête
@@ -108,7 +131,9 @@ api/
 - **Mot de passe de la base lu dans un fichier** (`DB_PASSWORD_FILE`, secret
   Docker), `DB_PASSWORD` en repli pour le développement local.
 - **Authentification** : sessions opaques en base, Argon2id, contrôle `Origin`,
-  limitation des tentatives. Règles et raisons : [ADR-003](../M2/decisions/ADR-003-authentification-v2.md) ;
+  limitation des tentatives, second facteur (TOTP chiffré en AES-256-GCM, codes de
+  secours). Règles et raisons : [ADR-003](../M2/decisions/ADR-003-authentification-v2.md),
+  [ADR-004](../M2/decisions/ADR-004-double-authentification.md) ;
   choix d'implémentation et mesures : [registre des choix techniques](../M2/decisions/CHOIX-TECHNIQUES.md).
 - **Deux niveaux de tests.** Unitaires avec des dépôts en mémoire (rapides,
   sans base) ; intégration sur PostgreSQL : migrations réversibles et conformes
@@ -137,6 +162,8 @@ api/
 | `APP_ORIGINS` | `http://localhost:8080` | Origines acceptées pour `POST`, `PUT`, `PATCH`, `DELETE` (virgules) |
 | `SESSION_COOKIE_SECURE` | `true` | `false` : cookie `luniqo_session` sans `Secure` (développement seulement) |
 | `SEED_DEMO_PASSWORD` | | Mot de passe des comptes de démonstration ; absent : aucun compte créé |
+| `MFA_KEY_FILE` | | Fichier de la clé AES-256 des secrets TOTP, 32 octets en base64 (prioritaire) |
+| `MFA_KEY` | | La même clé en variable, pour les tests et le développement local ; sans clé, routes du second facteur en 503 |
 
 ## Développement
 
@@ -145,9 +172,9 @@ cd api
 python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements-dev.txt
 
-pytest                          # tests unitaires, sans base de données (166 au 2026-10-09)
+pytest                          # tests unitaires, sans base de données (249 au 2026-10-09)
 
-# Tests d'intégration sur une vraie PostgreSQL (95 au 2026-10-09), base jetable
+# Tests d'intégration sur une vraie PostgreSQL (120 au 2026-10-09), base jetable
 # construite avec l'image luniqo/db du TP Docker (cd ../docker && docker compose build db) :
 scripts/test-db.sh up           # affiche la ligne export TEST_DB_... à copier
 export TEST_DB_ADDR=127.0.0.1:55432 TEST_DB_NAME=luniqo_test TEST_DB_PASSWORD=luniqo-test
@@ -158,6 +185,7 @@ scripts/test-db.sh down
 # Avec une base PostgreSQL joignable depuis la machine (celle du TP Docker
 # n'est pas publiée sur l'hôte, elle est sur un réseau interne) :
 export DB_ADDR=localhost:5432 DB_PASSWORD=...
+export MFA_KEY=...               # openssl rand -base64 32, à conserver : une autre clé rend les TOTP illisibles
 alembic upgrade head            # appliquer les migrations
 python -m app.seed              # données de démonstration
 uvicorn app.main:app --reload   # http://localhost:8000/api/docs

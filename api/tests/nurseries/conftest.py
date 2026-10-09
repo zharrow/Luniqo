@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 from app.auth.dependencies import get_now, get_repository
 from app.auth.models import AppUser, UserRole
 from app.auth.passwords import hash_password_sync
+from app.auth.tokens import token_digest
 from app.main import app
 from app.nurseries.dependencies import get_nursery_repository
 from app.nurseries.models import Nursery, NurseryAccess
@@ -82,11 +83,15 @@ def as_user(world: World) -> Iterator[Callable[[str], TestClient]]:
     app.dependency_overrides[get_nursery_repository] = override_nurseries
     app.dependency_overrides[get_now] = override_now
 
-    def make(key: str) -> TestClient:
+    def make(key: str, *, complete_mfa: bool = True) -> TestClient:
         client = TestClient(app, base_url="https://testserver")
         response = client.post("/api/v2/auth/login", json={"email": world.users[key].email, "password": PASSWORD},
                                headers=ORIGIN)
         assert response.status_code == 200, response.text
+        if complete_mfa and response.json()["mfa"] != "not_required":
+            # Direction et éditeur : second facteur considéré comme présenté
+            # (raccourci de test ; le parcours réel est testé dans test_mfa_db.py).
+            world.auth.complete_second_factor(token_digest(client.cookies["__Host-luniqo_session"]), NOW)
         return client
 
     yield make

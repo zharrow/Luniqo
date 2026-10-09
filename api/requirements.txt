@@ -1,5 +1,6 @@
 # Généré depuis requirements.in : versions exactes, dépendances transitives comprises.
 # Résolu le 2026-10-08 dans Alpine 3.24 / Python 3.14 (même environnement que l'image).
+# cryptography ajouté le 2026-10-09 sous contrainte de ces versions (aucune autre n'a changé), installé dans l'image.
 # Regénérer : pip install -r requirements.in dans un venv vierge, puis pip freeze.
 alembic==1.20.0
 annotated-doc==0.0.5
@@ -9,6 +10,7 @@ argon2-cffi==25.1.0
 argon2-cffi-bindings==26.1.0
 cffi==2.1.1
 click==8.5.0
+cryptography==50.0.2
 fastapi==0.143.0
 greenlet==3.5.6
 h11==0.16.0
