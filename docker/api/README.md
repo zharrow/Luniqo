@@ -7,7 +7,8 @@ passerelle `web`, sous `/api/`.
 | Route | Rôle |
 |---|---|
 | `GET /api/health` | État de l'API et de sa connexion à la base (200 ou 503). Utilisé par le healthcheck. |
-| `GET /api/v2/nurseries` | Crèches actives, lues dans PostgreSQL (données synthétiques). |
+| `/api/v2/auth/*` | Connexion, déconnexion, utilisateur courant (sessions en base, ADR-003). |
+| `/api/v2/nurseries/*`, `/api/v2/staff` | Crèches et accès du personnel, contrôlés par crèche (LUN-004). Détail : `api/README.md`. |
 | `GET /api/docs` | Documentation interactive Swagger UI, générée par FastAPI. |
 | `GET /api/redoc`, `GET /api/openapi.json` | Documentation ReDoc et schéma OpenAPI. |
 
@@ -80,6 +81,9 @@ installé.
 | `DB_NAME`, `DB_USER` | `luniqo` | identifiants | Base et rôle créés par l'image `db`. |
 | `DB_PASSWORD_FILE` | `/run/secrets/db_password` | fichier lisible non vide | Mot de passe (secret Docker), lu par l'application, jamais en variable. |
 | `SEED_DEMO` | `false` (`true` dans le compose) | `true`/`false` | Insère au démarrage un jeu de données **synthétique** (un groupe, deux crèches). Idempotent. |
+| `SEED_DEMO_PASSWORD` | vide | 15 caractères au moins (politique d'ADR-003) | Mot de passe des comptes de démonstration (`direction@demo.test`, `employe@demo.test`). Vide : aucun compte créé. Fourni par `API_SEED_DEMO_PASSWORD` dans le `.env` de l'application, jamais versionné. |
+| `APP_ORIGINS` | `http://localhost:8080` | origines séparées par des virgules | Seules origines acceptées pour les requêtes `POST`, `PUT`, `PATCH`, `DELETE` (protection CSRF). Le compose la cale sur le port publié. |
+| `SESSION_COOKIE_SECURE` | `true` | `true`/`false` | Cookie de session `Secure` et préfixé `__Host-`. `false` seulement pour un navigateur qui refuse `Secure` sur `http://localhost`. |
 
 ### Arguments Docker (ressources)
 
@@ -143,7 +147,7 @@ HEALTHCHECK --interval=5s --timeout=3s --start-period=10s --retries=3 \
 ## Ce que les mesures ont fait changer
 
 Les choix ci-dessus viennent de tests réels du 2026-10-08 (3 000 requêtes,
-60 simultanées, sur `/api/v2/nurseries` via la passerelle).
+60 simultanées, sur `/api/v2/nurseries` via la passerelle (route alors ouverte ; protégée par session depuis LUN-004)).
 
 | Version | Résultat | Cause | Correction |
 |---|---|---|---|

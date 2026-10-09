@@ -136,6 +136,7 @@ Les modules hors parcours central (HACCP, facturation, RH, statistiques…) sont
 | Id | Résumé | Gravité | Statut |
 |---|---|---|---|
 | [ANO-001](M2/bloc-4-maintien-operationnel/anomalies/ANO-001-pin-tablette.md) | Profils et hachés de PIN lisibles depuis le navigateur (v1) | Critique par conception ; aucune donnée réelle exposée (base v1 de test) | Ouverte, non reproduite ; corrigée par conception en v2 |
+| [ANO-002](M2/bloc-4-maintien-operationnel/anomalies/ANO-002-lint-v1.md) | Le lint de la v1 ne démarre pas (ESLint 8 face à `eslint-config-next` 16) | Mineure, sans effet utilisateur | Ouverte, reproduite ; non corrigée (v1 gelée) |
 
 ## Cours en cours
 
@@ -180,10 +181,14 @@ Statuts des preuves (repris du fil rouge) : à vérifier / absent / partiel / d�
 | 2026-10-08 | 25 commits poussés sur `feat/m2-docker-luniqo`. Conteneurisation déplacée de `M2/Docker/` vers `docker/` (M2 réservé au RNCP). Dépôt GitHub renommé `nursery-app` → `Luniqo`. README racine : section Docker pour le cours | [RÉEL] |
 | 2026-10-08 | PR #37 fusionnée dans `main` avant les 5 derniers commits de la branche (déplacement vers `docker/`, renommage, README, `.env` du front) : deuxième PR ouverte pour les intégrer. Dossier local renommé `Luniqo` | [RÉEL] |
 | 2026-10-08 | PR #38 fusionnée. Pile relancée depuis `main` (`e020a26`) : 4 conteneurs sains en 20 s, routes en 200. Tag `tp-docker-v1` posé et poussé. ADR-003 acceptée (authentification v2), registre des choix techniques créé, backlog provisoire `LUN-001` à `LUN-015` dans `M2/management/backlog.md` | [RÉEL] |
+| 2026-10-08 | LUN-003 : module `app/auth/` de l'API v2 (comptes, Argon2id, sessions opaques, contrôle `Origin`, limitation des tentatives, journal), migration 0002, 73 tests au vert. Vérifié sur la pile Docker : migration, connexion, déconnexion, limitation, usurpation de `X-Forwarded-For` corrigée dans nginx, charge (60 connexions, 6 threads, limite mémoire jamais atteinte). Trois défauts trouvés et corrigés en cours de route (registre des choix techniques). Registre des choix techniques tenu à jour | [RÉEL] |
+| 2026-10-08 | Durée de conservation du journal des connexions fixée à 6 mois (CNIL), décision de Florent. LUN-004 : module `app/nurseries/` (crèches, accès du personnel, règle d'accès unique, isolation doublée en base), migration 0003, 134 tests ; tests d'isolation éprouvés par mutation ; vérifié sur la pile Docker (migration sur base existante, contraintes SQL, parcours HTTP) | [RÉEL] |
+| 2026-10-08 | LUN-007 : tests d'intégration sur PostgreSQL (base jetable `scripts/test-db.sh` avec l'image `luniqo/db`, transaction annulée par test, migrations réversibles et conformes aux modèles, garde-fou `_test`). 31 tests d'intégration + 134 unitaires au vert ; deux mutations détectées | [RÉEL] |
+| 2026-10-08 | LUN-008 : CI GitHub Actions (API : ruff + tests unitaires et d'intégration ; images : build des 5 images, démarrage, sondes), actions épinglées par SHA. **Première exécution verte** sur la PR #44 (run `37842997099`) : 165 tests dont 31 d'intégration, 5 images construites, sondes 200 et 401 sans session, rapport JUnit conservé jusqu'au 2027-01-06. ANO-002 consignée (lint v1 cassé) | [RÉEL] |
 
 ### Prochaines actions
 
 1. **Florent** : fusionner les PR de LUN-001 et LUN-002 (ADR-003 acceptée).
-2. LUN-003 : premier module de l'API v2 (comptes et sessions), selon le découpage de [M2/management/backlog.md](M2/management/backlog.md).
+2. **Florent** : relire les PR de LUN-003 et LUN-004 (empilées : #40 → #41 → #42 → #43 → LUN-008) et vérifier le cookie de session dans un navigateur. Suite proposée : LUN-005 (tablette et PIN, corrige ANO-001 en v2) ou LUN-009 (enfants et familles).
 3. LUN-014 : préparer l'oral du TP Docker avant la séance 4.
 4. LUN-012, LUN-013, LUN-015 : fiche de ménage dans le parcours central, Trello et squelette `M2/`, phase 0 (voir le backlog).

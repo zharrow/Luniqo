@@ -8,8 +8,10 @@ thread, ce qui reste compatible avec la limite « pids » du conteneur.
 
 from collections.abc import AsyncIterator
 from functools import lru_cache
+from typing import Annotated
 
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
+from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, AsyncSession, create_async_engine
 
 from app.config import get_settings
 
@@ -30,6 +32,17 @@ def get_engine() -> AsyncEngine:
     )
 
 
+def new_session(bind: AsyncConnection | None = None, **options) -> AsyncSession:
+    """Session configurée comme dans l'application. Les tests d'intégration la lient à leur transaction."""
+    # expire_on_commit=False : après un commit, les objets gardent leurs
+    # valeurs. Sinon, lire un attribut relancerait une requête implicite,
+    # impossible en asynchrone (MissingGreenlet, constaté sur la connexion).
+    return AsyncSession(bind or get_engine(), expire_on_commit=False, **options)
+
+
 async def get_session() -> AsyncIterator[AsyncSession]:
-    async with AsyncSession(get_engine()) as session:
+    async with new_session() as session:
         yield session
+
+
+SessionDep = Annotated[AsyncSession, Depends(get_session)]
