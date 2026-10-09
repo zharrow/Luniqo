@@ -6,6 +6,7 @@ from alembic import context
 from sqlalchemy import create_engine, pool
 
 import app.auth.models  # noqa: F401  (enregistre les tables de chaque domaine)
+import app.children.models  # noqa: F401
 import app.nurseries.models  # noqa: F401
 import app.tablets.models  # noqa: F401
 from app.config import get_settings
