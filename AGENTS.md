@@ -135,7 +135,7 @@ Les modules hors parcours central (HACCP, facturation, RH, statistiques…) sont
 
 | Id | Résumé | Gravité | Statut |
 |---|---|---|---|
-| [ANO-001](M2/bloc-4-maintien-operationnel/anomalies/ANO-001-pin-tablette.md) | Profils et hachés de PIN lisibles depuis le navigateur (v1) | Critique par conception ; aucune donnée réelle exposée (base v1 de test) | Ouverte, non reproduite ; corrigée par conception en v2 |
+| [ANO-001](M2/bloc-4-maintien-operationnel/anomalies/ANO-001-pin-tablette.md) | Profils et hachés de PIN lisibles depuis le navigateur (v1) | Critique par conception ; aucune donnée réelle exposée (base v1 de test) | v1 : ouverte, non reproduite. **v2 : corrigée par conception** (LUN-005) |
 | [ANO-002](M2/bloc-4-maintien-operationnel/anomalies/ANO-002-lint-v1.md) | Le lint de la v1 ne démarre pas (ESLint 8 face à `eslint-config-next` 16) | Mineure, sans effet utilisateur | Ouverte, reproduite ; non corrigée (v1 gelée) |
 
 ## Cours en cours
@@ -185,10 +185,11 @@ Statuts des preuves (repris du fil rouge) : à vérifier / absent / partiel / d�
 | 2026-10-08 | Durée de conservation du journal des connexions fixée à 6 mois (CNIL), décision de Florent. LUN-004 : module `app/nurseries/` (crèches, accès du personnel, règle d'accès unique, isolation doublée en base), migration 0003, 134 tests ; tests d'isolation éprouvés par mutation ; vérifié sur la pile Docker (migration sur base existante, contraintes SQL, parcours HTTP) | [RÉEL] |
 | 2026-10-08 | LUN-007 : tests d'intégration sur PostgreSQL (base jetable `scripts/test-db.sh` avec l'image `luniqo/db`, transaction annulée par test, migrations réversibles et conformes aux modèles, garde-fou `_test`). 31 tests d'intégration + 134 unitaires au vert ; deux mutations détectées | [RÉEL] |
 | 2026-10-08 | LUN-008 : CI GitHub Actions (API : ruff + tests unitaires et d'intégration ; images : build des 5 images, démarrage, sondes), actions épinglées par SHA. **Première exécution verte** sur la PR #44 (run `37842997099`) : 165 tests dont 31 d'intégration, 5 images construites, sondes 200 et 401 sans session, rapport JUnit conservé jusqu'au 2027-01-06. ANO-002 consignée (lint v1 cassé) | [RÉEL] |
+| 2026-10-09 | PR #41 à #44 fusionnées chacune dans la branche de la précédente (PR empilées) : code absent de `main`, rattrapé par la PR #45 (CI verte, fusionnée le 2026-10-09). LUN-005 : module `app/tablets/` (enrôlement, PIN, sessions d'action de 2 min refusées par l'espace web), migration 0004, 211 tests ; cinq mutations détectées ; parcours vérifié sur la pile Docker. ANO-001 corrigée par conception en v2 | [RÉEL] |
 
 ### Prochaines actions
 
-1. **Florent** : fusionner les PR de LUN-001 et LUN-002 (ADR-003 acceptée).
-2. **Florent** : relire les PR de LUN-003 et LUN-004 (empilées : #40 → #41 → #42 → #43 → LUN-008) et vérifier le cookie de session dans un navigateur. Suite proposée : LUN-005 (tablette et PIN, corrige ANO-001 en v2) ou LUN-009 (enfants et familles).
+1. **Florent** : relire et fusionner la PR de LUN-005 (base `main`). Les branches empilées de LUN-002 à LUN-008 peuvent être supprimées.
+2. Suite proposée : LUN-009 (enfants et familles) puis LUN-010 (pointage, qui utilisera la session d'action de tablette) ; LUN-006 (TOTP direction) avant toute donnée réelle.
 3. LUN-014 : préparer l'oral du TP Docker avant la séance 4.
 4. LUN-012, LUN-013, LUN-015 : fiche de ménage dans le parcours central, Trello et squelette `M2/`, phase 0 (voir le backlog).
