@@ -1,4 +1,4 @@
-"""Pièces d'une crèche, catalogue des tâches de l'entreprise, et tâches prévues dans chaque pièce.
+"""Pièces d'une crèche, catalogue des tâches de l'entreprise, tâches prévues dans chaque pièce, et tâches cochées.
 
 Rien ne se supprime : une pièce, une tâche ou une affectation se désactive.
 Les fiches remplies (LUN-77) y feront référence et doivent rester lisibles
@@ -12,16 +12,18 @@ catalogue de cette même entreprise.
 
 import enum
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlalchemy import (
     ARRAY,
     Boolean,
     CheckConstraint,
+    Date,
     DateTime,
     Enum,
     ForeignKey,
     ForeignKeyConstraint,
+    Index,
     Integer,
     SmallInteger,
     String,
@@ -93,6 +95,8 @@ class RoomTask(Base):
                              name="fk_room_task_task_enterprise", ondelete="CASCADE"),
         # Une tâche figure au plus une fois par pièce : on change sa fréquence, on ne la duplique pas.
         UniqueConstraint("room_id", "task_id", name="uq_room_task_room_task"),
+        # Cible de la clé composite de cleaning_check : une tâche se coche dans sa crèche.
+        UniqueConstraint("id", "nursery_id", name="uq_room_task_id_nursery"),
         CheckConstraint("(frequency = 'daily') = (weekdays IS NULL)", name="room_task_daily_has_no_weekdays"),
         CheckConstraint("weekdays IS NULL OR (cardinality(weekdays) >= 1 "
                         "AND weekdays <@ ARRAY[1, 2, 3, 4, 5, 6, 7]::smallint[])",
@@ -109,4 +113,42 @@ class RoomTask(Base):
     weekdays: Mapped[list[int] | None] = mapped_column(ARRAY(SmallInteger))
     display_order: Mapped[int] = mapped_column(Integer, server_default=text("0"))
     is_active: Mapped[bool] = mapped_column(Boolean, server_default=text("true"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class CleaningCheck(Base):
+    """Une tâche cochée un jour donné : la ligne de la fiche papier (LUN-77).
+
+    L'heure et l'auteur sont fixés par le serveur. Les noms de la pièce, de la
+    tâche et de l'auteur sont recopiés au moment de la coche : renommer le
+    catalogue ou supprimer un compte ne change pas une fiche déjà remplie.
+    Décocher ne supprime rien : la ligne est annulée (qui, quand) et reste
+    lisible ; une seule coche non annulée par tâche et par jour (index unique partiel).
+    """
+
+    __tablename__ = "cleaning_check"
+    __table_args__ = (
+        ForeignKeyConstraint(["room_task_id", "nursery_id"], ["room_task.id", "room_task.nursery_id"],
+                             name="fk_cleaning_check_room_task_nursery", ondelete="CASCADE"),
+        CheckConstraint("cancelled_at IS NULL OR cancelled_at >= done_at", name="cleaning_check_cancel_after_done"),
+        CheckConstraint("(cancelled_at IS NULL) = (cancelled_by_name IS NULL)",
+                        name="cleaning_check_cancel_has_author"),
+        Index("ix_cleaning_check_nursery_id_day", "nursery_id", "day"),
+        Index("uq_cleaning_check_one_per_day", "room_task_id", "day", unique=True,
+              postgresql_where=text("cancelled_at IS NULL")),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, server_default=text("gen_random_uuid()"))
+    room_task_id: Mapped[uuid.UUID] = mapped_column()
+    nursery_id: Mapped[uuid.UUID] = mapped_column()
+    # Jour de la fiche en heure de Paris (une coche à 0 h 30 compte pour ce jour-là).
+    day: Mapped[date] = mapped_column(Date)
+    room_name: Mapped[str] = mapped_column(String(100))
+    task_name: Mapped[str] = mapped_column(String(150))
+    done_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    done_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("app_user.id", ondelete="SET NULL"))
+    done_by_name: Mapped[str] = mapped_column(String(201))
+    cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    cancelled_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("app_user.id", ondelete="SET NULL"))
+    cancelled_by_name: Mapped[str | None] = mapped_column(String(201))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

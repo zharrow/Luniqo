@@ -1,10 +1,13 @@
-"""Routes de la fiche de ménage : catalogue des tâches (/api/v2/cleaning-tasks) et pièces des crèches.
+"""Routes de la fiche de ménage : catalogue des tâches (/api/v2/cleaning-tasks), pièces des crèches, tablette.
 
 Le catalogue appartient à l'entreprise : seule la direction le lit et le
 modifie. Les pièces passent par `ReadableNursery` (lecture : direction,
 employés ayant accès à la crèche) ou `ManagedNursery` (écriture : direction).
 Une tâche ou une pièce d'une autre entreprise ou d'une autre crèche répond
 404, comme un identifiant inexistant.
+
+Sur la tablette (`/api/v2/tablet/cleaning…`), l'employé identifié par PIN
+(`CurrentActor`) coche les tâches du jour de la crèche de la tablette.
 """
 
 import uuid
@@ -21,6 +24,7 @@ from app.auth.dependencies import NowDep
 from app.cleaning import service
 from app.cleaning.models import CleaningTask, Room, RoomTask
 from app.cleaning.schemas import (
+    CheckOut,
     DayPlan,
     PlannedRoom,
     PlannedTask,
@@ -30,12 +34,17 @@ from app.cleaning.schemas import (
     RoomTaskIn,
     RoomTaskOut,
     RoomUpdate,
+    SheetRoom,
+    SheetTask,
+    TabletSheet,
     TaskCreate,
     TaskOut,
     TaskUpdate,
+    short_name,
 )
 from app.db import SessionDep
 from app.nurseries.dependencies import ManagedNursery, OwnerUser, ReadableNursery
+from app.tablets.dependencies import CurrentActor
 
 router = APIRouter(prefix="/api/v2", tags=["ménage"])
 
@@ -187,3 +196,55 @@ async def day_plan(context: ReadableNursery, db: SessionDep, now: NowDep,
                                             instructions=a.task.instructions) for a in assignments])
              for room, assignments in await service.day_plan(db, context.nursery.id, day)]
     return DayPlan(day=day, rooms=rooms)
+
+
+# --- Tablette ---------------------------------------------------------------------
+
+_REFUSALS = {
+    "not_found": (status.HTTP_404_NOT_FOUND, "Tâche introuvable dans cette crèche"),
+    "not_planned": (status.HTTP_409_CONFLICT, "Cette tâche n'est pas prévue aujourd'hui"),
+    "already_done": (status.HTTP_409_CONFLICT, "Tâche déjà cochée aujourd'hui"),
+    "not_done": (status.HTTP_409_CONFLICT, "Cette tâche n'est pas cochée aujourd'hui"),
+}
+
+
+def _refused(refusal: service.CheckRefused) -> HTTPException:
+    code, message = _REFUSALS[refusal.reason]
+    return HTTPException(code, message)
+
+
+@router.get("/tablet/cleaning")
+async def tablet_sheet(actor: CurrentActor, db: SessionDep, now: NowDep) -> TabletSheet:
+    """Fiche du jour de la crèche de la tablette : tâches prévues, pièce par pièce, et celles déjà cochées."""
+    nursery_id, day = actor.tablet.nursery.id, local_day(now)
+    done = await service.checks_of_day(db, nursery_id, day)
+    rooms = []
+    for room, assignments in await service.day_plan(db, nursery_id, day):
+        tasks = []
+        for a in assignments:
+            check = done.get(a.room_task.id)
+            tasks.append(SheetTask(room_task_id=a.room_task.id, task_id=a.task.id, name=a.task.name,
+                                   instructions=a.task.instructions, done_at=check.done_at if check else None,
+                                   done_by=short_name(check.done_by_name) if check else None))
+        rooms.append(SheetRoom(room_id=room.id, name=room.name, tasks=tasks))
+    return TabletSheet(day=day, rooms=rooms)
+
+
+@router.post("/tablet/cleaning/{room_task_id}/check", status_code=status.HTTP_201_CREATED)
+async def tablet_check(room_task_id: uuid.UUID, actor: CurrentActor, db: SessionDep, now: NowDep) -> CheckOut:
+    """Coche une tâche prévue aujourd'hui. Heure et auteur fixés par le serveur, pas saisis sur la tablette."""
+    try:
+        done = await service.check(db, actor.tablet.nursery.id, room_task_id, actor.user, now)
+    except service.CheckRefused as refusal:
+        raise _refused(refusal) from None
+    return CheckOut(id=done.id, room_task_id=done.room_task_id, day=done.day, room_name=done.room_name,
+                    task_name=done.task_name, done_at=done.done_at, done_by=short_name(done.done_by_name))
+
+
+@router.delete("/tablet/cleaning/{room_task_id}/check", status_code=status.HTTP_204_NO_CONTENT)
+async def tablet_uncheck(room_task_id: uuid.UUID, actor: CurrentActor, db: SessionDep, now: NowDep) -> None:
+    """Décoche une tâche cochée par erreur aujourd'hui. La coche reste dans l'historique, marquée annulée."""
+    try:
+        await service.uncheck(db, actor.tablet.nursery.id, room_task_id, actor.user, now)
+    except service.CheckRefused as refusal:
+        raise _refused(refusal) from None

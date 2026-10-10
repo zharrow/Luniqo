@@ -42,3 +42,9 @@ def is_due(frequency: Frequency, weekdays: list[int] | None, day: date) -> bool:
         return False
     # Mensuel : seule la première occurrence du jour dans le mois (du 1er au 7).
     return frequency == Frequency.WEEKLY or day.day <= 7
+
+
+def can_check(*, room_active: bool, task_active: bool, assignment_active: bool, frequency: Frequency,
+              weekdays: list[int] | None, day: date) -> bool:
+    """Seule une tâche prévue ce jour-là, dans une pièce ouverte, se coche (LUN-77)."""
+    return room_active and task_active and assignment_active and is_due(frequency, weekdays, day)

@@ -4,8 +4,8 @@ import pytest
 from pydantic import ValidationError
 
 from app.cleaning.models import Frequency
-from app.cleaning.policy import is_due, normalize_weekdays
-from app.cleaning.schemas import RoomTaskIn
+from app.cleaning.policy import can_check, is_due, normalize_weekdays
+from app.cleaning.schemas import RoomTaskIn, short_name
 
 # Octobre 2026 : le 1er est un jeudi, le 5 le premier lundi, le 12 le deuxième.
 OCTOBER = [date(2026, 10, 1) + timedelta(days=n) for n in range(31)]
@@ -58,3 +58,23 @@ def test_schema_d_affectation_normalise_et_refuse():
     assert RoomTaskIn(frequency="weekly", weekdays=[3, 1]).weekdays == [1, 3]
     with pytest.raises(ValidationError):
         RoomTaskIn(frequency="monthly", weekdays=[1, 2])
+
+
+@pytest.mark.parametrize(("room", "task", "assignment", "frequency", "weekdays", "expected"), [
+    (True, True, True, Frequency.DAILY, None, True),
+    (False, True, True, Frequency.DAILY, None, False),  # pièce fermée
+    (True, False, True, Frequency.DAILY, None, False),  # tâche retirée du catalogue
+    (True, True, False, Frequency.DAILY, None, False),  # tâche retirée de la pièce
+    (True, True, True, Frequency.WEEKLY, [2], True),  # mardi
+    (True, True, True, Frequency.WEEKLY, [5], False),  # vendredi seulement
+])
+def test_tache_cochable_le_jour_meme(room, task, assignment, frequency, weekdays, expected):
+    assert can_check(room_active=room, task_active=task, assignment_active=assignment, frequency=frequency,
+                     weekdays=weekdays, day=date(2026, 10, 6)) is expected
+
+
+@pytest.mark.parametrize(("full", "short"), [
+    ("Léa Bernard", "Léa B."), ("Jean Pierre Martin", "Jean P."), ("Léa", "Léa"),
+])
+def test_nom_court_sur_la_tablette(full, short):
+    assert short_name(full) == short
