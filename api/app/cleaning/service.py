@@ -1,14 +1,23 @@
-"""Lectures du ménage partagées par les routes de la direction et, demain, de la tablette (LUN-77)."""
+"""Fiche de ménage : lectures communes à la direction et à la tablette, coches depuis la tablette (LUN-77)."""
 
 import uuid
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.attendance.policy import local_day
+from app.auth.models import AppUser
 from app.cleaning import policy
-from app.cleaning.models import CleaningTask, Room, RoomTask
+from app.cleaning.models import CleaningCheck, CleaningTask, Room, RoomTask
+
+
+class CheckRefused(Exception):
+    def __init__(self, reason: str) -> None:
+        super().__init__(reason)
+        self.reason = reason
 
 
 @dataclass(frozen=True)
@@ -38,3 +47,54 @@ async def day_plan(db: AsyncSession, nursery_id: uuid.UUID, day: date) -> list[t
         if policy.is_due(room_task.frequency, room_task.weekdays, day):
             plan.setdefault(room.id, (room, []))[1].append(Assignment(room_task, task))
     return list(plan.values())
+
+
+async def checks_of_day(db: AsyncSession, nursery_id: uuid.UUID, day: date) -> dict[uuid.UUID, CleaningCheck]:
+    """Coches non annulées d'un jour, par affectation."""
+    checks = await db.scalars(select(CleaningCheck).where(
+        CleaningCheck.nursery_id == nursery_id, CleaningCheck.day == day, CleaningCheck.cancelled_at.is_(None)))
+    return {check.room_task_id: check for check in checks}
+
+
+def _full_name(user: AppUser) -> str:
+    return f"{user.first_name} {user.last_name}".strip()
+
+
+async def check(db: AsyncSession, nursery_id: uuid.UUID, room_task_id: uuid.UUID, employee: AppUser,
+                now: datetime) -> CleaningCheck:
+    """Coche une tâche prévue aujourd'hui (heure de Paris), à l'heure du serveur."""
+    row = (await db.execute(
+        select(RoomTask, Room, CleaningTask).join(Room, Room.id == RoomTask.room_id)
+        .join(CleaningTask, CleaningTask.id == RoomTask.task_id)
+        .where(RoomTask.id == room_task_id, RoomTask.nursery_id == nursery_id))).first()
+    if row is None:
+        raise CheckRefused("not_found")
+    room_task, room, task = row
+    day = local_day(now)
+    if not policy.can_check(room_active=room.is_active, task_active=task.is_active,
+                            assignment_active=room_task.is_active, frequency=room_task.frequency,
+                            weekdays=room_task.weekdays, day=day):
+        raise CheckRefused("not_planned")
+    if room_task.id in await checks_of_day(db, nursery_id, day):
+        raise CheckRefused("already_done")
+    done = CleaningCheck(id=uuid.uuid4(), room_task_id=room_task.id, nursery_id=nursery_id, day=day,
+                         room_name=room.name, task_name=task.name, done_at=now, done_by=employee.id,
+                         done_by_name=_full_name(employee))
+    db.add(done)
+    try:
+        await db.commit()
+    except IntegrityError:
+        # Deux coches simultanées (deux tablettes, double appui) : l'index unique partiel garde la première.
+        await db.rollback()
+        raise CheckRefused("already_done") from None
+    return done
+
+
+async def uncheck(db: AsyncSession, nursery_id: uuid.UUID, room_task_id: uuid.UUID, employee: AppUser,
+                  now: datetime) -> None:
+    """Annule la coche du jour : la ligne reste, marquée annulée. Les jours passés ne se décochent pas ici."""
+    done = (await checks_of_day(db, nursery_id, local_day(now))).get(room_task_id)
+    if done is None:
+        raise CheckRefused("not_done")
+    done.cancelled_at, done.cancelled_by, done.cancelled_by_name = now, employee.id, _full_name(employee)
+    await db.commit()

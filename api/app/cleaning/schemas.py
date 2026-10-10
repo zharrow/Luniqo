@@ -1,5 +1,5 @@
 import uuid
-from datetime import date
+from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -94,3 +94,35 @@ class PlannedRoom(BaseModel):
 class DayPlan(BaseModel):
     day: date
     rooms: list[PlannedRoom]
+
+
+def short_name(full_name: str) -> str:
+    """Prénom et initiale (« Lucas B. ») : assez pour reconnaître sur la tablette."""
+    first, _, last = full_name.partition(" ")
+    return f"{first} {last[:1]}." if last else first
+
+
+class SheetTask(PlannedTask):
+    done_at: datetime | None
+    done_by: str | None
+
+
+class SheetRoom(BaseModel):
+    room_id: uuid.UUID
+    name: str
+    tasks: list[SheetTask]
+
+
+class TabletSheet(BaseModel):
+    day: date
+    rooms: list[SheetRoom]
+
+
+class CheckOut(BaseModel):
+    id: uuid.UUID
+    room_task_id: uuid.UUID
+    day: date
+    room_name: str
+    task_name: str
+    done_at: datetime
+    done_by: str
