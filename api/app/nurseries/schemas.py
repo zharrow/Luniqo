@@ -50,6 +50,8 @@ class StaffOut(BaseModel):
     first_name: str
     last_name: str
     is_active: bool
+    # Faux tant que l'employé invité n'a pas choisi son mot de passe (LUN-55).
+    has_password: bool
 
 
 class EmployeeOut(StaffOut):

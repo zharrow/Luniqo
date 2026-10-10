@@ -13,6 +13,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from app import __version__
+from app.accounts.router import router as accounts_router
 from app.attendance.router import router as attendance_router
 from app.auth.router import router as auth_router
 from app.children.router import router as children_router
@@ -52,6 +53,7 @@ app.include_router(children_router)
 app.include_router(attendance_router)
 app.include_router(family_router)
 app.include_router(cleaning_router)
+app.include_router(accounts_router)
 
 
 @app.get(
