@@ -10,6 +10,7 @@ Chaque ligne cite son ticket Jira `LUN-<n>`.
 ### Ajouté
 
 - Historique des fiches de ménage : tâches cochées sur une période, annulées comprises, filtrables par pièce, et export CSV pour un contrôle (tableur en français, formules neutralisées) (LUN-78).
+- Comptes des employés : la direction crée le compte et transmet un lien d'invitation à usage unique, l'employé choisit son mot de passe ; départ d'un salarié avec fermeture immédiate de ses sessions ; changement de mot de passe qui ferme les autres sessions (LUN-55).
 
 ## [0.1.0] - 2026-10-10
 
