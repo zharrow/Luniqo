@@ -1,4 +1,4 @@
-"""Fiche de ménage remplie depuis la tablette, sur PostgreSQL (LUN-77)."""
+"""Fiche de ménage remplie depuis la tablette (LUN-77), puis consultée et exportée (LUN-78), sur PostgreSQL."""
 
 import uuid
 from datetime import UTC, datetime
@@ -219,3 +219,85 @@ async def test_la_base_garde_une_seule_coche_par_tache_et_par_jour(db, world):
     first.cancelled_at, first.cancelled_by_name = TUESDAY_MORNING, "Léa Bernard"
     db.add(done(world["change"]))
     await db.flush()
+
+
+# --- Historique et export (LUN-78) ----------------------------------------------------
+
+def records_of(response):
+    assert response.status_code == 200, response.text
+    return [(r["day"], r["room_name"], r["task_name"], r["done_by"], r["cancelled_by"]) for r in response.json()]
+
+
+async def fill_two_days(clients, world, clock):
+    """Mardi : Léa coche deux tâches, en décoche une puis la recoche. Mercredi : Hugo coche le plan de change."""
+    tablet = await ready_tablet(clients, world)
+    for method in ("post", "delete", "post"):
+        assert (await getattr(tablet, method)(check_url(world["change"]))).status_code in (201, 204)
+    assert (await tablet.post(check_url(world["sols_mardi"]))).status_code == 201
+    clock.now = datetime(2026, 10, 7, 7, 0, tzinfo=UTC)
+    assert (await pin_login(tablet, world["hugo"])).status_code == 201
+    assert (await tablet.post(check_url(world["change"]))).status_code == 201
+
+
+async def test_la_direction_relit_les_fiches_passees(clients, world, clock, db, data):
+    await fill_two_days(clients, world, clock)
+    # Une coche de la crèche Sud ne doit jamais apparaître dans l'historique de Nord.
+    db.add(CleaningCheck(id=uuid.uuid4(), room_task_id=world["sud"].id, nursery_id=world["sud"].nursery_id,
+                         day=TUESDAY_MORNING.date(), room_name="Salle", task_name="Laver les sols",
+                         done_at=TUESDAY_MORNING, done_by_name="Quelqu'un de Sud"))
+    await db.flush()
+    owner = clients()
+    assert (await login(owner, "direction@a.test")).status_code == 200
+    base = f"/api/v2/nurseries/{world['nord'].id}/cleaning/history"
+
+    # Sans paramètre : les 7 derniers jours. Ordre chronologique, coche annulée comprise, noms complets.
+    assert records_of(await owner.get(base)) == [
+        ("2026-10-06", "Dortoir", "Laver les sols", "Léa Bernard", None),
+        ("2026-10-06", "Espace de change", "Désinfecter le plan de change", "Léa Bernard", "Léa Bernard"),
+        ("2026-10-06", "Espace de change", "Désinfecter le plan de change", "Léa Bernard", None),
+        ("2026-10-07", "Espace de change", "Désinfecter le plan de change", "Hugo Bernard", None),
+    ]
+    assert [r[0] for r in records_of(await owner.get(base, params={"from": "2026-10-07"}))] == ["2026-10-07"]
+    assert records_of(await owner.get(base, params={"to": "2026-10-05"})) == []
+    dortoir = world["rooms"]["dortoir"].id
+    assert [r[2] for r in records_of(await owner.get(base, params={"room_id": str(dortoir)}))] == ["Laver les sols"]
+
+    # Pièce d'une autre crèche, période incohérente ou trop longue : refus.
+    assert (await owner.get(base, params={"room_id": str(world["rooms"]["sud"].id)})).status_code == 404
+    assert (await owner.get(base, params={"from": "2026-10-08", "to": "2026-10-07"})).status_code == 422
+    assert (await owner.get(base, params={"from": "2025-10-06", "to": "2026-10-07"})).status_code == 422
+    assert (await owner.get(base, params={"from": "2025-10-07", "to": "2026-10-07"})).status_code == 200
+
+    # Un employé de la crèche relit aussi ; la direction d'une autre entreprise ne voit rien.
+    employee = clients()
+    assert (await login(employee, "lea@a.test")).status_code == 200
+    assert len(records_of(await employee.get(base))) == 4
+    await data.user("direction@b.test", UserRole.OWNER, await data.enterprise("Groupe B"))
+    other = clients()
+    assert (await login(other, "direction@b.test")).status_code == 200
+    assert (await other.get(base)).status_code == 404
+    assert (await other.get(f"{base}.csv")).status_code == 404
+
+
+async def test_export_pour_un_controle(clients, world, clock):
+    # Nom saisi par un compte qui serait pris pour une formule par le tableur de la direction.
+    world["tasks"]["Laver les sols"].name = "=HYPERLINK(\"https://exemple.test\")"
+    await fill_two_days(clients, world, clock)
+    owner = clients()
+    assert (await login(owner, "direction@a.test")).status_code == 200
+    response = await owner.get(f"/api/v2/nurseries/{world['nord'].id}/cleaning/history.csv",
+                               params={"from": "2026-10-06", "to": "2026-10-07"})
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "text/csv; charset=utf-8"
+    assert response.headers["content-disposition"] == 'attachment; filename="fiches-menage_2026-10-06_2026-10-07.csv"'
+    assert response.headers["cache-control"] == "no-store"
+    assert response.content.startswith("\ufeff".encode())  # BOM : accents lus par un tableur en français
+    lines = response.content.decode("utf-8-sig").split("\r\n")
+    assert lines == [
+        "Jour;Pièce;Tâche;Faite à;Par;Annulée à;Annulée par",
+        "06/10/2026;Dortoir;\"'=HYPERLINK(\"\"https://exemple.test\"\")\";09:00;Léa Bernard;;",
+        "06/10/2026;Espace de change;Désinfecter le plan de change;09:00;Léa Bernard;09:00;Léa Bernard",
+        "06/10/2026;Espace de change;Désinfecter le plan de change;09:00;Léa Bernard;;",
+        "07/10/2026;Espace de change;Désinfecter le plan de change;09:00;Hugo Bernard;;",
+        "",
+    ]
