@@ -1,7 +1,7 @@
 """Jeu de données synthétique de démonstration. Aucune donnée réelle.
 
-Idempotent : chaque entreprise, crèche, compte et accès n'est créé que s'il
-manque. Lancement : python -m app.seed
+Idempotent : chaque entreprise, crèche, famille, pièce, compte et accès n'est
+créé que s'il manque. Lancement : python -m app.seed
 
 Deux entreprises : le groupe de démonstration, et un groupe « témoin » qui
 sert à vérifier l'isolation (sa direction ne doit rien voir du premier).
@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 from app.auth.models import AppUser, UserRole
 from app.auth.passwords import PasswordPolicyError, check_policy, hash_password_sync
 from app.children.models import Child, ChildGuardian, ChildStatus, Family, Guardian, Relationship
+from app.cleaning.models import CleaningTask, Frequency, Room, RoomTask
 from app.config import get_settings
 from app.nurseries.models import Enterprise, Nursery, NurseryAccess
 
@@ -61,6 +62,27 @@ DEMO_FAMILIES = (
 # Comptes famille fictifs, reliés à leur fiche de responsable (consultation famille, LUN-011).
 DEMO_GUARDIAN_ACCOUNTS = ("alice.garnier@famille.test", "claire.temoin@famille.test")
 
+
+# Catalogue de ménage par entreprise : (tâche, consigne).
+DEMO_CLEANING_TASKS = {
+    "Groupe Démo": (("Désinfecter le plan de change", "Spray désinfectant, laisser agir, essuyer"),
+                    ("Laver les sols", None), ("Désinfecter les jouets", None), ("Changer les draps", None),
+                    ("Nettoyer les vitres", None)),
+    "Groupe Témoin": (("Laver les sols", None),),
+}
+_DAILY, _WEEKLY, _MONTHLY = Frequency.DAILY, Frequency.WEEKLY, Frequency.MONTHLY
+# Pièces fictives : (crèche, pièce, ordre de passage, tâches (nom, fréquence, jours ISO)).
+DEMO_ROOMS = (
+    ("Crèche Démo Nord", "Espace de change", 0,
+     (("Désinfecter le plan de change", _DAILY, None), ("Laver les sols", _DAILY, None))),
+    ("Crèche Démo Nord", "Salle d'activité", 1,
+     (("Laver les sols", _DAILY, None), ("Désinfecter les jouets", _WEEKLY, [1, 3, 5]),
+      ("Nettoyer les vitres", _MONTHLY, [1]))),
+    ("Crèche Démo Nord", "Dortoir", 2, (("Changer les draps", _WEEKLY, [5]), ("Laver les sols", _WEEKLY, [2, 4]))),
+    ("Micro-crèche Démo Sud", "Salle d'activité", 0,
+     (("Laver les sols", _DAILY, None), ("Désinfecter les jouets", _WEEKLY, [3]))),
+    ("Crèche Témoin", "Salle", 0, (("Laver les sols", _DAILY, None),)),
+)
 
 def seed(session: Session) -> int:
     """Crée les entreprises et crèches manquantes. Renvoie le nombre de crèches créées."""
@@ -106,6 +128,32 @@ def seed_families(session: Session) -> int:
         created += 1
     return created
 
+
+def seed_cleaning(session: Session) -> int:
+    """Crée le catalogue et les pièces fictives manquants, avec leurs tâches. Renvoie le nombre de pièces créées."""
+    for enterprise_name, tasks in DEMO_CLEANING_TASKS.items():
+        enterprise_id = session.scalar(select(Enterprise.id).where(Enterprise.name == enterprise_name))
+        for name, instructions in tasks:
+            if not session.scalar(select(CleaningTask.id).where(CleaningTask.enterprise_id == enterprise_id,
+                                                                CleaningTask.name == name)):
+                session.add(CleaningTask(enterprise_id=enterprise_id, name=name, instructions=instructions))
+    session.flush()
+    created = 0
+    for nursery_name, room_name, order, tasks in DEMO_ROOMS:
+        nursery = session.scalar(select(Nursery).where(Nursery.name == nursery_name))
+        if session.scalar(select(Room.id).where(Room.nursery_id == nursery.id, Room.name == room_name)):
+            continue
+        room = Room(nursery_id=nursery.id, name=room_name, display_order=order)
+        session.add(room)
+        session.flush()
+        for position, (task_name, frequency, weekdays) in enumerate(tasks):
+            task_id = session.scalar(select(CleaningTask.id).where(CleaningTask.enterprise_id == nursery.enterprise_id,
+                                                                   CleaningTask.name == task_name))
+            session.add(RoomTask(room_id=room.id, task_id=task_id, nursery_id=nursery.id,
+                                 enterprise_id=nursery.enterprise_id, frequency=frequency, weekdays=weekdays,
+                                 display_order=position))
+        created += 1
+    return created
 
 def seed_users(session: Session, password: str) -> int:
     """Crée les comptes et accès manquants. Renvoie le nombre de comptes créés."""
@@ -154,6 +202,10 @@ if __name__ == "__main__":
             print(f"[api] familles fictives : {families} créée(s)")
         else:
             print("[api] familles fictives déjà présentes")
+        rooms = seed_cleaning(session)
+        session.commit()
+        print(f"[api] pièces de ménage fictives : {rooms} créée(s)" if rooms else
+              "[api] pièces de ménage fictives déjà présentes")
         demo_password = os.environ.get("SEED_DEMO_PASSWORD")
         if demo_password:
             try:

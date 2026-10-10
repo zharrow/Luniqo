@@ -7,16 +7,11 @@ Chaque ligne cite son ticket Jira `LUN-<n>`.
 
 ## [Non publié]
 
-### Ajouté
-
-- Organisation du projet : README pour les développeurs, CONTRIBUTING (branches `develop` / `staging` / `main`, SemVer, cycle de vie des tickets, Definition of Done), ce journal, import du backlog dans Jira (LUN-60).
-- Vision produit : 4 personas et une story map avec la découpe du MVP ; diagramme `gitGraph` du circuit complet des branches (LUN-60).
-- Automatisations GitHub : CI sur `develop`, `staging` et `main` ; contrôle des noms de branche, des cibles et des titres de PR ; étiquettes `front`, `back`, `infra`, `doc` posées selon les fichiers modifiés ; modèle de PR (LUN-60).
-
-## [0.1.0] - date fixée à la publication
+## [0.1.0] - 2026-10-10
 
 Première version numérotée. Elle rassemble le travail fait avant l'adoption de
-ce journal. Les clés sont celles de Jira ; un ticket du backlog d'origine a
+ce journal, l'organisation du projet (LUN-60) et la fiche de ménage côté API
+(LUN-76, LUN-77). Les clés sont celles de Jira ; un ticket du backlog d'origine a
 pour clé son ancien numéro + 38 (`LUN-006` est devenu `LUN-44`).
 
 ### Ajouté
@@ -30,6 +25,11 @@ pour clé son ancien numéro + 38 (`LUN-006` est devenu `LUN-44`).
 - Comptes familles par invitation, consultation réservée à l'autorité parentale (LUN-49).
 - Conteneurisation : 5 images construites depuis `scratch`, pile Docker Compose (LUN-39, tag `tp-docker-v1`).
 - Tests d'intégration sur une vraie PostgreSQL (LUN-45) et intégration continue GitHub Actions (LUN-46).
+- Organisation du projet : README pour les développeurs, CONTRIBUTING (branches `develop` / `staging` / `main`, SemVer, cycle de vie des tickets, Definition of Done), ce journal, import du backlog dans Jira (LUN-60).
+- Vision produit : 4 personas et une story map avec la découpe du MVP ; diagramme `gitGraph` du circuit complet des branches (LUN-60).
+- Automatisations GitHub : CI sur `develop`, `staging` et `main` ; contrôle des noms de branche, des cibles et des titres de PR ; étiquettes `front`, `back`, `infra`, `doc` posées selon les fichiers modifiés ; modèle de PR (LUN-60).
+- Fiche de ménage, côté API : pièces de chaque crèche, catalogue des tâches de l'entreprise, fréquences (chaque jour, certains jours, le premier jour donné du mois) et fiche du jour en heure de Paris ; pièces fictives dans le jeu de démonstration (LUN-76).
+- Fiche de ménage remplie depuis la tablette : l'employé identifié par PIN coche les tâches du jour (heure et auteur fixés par le serveur, noms recopiés tels qu'au moment de la coche) ; décocher le jour même annule la coche sans l'effacer (LUN-77).
 
 ### Corrigé
 
