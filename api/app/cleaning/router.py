@@ -10,21 +10,24 @@ Sur la tablette (`/api/v2/tablet/cleaning…`), l'employé identifié par PIN
 (`CurrentActor`) coche les tâches du jour de la crèche de la tablette.
 """
 
+import csv
+import io
 import uuid
-from datetime import date
+from datetime import date, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, Response, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.attendance.policy import local_day
+from app.attendance.policy import NURSERY_TZ, local_day
 from app.auth.dependencies import NowDep
-from app.cleaning import service
+from app.cleaning import policy, service
 from app.cleaning.models import CleaningTask, Room, RoomTask
 from app.cleaning.schemas import (
     CheckOut,
+    CheckRecord,
     DayPlan,
     PlannedRoom,
     PlannedTask,
@@ -196,6 +199,67 @@ async def day_plan(context: ReadableNursery, db: SessionDep, now: NowDep,
                                             instructions=a.task.instructions) for a in assignments])
              for room, assignments in await service.day_plan(db, context.nursery.id, day)]
     return DayPlan(day=day, rooms=rooms)
+
+
+# --- Historique ---------------------------------------------------------------------
+
+async def _history(context, db: AsyncSession, now: datetime, start: date | None, end: date | None,
+                   room_id: uuid.UUID | None) -> tuple[date, date, list[service.Record]]:
+    try:
+        start, end = policy.history_range(start, end, local_day(now))
+    except ValueError as error:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(error)) from None
+    if room_id is not None:
+        await _room_in(db, context.nursery.id, room_id)
+    return start, end, await service.history(db, context.nursery.id, start, end, room_id)
+
+
+FromQuery = Annotated[date | None, Query(alias="from", description="Premier jour (7 jours avant `to` par défaut)")]
+ToQuery = Annotated[date | None, Query(alias="to", description="Dernier jour (aujourd'hui à Paris par défaut)")]
+RoomQuery = Annotated[uuid.UUID | None, Query(description="Une seule pièce")]
+
+
+@router.get("/nurseries/{nursery_id}/cleaning/history", responses=_NOT_FOUND)
+async def cleaning_history(context: ReadableNursery, db: SessionDep, now: NowDep, start: FromQuery = None,
+                           end: ToQuery = None, room_id: RoomQuery = None) -> list[CheckRecord]:
+    """Tâches cochées sur une période (366 jours au plus), annulées comprises, dans l'ordre chronologique.
+
+    Les noms sont ceux du jour de la coche. Ce qui était prévu et n'a pas été
+    fait n'est pas reconstitué pour le passé : la configuration a pu changer.
+    """
+    _, _, records = await _history(context, db, now, start, end, room_id)
+    return [CheckRecord(id=r.check.id, day=r.check.day, room_id=r.room_id, room_name=r.check.room_name,
+                        task_name=r.check.task_name, done_at=r.check.done_at, done_by=r.check.done_by_name,
+                        cancelled_at=r.check.cancelled_at, cancelled_by=r.check.cancelled_by_name) for r in records]
+
+
+def _local_time(moment: datetime | None) -> str:
+    return moment.astimezone(NURSERY_TZ).strftime("%H:%M") if moment else ""
+
+
+@router.get("/nurseries/{nursery_id}/cleaning/history.csv", response_class=Response,
+            responses={200: {"content": {"text/csv": {}}, "description": "Fiches au format CSV (tableur)"}}
+            | _NOT_FOUND)
+async def cleaning_history_csv(context: ReadableNursery, db: SessionDep, now: NowDep, start: FromQuery = None,
+                               end: ToQuery = None, room_id: RoomQuery = None) -> Response:
+    """Mêmes lignes que l'historique, à ouvrir dans un tableur ou à imprimer pour un contrôle.
+
+    Séparateur « ; » et BOM UTF-8 : un tableur réglé en français l'ouvre avec ses accents. Heures en heure de Paris.
+    """
+    start, end, records = await _history(context, db, now, start, end, room_id)
+    buffer = io.StringIO()
+    writer = csv.writer(buffer, delimiter=";", lineterminator="\r\n")
+    writer.writerow(["Jour", "Pièce", "Tâche", "Faite à", "Par", "Annulée à", "Annulée par"])
+    for record in records:
+        check = record.check
+        writer.writerow([check.day.strftime("%d/%m/%Y"), policy.csv_cell(check.room_name),
+                         policy.csv_cell(check.task_name), _local_time(check.done_at),
+                         policy.csv_cell(check.done_by_name), _local_time(check.cancelled_at),
+                         policy.csv_cell(check.cancelled_by_name)])
+    filename = f"fiches-menage_{start.isoformat()}_{end.isoformat()}.csv"
+    return Response("\ufeff" + buffer.getvalue(), media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": f'attachment; filename="{filename}"',
+                             "Cache-Control": "no-store"})
 
 
 # --- Tablette ---------------------------------------------------------------------

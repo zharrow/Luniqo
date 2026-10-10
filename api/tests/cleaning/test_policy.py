@@ -4,7 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from app.cleaning.models import Frequency
-from app.cleaning.policy import can_check, is_due, normalize_weekdays
+from app.cleaning.policy import can_check, csv_cell, history_range, is_due, normalize_weekdays
 from app.cleaning.schemas import RoomTaskIn, short_name
 
 # Octobre 2026 : le 1er est un jeudi, le 5 le premier lundi, le 12 le deuxième.
@@ -78,3 +78,36 @@ def test_tache_cochable_le_jour_meme(room, task, assignment, frequency, weekdays
 ])
 def test_nom_court_sur_la_tablette(full, short):
     assert short_name(full) == short
+
+
+TODAY = date(2026, 10, 7)
+
+
+@pytest.mark.parametrize(("start", "end", "expected"), [
+    (None, None, (date(2026, 10, 1), TODAY)),  # 7 derniers jours, aujourd'hui compris
+    (None, date(2026, 9, 30), (date(2026, 9, 24), date(2026, 9, 30))),
+    (date(2026, 10, 7), None, (TODAY, TODAY)),
+    (date(2025, 10, 7), TODAY, (date(2025, 10, 7), TODAY)),  # 366 jours : la limite
+])
+def test_periode_de_l_historique(start, end, expected):
+    assert history_range(start, end, TODAY) == expected
+
+
+@pytest.mark.parametrize(("start", "end"), [
+    (date(2026, 10, 8), TODAY),  # début après la fin
+    (date(2025, 10, 6), TODAY),  # 367 jours
+])
+def test_periode_refusee(start, end):
+    with pytest.raises(ValueError):
+        history_range(start, end, TODAY)
+
+
+@pytest.mark.parametrize(("value", "expected"), [
+    ("Laver les sols", "Laver les sols"),
+    ("=HYPERLINK(\"https://exemple.test\")", "'=HYPERLINK(\"https://exemple.test\")"),
+    ("+33 6", "'+33 6"), ("-1", "'-1"), ("@SUM(A1)", "'@SUM(A1)"), ("\tx", "'\tx"), ("\rx", "'\rx"),
+    ("Sols = propres", "Sols = propres"),  # « = » ailleurs qu'en tête : inoffensif
+    (None, ""),
+])
+def test_cellule_csv_neutralisee(value, expected):
+    assert csv_cell(value) == expected

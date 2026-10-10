@@ -7,6 +7,10 @@ Chaque ligne cite son ticket Jira `LUN-<n>`.
 
 ## [Non publié]
 
+### Ajouté
+
+- Historique des fiches de ménage : tâches cochées sur une période, annulées comprises, filtrables par pièce, et export CSV pour un contrôle (tableur en français, formules neutralisées) (LUN-78).
+
 ## [0.1.0] - 2026-10-10
 
 Première version numérotée. Elle rassemble le travail fait avant l'adoption de

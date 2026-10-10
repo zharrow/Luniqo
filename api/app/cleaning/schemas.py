@@ -126,3 +126,17 @@ class CheckOut(BaseModel):
     task_name: str
     done_at: datetime
     done_by: str
+
+
+class CheckRecord(BaseModel):
+    """Ligne de l'historique : noms tels qu'au moment de la coche, auteur en nom complet (contrôle)."""
+
+    id: uuid.UUID
+    day: date
+    room_id: uuid.UUID
+    room_name: str
+    task_name: str
+    done_at: datetime
+    done_by: str
+    cancelled_at: datetime | None
+    cancelled_by: str | None

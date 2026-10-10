@@ -4,7 +4,7 @@ API de la v2 de Luniqo, en FastAPI ([ADR-001](../M2/decisions/ADR-001-reecriture
 Elle remplace progressivement l'accès direct du navigateur à Supabase de la v1.
 
 État au 2026-10-10 : **parcours central complet côté API** (LUN-003 à LUN-011) ;
-fiche de ménage : pièces, catalogue des tâches et fréquences (LUN-76), coches depuis la tablette (LUN-77).
+fiche de ménage : pièces, catalogue des tâches et fréquences (LUN-76), coches depuis la tablette (LUN-77), historique et export (LUN-78).
 Second facteur obligatoire pour la direction et l'éditeur
 ([ADR-004](../M2/decisions/ADR-004-double-authentification.md), LUN-006) : TOTP
 et codes de secours ; les passkeys suivent. Pas encore de données réelles
@@ -56,6 +56,8 @@ et codes de secours ; les passkeys suivent. Pas encore de données réelles
 | `GET /api/v2/nurseries/{id}/cleaning/plan` | Fiche du jour (`?day=`, aujourd'hui à Paris par défaut) : tâches prévues, pièce par pièce, dans l'ordre de passage |
 | `GET /api/v2/tablet/cleaning` | Sur la tablette (session par PIN) : fiche du jour de la crèche, avec les tâches déjà cochées et par qui |
 | `POST`, `DELETE /api/v2/tablet/cleaning/{room_task_id}/check` | Cocher une tâche prévue aujourd'hui (heure et auteur fixés par le serveur ; 409 si déjà cochée ou non prévue) ; la décocher le jour même, la coche restant tracée comme annulée |
+| `GET /api/v2/nurseries/{id}/cleaning/history` | Tâches cochées sur une période (`?from=&to=`, 7 derniers jours par défaut, 366 au plus ; `?room_id=` pour une pièce), annulées comprises, noms du jour de la coche |
+| `GET /api/v2/nurseries/{id}/cleaning/history.csv` | Même historique en CSV pour un tableur (séparateur `;`, BOM UTF-8, heures de Paris, formules neutralisées) |
 
 ### Second facteur (ADR-004)
 
@@ -180,9 +182,9 @@ cd api
 python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements-dev.txt
 
-pytest                          # tests unitaires, sans base de données (276 au 2026-10-10)
+pytest                          # tests unitaires, sans base de données (291 au 2026-10-10)
 
-# Tests d'intégration sur une vraie PostgreSQL (140 au 2026-10-10), base jetable
+# Tests d'intégration sur une vraie PostgreSQL (142 au 2026-10-10), base jetable
 # construite avec l'image luniqo/db du TP Docker (cd ../docker && docker compose build db) :
 scripts/test-db.sh up           # affiche la ligne export TEST_DB_... à copier
 export TEST_DB_ADDR=127.0.0.1:55432 TEST_DB_NAME=luniqo_test TEST_DB_PASSWORD=luniqo-test

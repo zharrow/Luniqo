@@ -98,3 +98,24 @@ async def uncheck(db: AsyncSession, nursery_id: uuid.UUID, room_task_id: uuid.UU
         raise CheckRefused("not_done")
     done.cancelled_at, done.cancelled_by, done.cancelled_by_name = now, employee.id, _full_name(employee)
     await db.commit()
+
+
+@dataclass(frozen=True)
+class Record:
+    check: CleaningCheck
+    room_id: uuid.UUID
+
+
+async def history(db: AsyncSession, nursery_id: uuid.UUID, start: date, end: date,
+                  room_id: uuid.UUID | None = None) -> list[Record]:
+    """Coches d'une période, annulées comprises, dans l'ordre chronologique (LUN-78).
+
+    Seules les coches existent pour le passé : ce qui était prévu un jour donné
+    ne se reconstitue pas, la configuration ayant pu changer depuis.
+    """
+    statement = (select(CleaningCheck, RoomTask.room_id).join(RoomTask, RoomTask.id == CleaningCheck.room_task_id)
+                 .where(CleaningCheck.nursery_id == nursery_id, CleaningCheck.day.between(start, end)))
+    if room_id is not None:
+        statement = statement.where(RoomTask.room_id == room_id)
+    rows = await db.execute(statement.order_by(CleaningCheck.day, CleaningCheck.room_name, CleaningCheck.done_at))
+    return [Record(check, room) for check, room in rows]
