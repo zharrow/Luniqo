@@ -2,7 +2,7 @@
 
 Ce fichier dit à tout agent (Claude Code, Codex…) **ce que l'on fait dans ce dépôt, pourquoi, et où on en est**. La référence technique (stack, architecture, règles de code) est dans [CLAUDE.md](CLAUDE.md).
 
-> Dernière mise à jour : 2026-10-08. Mettre à jour « État d'avancement » à la fin de chaque session de travail.
+> Dernière mise à jour : 2026-10-10. Mettre à jour « État d'avancement » à la fin de chaque session de travail.
 
 ## La mission en une phrase
 
@@ -43,14 +43,14 @@ Rien de secret ni de personnel dans ce fichier (dépôt public, règle 10).
 
 1. **Réel ≠ simulé.** Tout document indique si un fait est réel (commande exécutée, mesure, commit, échange réel) ou simulé (réunion d'équipe fictive, validation d'un persona, budget valorisé). Mention explicite : `[RÉEL]` / `[SIMULÉ]`.
 2. **Ne jamais inventer un résultat.** Une mesure, un taux de couverture, un temps de réponse ou un « ça marche » ne s'écrit qu'après exécution, avec la date, la version (commit/tag) et la commande. Sinon : statut « à vérifier ».
-3. **Pas de faux commits.** Tous les commits sont ceux de Florent (avec la ligne `Co-Authored-By` de l'assistant quand il a contribué). On n'attribue jamais de code à un membre fictif : l'équipe fictive existe dans les documents de pilotage, pas dans l'historique git.
+3. **Pas de faux commits.** Les commits de l'assistant sont ceux de Florent (avec la ligne `Co-Authored-By`). Les coéquipiers réels du cours de coordination signent leurs propres commits. On n'attribue jamais de code à un membre fictif : l'équipe fictive existe dans les documents de pilotage du RNCP, pas dans l'historique git ni dans Jira.
 4. **Assistance déclarée.** Le M2 demande de distinguer contribution personnelle, assistance et sources. Quand l'assistant produit une part significative d'un livrable, le noter dans la fiche du travail ou le journal.
 5. **Données synthétiques uniquement.** Jamais de données réelles d'enfants, de familles ou de salariés dans les seeds, captures, démos ou dépôts. Allergies, PAI et santé sont des données de santé : traiter le RGPD et la question de l'hébergement de données de santé (HDS) lors du cadrage.
 6. **Pas de commande destructive sans cible connue.** `pnpm seed` / `db:reset` utilisent la clé service role de `.env.local`, qui peut pointer vers le Supabase Cloud de la v1. Vérifier la destination avant tout reset, migration ou suppression.
 7. **Traçabilité.** Ticket `LUN-###` → branche → PR → version taguée → entrée du journal des versions. Chaque livrable M2 référence les compétences qu'il couvre.
 8. **Contraintes de cours respectées.** Une contrainte imposée par un sujet prime sur nos préférences. Si elle ne sert pas Luniqo, en discuter avec Florent plutôt que de la contourner.
 9. **Commanditaire réel, propos réels.** Bee a Baby et ses dirigeants sont réels : on ne leur attribue que ce qui a réellement été dit ou fait. Les revues et validations simulées sont tenues par la Product Owner fictive, qui représente le client (rôle normal en Scrum), jamais au nom de Simona. Un retour réel de la crèche est consigné comme tel, daté, avec son canal.
-10. **Dépôt public.** `zharrow/Luniqo` (anciennement `nursery-app`, renommé le 2026-10-08) est public, et c'est le **seul dépôt du projet** (code, TP, documentation M2). Personnes réelles citées : Florent, et Simona (directrice de Bee a Baby) par choix de Florent ; personne d'autre. Aucune information sur les enfants accueillis ni sur la famille de Florent, aucun secret. Le détail d'une faille non corrigée reste sobre tant que la v1 est en ligne.
+10. **Dépôt public.** `zharrow/Luniqo` (anciennement `nursery-app`, renommé le 2026-10-08) est public, et c'est le **seul dépôt du projet** (code, TP, documentation M2). Personnes réelles citées : Florent ; Simona (directrice de Bee a Baby) par choix de Florent ; Thomas, Pauline et Julien (équipe du cours de coordination, prénom et rôle, avec leur accord du 2026-10-09) ; personne d'autre. Aucune information sur les enfants accueillis ni sur la famille de Florent, aucun secret. Le détail d'une faille non corrigée reste sobre tant que la v1 est en ligne.
 11. **Langue.** Documentation et échanges en français. Code, identifiants, noms de fichiers techniques en anglais (convention existante).
 
 ## Le scénario
@@ -103,8 +103,8 @@ Ces profils couvrent les critères BC03 : RACI, styles managériaux selon la mat
 
 | Besoin | Outil retenu | Justification |
 |---|---|---|
-| Backlog et sprints | **Trello** : colonnes Backlog → Prêt → Sprint → En cours → En revue → Recette → Terminé | Demandé par Florent, visuel, gratuit |
-| Étiquettes Trello | `BC01`–`BC04`, type (`feat`, `fix`, `infra`, `doc`), cours (`cours:docker`…) | Relie chaque carte à une compétence et à un cours |
+| Backlog et sprints | **Jira** (offre gratuite), projet `LUN` : épic → story → sous-tâche ; statuts À faire → En cours → En revue → Intégré → En recette → Terminé ; relié à GitHub. Mise en place : [docs/projet/JIRA.md](docs/projet/JIRA.md) | Remplace Trello le 2026-10-09 : choisi par l'équipe du cours de coordination (hiérarchie native, gratuit) ; un seul outil pour le cours et le RNCP. Jira ne contient que des personnes réelles |
+| Champs Jira | composants `Front` / `Back` / `Infra` / `Doc`, étiquettes `bc01`–`bc04`, `cours-docker`, `cours-coordination`, `securite`, `rgpd`, `tablette`, Story Points, versions `vX.Y.Z` | Relie chaque ticket à une compétence, un cours et une version |
 | Planning macro | **Diagramme de Gantt en Mermaid** versionné dans `M2/management/` + export image pour les oraux | Diffable : l'historique git montre la baseline et ses révisions (prévu/réel) |
 | Code, revues, CI/CD | GitHub (`zharrow/Luniqo`), PR obligatoires, GitHub Actions | Preuves horodatées de la chaîne ticket → déploiement |
 | Décisions | ADR (Architecture Decision Records) dans `M2/decisions/` | Trace des choix et des options écartées (C1.3.2, C3.2.2) |
@@ -112,10 +112,13 @@ Ces profils couvrent les critères BC03 : RACI, styles managériaux selon la mat
 
 ### Conventions
 
-- Tickets : `LUN-001`, `LUN-002`… (numéro de la carte Trello, repris partout).
-- Branches : `feat/LUN-012-api-skeleton`, `fix/LUN-030-pin-server-side`, `docs/LUN-005-cadrage`.
-- Commits : Conventional Commits en français, avec le ticket (`feat(api): squelette FastAPI (LUN-012)`).
-- Versions : SemVer avec tags git (`v0.1.0`…) et `CHANGELOG.md` à la racine (journal des versions BC04).
+Détail complet : [CONTRIBUTING.md](CONTRIBUTING.md) (adopté le 2026-10-09).
+
+- Tickets : clé Jira `LUN-<n>` **sans zéro devant** (`LUN-60`). Le premier import Jira a raté et Jira ne réutilise pas les numéros : les tickets `LUN-001` à `LUN-021` du backlog d'origine sont devenus `LUN-39` à `LUN-59` (**ancien numéro + 38**, écrit dans leur description). Les anciens numéros restent valables dans l'historique git et le journal ci-dessous.
+- Branches durables : `develop` (INT) → `staging` (PRÉ-PROD, versions candidates) → `main` (PROD, tags). Seul ce qui est fini entre dans `develop`.
+- Branches de travail : `feat/LUN-34-mode-tablette`, `fix/…`, `docs/…`, `infra/…`, `chore/…` depuis `develop` ; `hotfix/…` depuis `main`. Vérifié par le workflow « Conventions de PR ».
+- Commits : Conventional Commits en français, avec le ticket (`feat(api): pointage groupé (LUN-34)`).
+- Versions : SemVer, `vX.Y.Z-rc.N` sur `staging`, `vX.Y.Z` sur `main`, [CHANGELOG.md](CHANGELOG.md) (journal des versions BC04).
 
 ## Plan technique de l'année
 
@@ -154,6 +157,7 @@ Les modules hors parcours central (HACCP, facturation, RH, statistiques…) sont
 
 | Cours | Contraintes clés | Calendrier | Fiche |
 |---|---|---|---|
+| Coordination Front & Back | Outil de gestion de projet avec parent ↔ enfant ; au moins 4 épics, sous-tâches front **et** back ; labels, champs, boards ; automatisations ; README, branching et SemVer, workflow des tickets. **Équipe réelle de 4, pour ce cours seulement** (Florent chef de projet, Thomas fullstack, Pauline front, Julien back), distincte de l'équipe fictive du RNCP | Commencé le 2026-10-09, rendu probablement en février 2027 | [M2/cours/coordination.md](M2/cours/coordination.md) |
 | Docker | **0 image Docker Hub**, images personnalisées ; au moins 3 types (front, back, serveur web) ; arguments de ressources au run et dans le compose ; SIGTERM gérés ; ordre de démarrage ; schéma des communications ; choix documentés | 4 séances, la 2e est passée. Rendu : dernier commit avant la date butoir. Oral non confirmé | [M2/cours/docker.md](M2/cours/docker.md) |
 
 Le TP vit dans `docker/` à la racine du dépôt (le dossier `M2/` est réservé aux preuves RNCP) ; le lien rendu au prof est celui du dépôt `zharrow/Luniqo`. Il remplace la première version (front/back/serveur de jeu sans lien avec Luniqo), dont l'historique reste sur l'ancien dépôt GitHub `zharrow/TP-Docker`, qui n'est plus utilisé.
@@ -204,26 +208,34 @@ Statuts des preuves (repris du fil rouge) : à vérifier / absent / partiel / d�
 | 2026-10-09 | LUN-011 : module `app/family/` (invitation des parents par lien à usage unique, compte famille, consultation réservée à l'autorité parentale, contacts sans coordonnées, un compte pour plusieurs fiches), migration 0007, 261 tests ; cinq mutations détectées. **Parcours central complet au niveau de l'API**, rejoué sur la pile Docker ; pas encore dans l'interface (front v1 sur Supabase) | [RÉEL] |
 | 2026-10-09 | ANO-003 : contrôle Vercel en échec sur la PR #50 (limite de 12 fonctions serverless du plan Hobby, l'API v2 de `api/` comptée comme fonctions). Cause lue dans l'API Vercel, `.vercelignore` ajouté, déploiement de prévisualisation vérifié (`Ready`, plus aucune fonction Python) | [RÉEL] |
 | 2026-10-09 | #50 fusionnée (LUN-011 et ANO-003 dans `main`). LUN-006, partie 1 : module `app/mfa/` (session en deux temps, TOTP chiffré en AES-256-GCM, codes de secours Argon2id, obligation pour la direction et l'éditeur, TOTP désactivé après 100 échecs), migration 0008, `cryptography` ajouté, 369 tests ; 13 mutations détectées ; parcours rejoué sur une pile Docker isolée, mémoire mesurée. PR #51 | [RÉEL] |
+| 2026-10-09 | #51 fusionnée (LUN-006 partie 1 dans `main`). Cours « Coordination Front & Back » : équipe réelle de 4 pour ce cours (Florent, Thomas, Pauline, Julien), distincte de l'équipe fictive du RNCP. Décisions de l'équipe : Jira (projet `LUN`, remplace Trello), branches `develop` / `staging` / `main` créées, SemVer, seul ce qui est fini entre dans `develop`, PRÉ-PROD et PROD documentées comme cibles (pas encore de VPS). LUN-60 (TD, numéroté LUN-22 avant l'import Jira) : README réécrit, CONTRIBUTING, CHANGELOG, guide et import Jira (80 tickets), workflows de conventions de PR et d'étiquettes ; Jira mis en place par Florent (80 tickets importés au deuxième essai, clés décalées de 38), personas et story map en bonus | [RÉEL] |
+| 2026-10-09 | #52 et #53 fusionnées dans `develop`, puis #54 (`develop` → `main`) fusionnée par Florent : `staging` n'a pas été traversée, le contrôle « Branche, cible et titre » de #54 est en échec (attendu par CONTRIBUTING), aucun tag `v0.1.0` | [RÉEL] |
+| 2026-10-10 | LUN-76, partie back (LUN-107) : module `app/cleaning/` (pièces par crèche, catalogue des tâches de l'entreprise, fréquences quotidienne / certains jours / premier jour donné du mois, fiche du jour en heure de Paris, isolation doublée par trois clés composites, désactivation au lieu de suppression), migration 0009, pièces fictives dans le seed, 399 tests ; 17 mutations détectées ; parcours rejoué sur une pile Docker isolée. PR #55 vers `develop` | [RÉEL] |
+| 2026-10-10 | #55 fusionnée (LUN-76). Version : Florent décide de ne pas taguer #54 après coup et de publier 0.1.0 par le circuit complet ; PR #56 de préparation (CHANGELOG daté). LUN-77, partie back (LUN-109) : coches depuis la tablette par session PIN (heure et auteur du serveur, jour de Paris, noms recopiés, décochage tracé le jour même, une coche par tâche et par jour garantie en base), migration 0010, 416 tests ; 12 mutations sur 13 détectées, la 13e équivalente (sans effet observable) ; parcours rejoué sur une pile Docker isolée (PIN, enrôlement, coches, refus). PR #57 vers `develop` | [RÉEL] |
+| 2026-10-10 | #56 et #57 fusionnées dans `develop` : LUN-77 part dans 0.1.0. Ligne LUN-77 ajoutée à la section `[0.1.0]` du CHANGELOG (PR #58), dernière étape avant la promotion vers `staging` | [RÉEL] |
 
 ### Prochaines actions
 
-1. **Florent** : relire et fusionner la PR #51 (LUN-006, partie 1 : TOTP et codes de secours).
-2. LUN-006, partie 2 : passkeys, puis ouvrir ADR-002 (front v2) pour rendre le parcours central utilisable depuis l'interface. LUN-019 (santé) et LUN-021 (envoi d'e-mails) avant toute donnée réelle.
-3. LUN-014 : préparer l'oral du TP Docker avant la séance 4.
-4. LUN-012, LUN-013, LUN-015 : fiche de ménage dans le parcours central, Trello et squelette `M2/`, phase 0 (voir le backlog).
+1. **Florent** : fusionner la PR #58 (ligne LUN-77 du CHANGELOG), puis les promotions de 0.1.0 ; finir Jira (statuts, rattachement aux épics, Story Points, workflow, règles R1 à R5 : [docs/projet/JIRA.md](docs/projet/JIRA.md)) ; protections des branches (contrôles obligatoires sur `main` et `staging`) et branche par défaut `develop`.
+2. **Assistant** : après #58, promotion `develop` → `staging` et tag `v0.1.0-rc.1`, puis `staging` → `main` et tag `v0.1.0`. En parallèle : LUN-78 côté back (LUN-111) : historique filtrable et export des fiches, correction d'un jour passé par la direction.
+3. **Version, décidé par Florent le 2026-10-10** : #54 (`develop` → `main` sans `staging`) était une erreur ; pas de tag posé après coup. La prochaine version part par le circuit complet, après la fusion de #55 : PR de préparation `chore/LUN-76-version-0-1-0` vers `develop` (CHANGELOG daté), promotion `develop` → `staging` (tag `v0.1.0-rc.1`), puis `staging` → `main` (tag `v0.1.0`). Numéro 0.1.0 conservé, aucune version n'ayant été publiée ; elle inclut LUN-60 et LUN-76.
+4. **À décider en équipe** (story map) : front v2 (story LUN-79, ADR-002) avant les passkeys (story LUN-69, LUN-44 partie 2). LUN-57 (santé) et LUN-59 (e-mails) avant toute donnée réelle.
+5. LUN-52 : oral du TP Docker. LUN-50, LUN-51, LUN-53.
 
 ## Point de reprise
 
-> Mis à jour le 2026-10-09, fin de la 2e session. Lire ceci quand Florent dit « continue ».
+> Mis à jour le 2026-10-10, 4e session. Lire ceci quand Florent dit « continue ».
 
-**Où on en est.** Dans `main` : LUN-001 à LUN-011, ADR-004 et le correctif d'ANO-003 (`.vercelignore`). **En attente** : PR #51, LUN-006 partie 1 (session en deux temps, TOTP chiffré, codes de secours, obligation pour `owner` et `developer`, migration 0008), à fusionner par Florent après une CI verte.
+**Où on en est.** `develop` contient LUN-76 et LUN-77 (#55, #57) et le CHANGELOG de 0.1.0 (#56). `main` contient tout jusqu'à LUN-60 (#54) ; `staging` est restée à #51 ; aucun tag. **En attente de Florent** : PR #58 (`chore/LUN-77-journal-0-1-0`, ligne LUN-77 dans la section `[0.1.0]`).
 
-**Prochaine tâche : LUN-006, partie 2 (passkeys)**, selon [ADR-004](M2/decisions/ADR-004-double-authentification.md) : WebAuthn avec la bibliothèque candidate `webauthn` (py_webauthn, 3.0.1 au 2026-10-09, dépend de `cryptography`, déjà présent), à ajouter sous contrainte des versions actuelles. `userVerification: required`, contrôle de l'origine et du `rpId`, compteur de signatures, plusieurs passkeys nommées par compte ; une passkey compte comme facteur (`has_second_factor`, `remove_totp` : la direction pourra retirer son TOTP si elle a une passkey) et peut aussi servir de connexion sans mot de passe. Les tests simuleront un authentificateur (attestation `none`, clé ES256 générée avec `cryptography`). Migration **0009** : ne pas commencer avant la fusion de la #51 (vérifier avec `git merge-base --is-ancestor`), puis partir de `main`.
+**Jira** (projet `LUN`, importé le 2026-10-09) : clés = ligne du CSV + 38. Backlog d'origine `LUN-39` à `LUN-59` ; TD `LUN-60` ; épics `LUN-61` (auth) à `LUN-67` (pilotage), dont `LUN-65` Fiche de ménage ; stories `LUN-68` à `LUN-80` ; sous-tâches `LUN-81` à `LUN-118`. Fiche de ménage : LUN-76 (pièces et tâches ; back LUN-107 fait dans #55, front LUN-108), LUN-77 (remplir depuis la tablette ; back LUN-109, front LUN-110), LUN-78 (historique et export ; back LUN-111, front LUN-112). Restent côté Florent : statuts, rattachement aux épics, Story Points, workflow et règles d'automatisation.
 
-**Ensuite** : ouvrir ADR-002 (front v2) ; puis LUN-019 (santé, RGPD/HDS) et LUN-021 (envoi d'e-mails) avant toute donnée réelle. Autres tickets au [backlog](M2/management/backlog.md) (LUN-012 à LUN-018, LUN-020).
+**Prochaine tâche : la version 0.1.0**, dès #58 fusionnée. PR `develop` → `staging` (ticket LUN-76), tag `v0.1.0-rc.1` sur `staging` après fusion ; PR `staging` → `main`, tag `v0.1.0` sur `main` ; Florent publie la version dans Jira. Ne plus rien fusionner dans `develop` qui ne doive partir dans 0.1.0 avant la promotion vers `staging`. Si la mise en production n'a pas lieu le 2026-10-10, corriger la date de la section `[0.1.0]` avant la promotion vers `main`.
 
-**Méthode suivie à chaque ticket** : branche depuis `main` → module `api/app/<domaine>/` (règles pures dans `policy.py`) → migration numérotée suivante → tests unitaires et d'intégration (`api/scripts/test-db.sh up`) → mutations (introduire chaque faille visée, vérifier qu'un test échoue, restaurer) → parcours sur la pile Docker → registre des choix techniques (raisons + sources), backlog, `api/README.md`, `CLAUDE.md`, ce fichier → PR vers `main`, suivi de la CI **et du contrôle Vercel** (ANO-003). Florent relit et fusionne. Ne pas empiler les PR.
+**Ensuite** : LUN-78 côté back (LUN-111, branche depuis `develop`, migration suivante) : historique filtrable par jour et par pièce, lu dans `cleaning_check` (noms recopiés, coches annulées visibles), export pour un contrôle, correction d'un jour passé par la direction avec motif. La mutation équivalente de LUN-77 (filtre de crèche dans `service.checks_of_day`) deviendra observable avec l'historique : l'ajouter aux mutations. Puis, selon la décision d'équipe, front v2 (LUN-79 : ADR-002, squelette, client TypeScript généré, sous-tâches LUN-113 à LUN-115) ou passkeys (LUN-69, sous-tâches back LUN-85 et LUN-86) selon [ADR-004](M2/decisions/ADR-004-double-authentification.md) : `webauthn` (py_webauthn 3.0.1 au 2026-10-09), `userVerification: required`, origine et `rpId` contrôlés, compteur de signatures, plusieurs passkeys nommées, tests avec authentificateur simulé (attestation `none`, ES256), migration suivante.
 
-**En attente de Florent** : fusion de la #51 ; vérifier une fois le cookie de session dans un navigateur (Swagger `/api/docs`, voir PR #41) ; option GitHub « Automatically delete head branches » à activer.
+**Méthode suivie à chaque ticket** : branche depuis `develop` → module `api/app/<domaine>/` (règles pures dans `policy.py`) → migration numérotée suivante → tests unitaires et d'intégration (`api/scripts/test-db.sh up`) → mutations (introduire chaque faille visée, vérifier qu'un test échoue, restaurer) → parcours sur une pile Docker isolée (`docker compose -p <nom>`) → registre des choix techniques, `CHANGELOG.md` (section « Non publié »), `api/README.md`, `CLAUDE.md`, ce fichier → PR vers `develop`, suivi de la CI, des conventions de PR **et du contrôle Vercel** (ANO-003). Florent (ou un relecteur de l'équipe) relit et fusionne. Ne pas empiler les PR.
 
-**Environnement local** : depuis LUN-006, les comptes direction doivent enregistrer un TOTP à leur première connexion (secret à saisir dans une application d'authentification, ou code calculé avec `app.mfa.policy.hotp`). Le mot de passe des comptes de démonstration de la base locale habituelle (`luniqo_pgdata`) n'a pas été conservé. Pour rejouer un parcours sans toucher cette base, lancer une pile isolée : `cd docker && API_SEED_DEMO_PASSWORD=... docker compose -p luniqo-essai --env-file .env --env-file ../.env up -d --build --wait`, puis `docker compose -p luniqo-essai down -v`.
+**En attente de Florent** : fusion de la PR #58, puis des deux promotions ; fin de la mise en place de Jira ; protections des branches, branche par défaut `develop`, « Automatically delete head branches » ; vérifier une fois le cookie de session dans un navigateur (Swagger `/api/docs`, voir PR #41) ; VPS à venir (environnements PRÉ-PROD et PROD).
+
+**Environnement local** : depuis LUN-44 (ex-LUN-006), les comptes direction doivent enregistrer un TOTP à leur première connexion (secret à saisir dans une application d'authentification, ou code calculé avec `app.mfa.policy.hotp`). Le mot de passe des comptes de démonstration de la base locale habituelle (`luniqo_pgdata`) n'a pas été conservé. Pour rejouer un parcours sans toucher cette base, lancer une pile isolée : `cd docker && API_SEED_DEMO_PASSWORD=... docker compose -p luniqo-essai --env-file .env --env-file ../.env up -d --build --wait`, puis `docker compose -p luniqo-essai down -v`. Le dossier `coordination/` (sujet du cours, brouillons de l'équipe) est ignoré par git.

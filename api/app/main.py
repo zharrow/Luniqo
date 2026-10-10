@@ -16,6 +16,7 @@ from app import __version__
 from app.attendance.router import router as attendance_router
 from app.auth.router import router as auth_router
 from app.children.router import router as children_router
+from app.cleaning.router import router as cleaning_router
 from app.db import SessionDep, get_engine
 from app.family.router import router as family_router
 from app.mfa.router import router as mfa_router
@@ -50,6 +51,7 @@ app.include_router(tablets_router)
 app.include_router(children_router)
 app.include_router(attendance_router)
 app.include_router(family_router)
+app.include_router(cleaning_router)
 
 
 @app.get(

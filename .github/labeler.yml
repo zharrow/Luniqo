@@ -1,0 +1,17 @@
+# Règles d'étiquetage des PR (actions/labeler, workflow labels.yml).
+back:
+  - changed-files:
+      - any-glob-to-any-file: ['api/**']
+
+front:
+  - changed-files:
+      - any-glob-to-any-file: ['app/**', 'components/**', 'lib/**', 'hooks/**', 'public/**', 'styles/**',
+                               'types/**', 'proxy.ts', 'package.json', 'pnpm-lock.yaml', 'next.config.*']
+
+infra:
+  - changed-files:
+      - any-glob-to-any-file: ['docker/**', '.github/**', 'api/Dockerfile', '.vercelignore']
+
+doc:
+  - changed-files:
+      - any-glob-to-any-file: ['**/*.md', 'docs/**', 'M2/**']

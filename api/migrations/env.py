@@ -8,6 +8,7 @@ from sqlalchemy import create_engine, pool
 import app.attendance.models  # noqa: F401  (enregistre les tables de chaque domaine)
 import app.auth.models  # noqa: F401
 import app.children.models  # noqa: F401
+import app.cleaning.models  # noqa: F401
 import app.family.models  # noqa: F401
 import app.mfa.models  # noqa: F401
 import app.nurseries.models  # noqa: F401

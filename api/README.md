@@ -3,7 +3,8 @@
 API de la v2 de Luniqo, en FastAPI ([ADR-001](../M2/decisions/ADR-001-reecriture-backend.md)).
 Elle remplace progressivement l'accès direct du navigateur à Supabase de la v1.
 
-État au 2026-10-09 : **parcours central complet côté API** (LUN-003 à LUN-011).
+État au 2026-10-10 : **parcours central complet côté API** (LUN-003 à LUN-011) ;
+fiche de ménage : pièces, catalogue des tâches et fréquences (LUN-76), coches depuis la tablette (LUN-77).
 Second facteur obligatoire pour la direction et l'éditeur
 ([ADR-004](../M2/decisions/ADR-004-double-authentification.md), LUN-006) : TOTP
 et codes de secours ; les passkeys suivent. Pas encore de données réelles
@@ -49,6 +50,12 @@ et codes de secours ; les passkeys suivent. Pas encore de données réelles
 | `POST /api/v2/nurseries/{id}/guardians/{guardian_id}/invitation` | Inviter un responsable à créer son compte famille : lien à usage unique, 7 jours (direction) |
 | `POST /api/v2/invitations/lookup`, `POST /api/v2/invitations/accept` | Sans session : lire l'invitation, créer le compte (ou relier un compte famille existant) ; jeton dans le corps |
 | `GET /api/v2/family/children`, `GET /api/v2/family/children/{child_id}` | Parent connecté : ses enfants (autorité parentale requise), présence du jour, présences récentes (`?days=`, 62 au plus), contacts sans coordonnées |
+| `GET`, `POST /api/v2/cleaning-tasks`, `PATCH …/cleaning-tasks/{task_id}` | Catalogue des tâches de ménage de l'entreprise, commun à ses crèches (direction) ; une tâche désactivée sort des fiches de toutes les crèches |
+| `GET`, `POST /api/v2/nurseries/{id}/rooms`, `GET`, `PATCH …/rooms/{room_id}` | Pièces de la crèche et, dans le détail, toutes leurs tâches (lecture : direction et employés ayant accès ; écriture : direction) |
+| `PUT …/rooms/{room_id}/tasks/{task_id}` | Prévoir une tâche du catalogue dans la pièce avec sa fréquence, ou la remplacer ; `is_active: false` la retire (direction) |
+| `GET /api/v2/nurseries/{id}/cleaning/plan` | Fiche du jour (`?day=`, aujourd'hui à Paris par défaut) : tâches prévues, pièce par pièce, dans l'ordre de passage |
+| `GET /api/v2/tablet/cleaning` | Sur la tablette (session par PIN) : fiche du jour de la crèche, avec les tâches déjà cochées et par qui |
+| `POST`, `DELETE /api/v2/tablet/cleaning/{room_task_id}/check` | Cocher une tâche prévue aujourd'hui (heure et auteur fixés par le serveur ; 409 si déjà cochée ou non prévue) ; la décocher le jour même, la coche restant tracée comme annulée |
 
 ### Second facteur (ADR-004)
 
@@ -103,6 +110,7 @@ api/
 │   ├── children/      familles, enfants, responsables (aucune donnée de santé : LUN-019)
 │   ├── attendance/    pointage depuis la tablette, suivi des présences
 │   ├── family/        invitations des parents, consultation famille
+│   ├── cleaning/      fiche de ménage : pièces, catalogue, fréquences (règles pures : policy.py)
 │   ├── mfa/           second facteur : TOTP chiffré (crypto.py), codes de secours, règles pures (policy.py)
 │   ├── security.py    contrôle de l'en-tête Origin (CSRF)
 │   ├── config.py      configuration lue dans l'environnement
@@ -172,9 +180,9 @@ cd api
 python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements-dev.txt
 
-pytest                          # tests unitaires, sans base de données (249 au 2026-10-09)
+pytest                          # tests unitaires, sans base de données (276 au 2026-10-10)
 
-# Tests d'intégration sur une vraie PostgreSQL (120 au 2026-10-09), base jetable
+# Tests d'intégration sur une vraie PostgreSQL (140 au 2026-10-10), base jetable
 # construite avec l'image luniqo/db du TP Docker (cd ../docker && docker compose build db) :
 scripts/test-db.sh up           # affiche la ligne export TEST_DB_... à copier
 export TEST_DB_ADDR=127.0.0.1:55432 TEST_DB_NAME=luniqo_test TEST_DB_PASSWORD=luniqo-test
