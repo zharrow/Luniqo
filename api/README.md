@@ -4,7 +4,7 @@ API de la v2 de Luniqo, en FastAPI ([ADR-001](../M2/decisions/ADR-001-reecriture
 Elle remplace progressivement l'accès direct du navigateur à Supabase de la v1.
 
 État au 2026-10-10 : **parcours central complet côté API** (LUN-003 à LUN-011) ;
-fiche de ménage : pièces, catalogue des tâches et fréquences (LUN-76), coches depuis la tablette (LUN-77), historique et export (LUN-78).
+fiche de ménage : pièces, catalogue des tâches et fréquences (LUN-76), coches depuis la tablette (LUN-77), historique et export (LUN-78). Comptes des employés par invitation et changement de mot de passe (LUN-55).
 Second facteur obligatoire pour la direction et l'éditeur
 ([ADR-004](../M2/decisions/ADR-004-double-authentification.md), LUN-006) : TOTP
 et codes de secours ; les passkeys suivent. Pas encore de données réelles
@@ -30,7 +30,12 @@ et codes de secours ; les passkeys suivent. Pas encore de données réelles
 | `PATCH /api/v2/nurseries/{id}` | Modifier ou fermer une crèche (direction) |
 | `GET /api/v2/nurseries/{id}/staff` | Employés ayant accès à la crèche (direction) |
 | `PUT`, `DELETE /api/v2/nurseries/{id}/staff/{user_id}` | Accorder, retirer l'accès d'un employé de l'entreprise (direction) ; effet immédiat |
-| `GET /api/v2/staff` | Employés de l'entreprise et crèches accessibles à chacun (direction) |
+| `GET /api/v2/staff` | Employés de l'entreprise et crèches accessibles à chacun (direction) ; `has_password` faux tant qu'un invité n'a pas accepté |
+| `POST /api/v2/staff` | Créer le compte d'un employé (sans mot de passe) et son lien d'invitation, 7 jours, usage unique (direction) |
+| `POST /api/v2/staff/{user_id}/invitation` | Nouveau lien pour un invité qui n'a pas encore accepté ; le précédent est annulé (direction) |
+| `PATCH /api/v2/staff/{user_id}` | Corriger le nom ; désactiver (départ : sessions web et de tablette fermées, invitations annulées) ou réactiver (direction) |
+| `POST /api/v2/staff-invitations/lookup`, `…/accept` | Sans session : lire l'invitation, choisir son mot de passe ; jeton dans le corps |
+| `PUT /api/v2/auth/me/password` | Changer son mot de passe (l'actuel est exigé, 5 essais sur 15 min) ; ferme les autres sessions du compte, tablette comprise |
 | `POST`, `GET /api/v2/nurseries/{id}/tablets` | Enrôler **l'appareil qui fait la requête** comme tablette de la crèche (cookie d'appareil 90 jours), lister (direction) |
 | `DELETE /api/v2/nurseries/{id}/tablets/{tablet_id}` | Révoquer une tablette ; ses sessions sont fermées (direction) |
 | `PUT /api/v2/auth/me/pin` | L'employé choisit son PIN (4 chiffres, mot de passe confirmé) ; débloque le PIN |
@@ -110,6 +115,7 @@ api/
 │   │   └── access.py        règle d'accès à une crèche (fonction pure)
 │   ├── tablets/       tablettes enrôlées, PIN, sessions d'action (routes testées sur PostgreSQL)
 │   ├── children/      familles, enfants, responsables (aucune donnée de santé : LUN-019)
+│   ├── accounts/      invitation des employés, changement de mot de passe, départ d'un salarié
 │   ├── attendance/    pointage depuis la tablette, suivi des présences
 │   ├── family/        invitations des parents, consultation famille
 │   ├── cleaning/      fiche de ménage : pièces, catalogue, fréquences (règles pures : policy.py)
@@ -182,9 +188,9 @@ cd api
 python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements-dev.txt
 
-pytest                          # tests unitaires, sans base de données (291 au 2026-10-10)
+pytest                          # tests unitaires, sans base de données (298 au 2026-10-10)
 
-# Tests d'intégration sur une vraie PostgreSQL (142 au 2026-10-10), base jetable
+# Tests d'intégration sur une vraie PostgreSQL (155 au 2026-10-10), base jetable
 # construite avec l'image luniqo/db du TP Docker (cd ../docker && docker compose build db) :
 scripts/test-db.sh up           # affiche la ligne export TEST_DB_... à copier
 export TEST_DB_ADDR=127.0.0.1:55432 TEST_DB_NAME=luniqo_test TEST_DB_PASSWORD=luniqo-test

@@ -69,6 +69,11 @@ class AppUser(Base):
     pin_failed_attempts: Mapped[int] = mapped_column(Integer, server_default=text("0"))
     pin_locked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
+    @property
+    def has_password(self) -> bool:
+        """Faux pour un employé invité qui n'a pas encore choisi son mot de passe (LUN-55) : il ne peut se connecter."""
+        return self.password_hash is not None
+
 
 class SessionKind(enum.StrEnum):
     WEB = "web"
@@ -127,6 +132,11 @@ class AuthEventType(enum.StrEnum):
     TABLET_SESSION_ENDED = "tablet_session_ended"
     INVITATION_CREATED = "invitation_created"
     INVITATION_ACCEPTED = "invitation_accepted"
+    # Comptes (LUN-55). detail de l'échec : bad_password.
+    PASSWORD_CHANGED = "password_changed"  # noqa: S105  (nom d'événement, pas un secret)
+    PASSWORD_CHANGE_FAILED = "password_change_failed"  # noqa: S105
+    ACCOUNT_DEACTIVATED = "account_deactivated"
+    ACCOUNT_REACTIVATED = "account_reactivated"
     # Second facteur (ADR-004). detail : totp ou backup_code ; pour un échec,
     # aussi replay (code TOTP déjà utilisé) ou locked (TOTP bloqué).
     MFA_SUCCEEDED = "mfa_succeeded"
