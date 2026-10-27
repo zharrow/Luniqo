@@ -8,6 +8,9 @@ tablette, personnel, fiche de ménage, portail des parents.
 Ce README s'adresse aux développeurs qui rejoignent le projet. Pour contribuer
 (branches, versions, tickets, PR), lire ensuite [CONTRIBUTING.md](CONTRIBUTING.md).
 
+**Nouvel arrivant ?** Commencer par [ONBOARDING.md](ONBOARDING.md) : le parcours
+pas à pas, du premier accès à la première PR fusionnée.
+
 ## Le projet
 
 ### D'où il vient
