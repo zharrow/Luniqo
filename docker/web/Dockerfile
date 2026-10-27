@@ -1,5 +1,35 @@
 # Serveur web : passerelle nginx, seul point d'entrée de la plateforme.
-# Elle relaie / vers le front Next.js et /api/ vers l'API.
+# Elle sert le front v2 (fichiers statiques construits par Vite) et relaie
+# /api/ vers l'API (ADR-002 : application monopage servie par nginx).
+#
+# Le contexte de build est la racine du dépôt (voir docker-compose.yml) ;
+# Dockerfile.dockerignore n'en laisse passer que front/ et docker/web/.
+
+# --- Étape 1 : build du front v2.
+FROM luniqo/base:1.0 AS build
+
+# nodejs : exécute Vite (Node 24 dans Alpine 3.24, Vite 8 demande >= 20.19).
+# pnpm : gestionnaire de paquets du front (front/pnpm-lock.yaml). Le paquet
+# d'Alpine est en 11.x comme celui du projet : même format de lockfile.
+RUN apk add --no-cache nodejs pnpm
+WORKDIR /src/front
+
+# Les dépendances d'abord : cette couche reste en cache tant que les fichiers
+# de pnpm ne changent pas. --frozen-lockfile : versions exactes du lockfile.
+# Les scripts d'installation restent ceux autorisés dans pnpm-workspace.yaml.
+# --pm-on-fail=warn : on garde le pnpm d'Alpine (paquet signé de la
+# distribution) au lieu d'en télécharger un autre pour suivre la version
+# exacte du champ packageManager ; même version majeure, même lockfile.
+# PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD : aucun navigateur de test dans l'image.
+COPY front/package.json front/pnpm-lock.yaml front/pnpm-workspace.yaml ./
+RUN PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 pnpm install --frozen-lockfile --pm-on-fail=warn
+
+COPY front/ ./
+# vite build directement, plutôt que « pnpm build » : le typage est vérifié en
+# CI, l'image n'a besoin que des fichiers produits.
+RUN ./node_modules/.bin/vite build
+
+# --- Étape 2 : image finale, nginx seul, sans Node ni sources.
 FROM luniqo/base:1.0
 
 # nginx : serveur web et reverse proxy.
@@ -11,14 +41,15 @@ FROM luniqo/base:1.0
 RUN apk add --no-cache nginx \
  && rm -rf /etc/nginx/nginx.conf /etc/nginx/http.d /var/lib/nginx/html /etc/logrotate.d/nginx
 
-COPY --chmod=0644 nginx.conf.template /etc/nginx/nginx.conf.template
-COPY --chmod=0755 entrypoint.sh /usr/local/bin/entrypoint.sh
-COPY www/ /srv/www/
+COPY --chmod=0644 docker/web/nginx.conf.template /etc/nginx/nginx.conf.template
+COPY --chmod=0644 docker/web/security-headers.conf /etc/nginx/security-headers.conf
+COPY --chmod=0755 docker/web/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY docker/web/www/ /srv/www/
+COPY --from=build /src/front/dist/ /srv/front/
 
 # Valeurs par défaut, modifiables au run (-e) ou dans le compose.
 ENV NGINX_WORKER_PROCESSES=1 \
     NGINX_WORKER_CONNECTIONS=512 \
-    FRONT_ADDR=front:3000 \
     API_ADDR=api:8000
 
 # 8080 et non 80 : nginx tourne sous un utilisateur non-root.

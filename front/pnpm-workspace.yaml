@@ -1,0 +1,18 @@
+# Réglages pnpm du front v2 (ADR-002 § 1 et § 5). front/ est un projet
+# autonome : la v1, à la racine du dépôt, garde son propre pnpm-lock.yaml.
+
+# Une version publiée depuis moins de 24 h n'est pas installée : les paquets
+# piégés sont en général retirés dans la journée (compromis @tanstack/* du
+# 2026-05-11 : retirés en 4 h 35 au plus). Valeur par défaut de pnpm 11,
+# écrite ici pour qu'elle ne dépende pas de la version de pnpm.
+minimumReleaseAge: 1440
+
+# Les scripts d'installation des dépendances sont refusés, sauf ceux listés
+# ici après examen. strictDepBuilds : un script non examiné fait échouer
+# l'installation au lieu d'un simple avertissement.
+strictDepBuilds: true
+allowBuilds:
+  # Script de vérification du binaire d'esbuild (dépendance de Storybook et du
+  # plugin du routeur). Inutile : pnpm installe déjà le binaire de la plateforme
+  # (@esbuild/<plateforme>, dépendance optionnelle). Refusé.
+  esbuild: false
