@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Statut | **Proposée** le 2026-10-10, en attente de la décision de Florent (penche pour React + Vite le 2026-10-10) |
-| Date | 2026-10-10 |
-| Décideur | Florent `[RÉEL]`. L'assistant a fait la recherche, la comparaison et la recommandation |
+| Statut | **Acceptée** le 2026-10-27 : option C (React + Vite). Proposée le 2026-10-10 |
+| Date | 2026-10-10, décision le 2026-10-27 |
+| Décideur | Florent `[RÉEL]`. L'assistant a fait la recherche, la comparaison et la recommandation ; Florent lui a délégué le choix du routeur après recherche (2026-10-27) |
 | Équipe concernée | `[SIMULÉ]` Mateo Fernández (front / UX) réalisera les écrans, Kwame Asante (QA / DevOps) les tests de bout en bout et la CI. Aucun avis ne leur est attribué ici |
 | Ticket | LUN-113, sous-tâche de la story LUN-79 (Socle du front v2) |
 | Prolonge | [ADR-001](ADR-001-reecriture-backend.md), qui gardait Next.js « pendant la transition » et renvoyait ce choix ici |
@@ -80,10 +80,25 @@ front/src/
 
 ### 3. Routage : TanStack Router
 
-- **Routes déclarées par fichier**, ce que la documentation présente comme la méthode recommandée ; le plugin Vite génère l'arbre des routes et **découpe le code par route** automatiquement ([documentation](https://tanstack.com/router/latest/docs/framework/react/routing/file-based-routing)). Version 1.170.42.
-- **Paramètres d'URL typés et validés** (`validateSearch`) : `?day=` et `?from=&to=` de l'API se retrouvent typés dans les écrans.
+Choix délégué par Florent le 2026-10-27 : rechercher la meilleure option, puis la retenir. Comparaison refaite ce jour-là sur les sources primaires.
+
+| Critère | TanStack Router 1.170.46 | React Router 8.5.0 |
+|---|---|---|
+| Publication | 2026-10-22 ; version 1.0 publiée le 2023-12-23, 7 versions en 30 jours | 2026-10-19 ; v8 publiée le 2026-06-17, une version majeure par an annoncée, v7 maintenue pour la sécurité ([annonce](https://remix.run/blog/react-router-v8)) |
+| Usage (npm, semaine du 2026-10-20) | 15,1 millions de téléchargements | 49,1 millions |
+| Typage des routes et des paramètres de chemin | Oui, dans une application monopage, par le plugin Vite | **Seulement en mode « framework »** ([tableau des modes](https://reactrouter.com/start/modes)), c'est-à-dire avec le plugin de React Router qui prend en charge la construction (rendu serveur, SPA par `ssr: false`) |
+| Paramètres d'URL (`?day=`, `?from=&to=`) | **Typés et validés par schéma** (`validateSearch`), Zod 4 accepté directement ; une valeur invalide retombe sur une valeur par défaut avec `.catch()` ([documentation](https://tanstack.com/router/latest/docs/framework/react/guide/search-params)) | Chaînes de caractères (`useSearchParams`) dans tous les modes : à analyser et valider à la main |
+| Découpage du code par route | Automatique avec les routes par fichier | Automatique en mode framework seulement |
+| Avis de sécurité GitHub depuis 2025 | 1 : **versions piégées** publiées le 2026-05-11 (CVE-2026-45321) | 20, dont 11 de gravité élevée ; la plupart dans le rendu serveur, les RSC ou le mode framework, que Luniqo n'utiliserait pas ; deux redirections ouvertes touchent aussi `<Link>` et `navigate()` dans le navigateur (CVE-2025-68470 et son contournement CVE-2026-53669, corrigés depuis 7.18) |
+| Prérequis | React 18 ou 19 | React 19.2.7+, Node 22.22+, Vite 7+ |
+
+**Décision : TanStack Router.** Les écrans de Luniqo vivent de paramètres d'URL qui sont ceux de l'API (jour du pointage, période et pièce de l'historique, filtre de statut des enfants) : les avoir typés et validés à l'entrée évite toute une classe d'erreurs, ce que React Router ne fait dans aucun mode. Pour le typage des routes, React Router demanderait son mode « framework », conçu pour le rendu serveur que l'option C écarte justement. TanStack Router s'accorde enfin avec TanStack Query (déjà retenu, même éditeur) : un `loader` de route peut précharger la requête que l'écran lira.
+
+**Le compromis de mai 2026 ne change pas ce choix, mais il fixe des règles.** Le 2026-05-11, un attaquant a publié 84 versions piégées de 42 paquets `@tanstack/*` en détournant leur CI (workflow `pull_request_target`, cache GitHub Actions empoisonné, jeton OIDC extrait de la mémoire du runner) ; elles volaient les identifiants de la machine à l'installation. Elles ont été dépréciées en 1 h 43 et retirées du registre en 4 h 35 au plus ([avis](https://github.com/advisories/GHSA-g7cv-rxg3-hmpx), [post-mortem](https://tanstack.com/blog/npm-supply-chain-compromise-postmortem)). Le ver qui l'accompagnait se propageait à d'autres paquets : le risque concerne toute dépendance npm, pas un éditeur. Les protections retenues au § 5 l'auraient arrêté : **délai de 24 h de pnpm** (`minimumReleaseAge`), **scripts d'installation interdits sauf liste** (la charge utile passait par l'installation), **versions figées par le fichier de verrouillage** et mises à jour par PR relues.
+
+- **Routes déclarées par fichier**, ce que la documentation présente comme la méthode recommandée ; le plugin Vite génère l'arbre des routes et **découpe le code par route** automatiquement ([documentation](https://tanstack.com/router/latest/docs/framework/react/routing/file-based-routing)).
 - **Routes protégées** : une route parente vérifie la session dans `beforeLoad` et renvoie vers la connexion ([documentation](https://tanstack.com/router/latest/docs/framework/react/guide/authenticated-routes)). La documentation le rappelle : **une garde de route n'est pas une barrière d'autorisation**. Chez Luniqo, toute autorisation reste dans l'API ; la garde ne sert qu'à l'affichage.
-- Écarté : React Router 8 (8.4.0), plus répandu, mais son typage repose sur une génération de code séparée et sur le mode framework, prévu pour le rendu serveur. Les comparatifs consultés sont des billets de blog, à prendre avec prudence ; ils s'accordent sur l'avantage de TanStack Router pour une SPA typée. **À trancher par Florent**, React Router restant acceptable.
+- Écarté : **React Router 8**, plus répandu (trois fois plus de téléchargements) et à l'API plus familière, qui reste un choix sûr ailleurs. Le comparatif publié par TanStack ([page](https://tanstack.com/router/latest/docs/framework/react/comparison)) n'a servi qu'à repérer les écarts, vérifiés ensuite dans la documentation de React Router : il est écrit par l'un des deux concurrents.
 
 ### 4. Données et client d'API
 
@@ -139,31 +154,48 @@ Les parcours tournent contre la vraie API plutôt que contre des simulations : c
 - **ESLint 10** + **typescript-eslint** (8.71.1, règles typées) + **eslint-plugin-react-hooks** (7.1.1, qui contient les règles du React Compiler, [annonce](https://react.dev/blog/2025/10/07/react-compiler-1)) + **eslint-plugin-jsx-a11y** (6.10.2) + règle d'imports entre domaines ; **Prettier** pour le formatage. Une configuration à jour et vérifiée en CI dès le premier jour, à l'inverse de la v1 (ANO-002).
 - Écartés : Biome (un seul outil, rapide, mais ses règles typées couvrent encore une partie seulement de celles de typescript-eslint, selon les comparatifs consultés) ; Oxlint (rapide, possible plus tard en complément).
 
-### 12. Ce qui n'est pas repris de la v1
+### 12. Documentation des composants : Storybook
+
+Demandé par Florent le 2026-10-27, installé avec le squelette (LUN-114).
+
+- **Storybook 10** (10.6.5 au 2026-10-27) avec `@storybook/react-vite` : il reprend la configuration Vite du front. Une *story* par état utile d'un composant (chargement, vide, erreur, désactivé, grande cible tablette) : c'est la documentation vivante du design system « Douceur Professionnelle » et des composants partagés, consultable sans lancer l'API.
+- **Les stories servent aussi de tests** : `@storybook/addon-vitest` les exécute comme tests de composants dans Vitest en mode navigateur (§ 10), et `@storybook/addon-a11y` y ajoute un contrôle d'accessibilité (axe). Une story qui ne s'affiche plus fait échouer la CI.
+- **Règles de sécurité**, tirées des avis publiés en 2025 et 2026 :
+  - version **10.6.2 au moins** : deux failles du serveur de développement, publiées les 21 et 22 octobre 2026, permettaient à une page web malveillante ou à une machine du réseau local de modifier des fichiers du projet ([CVE-2026-114125](https://github.com/advisories/GHSA-f2ph-cmg5-wxc8), critique ; [CVE-2026-114126](https://github.com/advisories/GHSA-px85-f4q5-jh77)) ;
+  - serveur de développement **écouté sur `127.0.0.1` seulement**, jamais sur le réseau ;
+  - **aucun fichier `.env` lu par Storybook** : une faille a déjà inclus des variables d'environnement dans le site construit ([CVE-2025-68429](https://github.com/advisories/GHSA-8452-54wp-rmv6)) ; le front n'a de toute façon aucun secret (§ 5) ;
+  - Storybook **n'entre pas dans l'image de production** ; le site construit peut être publié comme preuve du BC02, sans données réelles (règle 5 d'AGENTS.md).
+
+### 13. Ce qui n'est pas repris de la v1
 
 - PostHog (analytique) : pas avant une analyse RGPD et un consentement.
 - Session tablette en `localStorage` (ANO-001) : remplacée par les cookies de l'API (LUN-43).
 
-## Questions à trancher par Florent
+## Décisions de Florent (2026-10-27) `[RÉEL]`
 
-1. **Routeur** : TanStack Router (recommandé) ou React Router 8.
-2. **Dossier** : la v2 dans `front/` à la racine, la v1 restant en place, gelée, jusqu'à la bascule.
-3. **TP Docker** : il est rendu sur le tag `tp-docker-v1`, qui reste démontrable. Avec l'option C, le type d'image « front » disparaît de la pile courante (les fichiers vont dans `web`). À vérifier si l'oral (LUN-52) porte sur la pile courante ; sinon, sans effet.
-4. **Bascule** : la v1 reste en ligne sur Vercel, gelée, pendant la construction de la v2 ; la pile Docker sert la v2 dès son premier écran (connexion).
+1. **Option** : C, React + Vite en application monopage.
+2. **Routeur** : choix délégué à l'assistant après recherche ; TanStack Router retenu (§ 3).
+3. **Dossier** : `front/` à la racine ; la v1 reste en place, gelée, jusqu'à la bascule.
+4. **TP Docker** : pas d'oral. Le rendu reste le tag `tp-docker-v1` ; que l'image `front` disparaisse de la pile courante (les fichiers du front v2 sont servis par `web`) est sans effet sur lui. LUN-52 (oral du TP Docker) est sans objet.
+5. **Bascule** : la v1 reste en production (Vercel), gelée, jusqu'à ce que la v2 soit **complète et prête à partir en production sur le VPS** ; la bascule se fait alors en une fois. D'ici là, la v2 tourne sur la pile Docker (développement, puis PRÉ-PROD).
+6. **Storybook** pour documenter le front (§ 12).
 
-## Conséquences si l'option C est acceptée
+## Conséquences
 
-- LUN-114 : squelette `front/` avec les pratiques ci-dessus, écran de connexion et second facteur comme premier écran, types générés vérifiés en CI, build copié dans l'image `web` (configuration nginx `try_files` vers `index.html`, en-têtes, CSP), premiers tests à chaque niveau, puis mesure de la taille et du temps de build.
+- LUN-114 : squelette `front/` avec les pratiques ci-dessus et Storybook, écran de connexion et second facteur comme premier écran, types générés vérifiés en CI, build copié dans l'image `web` (configuration nginx `try_files` vers `index.html`, en-têtes, CSP), premiers tests à chaque niveau, puis mesure de la taille et du temps de build.
 - Le registre des choix techniques passe la ligne « Front gardé en Next.js pendant la transition » au statut « remplacé ».
-- La CI gagne une tâche front : lint, typage, tests, build, contrôle des types générés.
+- La CI gagne une tâche front : lint, typage, tests (stories comprises), build, contrôle des types générés.
+- La bascule de la v1 vers la v2 en production est un jalon du planning : v2 complète, VPS et environnement PROD prêts.
 
 ## Sources
 
-Consultées le 2026-10-10.
+Consultées le 2026-10-10, complétées le 2026-10-27 pour le routeur et Storybook.
 
 - Architecture : [React, Build a React app from scratch](https://react.dev/learn/build-a-react-app-from-scratch) ; [IETF, RFC 10017 (BCP 212)](https://www.ietf.org/ietf-ftp/rfc/rfc10017.txt) ; [Next.js, Static Exports (16.4)](https://nextjs.org/docs/app/guides/static-exports) ; [bulletproof-react, structure](https://github.com/alan2207/bulletproof-react/blob/master/docs/project-structure.md)
 - Sécurité : [React, CVE-2025-55182](https://react.dev/blog/2025/12/03/critical-security-vulnerability-in-react-server-components) ; [Next.js, CVE-2025-29927](https://github.com/vercel/next.js/security/advisories/GHSA-f82v-jwr5-mffw) ; [OWASP, CSRF](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html) ; [OWASP, CSP](https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html) ; [Vite, variables d'environnement](https://vite.dev/guide/env-and-mode) ; [pnpm, minimumReleaseAge](https://pnpm.io/settings/dependency-resolution)
 - Outils : [Vite 8](https://vite.dev/blog/announcing-vite8) ; [React Compiler 1.0](https://react.dev/blog/2025/10/07/react-compiler-1) et [installation](https://react.dev/learn/react-compiler/installation) ; [typescript-eslint #12518](https://github.com/typescript-eslint/typescript-eslint/issues/12518) et [#10940](https://github.com/typescript-eslint/typescript-eslint/issues/10940) ; [shadcn/ui, Vite](https://ui.shadcn.com/docs/installation/vite) et [formulaires](https://ui.shadcn.com/docs/forms)
 - Routage et données : [TanStack Router, routes par fichier](https://tanstack.com/router/latest/docs/framework/react/routing/file-based-routing) et [routes protégées](https://tanstack.com/router/latest/docs/framework/react/guide/authenticated-routes) ; [openapi-react-query](https://openapi-ts.dev/openapi-react-query/) ; [openapi-fetch](https://openapi-ts.dev/openapi-fetch/) ; [Hey API](https://heyapi.dev/openapi-ts/get-started)
+- Choix du routeur (2026-10-27) : [React Router v8, annonce](https://remix.run/blog/react-router-v8) ; [React Router, modes](https://reactrouter.com/start/modes) ; [TanStack Router, paramètres d'URL](https://tanstack.com/router/latest/docs/framework/react/guide/search-params) ; [TanStack, comparatif (écrit par TanStack)](https://tanstack.com/router/latest/docs/framework/react/comparison) ; versions et téléchargements lus sur le registre npm ; avis de sécurité lus dans la [base GitHub](https://github.com/advisories) (`react-router`, `@tanstack/react-router`) ; [compromis TanStack, avis](https://github.com/advisories/GHSA-g7cv-rxg3-hmpx) et [post-mortem](https://tanstack.com/blog/npm-supply-chain-compromise-postmortem)
+- Storybook (2026-10-27) : [CVE-2026-114125](https://github.com/advisories/GHSA-f2ph-cmg5-wxc8), [CVE-2026-114126](https://github.com/advisories/GHSA-px85-f4q5-jh77), [CVE-2026-27148](https://github.com/advisories/GHSA-mjf5-7g4m-gx5w), [CVE-2025-68429](https://github.com/advisories/GHSA-8452-54wp-rmv6)
 - Tests : [Vitest 4](https://vitest.dev/blog/vitest-4) ; [MSW, mode navigateur de Vitest](https://mswjs.io/docs/recipes/vitest-browser-mode)
 - Mesures du TP Docker : [docker/front/README.md](../../docker/front/README.md), [docker/README.md](../../docker/README.md)

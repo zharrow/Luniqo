@@ -12,7 +12,7 @@ Luniqo (anciennement cLean) est une application web de gestion de crèches pour 
 
 Les docs historiques annoncent les phases 0 à 7 « 100 % complètes ». **Rien n'a encore été vérifié par exécution** : ne pas tenir une fonctionnalité pour opérationnelle tant qu'elle n'a pas été testée.
 
-**v1 et v2.** Le code actuel est la **v1**, désormais gelée : seuls les correctifs de sécurité y sont acceptés. Une **v2** est réécrite progressivement avec un backend dédié (FastAPI) et PostgreSQL, en commençant par le parcours central ([ADR-001](M2/decisions/ADR-001-reecriture-backend.md)). Le front reste en Next.js + React pendant la transition. Tout ce qui suit décrit la v1, sauf mention contraire.
+**v1 et v2.** Le code actuel est la **v1**, désormais gelée : seuls les correctifs de sécurité y sont acceptés. Une **v2** est réécrite progressivement avec un backend dédié (FastAPI) et PostgreSQL, en commençant par le parcours central ([ADR-001](M2/decisions/ADR-001-reecriture-backend.md)). Le front v1 (Next.js) reste en production, gelé, jusqu'à la bascule ; le front v2 est une application React + Vite avec TanStack Router et Storybook, dans `front/` ([ADR-002](M2/decisions/ADR-002-front-v2.md)). La bascule se fera en une fois, quand la v2 sera complète et prête pour la production sur le VPS. Tout ce qui suit décrit la v1, sauf mention contraire.
 
 ## Stack v1 (lue dans package.json, non installée à ce jour)
 

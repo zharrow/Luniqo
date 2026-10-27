@@ -6,7 +6,7 @@
 | Sujet | TP « Projet - Docker Cloud » : images personnalisées orchestrées avec Compose (sujet complet : `docker/TP.md`, non versionné) |
 | Échéance | Dernière des 4 séances. 2 séances passées au 2026-10-08 |
 | Rendu | Lien git, dernier commit avant la date butoir : dépôt public `zharrow/Luniqo`, dossier `docker/` |
-| Oral | Non confirmé |
+| Oral | Aucun (Florent, 2026-10-27) |
 | Compétences RNCP | C2.1.1 (environnements, déploiement), C1.5 (schéma d'architecture), C2.2.2 (tests), C2.2.3 (sécurité), C4.1.2 (healthchecks, première brique de supervision) |
 | Statut | **Exigences du sujet couvertes** (2026-10-08) : 5 images (base, db, api, front, web), toutes construites depuis `scratch`, mesurées et documentées. Reste : commit et tag de rendu |
 
@@ -78,7 +78,7 @@ Matière directe pour la soutenance et pour le BC04 (anomalie → diagnostic →
 |---|---|---|
 | ~~Relire puis fusionner la branche `feat/m2-docker-luniqo` dans `main`~~ | Fait le 2026-10-08 | PR #37 puis #38 (commits poussés après la fusion de la #37) |
 | ~~Marquer la version rendue~~ | Fait le 2026-10-08 | Tag annoté `tp-docker-v1` sur `e020a26`, poussé |
-| Préparer l'explication orale | Avant la séance 4 | Les pannes 6 à 9 sont les meilleurs exemples à raconter |
+| ~~Préparer l'explication orale~~ | — | Sans objet : pas d'oral (Florent, 2026-10-27) |
 | ~~Arrêter l'ancienne pile `tp-docker`~~ | Constaté le 2026-10-08 | `docker compose ls` ne liste plus que `luniqo` |
 
 ## Suivi
