@@ -110,6 +110,8 @@ CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000",
    - applique les migrations : `alembic upgrade head`. Le schéma suit toujours
      la version du code ; une seule réplique de l'API, donc pas de migrations
      concurrentes ;
+   - purge ce qui a dépassé sa durée de conservation : `python -m app.purge`
+     (LUN-54). Un échec est journalisé mais n'empêche pas le démarrage ;
    - si `SEED_DEMO=true`, insère les données de démonstration ;
    - exporte `WEB_CONCURRENCY` (lu par uvicorn comme nombre de workers) et
      `FORWARDED_ALLOW_IPS=*` (l'API ne reçoit que des requêtes de la passerelle,

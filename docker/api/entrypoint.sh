@@ -1,6 +1,7 @@
 #!/bin/sh
-# Vérifie les arguments, applique les migrations de la base, insère les
-# données de démonstration si demandé, puis remplace ce script par uvicorn.
+# Vérifie les arguments, applique les migrations de la base, purge ce qui a
+# expiré, insère les données de démonstration si demandé, puis remplace ce
+# script par uvicorn.
 set -eu
 
 . /usr/local/lib/tp/common.sh
@@ -22,6 +23,10 @@ log "connexions à la base au maximum : $((API_WORKERS * DB_POOL_SIZE))"
 # Migrations au démarrage : le schéma suit toujours la version du code.
 # Une seule réplique de l'API : pas de risque de migrations concurrentes.
 alembic -c /app/alembic.ini upgrade head
+
+# Purge RGPD (LUN-54) à chaque démarrage, en plus de la planification
+# quotidienne. Un échec ne doit pas empêcher l'API de démarrer.
+python -m app.purge || log "purge en échec, voir l'erreur ci-dessus"
 
 if [ "$SEED_DEMO" = true ]; then
     python -m app.seed
