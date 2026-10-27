@@ -11,7 +11,7 @@ Chaque ligne cite son ticket Jira `LUN-<n>`.
 
 - Historique des fiches de ménage : tâches cochées sur une période, annulées comprises, filtrables par pièce, et export CSV pour un contrôle (tableur en français, formules neutralisées) (LUN-78).
 - Comptes des employés : la direction crée le compte et transmet un lien d'invitation à usage unique, l'employé choisit son mot de passe ; départ d'un salarié avec fermeture immédiate de ses sessions ; changement de mot de passe qui ferme les autres sessions (LUN-55).
-- Parcours d'onboarding d'un nouvel arrivant, du premier accès à la première PR fusionnée, référencé depuis le README et CONTRIBUTING (LUN-114).
+- Protection des branches `develop`, `staging` et `main` : PR obligatoire, relectures, CI et conventions de PR obligatoires, ni suppression ni push forcé ; tags de version non modifiables ; branche par défaut `develop` ; configuration exportée dans `.github/rulesets/` (LUN-60).
 
 ## [0.1.0] - 2026-10-10
 
