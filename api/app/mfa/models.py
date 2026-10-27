@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import BigInteger, DateTime, ForeignKey, Index, LargeBinary, String, func, text
+from sqlalchemy import BigInteger, DateTime, ForeignKey, Index, Integer, LargeBinary, String, func, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models import Base
@@ -36,6 +36,11 @@ class TotpFactor(Base):
     # refusé (rejeu d'un code intercepté).
     last_used_step: Mapped[int | None] = mapped_column(BigInteger)
     last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Échecs du second facteur depuis la dernière réussite (TOTP ou code de
+    # secours) : au 100e, le TOTP est bloqué. Compté ici plutôt que dans
+    # auth_event, que la purge vide au-delà de 6 mois (LUN-54) : des échecs
+    # étalés sur plus de 6 mois restent consécutifs (NIST SP 800-63B-4).
+    failed_attempts: Mapped[int] = mapped_column(Integer, server_default=text("0"))
 
 
 class BackupCode(Base):

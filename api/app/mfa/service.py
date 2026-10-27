@@ -8,7 +8,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import passwords
@@ -126,21 +126,16 @@ async def _throttle(db: AsyncSession, web: WebSession, client: Client, now: date
         raise TooManyAttempts(wait)
 
 
-async def _consecutive_failures(db: AsyncSession, user_id: uuid.UUID) -> int:
-    """Échecs depuis la dernière réussite ou la dernière activation d'un TOTP."""
-    last_success = (
-        select(func.max(AuthEvent.occurred_at))
-        .where(AuthEvent.user_id == user_id,
-               AuthEvent.event.in_([AuthEventType.MFA_SUCCEEDED.value, AuthEventType.TOTP_ENABLED.value]))
-        .scalar_subquery()
-    )
-    return await db.scalar(select(func.count()).select_from(AuthEvent).where(
-        AuthEvent.user_id == user_id, AuthEvent.event == AuthEventType.MFA_FAILED.value,
-        AuthEvent.occurred_at > func.coalesce(last_success, func.to_timestamp(0)))) or 0
+async def _count_failure(db: AsyncSession, user_id: uuid.UUID) -> None:
+    """Un échec de plus pour le TOTP confirmé du compte, s'il en a un."""
+    await db.execute(update(TotpFactor)
+                     .where(TotpFactor.user_id == user_id, TotpFactor.confirmed_at.is_not(None))
+                     .values(failed_attempts=TotpFactor.failed_attempts + 1))
 
 
 async def _fail(db: AsyncSession, web: WebSession, client: Client, now: datetime, detail: str) -> InvalidCode:
     _event(db, AuthEventType.MFA_FAILED, web, client, now, detail=detail)
+    await _count_failure(db, web.user.id)
     await db.commit()
     return InvalidCode()
 
@@ -224,8 +219,9 @@ async def verify(db: AsyncSession, web: WebSession, code: str, key: bytes | None
         factor = await _confirmed_totp(db, web.user.id, lock=True)
         if factor is None:
             raise await _fail(db, web, client, now, "no_totp")
-        if policy.totp_locked(await _consecutive_failures(db, web.user.id)):
+        if policy.totp_locked(factor.failed_attempts):
             _event(db, AuthEventType.MFA_FAILED, web, client, now, detail="locked")
+            await _count_failure(db, web.user.id)
             await db.commit()
             raise Refused("totp_locked")
         match = policy.check_totp(crypto.decrypt_secret(key, web.user.id, factor.secret_ciphertext), code, now,
@@ -256,6 +252,10 @@ async def verify(db: AsyncSession, web: WebSession, code: str, key: bytes | None
         used.used_at = now
 
     web.session.mfa_verified_at = now
+    # Une réussite, même par code de secours, remet le compteur à zéro : c'est ainsi que le TOTP se débloque.
+    await db.execute(update(TotpFactor)
+                     .where(TotpFactor.user_id == web.user.id, TotpFactor.confirmed_at.is_not(None))
+                     .values(failed_attempts=0))
     _event(db, AuthEventType.MFA_SUCCEEDED, web, client, now, detail=method)
     await db.commit()
     return method
