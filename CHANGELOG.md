@@ -12,6 +12,11 @@ Chaque ligne cite son ticket Jira `LUN-<n>`.
 - Historique des fiches de ménage : tâches cochées sur une période, annulées comprises, filtrables par pièce, et export CSV pour un contrôle (tableur en français, formules neutralisées) (LUN-78).
 - Comptes des employés : la direction crée le compte et transmet un lien d'invitation à usage unique, l'employé choisit son mot de passe ; départ d'un salarié avec fermeture immédiate de ses sessions ; changement de mot de passe qui ferme les autres sessions (LUN-55).
 - Protection des branches `develop`, `staging` et `main` : PR obligatoire, relectures, CI et conventions de PR obligatoires, ni suppression ni push forcé ; tags de version non modifiables ; branche par défaut `develop` ; configuration exportée dans `.github/rulesets/` (LUN-60).
+- Purge RGPD : sessions expirées, journal des connexions au-delà de 6 mois et invitations expirées supprimés à chaque démarrage de l'API et par la commande `python -m app.purge` (LUN-54).
+
+### Sécurité
+
+- Le blocage du TOTP au 100e échec consécutif ne dépend plus du journal des connexions : la purge ne peut plus le lever (LUN-54).
 
 ## [0.1.0] - 2026-10-10
 

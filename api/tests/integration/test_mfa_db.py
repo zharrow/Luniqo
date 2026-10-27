@@ -2,10 +2,15 @@
 
 import base64
 import dataclasses
+import os
+import uuid
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from sqlalchemy import func, select
+from alembic import command
+from alembic.config import Config
+from sqlalchemy import create_engine, func, select, text
+from sqlalchemy.pool import NullPool
 
 from app.auth.dependencies import get_now
 from app.auth.models import AuthEvent, AuthEventType, UserRole, UserSession
@@ -13,7 +18,8 @@ from app.config import get_settings
 from app.main import app
 from app.mfa import policy
 from app.mfa.models import BackupCode, TotpFactor
-from tests.integration.conftest import login
+from app.purge.service import purge
+from tests.integration.conftest import API_DIR, login
 
 pytestmark = pytest.mark.anyio
 
@@ -231,17 +237,35 @@ async def test_delai_puis_blocage_apres_des_echecs(clients, world, clock, db):
     assert len(await events(db, AuthEventType.MFA_THROTTLED)) == 1
 
 
-async def test_totp_bloque_apres_100_echecs_consecutifs_debloque_par_un_code_de_secours(clients, world, clock, db):
+async def totp_factor(db, user) -> TotpFactor:
+    return await db.scalar(select(TotpFactor).where(TotpFactor.user_id == user.id,
+                                                    TotpFactor.confirmed_at.is_not(None)))
+
+
+async def test_echecs_comptes_sur_le_facteur_et_remis_a_zero_par_une_reussite(clients, world, clock, db):
     secret, codes = await owner_with_totp(clients, clock)
-    # 100 échecs depuis l'activation, étalés sur plus d'une journée : la
-    # limitation par fenêtre de 15 minutes ne les arrête pas.
-    clock.advance(days=3)
-    for attempt in range(100):
-        db.add(AuthEvent(occurred_at=clock.now - timedelta(hours=1, minutes=attempt * 20), user_id=world["owner"].id,
-                         event=AuthEventType.MFA_FAILED.value, detail="totp"))
+    client = clients()
+    await login(client, DIRECTION, complete_mfa=False)
+    for wrong in ("000000", "ABCD-EFGH-JKMN", "pas-un-code"):
+        assert (await client.post("/api/v2/auth/mfa/verify", json={"code": wrong})).status_code == 401
+    factor = await totp_factor(db, world["owner"])
+    await db.refresh(factor)
+    assert factor.failed_attempts == 3
+    assert (await client.post("/api/v2/auth/mfa/verify", json={"code": code(secret, clock)})).status_code == 200
+    await db.refresh(factor)
+    assert factor.failed_attempts == 0
+
+
+async def test_totp_bloque_au_100e_echec_consecutif_debloque_par_un_code_de_secours(clients, world, clock, db):
+    secret, codes = await owner_with_totp(clients, clock)
+    # 99 échecs déjà comptés, étalés sur des semaines : la limitation par
+    # fenêtre de 15 minutes ne les a pas arrêtés.
+    factor = await totp_factor(db, world["owner"])
+    factor.failed_attempts = 99
     await db.flush()
     client = clients()
     await login(client, DIRECTION, complete_mfa=False)
+    assert (await client.post("/api/v2/auth/mfa/verify", json={"code": "000000"})).status_code == 401
     response = await client.post("/api/v2/auth/mfa/verify", json={"code": code(secret, clock)})
     assert response.status_code == 403 and "code de secours" in response.json()["detail"]
     assert (await client.post("/api/v2/auth/mfa/verify", json={"code": codes[0]})).status_code == 200
@@ -250,6 +274,23 @@ async def test_totp_bloque_apres_100_echecs_consecutifs_debloque_par_un_code_de_
     later = clients()
     await login(later, DIRECTION, complete_mfa=False)
     assert (await later.post("/api/v2/auth/mfa/verify", json={"code": code(secret, clock)})).status_code == 200
+
+
+async def test_la_purge_du_journal_ne_debloque_pas_le_totp(clients, world, clock, db):
+    """Des échecs vieux de plus de 6 mois restent consécutifs (NIST) : le blocage ne dépend pas du journal."""
+    secret, _ = await owner_with_totp(clients, clock)
+    factor = await totp_factor(db, world["owner"])
+    factor.failed_attempts = policy.MAX_CONSECUTIVE_FAILURES
+    await db.flush()
+    clock.advance(days=200)
+    report = await purge(db, clock.now)
+    assert report.auth_events > 0
+    assert await db.scalar(select(func.count()).select_from(AuthEvent)) == 0
+
+    client = clients()
+    await login(client, DIRECTION, complete_mfa=False)
+    response = await client.post("/api/v2/auth/mfa/verify", json={"code": code(secret, clock)})
+    assert response.status_code == 403 and "code de secours" in response.json()["detail"]
 
 
 # --- Changer, retirer, régénérer -------------------------------------------------
@@ -369,3 +410,52 @@ async def test_sessions_anterieures_a_la_migration_sans_second_facteur_exige(db,
     await db.flush()
     await db.refresh(session)
     assert session.mfa_required is False and session.mfa_verified_at is None
+
+
+def test_migration_0012_reprend_les_echecs_du_journal(database_url):
+    """Un TOTP bloqué avant la 0012 (échecs comptés dans le journal) le reste après."""
+    alembic = Config(os.path.join(API_DIR, "alembic.ini"))
+    engine = create_engine(database_url, poolclass=NullPool)
+    enterprise, blocked, recovered, pending = (uuid.uuid4() for _ in range(4))
+    command.downgrade(alembic, "0011")
+    try:
+        with engine.begin() as connection:
+            connection.execute(text("INSERT INTO enterprise (id, name) VALUES (:id, 'Migration')"), {"id": enterprise})
+            for user in (blocked, recovered, pending):
+                connection.execute(text(
+                    "INSERT INTO app_user (id, email, first_name, last_name, role, enterprise_id) "
+                    "VALUES (:id, :email, 'M', 'M', 'owner', :enterprise)"),
+                    {"id": user, "email": f"{user}@migration.test", "enterprise": enterprise})
+                connection.execute(text(
+                    "INSERT INTO totp_factor (user_id, secret_ciphertext, confirmed_at) "
+                    "VALUES (:user, '\\x00', :confirmed_at)"),
+                    {"user": user, "confirmed_at": None if user == pending else datetime.now(UTC)})
+
+            def event(user, kind, days_ago):
+                connection.execute(text(
+                    "INSERT INTO auth_event (user_id, event, occurred_at) "
+                    "VALUES (:user, :kind, now() - make_interval(days => :days))"),
+                    {"user": user, "kind": kind, "days": days_ago})
+
+            # Aucune réussite : tous les échecs comptent.
+            for day in range(100):
+                event(blocked, "mfa_failed", day + 1)
+            # Échecs avant la dernière réussite oubliés, 2 après.
+            for day in (9, 8, 1, 0):
+                event(recovered, "mfa_failed", day)
+            event(recovered, "mfa_succeeded", 5)
+            event(pending, "mfa_failed", 1)
+        command.upgrade(alembic, "head")
+        with engine.connect() as connection:
+            counts = dict(connection.execute(text(
+                "SELECT user_id, failed_attempts FROM totp_factor WHERE user_id IN (:a, :b, :c)"),
+                {"a": blocked, "b": recovered, "c": pending}).all())
+        assert counts == {blocked: 100, recovered: 2, pending: 0}
+    finally:
+        command.upgrade(alembic, "head")
+        with engine.begin() as connection:
+            connection.execute(text("DELETE FROM auth_event WHERE user_id IN (:a, :b, :c)"),
+                               {"a": blocked, "b": recovered, "c": pending})
+            connection.execute(text("DELETE FROM app_user WHERE enterprise_id = :id"), {"id": enterprise})
+            connection.execute(text("DELETE FROM enterprise WHERE id = :id"), {"id": enterprise})
+        engine.dispose()

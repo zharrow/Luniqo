@@ -2,7 +2,7 @@
 
 Ce fichier dit à tout agent (Claude Code, Codex…) **ce que l'on fait dans ce dépôt, pourquoi, et où on en est**. La référence technique (stack, architecture, règles de code) est dans [CLAUDE.md](CLAUDE.md).
 
-> Dernière mise à jour : 2026-10-10. Mettre à jour « État d'avancement » à la fin de chaque session de travail.
+> Dernière mise à jour : 2026-10-27. Mettre à jour « État d'avancement » à la fin de chaque session de travail.
 
 ## La mission en une phrase
 
@@ -237,7 +237,7 @@ Statuts des preuves (repris du fil rouge) : à vérifier / absent / partiel / d�
 
 **Prochaine tâche : LUN-114** (squelette du front v2), branche `feat/LUN-114-squelette-front-v2` depuis `develop`, une fois la PR d'ADR-002 fusionnée : dossier `front/` (Vite, TypeScript strict, Tailwind v4, shadcn/ui), TanStack Router et Query, Storybook 10 (règles d'ADR-002 § 12), types générés depuis `/api/openapi.json` (`openapi-typescript` + `openapi-fetch`) et vérifiés en CI, écran de connexion avec second facteur comme premier écran, build copié dans l'image nginx `web` (`try_files` vers `index.html`, en-têtes de sécurité, CSP), premiers tests (Vitest), parcours rejoué sur une pile Docker isolée. Versions à relire sur npm le jour même. **LUN-54** (purge RGPD : sessions expirées, `auth_event` au-delà de 6 mois sans descendre sous la fenêtre de 15 min de la limitation des tentatives, invitations expirées ; commande `python -m app.purge`) reste à faire avant toute donnée réelle.
 
-**Ensuite** : les écrans du MVP sur le front v2, puis les passkeys (LUN-69, sous-tâches back LUN-85 et LUN-86) selon [ADR-004](M2/decisions/ADR-004-double-authentification.md) : `webauthn` (py_webauthn 3.0.1 au 2026-10-09), `userVerification: required`, origine et `rpId` contrôlés, compteur de signatures, plusieurs passkeys nommées, tests avec authentificateur simulé (attestation `none`, ES256), migration suivante (0012). Côté API seule, il ne reste que LUN-54. Une mutation équivalente subsiste dans LUN-77 (filtre de crèche de `service.checks_of_day`, sans effet observable).
+**Ensuite** : les écrans du MVP sur le front v2, puis les passkeys (LUN-69, sous-tâches back LUN-85 et LUN-86) selon [ADR-004](M2/decisions/ADR-004-double-authentification.md) : `webauthn` (py_webauthn 3.0.1 au 2026-10-09), `userVerification: required`, origine et `rpId` contrôlés, compteur de signatures, plusieurs passkeys nommées, tests avec authentificateur simulé (attestation `none`, ES256), migration suivante (0013). Une mutation équivalente subsiste dans LUN-77 (filtre de crèche de `service.checks_of_day`, sans effet observable).
 
 **Méthode suivie à chaque ticket** : branche depuis `develop` → module `api/app/<domaine>/` (règles pures dans `policy.py`) → migration numérotée suivante → tests unitaires et d'intégration (`api/scripts/test-db.sh up`) → mutations (introduire chaque faille visée, vérifier qu'un test échoue, restaurer) → parcours sur une pile Docker isolée (`docker compose -p <nom>`) → registre des choix techniques, `CHANGELOG.md` (section « Non publié »), `api/README.md`, `CLAUDE.md`, ce fichier → PR vers `develop`, suivi de la CI, des conventions de PR **et du contrôle Vercel** (ANO-003). Florent (ou un relecteur de l'équipe) relit et fusionne. Ne pas empiler les PR.
 
