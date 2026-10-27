@@ -4,7 +4,7 @@ API de la v2 de Luniqo, en FastAPI ([ADR-001](../M2/decisions/ADR-001-reecriture
 Elle remplace progressivement l'accès direct du navigateur à Supabase de la v1.
 
 État au 2026-10-10 : **parcours central complet côté API** (LUN-003 à LUN-011) ;
-fiche de ménage : pièces, catalogue des tâches et fréquences (LUN-76), coches depuis la tablette (LUN-77), historique et export (LUN-78). Comptes des employés par invitation et changement de mot de passe (LUN-55).
+fiche de ménage : pièces, catalogue des tâches et fréquences (LUN-76), coches depuis la tablette (LUN-77), historique et export (LUN-78). Comptes des employés par invitation et changement de mot de passe (LUN-55). Purge RGPD des sessions expirées, du journal au-delà de 6 mois et des invitations expirées (LUN-54, 2026-10-27).
 Second facteur obligatoire pour la direction et l'éditeur
 ([ADR-004](../M2/decisions/ADR-004-double-authentification.md), LUN-006) : TOTP
 et codes de secours ; les passkeys suivent. Pas encore de données réelles
@@ -120,6 +120,7 @@ api/
 │   ├── family/        invitations des parents, consultation famille
 │   ├── cleaning/      fiche de ménage : pièces, catalogue, fréquences (règles pures : policy.py)
 │   ├── mfa/           second facteur : TOTP chiffré (crypto.py), codes de secours, règles pures (policy.py)
+│   ├── purge/         purge RGPD : durées de conservation (policy.py), commande python -m app.purge
 │   ├── security.py    contrôle de l'en-tête Origin (CSRF)
 │   ├── config.py      configuration lue dans l'environnement
 │   ├── db.py          moteur SQLAlchemy asynchrone, session par requête
@@ -188,9 +189,9 @@ cd api
 python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements-dev.txt
 
-pytest                          # tests unitaires, sans base de données (298 au 2026-10-10)
+pytest                          # tests unitaires, sans base de données (309 au 2026-10-27)
 
-# Tests d'intégration sur une vraie PostgreSQL (155 au 2026-10-10), base jetable
+# Tests d'intégration sur une vraie PostgreSQL (164 au 2026-10-27), base jetable
 # construite avec l'image luniqo/db du TP Docker (cd ../docker && docker compose build db) :
 scripts/test-db.sh up           # affiche la ligne export TEST_DB_... à copier
 export TEST_DB_ADDR=127.0.0.1:55432 TEST_DB_NAME=luniqo_test TEST_DB_PASSWORD=luniqo-test
@@ -204,6 +205,7 @@ export DB_ADDR=localhost:5432 DB_PASSWORD=...
 export MFA_KEY=...               # openssl rand -base64 32, à conserver : une autre clé rend les TOTP illisibles
 alembic upgrade head            # appliquer les migrations
 python -m app.seed              # données de démonstration
+python -m app.purge             # purge RGPD (LUN-54) ; aussi lancée à chaque démarrage du conteneur
 uvicorn app.main:app --reload   # http://localhost:8000/api/docs
 ```
 
