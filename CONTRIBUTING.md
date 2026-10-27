@@ -3,7 +3,8 @@
 Règles de travail de l'équipe : tickets, branches, versions, pull requests.
 Elles ont été décidées en groupe le 2026-10-09 (cours « Coordination Front &
 Back ») à partir d'un premier brouillon de stratégie de branches rédigé par
-l'équipe. Installation du projet : [README.md](README.md).
+l'équipe. Installation du projet : [README.md](README.md). Première
+contribution : suivre le parcours de [ONBOARDING.md](ONBOARDING.md).
 
 ## En bref
 
