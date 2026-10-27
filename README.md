@@ -44,18 +44,20 @@ parcours qui doit fonctionner de bout en bout :
 
 ### Deux versions dans le même dépôt
 
-| | v1 (racine du dépôt) | v2 (dossier [`api/`](api/)) |
+| | v1 (racine du dépôt) | v2 (dossiers [`api/`](api/) et [`front/`](front/)) |
 |---|---|---|
 | Rôle | Application d'origine, **gelée** : seuls les correctifs de sécurité y entrent | Réécriture progressive avec un vrai backend |
-| Technologies | Next.js 16, React 18, Supabase Cloud (accès direct à la base depuis le navigateur) | FastAPI (Python 3.14), PostgreSQL 18, SQLAlchemy asynchrone, Alembic |
-| État au 2026-10-09 | Fonctionne sur Supabase, sans tests | Parcours central complet **côté API**, 369 tests, second facteur. Le front v2 reste à construire ([ADR-002](M2/decisions/), à ouvrir) |
+| Technologies | Next.js 16, React 18, Supabase Cloud (accès direct à la base depuis le navigateur) | API : FastAPI (Python 3.14), PostgreSQL 18, SQLAlchemy asynchrone, Alembic. Front : React + Vite, TanStack Router et Query, client typé généré depuis le schéma OpenAPI, Storybook ([ADR-002](M2/decisions/ADR-002-front-v2.md)) |
+| État au 2026-10-27 | En production sur Vercel, gelée jusqu'à la bascule vers la v2 | Parcours central et fiche de ménage complets **côté API**, second facteur, purge RGPD. Front v2 : connexion avec second facteur et premier écran (LUN-114) |
 
 Pourquoi réécrire : [ADR-001](M2/decisions/ADR-001-reecriture-backend.md). La
 logique métier et les contrôles d'accès de la v1 s'exécutent dans le navigateur.
 
 ```
-Navigateur ──HTTP :8080──▶ web (nginx) ──/──────▶ front (Next.js, v1)  ──▶ Supabase Cloud
+Navigateur ──HTTP :8080──▶ web (nginx) ──/──────▶ fichiers du front v2 (React + Vite), servis par nginx
                                        └─/api/──▶ api (FastAPI, v2) ──SQL──▶ db (PostgreSQL)
+
+v1 : Vercel (Next.js) ──▶ Supabase Cloud, hors de la pile Docker
 ```
 
 ## Installer le projet
@@ -67,7 +69,7 @@ Navigateur ──HTTP :8080──▶ web (nginx) ──/──────▶ fr
 | Git | récent | tout |
 | Docker avec Compose v2 (`docker compose`) | | la pile complète, la base de test |
 | Python | 3.14 (version de l'image et de la CI) | l'API v2 |
-| Node.js et pnpm | pnpm, lockfile au format 9 | le front v1 |
+| Node.js et pnpm | Node 22.12+, pnpm 11 pour le front v2 (`corepack pnpm`), pnpm 10 suffit pour la v1 | le front v2, le front v1 |
 
 ```bash
 git clone https://github.com/zharrow/Luniqo.git
@@ -79,13 +81,13 @@ git switch develop          # branche d'intégration : on part toujours d'elle
 
 ```bash
 cd docker
-docker compose up -d --build     # construit les 5 images et lance les 4 services
-docker compose ps                # db, api, front et web doivent être "healthy"
+docker compose up -d --build     # construit les 4 images et lance les 3 services
+docker compose ps                # db, api et web doivent être "healthy"
 ```
 
 | Adresse | Contenu |
 |---|---|
-| <http://localhost:8080> | l'application (front v1) |
+| <http://localhost:8080> | l'application (front v2) |
 | <http://localhost:8080/api/docs> | documentation Swagger de l'API v2, pour l'essayer |
 | <http://localhost:8080/api/health> | état de l'API et de sa base |
 
@@ -118,7 +120,19 @@ ruff check .                            # lint, comme en CI
 Lancer l'API en local, nouvelle migration, variables d'environnement :
 [api/README.md](api/README.md).
 
-### Option 3 : le front v1
+### Option 3 : le front v2
+
+```bash
+cd front
+corepack pnpm install
+corepack pnpm dev            # http://localhost:5173, l'API passe par la pile Docker (port 8080)
+corepack pnpm test           # tests unitaires, de composants et stories
+corepack pnpm storybook      # documentation des composants, http://127.0.0.1:6006
+```
+
+Tout le détail : [front/README.md](front/README.md).
+
+### Option 4 : le front v1
 
 ```bash
 pnpm install
@@ -163,8 +177,8 @@ orchestrer avec docker compose. Version rendue : tag `tp-docker-v1`.
 | Image | Rôle pour le TP | Contenu |
 |---|---|---|
 | `base` | socle commun | Alpine Linux construit depuis `scratch`, tini, utilisateur non-root |
-| `web` | **serveur web** | nginx, seul point d'entrée, relaie vers le front et l'API |
-| `front` | **front** | l'application Next.js de ce dépôt, en serveur autonome |
+| `web` | **serveur web** | nginx, seul point d'entrée, relaie vers l'API ; depuis LUN-114, construit et sert aussi le front v2 |
+| `front` | **front** (au tag du rendu) | l'application Next.js v1, en serveur autonome ; retirée de la pile depuis LUN-114 |
 | `api` | **back** | l'API FastAPI de la v2 (dossier [`api/`](api/)) |
 | `db` | base de données | PostgreSQL 18, données dans un volume |
 
@@ -173,7 +187,7 @@ orchestrer avec docker compose. Version rendue : tag `tp-docker-v1`.
 | Aucune image Docker Hub | Toutes les images partent de `scratch` (archive officielle d'Alpine) ou de notre image `base` ; compose ne fait jamais de `pull` |
 | Au moins un front, un back et un serveur web | `front`, `api` et `web`, plus `db` |
 | Arguments de ressources au run et dans le compose | Limites CPU, mémoire et processus réglées dans [`docker/.env`](docker/.env), plus des arguments applicatifs alignés sur ces limites (workers, connexions, mémoire de Node.js...) |
-| Dépendances, manipulations sur l'OS, arguments, entrypoints expliqués | Un README par image : [base](docker/base/README.md), [db](docker/db/README.md), [api](docker/api/README.md), [front](docker/front/README.md), [web](docker/web/README.md) |
+| Dépendances, manipulations sur l'OS, arguments, entrypoints expliqués | Un README par image : [base](docker/base/README.md), [db](docker/db/README.md), [api](docker/api/README.md), [web](docker/web/README.md), et [front](https://github.com/zharrow/Luniqo/blob/tp-docker-v1/docker/front/README.md) au tag du rendu |
 | Limitations de ressources expliquées | Justifiées par des mesures réelles (repos et charge) dans le [README du dossier docker](docker/README.md) |
 | SIGTERM gérés | Chaque service s'arrête proprement (signal adapté à chaque programme) ; toute la pile s'arrête en moins d'une seconde |
 | Ordre de démarrage | `db` et `front` en parallèle, puis `api` quand la base est saine, puis `web` quand l'API et le front sont sains (healthchecks) |
@@ -182,17 +196,17 @@ orchestrer avec docker compose. Version rendue : tag `tp-docker-v1`.
 Tout le détail (architecture, choix, mesures, problèmes rencontrés) est dans
 [`docker/README.md`](docker/README.md).
 
-Le front utilise encore Supabase Cloud pour la connexion (v1). Pour pouvoir s'y
-connecter, renseigner `NEXT_PUBLIC_SUPABASE_URL` et `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-dans le `.env` à la racine (non versionné). Sans ce fichier, les pages
-s'affichent mais la connexion de la v1 échoue.
+Depuis LUN-114, la pile n'a plus de conteneur `front` : le front v2 est construit
+dans l'image `web` et servi par nginx ([ADR-002](M2/decisions/ADR-002-front-v2.md)).
+Le tableau ci-dessus décrit la version rendue.
 
 ## Carte du dépôt
 
 ```
 app/, components/, lib/   front v1 (Next.js), gelé
 api/                      API v2 (FastAPI) : code, migrations, tests
-docker/                   conteneurisation : 5 images, compose
+front/                    front v2 (React + Vite) : écrans, Storybook, tests
+docker/                   conteneurisation : 4 images, compose
 supabase/                 migrations SQL de la v1
 .github/                  CI, conventions de PR, étiquettes, modèle de PR
 docs/projet/              organisation du projet : Jira, import du backlog

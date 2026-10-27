@@ -13,6 +13,12 @@ Chaque ligne cite son ticket Jira `LUN-<n>`.
 - Comptes des employés : la direction crée le compte et transmet un lien d'invitation à usage unique, l'employé choisit son mot de passe ; départ d'un salarié avec fermeture immédiate de ses sessions ; changement de mot de passe qui ferme les autres sessions (LUN-55).
 - Protection des branches `develop`, `staging` et `main` : PR obligatoire, relectures, CI et conventions de PR obligatoires, ni suppression ni push forcé ; tags de version non modifiables ; branche par défaut `develop` ; configuration exportée dans `.github/rulesets/` (LUN-60).
 - Purge RGPD : sessions expirées, journal des connexions au-delà de 6 mois et invitations expirées supprimés à chaque démarrage de l'API et par la commande `python -m app.purge` (LUN-54).
+- Front v2 (`front/`, React + Vite) : connexion, second facteur (code ou code de secours), activation d'une application d'authentification avec ses codes de secours, déconnexion, et un premier écran qui liste les crèches accessibles. Client d'API typé, généré depuis le schéma OpenAPI ; Storybook pour documenter les composants ; tests unitaires, de composants, de stories (accessibilité comprise) et parcours de bout en bout (LUN-114).
+- CI : vérification du front v2 (contrat d'API à jour, lint, typage, tests, build, Storybook) et parcours Playwright contre la pile démarrée (LUN-114).
+
+### Modifié
+
+- La pile Docker sert le front v2 depuis l'image `web` (nginx), avec une politique de sécurité du contenu stricte et un cache adapté ; le conteneur du front Next.js v1 est retiré, la pile compte 4 images. La v1 reste en production sur Vercel jusqu'à la bascule (LUN-114).
 
 ### Sécurité
 

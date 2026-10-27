@@ -80,7 +80,8 @@ docker compose ps
 
 **Vérifier** :
 
-- [ ] `docker compose ps` montre `db`, `api`, `front` et `web` à l'état `healthy` ;
+- [ ] `docker compose ps` montre `db`, `api` et `web` à l'état `healthy` ;
+- [ ] <http://localhost:8080> affiche la page de connexion du front v2 ;
 - [ ] <http://localhost:8080/api/health> répond ;
 - [ ] <http://localhost:8080/api/docs> affiche la documentation Swagger de l'API.
 
