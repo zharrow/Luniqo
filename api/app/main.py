@@ -22,6 +22,7 @@ from app.db import SessionDep, get_engine
 from app.family.router import router as family_router
 from app.mfa.router import router as mfa_router
 from app.nurseries.router import router as nurseries_router
+from app.passkeys.router import router as passkeys_router
 from app.schemas import Health
 from app.security import OriginCheckMiddleware
 from app.tablets.router import router as tablets_router
@@ -47,6 +48,7 @@ app = FastAPI(
 app.add_middleware(OriginCheckMiddleware)
 app.include_router(auth_router)
 app.include_router(mfa_router)
+app.include_router(passkeys_router)
 app.include_router(nurseries_router)
 app.include_router(tablets_router)
 app.include_router(children_router)

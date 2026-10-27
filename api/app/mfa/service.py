@@ -8,7 +8,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime
 
-from sqlalchemy import delete, func, select, update
+from sqlalchemy import delete, exists, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import passwords
@@ -18,6 +18,7 @@ from app.auth.service import Client, WebSession
 from app.mfa import crypto, policy
 from app.mfa.models import BackupCode, TotpFactor
 from app.mfa.policy import MfaState
+from app.passkeys.models import Passkey
 
 
 class MfaUnavailable(Exception):
@@ -74,17 +75,29 @@ async def _pending_totp(db: AsyncSession, user_id: uuid.UUID) -> TotpFactor | No
     return await db.scalar(select(TotpFactor).where(TotpFactor.user_id == user_id, TotpFactor.confirmed_at.is_(None)))
 
 
-async def _unused_backup_codes(db: AsyncSession, user_id: uuid.UUID) -> int:
+async def unused_backup_codes(db: AsyncSession, user_id: uuid.UUID) -> int:
     return await db.scalar(select(func.count()).select_from(BackupCode).where(
         BackupCode.user_id == user_id, BackupCode.used_at.is_(None))) or 0
 
 
+async def has_factor(db: AsyncSession, user_id: uuid.UUID) -> bool:
+    """TOTP confirmé ou passkey (les codes de secours ne sont pas un facteur, ils servent à la récupération)."""
+    return bool(await db.scalar(select(
+        exists().where(TotpFactor.user_id == user_id, TotpFactor.confirmed_at.is_not(None))
+        | exists().where(Passkey.user_id == user_id)
+    )))
+
+
+async def _passkey_count(db: AsyncSession, user_id: uuid.UUID) -> int:
+    return await db.scalar(select(func.count()).select_from(Passkey).where(Passkey.user_id == user_id)) or 0
+
+
 async def _state(db: AsyncSession, web: WebSession) -> MfaState:
-    has_factor = await _confirmed_totp(db, web.user.id) is not None
-    return policy.session_state(web.session.mfa_required, web.session.mfa_verified_at, has_factor)
+    return policy.session_state(web.session.mfa_required, web.session.mfa_verified_at,
+                                await has_factor(db, web.user.id))
 
 
-async def _check_management(db: AsyncSession, web: WebSession, now: datetime) -> MfaState:
+async def check_management(db: AsyncSession, web: WebSession, now: datetime) -> MfaState:
     state = await _state(db, web)
     recent = policy.recently_authenticated(web.session.created_at, web.session.mfa_verified_at, now)
     refusal = policy.management_refusal(state, recent)
@@ -93,7 +106,7 @@ async def _check_management(db: AsyncSession, web: WebSession, now: datetime) ->
     return state
 
 
-async def _revoke_other_sessions(db: AsyncSession, web: WebSession, client: Client, now: datetime) -> None:
+async def revoke_other_sessions(db: AsyncSession, web: WebSession, client: Client, now: datetime) -> None:
     """Un facteur ajouté, changé ou retiré ferme les autres sessions du compte (ADR-004)."""
     result = await db.execute(delete(UserSession).where(UserSession.user_id == web.user.id,
                                                         UserSession.id != web.session.id))
@@ -101,7 +114,7 @@ async def _revoke_other_sessions(db: AsyncSession, web: WebSession, client: Clie
         _event(db, AuthEventType.SESSIONS_REVOKED, web, client, now, detail="mfa_changed")
 
 
-async def _new_backup_codes(db: AsyncSession, user_id: uuid.UUID, now: datetime) -> list[str]:
+async def new_backup_codes(db: AsyncSession, user_id: uuid.UUID, now: datetime) -> list[str]:
     """Remplace les codes de secours du compte ; renvoie les nouveaux, affichés une seule fois."""
     await db.execute(delete(BackupCode).where(BackupCode.user_id == user_id))
     codes = [policy.new_backup_code() for _ in range(policy.BACKUP_CODE_COUNT)]
@@ -112,7 +125,7 @@ async def _new_backup_codes(db: AsyncSession, user_id: uuid.UUID, now: datetime)
     return [policy.format_backup_code(code) for code in codes]
 
 
-async def _throttle(db: AsyncSession, web: WebSession, client: Client, now: datetime) -> None:
+async def throttle(db: AsyncSession, web: WebSession, client: Client, now: datetime) -> None:
     """Mêmes seuils que le mot de passe, comptés par compte (ADR-004)."""
     count, last = (await db.execute(
         select(func.count(), func.max(AuthEvent.occurred_at)).where(
@@ -144,9 +157,9 @@ async def _fail(db: AsyncSession, web: WebSession, client: Client, now: datetime
 
 async def status(db: AsyncSession, web: WebSession) -> MfaStatus:
     totp = await _confirmed_totp(db, web.user.id)
-    state = policy.session_state(web.session.mfa_required, web.session.mfa_verified_at, totp is not None)
+    state = await _state(db, web)
     return MfaStatus(state=state, totp=totp, totp_setup_pending=await _pending_totp(db, web.user.id) is not None,
-                     backup_codes_remaining=await _unused_backup_codes(db, web.user.id))
+                     backup_codes_remaining=await unused_backup_codes(db, web.user.id))
 
 
 # --- Activation du TOTP -----------------------------------------------------------
@@ -154,7 +167,7 @@ async def status(db: AsyncSession, web: WebSession) -> MfaStatus:
 async def start_totp(db: AsyncSession, web: WebSession, key: bytes | None, now: datetime) -> tuple[str, str]:
     """Crée un secret en attente de confirmation ; renvoie (secret en base 32, URI du QR code)."""
     key = _key(key)
-    await _check_management(db, web, now)
+    await check_management(db, web, now)
     # Une seule activation en cours : recommencer annule la précédente.
     await db.execute(delete(TotpFactor).where(TotpFactor.user_id == web.user.id, TotpFactor.confirmed_at.is_(None)))
     secret = policy.new_totp_secret()
@@ -173,11 +186,11 @@ async def confirm_totp(db: AsyncSession, web: WebSession, code: str, key: bytes 
     compte), None sinon : les codes existants restent valables.
     """
     key = _key(key)
-    await _check_management(db, web, now)
+    await check_management(db, web, now)
     pending = await _pending_totp(db, web.user.id)
     if pending is None:
         raise Refused("no_pending_setup")
-    await _throttle(db, web, client, now)
+    await throttle(db, web, client, now)
     secret = crypto.decrypt_secret(key, web.user.id, pending.secret_ciphertext)
     match = policy.check_totp(secret, code, now, last_used_step=None)
     if match.step is None:
@@ -195,8 +208,8 @@ async def confirm_totp(db: AsyncSession, web: WebSession, code: str, key: bytes 
     # complète, et les prochaines connexions l'exigeront.
     web.session.mfa_required = True
     web.session.mfa_verified_at = now
-    codes = None if await _unused_backup_codes(db, web.user.id) else await _new_backup_codes(db, web.user.id, now)
-    await _revoke_other_sessions(db, web, client, now)
+    codes = None if await unused_backup_codes(db, web.user.id) else await new_backup_codes(db, web.user.id, now)
+    await revoke_other_sessions(db, web, client, now)
     _event(db, AuthEventType.TOTP_ENABLED, web, client, now, detail="replaced" if replaced else None)
     if codes:
         _event(db, AuthEventType.BACKUP_CODES_GENERATED, web, client, now)
@@ -212,7 +225,7 @@ async def verify(db: AsyncSession, web: WebSession, code: str, key: bytes | None
     key = _key(key)
     if not web.session.mfa_pending:
         raise Refused("not_pending")
-    await _throttle(db, web, client, now)
+    await throttle(db, web, client, now)
 
     if policy.normalize_totp_code(code) is not None:
         method = "totp"
@@ -251,6 +264,13 @@ async def verify(db: AsyncSession, web: WebSession, code: str, key: bytes | None
             raise await _fail(db, web, client, now, "backup_code")
         used.used_at = now
 
+    await complete_verification(db, web, client, now, method)
+    return method
+
+
+async def complete_verification(db: AsyncSession, web: WebSession, client: Client, now: datetime,
+                                method: str) -> None:
+    """Second facteur présenté (TOTP, code de secours ou passkey) : la session devient complète."""
     web.session.mfa_verified_at = now
     # Une réussite, même par code de secours, remet le compteur à zéro : c'est ainsi que le TOTP se débloque.
     await db.execute(update(TotpFactor)
@@ -258,33 +278,34 @@ async def verify(db: AsyncSession, web: WebSession, code: str, key: bytes | None
                      .values(failed_attempts=0))
     _event(db, AuthEventType.MFA_SUCCEEDED, web, client, now, detail=method)
     await db.commit()
-    return method
 
 
 # --- Retrait et codes de secours --------------------------------------------------
 
 async def remove_totp(db: AsyncSession, web: WebSession, client: Client, now: datetime) -> None:
-    await _check_management(db, web, now)
+    await check_management(db, web, now)
     if await _confirmed_totp(db, web.user.id) is None:
         raise Refused("no_factor")
-    # Seul facteur possible pour l'instant (les passkeys viendront) : la
-    # direction et l'éditeur ne peuvent pas le retirer, seulement le remplacer.
-    if not policy.can_remove_last_factor(web.user.role):
+    passkeys = await _passkey_count(db, web.user.id)
+    # Sans passkey, la direction et l'éditeur ne peuvent pas retirer leur TOTP,
+    # seulement le remplacer.
+    if not passkeys and not policy.can_remove_last_factor(web.user.role):
         raise Refused("last_factor")
     await db.execute(delete(TotpFactor).where(TotpFactor.user_id == web.user.id))
-    # Sans facteur, les codes de secours ne servent plus à rien.
-    await db.execute(delete(BackupCode).where(BackupCode.user_id == web.user.id))
-    await _revoke_other_sessions(db, web, client, now)
+    if not passkeys:
+        # Sans facteur, les codes de secours ne servent plus à rien.
+        await db.execute(delete(BackupCode).where(BackupCode.user_id == web.user.id))
+    await revoke_other_sessions(db, web, client, now)
     _event(db, AuthEventType.TOTP_REMOVED, web, client, now)
     await db.commit()
 
 
 async def regenerate_backup_codes(db: AsyncSession, web: WebSession, client: Client, now: datetime) -> list[str]:
-    await _check_management(db, web, now)
-    if await _confirmed_totp(db, web.user.id) is None:
+    await check_management(db, web, now)
+    if not await has_factor(db, web.user.id):
         raise Refused("no_factor")
-    codes = await _new_backup_codes(db, web.user.id, now)
-    await _revoke_other_sessions(db, web, client, now)
+    codes = await new_backup_codes(db, web.user.id, now)
+    await revoke_other_sessions(db, web, client, now)
     _event(db, AuthEventType.BACKUP_CODES_GENERATED, web, client, now, detail="regenerated")
     await db.commit()
     return codes

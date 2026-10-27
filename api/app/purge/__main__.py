@@ -19,8 +19,8 @@ async def main() -> None:
     finally:
         await get_engine().dispose()
     print(f"[api] purge : {report.sessions} session(s) expirée(s), {report.auth_events} événement(s) du journal "
-          f"de plus de 6 mois, {report.staff_invitations + report.family_invitations} invitation(s) expirée(s) "
-          "supprimés", flush=True)
+          f"de plus de 6 mois, {report.staff_invitations + report.family_invitations} invitation(s) et "
+          f"{report.webauthn_challenges} défi(s) de passkey expirés supprimés", flush=True)
 
 
 if __name__ == "__main__":

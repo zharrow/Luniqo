@@ -123,7 +123,8 @@ async def test_purge_idempotente(db, world):
     db.add(AuthEvent(occurred_at=LIMIT.auth_event, event=AuthEventType.LOGOUT.value))
     await db.flush()
     assert (await purge(db, NOW)).auth_events == 1
-    assert await purge(db, NOW) == PurgeReport(sessions=0, auth_events=0, staff_invitations=0, family_invitations=0)
+    assert await purge(db, NOW) == PurgeReport(sessions=0, auth_events=0, staff_invitations=0, family_invitations=0,
+                                                webauthn_challenges=0)
 
 
 async def test_session_en_cours_intacte_apres_la_purge(clients, db, world):

@@ -145,6 +145,10 @@ class AuthEventType(enum.StrEnum):
     TOTP_ENABLED = "totp_enabled"
     TOTP_REMOVED = "totp_removed"
     BACKUP_CODES_GENERATED = "backup_codes_generated"
+    # Passkeys (LUN-69). Une connexion par passkey est un login_succeeded de
+    # detail passkey ; son échec, un login_failed de detail passkey.
+    PASSKEY_ADDED = "passkey_added"
+    PASSKEY_REMOVED = "passkey_removed"
 
 
 class AuthEvent(Base):

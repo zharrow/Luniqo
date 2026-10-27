@@ -6,6 +6,7 @@ import pytest
 
 from app.accounts import policy as accounts_policy
 from app.auth import policy as auth_policy
+from app.passkeys import policy as passkey_policy
 from app.purge import policy
 from app.tablets import policy as tablet_policy
 
@@ -37,6 +38,11 @@ def test_invitation_supprimee_des_qu_elle_est_inutilisable():
 
     assert not usable(LIMIT.invitation_expires)
     assert usable(LIMIT.invitation_expires + TICK)
+
+
+def test_defi_de_passkey_supprime_des_qu_il_est_refuse():
+    assert not passkey_policy.challenge_usable(LIMIT.challenge_expires, NOW)
+    assert passkey_policy.challenge_usable(LIMIT.challenge_expires + TICK, NOW)
 
 
 def _months_before(day: date, months: int) -> date:
