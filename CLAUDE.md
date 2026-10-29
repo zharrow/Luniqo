@@ -23,7 +23,7 @@ Les docs historiques annoncent les phases 0 à 7 « 100 % complètes ». **Rien 
 | Données / Auth | Supabase Cloud : PostgreSQL, Auth, Storage, Realtime (`@supabase/ssr`, `@supabase/supabase-js`) |
 | Intégrations | Stripe (abonnements), Resend (e-mails), PostHog (analytics produit, serveurs EU), OpenFoodFacts, jsPDF |
 | Gestionnaire de paquets | **pnpm** (`pnpm-lock.yaml`). Les scripts appellent encore `npx` |
-| Tests / CI | v1 : **aucun** test, lint cassé (ANO-002). v2 : pytest (unitaires + intégration PostgreSQL), CI GitHub Actions (`.github/workflows/ci.yml`, LUN-008) |
+| Tests / CI | v1 : **aucun** test, lint cassé (ANO-002). v2 : pytest (unitaires + intégration PostgreSQL) ; front v2 : Vitest (unitaires, composants et stories dans Chromium), Playwright contre la pile ; CI GitHub Actions (`.github/workflows/ci.yml`, LUN-008, LUN-114) |
 
 README.md et l'ancien CLAUDE.md citent d'autres versions (React 19, Next 15). Seul package.json fait foi.
 
@@ -54,13 +54,26 @@ uvicorn app.main:app --reload   # Swagger sur /api/docs
 
 Stack v2 : Python 3.14, FastAPI, SQLAlchemy 2 asynchrone + psycopg 3, Alembic, pytest. Dépendances figées dans `api/requirements.txt` (voir [api/README.md](api/README.md)). Routes et accès base **asynchrones** : les routes synchrones ont été écartées après mesure (dépassement de la limite de processus du conteneur sous charge).
 
+### Front v2 (`front/`)
+
+```bash
+cd front && corepack pnpm install   # pnpm 11 (champ packageManager) ; délai de 24 h, scripts d'installation refusés sauf liste
+corepack pnpm dev                    # http://localhost:5173, /api relayé vers la pile (localhost:8080)
+corepack pnpm lint && corepack pnpm typecheck && corepack pnpm test
+corepack pnpm api:types              # régénère src/api/ depuis le code de l'API (Python de l'API requis) ; la CI échoue sinon
+corepack pnpm storybook              # http://127.0.0.1:6006
+E2E_PASSWORD=… corepack pnpm test:e2e   # Playwright contre une pile neuve
+```
+
+Stack : React 19 + Vite 8, TypeScript 6 strict, React Compiler, TanStack Router (routes par fichier) et Query, `openapi-fetch` + `openapi-react-query`, Tailwind v4 + shadcn/ui, React Hook Form + Zod 4, Storybook 10, Vitest 5 + MSW 3, Playwright, ESLint 10. Détail : [front/README.md](front/README.md), choix : [ADR-002](M2/decisions/ADR-002-front-v2.md). Pièges rencontrés : la CLI shadcn a installé un paquet `cn` non demandé (relire ses ajouts) ; MSW 3 nomme `onUnhandledFrame` l'ancien `onUnhandledRequest`.
+
 ### Pile Docker (`docker/`)
 
 ```bash
-cd docker && docker compose --env-file .env --env-file ../.env up -d --build   # db, api, front, web ; http://localhost:8080
+cd docker && docker compose --env-file .env --env-file ../.env up -d --build   # db, api, web ; http://localhost:8080
 ```
 
-Le compose construit l'API depuis `../api` et le front depuis la racine du dépôt.
+Le compose construit l'API depuis `../api` ; l'image `web` construit le front v2 (`front/`, contexte = racine du dépôt) et sert ses fichiers.
 
 `pnpm db:reset` lance le même script que `seed`. Ne jamais l'exécuter sans savoir quelle base est visée (voir règle 6 d'AGENTS.md).
 
@@ -71,7 +84,8 @@ Variables d'environnement (`.env.local`, ignoré par git) : `NEXT_PUBLIC_SUPABAS
 ```
 app/                 routes Next.js (App Router), une route group par rôle
 components/          ui/ (shadcn), layout/, shared/, forms/, dashboard/, analytics/, tablet/
-api/                 v2 : API FastAPI (squelette), migrations Alembic, tests
+api/                 v2 : API FastAPI, migrations Alembic, tests
+front/               v2 : front React + Vite, Storybook, tests (Vitest, Playwright)
 lib/services/        54 services d'accès aux données (un par domaine), exécutés pour la plupart dans le navigateur
 lib/actions/         server actions (création d'utilisateurs, invitations, Stripe) — clé service role
 lib/contexts/        AuthContext, NurseryContext, TabletAuthContext, PopupEventContext
@@ -83,7 +97,7 @@ scripts/seed.ts      jeu de données de démo
 proxy.ts             middleware Next 16 (ex-middleware.ts) → lib/supabase/middleware.ts
 docs/                documentation historique du produit (design system, phases, Stripe, PostHog)
 M2/                  travaux et preuves du M2 : décisions, anomalies, fiches de cours (voir AGENTS.md)
-docker/              conteneurisation : images (base, db, api, front, web), compose, documentation
+docker/              conteneurisation : images (base, db, api, web), compose, documentation
 maquette/, marketing/  captures et contenus marketing (marketing/ est ignoré par git)
 ```
 
@@ -163,7 +177,7 @@ Issus d'une lecture statique du code, sans exécution :
 Détails et choix dans AGENTS.md et les ADR de `M2/decisions/`.
 
 - **v2** : `api/` (voir « Commandes » et [api/README.md](api/README.md)). Fait : authentification (ADR-003, LUN-003), entreprises, crèches et accès par crèche (LUN-004), tablette et PIN (LUN-005, corrige ANO-001 en v2), familles et enfants sans données de santé (LUN-009), pointage depuis la tablette (LUN-010), comptes et consultation famille (LUN-011) : le parcours central est complet côté API. Second facteur obligatoire pour la direction et l'éditeur : TOTP chiffré et codes de secours (LUN-006, partie 1). Fiche de ménage : pièces, catalogue des tâches de l'entreprise et fréquences (LUN-76), tâches cochées depuis la tablette (LUN-77), historique et export CSV (LUN-78) : la fiche de ménage est complète côté API. Comptes des employés par invitation, départ d'un salarié, changement de mot de passe (LUN-55). Purge RGPD (`python -m app.purge`, aussi au démarrage du conteneur) : sessions expirées, journal au-delà de 6 mois, invitations expirées (LUN-54). À venir : passkeys (LUN-006, partie 2), données de santé après analyse RGPD/HDS (LUN-019), enfants et familles, pointage, client TypeScript généré depuis le schéma OpenAPI. Choix et sources : [M2/decisions/CHOIX-TECHNIQUES.md](M2/decisions/CHOIX-TECHNIQUES.md), à tenir à jour.
-- **Docker Compose** : passerelle nginx, front Next.js, API, PostgreSQL **fonctionnent** (TP Docker, [M2/cours/docker.md](M2/cours/docker.md)). Pour le front : `output: 'standalone'` dans `next.config.mjs` et une route `app/healthz` exclue du middleware ; ne pas les retirer. Images construites par nos soins (aucune image Docker Hub, base `FROM scratch`), arguments de ressources, healthchecks, gestion des signaux, non-root, lecture seule.
+- **Docker Compose** : passerelle nginx (qui sert le front v2), API, PostgreSQL **fonctionnent** (TP Docker rendu au tag `tp-docker-v1`, [M2/cours/docker.md](M2/cours/docker.md)). L'image `front` Next.js a quitté la pile avec LUN-114 ; `output: 'standalone'` et `app/healthz` restent dans la v1 gelée, sans usage dans la pile. Images construites par nos soins (aucune image Docker Hub, base `FROM scratch`), arguments de ressources, healthchecks, gestion des signaux, non-root, lecture seule.
 - **Automatisations GitHub** : conventions de PR (`pr-conventions.yml`), étiquettes selon les fichiers (`labels.yml`), modèle de PR. Branches durables et tags `v*` protégés par des rulesets (2026-10-27), exportés dans `.github/rulesets/` : à ré-exporter après toute modification sur GitHub (commande dans CONTRIBUTING). Branche par défaut : `develop`.
 - **CI** (GitHub Actions, `.github/workflows/ci.yml`) : ruff, tests unitaires et d'intégration de l'API, build des 5 images, démarrage de la pile et sondes, sur chaque PR et push sur `main`.
 - **CD** : images publiées et taguées, déploiement sur VPS (recette puis production), retour arrière par tag.

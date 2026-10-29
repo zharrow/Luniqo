@@ -1,0 +1,11 @@
+# Contexte = racine du dépôt : on ne laisse passer que le front v2 et les
+# fichiers de l'image web, sans dépendances ni artefacts locaux.
+*
+!front/
+!docker/web/
+front/node_modules
+front/dist
+front/storybook-static
+front/.vitest
+front/test-results
+front/playwright-report

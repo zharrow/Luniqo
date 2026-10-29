@@ -75,7 +75,7 @@ Ces protections sont imposées par GitHub : voir
 [Protections des branches](#protections-des-branches-rulesets-github).
 
 **Les environnements aujourd'hui.** INT existe : à chaque push sur `develop` (et
-sur chaque PR), la CI construit les 5 images, démarre toute la pile et la sonde.
+sur chaque PR), la CI vérifie l'API et le front v2, construit les 4 images, démarre toute la pile, la sonde et y rejoue les parcours Playwright.
 PRÉ-PROD et PROD sont **des cibles** : elles seront déployées sur un VPS (story
 « Environnements PRÉ-PROD et PROD » de l'épic « Socle technique et
 livraison »). D'ici là, `staging` et `main` sont vérifiées par la même CI.
@@ -265,7 +265,7 @@ Une seule version pour tout le dépôt, au format `MAJEUR.MINEUR.CORRECTIF`
   version en production chez une crèche.
 - **Versions candidates** : `vX.Y.Z-rc.N` sur `staging`, `N` repart à 1 pour
   chaque nouvelle version.
-- La version de l'API (`api/app/__init__.py`) et celle du front (`package.json`)
+- La version de l'API (`api/app/__init__.py`) et celle du front v2 (`front/package.json`)
   suivent celle du dépôt. Les images Docker seront taguées avec elle (phase de
   déploiement continu).
 - Chaque version a son entrée dans [CHANGELOG.md](CHANGELOG.md).

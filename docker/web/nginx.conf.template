@@ -39,7 +39,9 @@ http {
     resolver 127.0.0.11 valid=10s ipv6=off;
     resolver_timeout 2s;
 
-    # En-têtes de sécurité ajoutés à toutes les réponses.
+    # En-têtes de sécurité des réponses de l'API. Les fichiers du front ont les
+    # leurs, CSP comprise (security-headers.conf) : la CSP stricte du front
+    # bloquerait Swagger UI (/api/docs), qui charge ses scripts depuis un CDN.
     add_header X-Content-Type-Options nosniff always;
     add_header X-Frame-Options SAMEORIGIN always;
     add_header Referrer-Policy strict-origin-when-cross-origin always;
@@ -58,13 +60,26 @@ http {
     server {
         listen 8080;
 
-        set $front_upstream http://__FRONT_ADDR__;
         set $api_upstream http://__API_ADDR__;
 
-        # Front Next.js : tout ce qui n'est pas /api/.
+        # Front v2 : application monopage construite par Vite (ADR-002).
+        # Une adresse sans fichier correspondant (/accueil, /connexion…) reçoit
+        # index.html : c'est le routeur du navigateur qui affiche la page.
+        root /srv/front;
         location / {
-            proxy_pass $front_upstream;
-            proxy_read_timeout 30s;
+            try_files $uri /index.html;
+            include /etc/nginx/security-headers.conf;
+            # Jamais gardé en cache sans revalidation : une nouvelle version
+            # est prise au chargement suivant.
+            add_header Cache-Control "no-cache" always;
+        }
+
+        # Fichiers produits par Vite : leur nom contient l'empreinte de leur
+        # contenu, ils ne changent jamais. Fichier absent : 404, pas index.html.
+        location /assets/ {
+            try_files $uri =404;
+            include /etc/nginx/security-headers.conf;
+            add_header Cache-Control "public, max-age=31536000, immutable" always;
         }
 
         # API FastAPI. L'URI est transmise telle quelle : les routes de l'API

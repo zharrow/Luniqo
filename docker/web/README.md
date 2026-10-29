@@ -1,22 +1,41 @@
 # Image `luniqo/web`
 
 Le serveur web de Luniqo : une passerelle nginx, **seul point d'entrée** de la
-plateforme. Elle relaie les requêtes vers le bon service ; ni l'API ni la base
-ne sont exposées sur la machine hôte.
+plateforme. Elle sert le **front v2** (application monopage React + Vite,
+[ADR-002](../../M2/decisions/ADR-002-front-v2.md)), dont elle construit les
+fichiers dans une première étape, et relaie l'API ; ni l'API ni la base ne sont
+exposées sur la machine hôte.
 
-| Chemin | Relayé vers |
+| Chemin | Servi par |
 |---|---|
 | `/api/*` | l'API (`API_ADDR`, `api:8000`), URI transmise telle quelle |
-| tout le reste | le front Next.js (`FRONT_ADDR`, `front:3000`) |
+| `/assets/*` | fichiers du front produits par Vite (nom avec empreinte), cache immuable d'un an ; 404 si absent |
+| tout le reste | le fichier demandé s'il existe, sinon `index.html` : le routeur du navigateur affiche la page (`/accueil`, `/connexion`…) |
 | `/healthz` | réponse fixe de nginx, pour le healthcheck |
 
-Si un service ne répond pas, la passerelle sert une page « Luniqo est
-momentanément indisponible » (code 502) au lieu d'une erreur brute, par exemple
-pendant le redémarrage du front.
+Si l'API ne répond pas, la passerelle sert une page « Luniqo est momentanément
+indisponible » (code 502) au lieu d'une erreur brute, par exemple pendant son
+redémarrage.
+
+Jusqu'au tag `tp-docker-v1`, le front était un serveur Next.js dans sa propre
+image (`luniqo/front`), vers lequel la passerelle relayait les pages.
 
 ## Construction
 
-### Dépendances installées
+Le contexte de build est la **racine du dépôt** ; `Dockerfile.dockerignore` n'en
+laisse passer que `front/` et `docker/web/`, sans dépendances ni artefacts locaux.
+
+### Étape 1 : build du front (jetée)
+
+| Paquet | Pourquoi |
+|---|---|
+| `nodejs` | Exécute Vite (Node 24 dans Alpine 3.24 ; Vite 8 demande 20.19 au moins). |
+| `pnpm` | Installe les dépendances du front depuis `front/pnpm-lock.yaml` (`--frozen-lockfile`). Paquet d'Alpine en 11.20, même version majeure que le projet : même format de lockfile. `--pm-on-fail=warn` le garde au lieu d'en télécharger un autre pour suivre la version exacte du champ `packageManager`. Les scripts d'installation des dépendances restent ceux autorisés dans `front/pnpm-workspace.yaml`. |
+
+`vite build` produit `dist/` (636 Kio, mesuré le 2026-10-27), copié dans l'image
+finale. Node.js, pnpm, `node_modules` et les sources n'y entrent pas.
+
+### Étape 2 : image finale — dépendances installées
 
 | Paquet | Pourquoi |
 |---|---|
@@ -33,6 +52,8 @@ BusyBox dans l'image de base.
 | `rm -rf /var/lib/nginx/html` | Page « Welcome to nginx » du paquet, inutile. |
 | `rm -rf /etc/logrotate.d/nginx` | Rotation des logs inutile : ils partent sur la sortie standard, Docker les gère. |
 | `COPY nginx.conf.template /etc/nginx/` | Modèle de configuration, complété au démarrage avec les arguments. |
+| `COPY security-headers.conf /etc/nginx/` | En-têtes de sécurité du front, CSP comprise, inclus dans chaque bloc `location` du front : nginx n'hérite pas des `add_header` du niveau supérieur dans un bloc qui en pose. Pas appliqués à `/api/` : la CSP stricte bloquerait Swagger UI (`/api/docs`), qui charge ses scripts depuis un CDN. |
+| `COPY --from=build dist/ /srv/front/` | Les fichiers du front v2. |
 | `COPY www/ /srv/www/` | La page d'indisponibilité. Sans `--chmod` : appliqué à un dossier, `--chmod=0644` le rendrait impossible à parcourir. |
 | `USER app` | nginx tourne entièrement sous l'utilisateur non-root, master compris. |
 
@@ -55,7 +76,6 @@ l'hôte (`WEB_PUBLISHED_PORT`).
 |---|---|---|---|
 | `NGINX_WORKER_PROCESSES` | `1` | 1 à 64 | Processus workers. La valeur suit la limite CPU (1 pour 0,25 CPU). `auto` compterait les cœurs de l'**hôte** et non la limite du conteneur. |
 | `NGINX_WORKER_CONNECTIONS` | `512` | 16 à 65535 | Connexions simultanées par worker. Une requête relayée en consomme deux (client et service). |
-| `FRONT_ADDR` | `front:3000` | forme `hôte:port` | Front Next.js. |
 | `API_ADDR` | `api:8000` | forme `hôte:port` | API FastAPI. |
 
 ### Arguments Docker (ressources)
@@ -63,7 +83,7 @@ l'hôte (`WEB_PUBLISHED_PORT`).
 | Option `docker run` | Équivalent compose | Valeur | Rôle |
 |---|---|---|---|
 | `--cpus 0.25` | `deploy.resources.limits.cpus` | `WEB_CPUS` | nginx ne fait que relayer. |
-| `--memory 32m` | `deploy.resources.limits.memory` | `WEB_MEMORY` | 3 à 5 Mo mesurés. |
+| `--memory 32m` | `deploy.resources.limits.memory` | `WEB_MEMORY` | 3 à 5 Mo mesurés en relais seul ; 10,5 Mo en servant aussi le front (2026-10-27, 400 requêtes). |
 | `--pids-limit 16` | `deploy.resources.limits.pids` | `WEB_PIDS` | tini + master + worker + commandes du healthcheck (3 mesurés). |
 | `-p 8080:8080` | `ports:` | `WEB_PUBLISHED_PORT` | Publication sur l'hôte. |
 
@@ -72,8 +92,8 @@ docker run -d --name web --network backend \
   --cpus 0.25 --memory 32m --pids-limit 16 \
   --read-only --tmpfs /tmp:size=16m \
   -e NGINX_WORKER_PROCESSES=1 -e NGINX_WORKER_CONNECTIONS=512 \
-  -e FRONT_ADDR=front:3000 -e API_ADDR=api:8000 \
-  -p 8080:8080 luniqo/web:1.0
+  -e API_ADDR=api:8000 \
+  -p 8080:8080 luniqo/web:2.0
 docker network connect edge web
 ```
 
@@ -88,8 +108,8 @@ CMD ["nginx", "-c", "/tmp/nginx/nginx.conf", "-e", "stderr", "-g", "daemon off;"
 2. **`entrypoint.sh`** :
    - vérifie les arguments ;
    - génère `/tmp/nginx/nginx.conf` en remplaçant avec `sed` les marqueurs
-     `__WORKER_PROCESSES__`, `__WORKER_CONNECTIONS__`, `__FRONT_ADDR__` et
-     `__API_ADDR__` du modèle (nginx ne lit pas les variables d'environnement) ;
+     `__WORKER_PROCESSES__`, `__WORKER_CONNECTIONS__` et `__API_ADDR__` du
+     modèle (nginx ne lit pas les variables d'environnement) ;
    - **valide la configuration générée** (`nginx -t`) : une erreur arrête le
      conteneur avec un message clair ;
    - affiche les ressources allouées, puis fait `exec "$@"`.

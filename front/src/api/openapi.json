@@ -1,0 +1,6538 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Luniqo API",
+    "description": "API de la v2 de Luniqo, logiciel de gestion de crèches.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v2/auth/login": {
+      "post": {
+        "tags": [
+          "authentification"
+        ],
+        "summary": "Login",
+        "description": "Ouvre une session et pose le cookie de session.\n\nSi `mfa` vaut `required` ou `setup_required`, la session n'ouvre encore que\n/me, la déconnexion et /api/v2/auth/mfa/* : présenter ou enregistrer le second facteur.",
+        "operationId": "login_api_v2_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Identifiants invalides ou session absente"
+          },
+          "429": {
+            "description": "Trop de tentatives (en-tête Retry-After)"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/auth/logout": {
+      "post": {
+        "tags": [
+          "authentification"
+        ],
+        "summary": "Logout",
+        "description": "Supprime la session en base et efface le cookie. Sans session, ne fait rien.",
+        "operationId": "logout_api_v2_auth_logout_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        }
+      }
+    },
+    "/api/v2/auth/me": {
+      "get": {
+        "tags": [
+          "authentification"
+        ],
+        "summary": "Me",
+        "description": "Utilisateur de la session en cours, même en attente du second facteur.",
+        "operationId": "me_api_v2_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Identifiants invalides ou session absente"
+          }
+        }
+      }
+    },
+    "/api/v2/auth/mfa": {
+      "get": {
+        "tags": [
+          "second facteur"
+        ],
+        "summary": "Get Status",
+        "description": "État du second facteur du compte et de la session.",
+        "operationId": "get_status_api_v2_auth_mfa_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MfaStatusOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session absente ou code invalide"
+          },
+          "403": {
+            "description": "Second facteur à présenter d'abord, réauthentification requise ou TOTP bloqué"
+          },
+          "409": {
+            "description": "Opération sans objet dans l'état actuel"
+          },
+          "429": {
+            "description": "Trop de tentatives (en-tête Retry-After)"
+          },
+          "503": {
+            "description": "Clé de chiffrement absente ou différente"
+          }
+        }
+      }
+    },
+    "/api/v2/auth/mfa/totp": {
+      "post": {
+        "tags": [
+          "second facteur"
+        ],
+        "summary": "Start Totp",
+        "description": "Commence l'activation d'une application d'authentification (ou son remplacement).",
+        "operationId": "start_totp_api_v2_auth_mfa_totp_post",
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TotpSetupOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session absente ou code invalide"
+          },
+          "403": {
+            "description": "Second facteur à présenter d'abord, réauthentification requise ou TOTP bloqué"
+          },
+          "409": {
+            "description": "Opération sans objet dans l'état actuel"
+          },
+          "429": {
+            "description": "Trop de tentatives (en-tête Retry-After)"
+          },
+          "503": {
+            "description": "Clé de chiffrement absente ou différente"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "second facteur"
+        ],
+        "summary": "Remove Totp",
+        "description": "Retire l'application d'authentification (comptes où le second facteur est facultatif).",
+        "operationId": "remove_totp_api_v2_auth_mfa_totp_delete",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Session absente ou code invalide"
+          },
+          "403": {
+            "description": "Second facteur à présenter d'abord, réauthentification requise ou TOTP bloqué"
+          },
+          "409": {
+            "description": "Opération sans objet dans l'état actuel"
+          },
+          "429": {
+            "description": "Trop de tentatives (en-tête Retry-After)"
+          },
+          "503": {
+            "description": "Clé de chiffrement absente ou différente"
+          }
+        }
+      }
+    },
+    "/api/v2/auth/mfa/totp/confirm": {
+      "post": {
+        "tags": [
+          "second facteur"
+        ],
+        "summary": "Confirm Totp",
+        "description": "Active l'application d'authentification avec un premier code. Ferme les autres sessions du compte.",
+        "operationId": "confirm_totp_api_v2_auth_mfa_totp_confirm_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TotpConfirmOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session absente ou code invalide"
+          },
+          "403": {
+            "description": "Second facteur à présenter d'abord, réauthentification requise ou TOTP bloqué"
+          },
+          "409": {
+            "description": "Opération sans objet dans l'état actuel"
+          },
+          "429": {
+            "description": "Trop de tentatives (en-tête Retry-After)"
+          },
+          "503": {
+            "description": "Clé de chiffrement absente ou différente"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/auth/mfa/verify": {
+      "post": {
+        "tags": [
+          "second facteur"
+        ],
+        "summary": "Verify",
+        "description": "Présente le second facteur (code TOTP ou code de secours) : la session devient complète.",
+        "operationId": "verify_api_v2_auth_mfa_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session absente ou code invalide"
+          },
+          "403": {
+            "description": "Second facteur à présenter d'abord, réauthentification requise ou TOTP bloqué"
+          },
+          "409": {
+            "description": "Opération sans objet dans l'état actuel"
+          },
+          "429": {
+            "description": "Trop de tentatives (en-tête Retry-After)"
+          },
+          "503": {
+            "description": "Clé de chiffrement absente ou différente"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/auth/mfa/backup-codes": {
+      "post": {
+        "tags": [
+          "second facteur"
+        ],
+        "summary": "Regenerate Backup Codes",
+        "description": "Crée 10 nouveaux codes de secours ; les anciens ne valent plus rien.",
+        "operationId": "regenerate_backup_codes_api_v2_auth_mfa_backup_codes_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupCodesOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session absente ou code invalide"
+          },
+          "403": {
+            "description": "Second facteur à présenter d'abord, réauthentification requise ou TOTP bloqué"
+          },
+          "409": {
+            "description": "Opération sans objet dans l'état actuel"
+          },
+          "429": {
+            "description": "Trop de tentatives (en-tête Retry-After)"
+          },
+          "503": {
+            "description": "Clé de chiffrement absente ou différente"
+          }
+        }
+      }
+    },
+    "/api/v2/nurseries": {
+      "get": {
+        "tags": [
+          "crèches"
+        ],
+        "summary": "List Nurseries",
+        "description": "Crèches accessibles : toutes celles de l'entreprise pour la direction, celles accordées pour un employé.",
+        "operationId": "list_nurseries_api_v2_nurseries_get",
+        "parameters": [
+          {
+            "name": "include_inactive",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Inactive"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NurseryOut"
+                  },
+                  "title": "Response List Nurseries Api V2 Nurseries Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session absente ou expirée"
+          },
+          "403": {
+            "description": "Rôle insuffisant"
+          },
+          "404": {
+            "description": "Crèche inexistante ou inaccessible"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "crèches"
+        ],
+        "summary": "Create Nursery",
+        "description": "Crée une crèche dans l'entreprise de la direction connectée.",
+        "operationId": "create_nursery_api_v2_nurseries_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NurseryCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NurseryOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session absente ou expirée"
+          },
+          "403": {
+            "description": "Rôle insuffisant"
+          },
+          "404": {
+            "description": "Crèche inexistante ou inaccessible"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/nurseries/{nursery_id}": {
+      "get": {
+        "tags": [
+          "crèches"
+        ],
+        "summary": "Get Nursery",
+        "operationId": "get_nursery_api_v2_nurseries__nursery_id__get",
+        "parameters": [
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NurseryOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session absente ou expirée"
+          },
+          "403": {
+            "description": "Rôle insuffisant"
+          },
+          "404": {
+            "description": "Crèche inexistante ou inaccessible"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "crèches"
+        ],
+        "summary": "Update Nursery",
+        "operationId": "update_nursery_api_v2_nurseries__nursery_id__patch",
+        "parameters": [
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NurseryUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NurseryOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session absente ou expirée"
+          },
+          "403": {
+            "description": "Rôle insuffisant"
+          },
+          "404": {
+            "description": "Crèche inexistante ou inaccessible"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/nurseries/{nursery_id}/staff": {
+      "get": {
+        "tags": [
+          "crèches"
+        ],
+        "summary": "List Nursery Staff",
+        "description": "Employés qui ont accès à cette crèche.",
+        "operationId": "list_nursery_staff_api_v2_nurseries__nursery_id__staff_get",
+        "parameters": [
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StaffOut"
+                  },
+                  "title": "Response List Nursery Staff Api V2 Nurseries  Nursery Id  Staff Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session absente ou expirée"
+          },
+          "403": {
+            "description": "Rôle insuffisant"
+          },
+          "404": {
+            "description": "Crèche inexistante ou inaccessible"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/nurseries/{nursery_id}/staff/{user_id}": {
+      "put": {
+        "tags": [
+          "crèches"
+        ],
+        "summary": "Grant Access",
+        "description": "Donne à un employé de l'entreprise l'accès à cette crèche. Sans effet s'il l'a déjà.",
+        "operationId": "grant_access_api_v2_nurseries__nursery_id__staff__user_id__put",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Session absente ou expirée"
+          },
+          "403": {
+            "description": "Rôle insuffisant"
+          },
+          "404": {
+            "description": "Crèche inexistante ou inaccessible"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "crèches"
+        ],
+        "summary": "Revoke Access",
+        "description": "Retire l'accès ; effet immédiat, l'accès étant vérifié à chaque requête. Sans effet s'il n'existait pas.",
+        "operationId": "revoke_access_api_v2_nurseries__nursery_id__staff__user_id__delete",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Session absente ou expirée"
+          },
+          "403": {
+            "description": "Rôle insuffisant"
+          },
+          "404": {
+            "description": "Crèche inexistante ou inaccessible"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/staff": {
+      "get": {
+        "tags": [
+          "crèches",
+          "personnel"
+        ],
+        "summary": "List Employees",
+        "description": "Employés de l'entreprise et crèches auxquelles chacun a accès.",
+        "operationId": "list_employees_api_v2_staff_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/EmployeeOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Employees Api V2 Staff Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session absente ou expirée"
+          },
+          "403": {
+            "description": "Rôle insuffisant"
+          },
+          "404": {
+            "description": "Crèche inexistante ou inaccessible"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "personnel"
+        ],
+        "summary": "Invite Employee",
+        "description": "Crée le compte d'un employé de l'entreprise, sans mot de passe, et son lien d'invitation (7 jours).\n\nL'accès aux crèches se donne ensuite, même avant l'acceptation : `PUT /nurseries/{id}/staff/{user_id}`.",
+        "operationId": "invite_employee_api_v2_staff_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmployeeCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffInvitationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/nurseries/{nursery_id}/tablets": {
+      "post": {
+        "tags": [
+          "tablettes"
+        ],
+        "summary": "Enroll Tablet",
+        "description": "Enrôle **l'appareil qui envoie la requête** comme tablette de cette crèche.\n\nLa direction se connecte sur la tablette elle-même, l'enrôle, puis se\ndéconnecte : le cookie d'appareil (90 jours) reste sur la tablette.",
+        "operationId": "enroll_tablet_api_v2_nurseries__nursery_id__tablets_post",
+        "parameters": [
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TabletCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TabletOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "tablettes"
+        ],
+        "summary": "List Tablets",
+        "operationId": "list_tablets_api_v2_nurseries__nursery_id__tablets_get",
+        "parameters": [
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TabletOut"
+                  },
+                  "title": "Response List Tablets Api V2 Nurseries  Nursery Id  Tablets Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/nurseries/{nursery_id}/tablets/{tablet_id}": {
+      "delete": {
+        "tags": [
+          "tablettes"
+        ],
+        "summary": "Revoke Tablet",
+        "description": "Révoque la tablette (perte, vol, remplacement) et ferme ses sessions d'action. Effet immédiat.",
+        "operationId": "revoke_tablet_api_v2_nurseries__nursery_id__tablets__tablet_id__delete",
+        "parameters": [
+          {
+            "name": "tablet_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Tablet Id"
+            }
+          },
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/auth/me/pin": {
+      "put": {
+        "tags": [
+          "tablettes",
+          "authentification"
+        ],
+        "summary": "Set My Pin",
+        "description": "L'employé choisit ou change son PIN de tablette, en confirmant son mot de passe. Débloque le PIN.",
+        "operationId": "set_my_pin_api_v2_auth_me_pin_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PinIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/staff/{user_id}/pin/unlock": {
+      "post": {
+        "tags": [
+          "tablettes",
+          "personnel"
+        ],
+        "summary": "Unlock Pin",
+        "description": "La direction débloque le PIN d'un employé de son entreprise.",
+        "operationId": "unlock_pin_api_v2_staff__user_id__pin_unlock_post",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/tablet": {
+      "get": {
+        "tags": [
+          "tablettes"
+        ],
+        "summary": "Tablet Info",
+        "description": "Crèche de la tablette et employés qui peuvent s'y identifier (prénom et initiale).",
+        "operationId": "tablet_info_api_v2_tablet_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TabletInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/tablet/session": {
+      "get": {
+        "tags": [
+          "tablettes"
+        ],
+        "summary": "Tablet Session",
+        "description": "Employé de la session d'action en cours.",
+        "operationId": "tablet_session_api_v2_tablet_session_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TabletActorOut"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "tablettes"
+        ],
+        "summary": "Open Tablet Session",
+        "description": "Ouvre une session d'action de 2 minutes par PIN, pour la crèche de la tablette.",
+        "operationId": "open_tablet_session_api_v2_tablet_session_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TabletLoginIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TabletActorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "tablettes"
+        ],
+        "summary": "End Tablet Session",
+        "description": "Ferme la session d'action (l'employé a fini son geste).",
+        "operationId": "end_tablet_session_api_v2_tablet_session_delete",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        }
+      }
+    },
+    "/api/v2/nurseries/{nursery_id}/families": {
+      "get": {
+        "tags": [
+          "enfants et familles"
+        ],
+        "summary": "List Families",
+        "operationId": "list_families_api_v2_nurseries__nursery_id__families_get",
+        "parameters": [
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FamilyOut"
+                  },
+                  "title": "Response List Families Api V2 Nurseries  Nursery Id  Families Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "enfants et familles"
+        ],
+        "summary": "Create Family",
+        "operationId": "create_family_api_v2_nurseries__nursery_id__families_post",
+        "parameters": [
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FamilyCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/nurseries/{nursery_id}/families/{family_id}": {
+      "get": {
+        "tags": [
+          "enfants et familles"
+        ],
+        "summary": "Get Family",
+        "operationId": "get_family_api_v2_nurseries__nursery_id__families__family_id__get",
+        "parameters": [
+          {
+            "name": "family_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Family Id"
+            }
+          },
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Inexistant ou hors de cette crèche"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "enfants et familles"
+        ],
+        "summary": "Update Family",
+        "operationId": "update_family_api_v2_nurseries__nursery_id__families__family_id__patch",
+        "parameters": [
+          {
+            "name": "family_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Family Id"
+            }
+          },
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FamilyUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Inexistant ou hors de cette crèche"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/nurseries/{nursery_id}/children": {
+      "get": {
+        "tags": [
+          "enfants et familles"
+        ],
+        "summary": "List Children",
+        "description": "Enfants de la crèche. Par défaut, tous sauf les enfants partis ; `?status=` pour filtrer.",
+        "operationId": "list_children_api_v2_nurseries__nursery_id__children_get",
+        "parameters": [
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ChildStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChildOut"
+                  },
+                  "title": "Response List Children Api V2 Nurseries  Nursery Id  Children Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/nurseries/{nursery_id}/families/{family_id}/children": {
+      "post": {
+        "tags": [
+          "enfants et familles"
+        ],
+        "summary": "Create Child",
+        "operationId": "create_child_api_v2_nurseries__nursery_id__families__family_id__children_post",
+        "parameters": [
+          {
+            "name": "family_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Family Id"
+            }
+          },
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChildCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Inexistant ou hors de cette crèche"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/nurseries/{nursery_id}/children/{child_id}": {
+      "get": {
+        "tags": [
+          "enfants et familles"
+        ],
+        "summary": "Get Child",
+        "description": "Fiche de l'enfant et ses responsables, avec leurs autorisations.",
+        "operationId": "get_child_api_v2_nurseries__nursery_id__children__child_id__get",
+        "parameters": [
+          {
+            "name": "child_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Child Id"
+            }
+          },
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Inexistant ou hors de cette crèche"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "enfants et familles"
+        ],
+        "summary": "Update Child",
+        "operationId": "update_child_api_v2_nurseries__nursery_id__children__child_id__patch",
+        "parameters": [
+          {
+            "name": "child_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Child Id"
+            }
+          },
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChildUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Inexistant ou hors de cette crèche"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/nurseries/{nursery_id}/families/{family_id}/guardians": {
+      "post": {
+        "tags": [
+          "enfants et familles"
+        ],
+        "summary": "Create Guardian",
+        "operationId": "create_guardian_api_v2_nurseries__nursery_id__families__family_id__guardians_post",
+        "parameters": [
+          {
+            "name": "family_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Family Id"
+            }
+          },
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardianCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardianOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Inexistant ou hors de cette crèche"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/nurseries/{nursery_id}/guardians/{guardian_id}": {
+      "patch": {
+        "tags": [
+          "enfants et familles"
+        ],
+        "summary": "Update Guardian",
+        "operationId": "update_guardian_api_v2_nurseries__nursery_id__guardians__guardian_id__patch",
+        "parameters": [
+          {
+            "name": "guardian_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Guardian Id"
+            }
+          },
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardianUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardianOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Inexistant ou hors de cette crèche"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/nurseries/{nursery_id}/children/{child_id}/guardians/{guardian_id}": {
+      "put": {
+        "tags": [
+          "enfants et familles"
+        ],
+        "summary": "Link Guardian",
+        "description": "Relie un responsable à un enfant **de la même famille**, ou met à jour ses autorisations.",
+        "operationId": "link_guardian_api_v2_nurseries__nursery_id__children__child_id__guardians__guardian_id__put",
+        "parameters": [
+          {
+            "name": "child_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Child Id"
+            }
+          },
+          {
+            "name": "guardian_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Guardian Id"
+            }
+          },
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Inexistant ou hors de cette crèche"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "enfants et familles"
+        ],
+        "summary": "Unlink Guardian",
+        "operationId": "unlink_guardian_api_v2_nurseries__nursery_id__children__child_id__guardians__guardian_id__delete",
+        "parameters": [
+          {
+            "name": "child_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Child Id"
+            }
+          },
+          {
+            "name": "guardian_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Guardian Id"
+            }
+          },
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Inexistant ou hors de cette crèche"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/tablet/children": {
+      "get": {
+        "tags": [
+          "pointage"
+        ],
+        "summary": "Tablet Children",
+        "description": "Enfants attendus aujourd'hui dans la crèche de la tablette, avec leur état de présence.",
+        "operationId": "tablet_children_api_v2_tablet_children_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TabletChild"
+                  },
+                  "type": "array",
+                  "title": "Response Tablet Children Api V2 Tablet Children Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/tablet/children/{child_id}/arrival": {
+      "post": {
+        "tags": [
+          "pointage"
+        ],
+        "summary": "Tablet Arrival",
+        "description": "Pointe l'arrivée, à l'heure du serveur (pas d'heure saisie sur la tablette).",
+        "operationId": "tablet_arrival_api_v2_tablet_children__child_id__arrival_post",
+        "parameters": [
+          {
+            "name": "child_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Child Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ArrivalIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/tablet/children/{child_id}/departure": {
+      "post": {
+        "tags": [
+          "pointage"
+        ],
+        "summary": "Tablet Departure",
+        "description": "Pointe le départ avec la personne venue chercher l'enfant, qui doit être autorisée pour lui.",
+        "operationId": "tablet_departure_api_v2_tablet_children__child_id__departure_post",
+        "parameters": [
+          {
+            "name": "child_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Child Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DepartureIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/nurseries/{nursery_id}/attendance": {
+      "get": {
+        "tags": [
+          "pointage"
+        ],
+        "summary": "Day Attendance",
+        "description": "Présences d'un jour (aujourd'hui, heure de Paris, par défaut).",
+        "operationId": "day_attendance_api_v2_nurseries__nursery_id__attendance_get",
+        "parameters": [
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          },
+          {
+            "name": "day",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Day"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttendanceOut"
+                  },
+                  "title": "Response Day Attendance Api V2 Nurseries  Nursery Id  Attendance Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/nurseries/{nursery_id}/attendance/present": {
+      "get": {
+        "tags": [
+          "pointage"
+        ],
+        "summary": "Present Children",
+        "description": "Enfants présents en ce moment (arrivée pointée, départ non pointé).",
+        "operationId": "present_children_api_v2_nurseries__nursery_id__attendance_present_get",
+        "parameters": [
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttendanceOut"
+                  },
+                  "title": "Response Present Children Api V2 Nurseries  Nursery Id  Attendance Present Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/nurseries/{nursery_id}/guardians/{guardian_id}/invitation": {
+      "post": {
+        "tags": [
+          "familles",
+          "enfants et familles"
+        ],
+        "summary": "Invite Guardian",
+        "description": "Crée un lien d'invitation (7 jours, usage unique) ; annule les invitations précédentes de ce responsable.",
+        "operationId": "invite_guardian_api_v2_nurseries__nursery_id__guardians__guardian_id__invitation_post",
+        "parameters": [
+          {
+            "name": "guardian_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Guardian Id"
+            }
+          },
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/invitations/lookup": {
+      "post": {
+        "tags": [
+          "familles"
+        ],
+        "summary": "Lookup Invitation",
+        "description": "Ce que le parent voit en ouvrant son lien : prénom, crèche, adresse du futur compte.",
+        "operationId": "lookup_invitation_api_v2_invitations_lookup_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationInfo"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/invitations/accept": {
+      "post": {
+        "tags": [
+          "familles"
+        ],
+        "summary": "Accept Invitation",
+        "description": "Crée le compte famille (mot de passe choisi) ou relie un compte famille existant (son mot de passe).",
+        "operationId": "accept_invitation_api_v2_invitations_accept_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__family__schemas__AcceptedOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/family/children": {
+      "get": {
+        "tags": [
+          "familles"
+        ],
+        "summary": "My Children",
+        "description": "Enfants dont je suis responsable avec autorité parentale, et leur présence du jour.",
+        "operationId": "my_children_api_v2_family_children_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FamilyChild"
+                  },
+                  "type": "array",
+                  "title": "Response My Children Api V2 Family Children Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/family/children/{child_id}": {
+      "get": {
+        "tags": [
+          "familles"
+        ],
+        "summary": "My Child",
+        "description": "Fiche de mon enfant : responsables (sans coordonnées) et présences des `days` derniers jours.",
+        "operationId": "my_child_api_v2_family_children__child_id__get",
+        "parameters": [
+          {
+            "name": "child_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Child Id"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 62,
+              "minimum": 1,
+              "default": 30,
+              "title": "Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyChildDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Hors de ma famille"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/cleaning-tasks": {
+      "get": {
+        "tags": [
+          "ménage"
+        ],
+        "summary": "List Tasks",
+        "description": "Catalogue des tâches de ménage de l'entreprise, commun à toutes ses crèches.",
+        "operationId": "list_tasks_api_v2_cleaning_tasks_get",
+        "parameters": [
+          {
+            "name": "include_inactive",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Inactive"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TaskOut"
+                  },
+                  "title": "Response List Tasks Api V2 Cleaning Tasks Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ménage"
+        ],
+        "summary": "Create Task",
+        "operationId": "create_task_api_v2_cleaning_tasks_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskOut"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Nom déjà pris"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/cleaning-tasks/{task_id}": {
+      "patch": {
+        "tags": [
+          "ménage"
+        ],
+        "summary": "Update Task",
+        "description": "Renommer, préciser la consigne, désactiver : la tâche disparaît alors des fiches de toutes les crèches.",
+        "operationId": "update_task_api_v2_cleaning_tasks__task_id__patch",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Inexistant ou hors de cette crèche ou entreprise"
+          },
+          "409": {
+            "description": "Nom déjà pris"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/nurseries/{nursery_id}/rooms": {
+      "get": {
+        "tags": [
+          "ménage"
+        ],
+        "summary": "List Rooms",
+        "operationId": "list_rooms_api_v2_nurseries__nursery_id__rooms_get",
+        "parameters": [
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          },
+          {
+            "name": "include_inactive",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Inactive"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RoomOut"
+                  },
+                  "title": "Response List Rooms Api V2 Nurseries  Nursery Id  Rooms Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ménage"
+        ],
+        "summary": "Create Room",
+        "operationId": "create_room_api_v2_nurseries__nursery_id__rooms_post",
+        "parameters": [
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoomCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoomOut"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Nom déjà pris"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/nurseries/{nursery_id}/rooms/{room_id}": {
+      "get": {
+        "tags": [
+          "ménage"
+        ],
+        "summary": "Get Room",
+        "description": "La pièce et toutes ses tâches, désactivées comprises, dans l'ordre de la fiche.",
+        "operationId": "get_room_api_v2_nurseries__nursery_id__rooms__room_id__get",
+        "parameters": [
+          {
+            "name": "room_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Room Id"
+            }
+          },
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoomDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Inexistant ou hors de cette crèche ou entreprise"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "ménage"
+        ],
+        "summary": "Update Room",
+        "operationId": "update_room_api_v2_nurseries__nursery_id__rooms__room_id__patch",
+        "parameters": [
+          {
+            "name": "room_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Room Id"
+            }
+          },
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoomUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoomOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Inexistant ou hors de cette crèche ou entreprise"
+          },
+          "409": {
+            "description": "Nom déjà pris"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/nurseries/{nursery_id}/rooms/{room_id}/tasks/{task_id}": {
+      "put": {
+        "tags": [
+          "ménage"
+        ],
+        "summary": "Set Room Task",
+        "description": "Prévoit une tâche du catalogue dans la pièce, ou remplace sa fréquence. `is_active: false` la retire.",
+        "operationId": "set_room_task_api_v2_nurseries__nursery_id__rooms__room_id__tasks__task_id__put",
+        "parameters": [
+          {
+            "name": "room_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Room Id"
+            }
+          },
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Task Id"
+            }
+          },
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoomTaskIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoomTaskOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Inexistant ou hors de cette crèche ou entreprise"
+          },
+          "409": {
+            "description": "Nom déjà pris"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/nurseries/{nursery_id}/cleaning/plan": {
+      "get": {
+        "tags": [
+          "ménage"
+        ],
+        "summary": "Day Plan",
+        "description": "Tâches prévues un jour donné (aujourd'hui, heure de Paris, par défaut), pièce par pièce.",
+        "operationId": "day_plan_api_v2_nurseries__nursery_id__cleaning_plan_get",
+        "parameters": [
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          },
+          {
+            "name": "day",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Day"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DayPlan"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/nurseries/{nursery_id}/cleaning/history": {
+      "get": {
+        "tags": [
+          "ménage"
+        ],
+        "summary": "Cleaning History",
+        "description": "Tâches cochées sur une période (366 jours au plus), annulées comprises, dans l'ordre chronologique.\n\nLes noms sont ceux du jour de la coche. Ce qui était prévu et n'a pas été\nfait n'est pas reconstitué pour le passé : la configuration a pu changer.",
+        "operationId": "cleaning_history_api_v2_nurseries__nursery_id__cleaning_history_get",
+        "parameters": [
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Premier jour (7 jours avant `to` par défaut)",
+              "title": "From"
+            },
+            "description": "Premier jour (7 jours avant `to` par défaut)"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Dernier jour (aujourd'hui à Paris par défaut)",
+              "title": "To"
+            },
+            "description": "Dernier jour (aujourd'hui à Paris par défaut)"
+          },
+          {
+            "name": "room_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Une seule pièce",
+              "title": "Room Id"
+            },
+            "description": "Une seule pièce"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CheckRecord"
+                  },
+                  "title": "Response Cleaning History Api V2 Nurseries  Nursery Id  Cleaning History Get"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Inexistant ou hors de cette crèche ou entreprise"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/nurseries/{nursery_id}/cleaning/history.csv": {
+      "get": {
+        "tags": [
+          "ménage"
+        ],
+        "summary": "Cleaning History Csv",
+        "description": "Mêmes lignes que l'historique, à ouvrir dans un tableur ou à imprimer pour un contrôle.\n\nSéparateur « ; » et BOM UTF-8 : un tableur réglé en français l'ouvre avec ses accents. Heures en heure de Paris.",
+        "operationId": "cleaning_history_csv_api_v2_nurseries__nursery_id__cleaning_history_csv_get",
+        "parameters": [
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Premier jour (7 jours avant `to` par défaut)",
+              "title": "From"
+            },
+            "description": "Premier jour (7 jours avant `to` par défaut)"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Dernier jour (aujourd'hui à Paris par défaut)",
+              "title": "To"
+            },
+            "description": "Dernier jour (aujourd'hui à Paris par défaut)"
+          },
+          {
+            "name": "room_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Une seule pièce",
+              "title": "Room Id"
+            },
+            "description": "Une seule pièce"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fiches au format CSV (tableur)",
+            "content": {
+              "text/csv": {}
+            }
+          },
+          "404": {
+            "description": "Inexistant ou hors de cette crèche ou entreprise"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/tablet/cleaning": {
+      "get": {
+        "tags": [
+          "ménage"
+        ],
+        "summary": "Tablet Sheet",
+        "description": "Fiche du jour de la crèche de la tablette : tâches prévues, pièce par pièce, et celles déjà cochées.",
+        "operationId": "tablet_sheet_api_v2_tablet_cleaning_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TabletSheet"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/tablet/cleaning/{room_task_id}/check": {
+      "post": {
+        "tags": [
+          "ménage"
+        ],
+        "summary": "Tablet Check",
+        "description": "Coche une tâche prévue aujourd'hui. Heure et auteur fixés par le serveur, pas saisis sur la tablette.",
+        "operationId": "tablet_check_api_v2_tablet_cleaning__room_task_id__check_post",
+        "parameters": [
+          {
+            "name": "room_task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Room Task Id"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ménage"
+        ],
+        "summary": "Tablet Uncheck",
+        "description": "Décoche une tâche cochée par erreur aujourd'hui. La coche reste dans l'historique, marquée annulée.",
+        "operationId": "tablet_uncheck_api_v2_tablet_cleaning__room_task_id__check_delete",
+        "parameters": [
+          {
+            "name": "room_task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Room Task Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/staff/{user_id}/invitation": {
+      "post": {
+        "tags": [
+          "personnel"
+        ],
+        "summary": "Reinvite Employee",
+        "description": "Nouveau lien pour un employé qui n'a pas encore choisi son mot de passe ; le précédent est annulé.",
+        "operationId": "reinvite_employee_api_v2_staff__user_id__invitation_post",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffInvitationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/staff/{user_id}": {
+      "patch": {
+        "tags": [
+          "personnel"
+        ],
+        "summary": "Update Employee",
+        "description": "Corriger le nom, ou désactiver le compte (départ) : ses sessions web et de tablette tombent aussitôt.",
+        "operationId": "update_employee_api_v2_staff__user_id__patch",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmployeeUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/staff-invitations/lookup": {
+      "post": {
+        "tags": [
+          "personnel"
+        ],
+        "summary": "Lookup Invitation",
+        "description": "Ce que l'employé voit en ouvrant son lien : prénom, entreprise, adresse de connexion.",
+        "operationId": "lookup_invitation_api_v2_staff_invitations_lookup_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffInvitationInfo"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/staff-invitations/accept": {
+      "post": {
+        "tags": [
+          "personnel"
+        ],
+        "summary": "Accept Invitation",
+        "description": "L'employé choisit son mot de passe (politique de LUN-41) ; il se connecte ensuite normalement.",
+        "operationId": "accept_invitation_api_v2_staff_invitations_accept_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__accounts__schemas__AcceptedOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/auth/me/password": {
+      "put": {
+        "tags": [
+          "personnel",
+          "authentification"
+        ],
+        "summary": "Change Password",
+        "description": "Change son mot de passe (l'actuel est exigé) ; les autres sessions du compte, tablette comprise, sont fermées.",
+        "operationId": "change_password_api_v2_auth_me_password_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordChangeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasswordChangedOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "tags": [
+          "supervision"
+        ],
+        "summary": "Health",
+        "description": "État de l'API et de sa connexion à la base. Utilisé par le healthcheck Docker.",
+        "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AcceptIn": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 20,
+            "title": "Token"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token",
+          "password"
+        ],
+        "title": "AcceptIn"
+      },
+      "ArrivalIn": {
+        "properties": {
+          "dropped_off_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dropped Off By"
+          }
+        },
+        "type": "object",
+        "title": "ArrivalIn"
+      },
+      "AttendanceOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "child_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Child Id"
+          },
+          "child_name": {
+            "type": "string",
+            "title": "Child Name"
+          },
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          },
+          "arrived_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Arrived At"
+          },
+          "arrival_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Arrival By"
+          },
+          "dropped_off_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dropped Off By"
+          },
+          "departed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Departed At"
+          },
+          "departure_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Departure By"
+          },
+          "picked_up_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Picked Up By"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "child_id",
+          "child_name",
+          "day",
+          "arrived_at",
+          "arrival_by",
+          "dropped_off_by",
+          "departed_at",
+          "departure_by",
+          "picked_up_by"
+        ],
+        "title": "AttendanceOut"
+      },
+      "BackupCodesOut": {
+        "properties": {
+          "backup_codes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Backup Codes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "backup_codes"
+        ],
+        "title": "BackupCodesOut"
+      },
+      "CheckOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "room_task_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Room Task Id"
+          },
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          },
+          "room_name": {
+            "type": "string",
+            "title": "Room Name"
+          },
+          "task_name": {
+            "type": "string",
+            "title": "Task Name"
+          },
+          "done_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Done At"
+          },
+          "done_by": {
+            "type": "string",
+            "title": "Done By"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "room_task_id",
+          "day",
+          "room_name",
+          "task_name",
+          "done_at",
+          "done_by"
+        ],
+        "title": "CheckOut"
+      },
+      "CheckRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          },
+          "room_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Room Id"
+          },
+          "room_name": {
+            "type": "string",
+            "title": "Room Name"
+          },
+          "task_name": {
+            "type": "string",
+            "title": "Task Name"
+          },
+          "done_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Done At"
+          },
+          "done_by": {
+            "type": "string",
+            "title": "Done By"
+          },
+          "cancelled_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelled At"
+          },
+          "cancelled_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelled By"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "day",
+          "room_id",
+          "room_name",
+          "task_name",
+          "done_at",
+          "done_by",
+          "cancelled_at",
+          "cancelled_by"
+        ],
+        "title": "CheckRecord",
+        "description": "Ligne de l'historique : noms tels qu'au moment de la coche, auteur en nom complet (contrôle)."
+      },
+      "ChildCreate": {
+        "properties": {
+          "first_name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "First Name"
+          },
+          "last_name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Last Name"
+          },
+          "birth_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Birth Date"
+          },
+          "enrollment_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Enrollment Date"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ChildStatus",
+            "default": "adaptation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "first_name",
+          "last_name",
+          "birth_date",
+          "enrollment_date"
+        ],
+        "title": "ChildCreate"
+      },
+      "ChildDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "family_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Family Id"
+          },
+          "nursery_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Nursery Id"
+          },
+          "first_name": {
+            "type": "string",
+            "title": "First Name"
+          },
+          "last_name": {
+            "type": "string",
+            "title": "Last Name"
+          },
+          "birth_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Birth Date"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ChildStatus"
+          },
+          "enrollment_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Enrollment Date"
+          },
+          "exit_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Date"
+          },
+          "guardians": {
+            "items": {
+              "$ref": "#/components/schemas/ChildGuardianOut"
+            },
+            "type": "array",
+            "title": "Guardians"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "family_id",
+          "nursery_id",
+          "first_name",
+          "last_name",
+          "birth_date",
+          "status",
+          "enrollment_date",
+          "exit_date",
+          "guardians"
+        ],
+        "title": "ChildDetail"
+      },
+      "ChildGuardianOut": {
+        "properties": {
+          "guardian": {
+            "$ref": "#/components/schemas/GuardianOut"
+          },
+          "relationship": {
+            "$ref": "#/components/schemas/Relationship"
+          },
+          "has_parental_authority": {
+            "type": "boolean",
+            "title": "Has Parental Authority"
+          },
+          "is_authorized_pickup": {
+            "type": "boolean",
+            "title": "Is Authorized Pickup"
+          },
+          "is_emergency_contact": {
+            "type": "boolean",
+            "title": "Is Emergency Contact"
+          }
+        },
+        "type": "object",
+        "required": [
+          "guardian",
+          "relationship",
+          "has_parental_authority",
+          "is_authorized_pickup",
+          "is_emergency_contact"
+        ],
+        "title": "ChildGuardianOut"
+      },
+      "ChildOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "family_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Family Id"
+          },
+          "nursery_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Nursery Id"
+          },
+          "first_name": {
+            "type": "string",
+            "title": "First Name"
+          },
+          "last_name": {
+            "type": "string",
+            "title": "Last Name"
+          },
+          "birth_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Birth Date"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ChildStatus"
+          },
+          "enrollment_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Enrollment Date"
+          },
+          "exit_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "family_id",
+          "nursery_id",
+          "first_name",
+          "last_name",
+          "birth_date",
+          "status",
+          "enrollment_date",
+          "exit_date"
+        ],
+        "title": "ChildOut"
+      },
+      "ChildStatus": {
+        "type": "string",
+        "enum": [
+          "adaptation",
+          "active",
+          "suspended",
+          "departed"
+        ],
+        "title": "ChildStatus"
+      },
+      "ChildUpdate": {
+        "properties": {
+          "first_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Name"
+          },
+          "last_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Name"
+          },
+          "birth_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Birth Date"
+          },
+          "enrollment_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enrollment Date"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ChildStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "exit_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Date"
+          }
+        },
+        "type": "object",
+        "title": "ChildUpdate",
+        "description": "Champs absents : inchangés. Passer au statut « departed » exige `exit_date`."
+      },
+      "CodeIn": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "title": "CodeIn"
+      },
+      "DayPlan": {
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          },
+          "rooms": {
+            "items": {
+              "$ref": "#/components/schemas/PlannedRoom"
+            },
+            "type": "array",
+            "title": "Rooms"
+          }
+        },
+        "type": "object",
+        "required": [
+          "day",
+          "rooms"
+        ],
+        "title": "DayPlan"
+      },
+      "DepartureIn": {
+        "properties": {
+          "picked_up_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Picked Up By"
+          }
+        },
+        "type": "object",
+        "required": [
+          "picked_up_by"
+        ],
+        "title": "DepartureIn"
+      },
+      "EmployeeCreate": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 254,
+            "minLength": 3,
+            "title": "Email"
+          },
+          "first_name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "First Name"
+          },
+          "last_name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Last Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "first_name",
+          "last_name"
+        ],
+        "title": "EmployeeCreate"
+      },
+      "EmployeeOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "first_name": {
+            "type": "string",
+            "title": "First Name"
+          },
+          "last_name": {
+            "type": "string",
+            "title": "Last Name"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "has_password": {
+            "type": "boolean",
+            "title": "Has Password"
+          },
+          "nursery_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Nursery Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "first_name",
+          "last_name",
+          "is_active",
+          "has_password",
+          "nursery_ids"
+        ],
+        "title": "EmployeeOut"
+      },
+      "EmployeeUpdate": {
+        "properties": {
+          "first_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Name"
+          },
+          "last_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Name"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "title": "EmployeeUpdate",
+        "description": "Champs absents : inchangés. `is_active: false` = départ du salarié, sessions fermées sur-le-champ."
+      },
+      "FamilyChild": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "first_name": {
+            "type": "string",
+            "title": "First Name"
+          },
+          "last_name": {
+            "type": "string",
+            "title": "Last Name"
+          },
+          "nursery_name": {
+            "type": "string",
+            "title": "Nursery Name"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ChildStatus"
+          },
+          "today": {
+            "type": "string",
+            "enum": [
+              "absent",
+              "present",
+              "left"
+            ],
+            "title": "Today"
+          },
+          "today_arrived_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Today Arrived At"
+          },
+          "today_departed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Today Departed At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "first_name",
+          "last_name",
+          "nursery_name",
+          "status",
+          "today",
+          "today_arrived_at",
+          "today_departed_at"
+        ],
+        "title": "FamilyChild"
+      },
+      "FamilyChildDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "first_name": {
+            "type": "string",
+            "title": "First Name"
+          },
+          "last_name": {
+            "type": "string",
+            "title": "Last Name"
+          },
+          "nursery_name": {
+            "type": "string",
+            "title": "Nursery Name"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ChildStatus"
+          },
+          "today": {
+            "type": "string",
+            "enum": [
+              "absent",
+              "present",
+              "left"
+            ],
+            "title": "Today"
+          },
+          "today_arrived_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Today Arrived At"
+          },
+          "today_departed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Today Departed At"
+          },
+          "birth_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Birth Date"
+          },
+          "contacts": {
+            "items": {
+              "$ref": "#/components/schemas/FamilyContact"
+            },
+            "type": "array",
+            "title": "Contacts"
+          },
+          "presences": {
+            "items": {
+              "$ref": "#/components/schemas/PresenceOut"
+            },
+            "type": "array",
+            "title": "Presences"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "first_name",
+          "last_name",
+          "nursery_name",
+          "status",
+          "today",
+          "today_arrived_at",
+          "today_departed_at",
+          "birth_date",
+          "contacts",
+          "presences"
+        ],
+        "title": "FamilyChildDetail"
+      },
+      "FamilyContact": {
+        "properties": {
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "relationship": {
+            "$ref": "#/components/schemas/Relationship"
+          },
+          "has_parental_authority": {
+            "type": "boolean",
+            "title": "Has Parental Authority"
+          },
+          "is_authorized_pickup": {
+            "type": "boolean",
+            "title": "Is Authorized Pickup"
+          }
+        },
+        "type": "object",
+        "required": [
+          "display_name",
+          "relationship",
+          "has_parental_authority",
+          "is_authorized_pickup"
+        ],
+        "title": "FamilyContact",
+        "description": "Responsables de l'enfant, sans leurs coordonnées : un parent ne reçoit pas le téléphone des autres."
+      },
+      "FamilyCreate": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Label"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "postal_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 10
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Postal Code"
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label"
+        ],
+        "title": "FamilyCreate"
+      },
+      "FamilyDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "nursery_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Nursery Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "postal_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Postal Code"
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "children": {
+            "items": {
+              "$ref": "#/components/schemas/ChildOut"
+            },
+            "type": "array",
+            "title": "Children"
+          },
+          "guardians": {
+            "items": {
+              "$ref": "#/components/schemas/GuardianOut"
+            },
+            "type": "array",
+            "title": "Guardians"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nursery_id",
+          "label",
+          "address",
+          "postal_code",
+          "city",
+          "is_active",
+          "children",
+          "guardians"
+        ],
+        "title": "FamilyDetail"
+      },
+      "FamilyOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "nursery_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Nursery Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "postal_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Postal Code"
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nursery_id",
+          "label",
+          "address",
+          "postal_code",
+          "city",
+          "is_active"
+        ],
+        "title": "FamilyOut"
+      },
+      "FamilyUpdate": {
+        "properties": {
+          "label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "postal_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 10
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Postal Code"
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "title": "FamilyUpdate"
+      },
+      "Frequency": {
+        "type": "string",
+        "enum": [
+          "daily",
+          "weekly",
+          "monthly"
+        ],
+        "title": "Frequency"
+      },
+      "GuardianCreate": {
+        "properties": {
+          "first_name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "First Name"
+          },
+          "last_name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Last Name"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 254,
+                "minLength": 3
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          }
+        },
+        "type": "object",
+        "required": [
+          "first_name",
+          "last_name"
+        ],
+        "title": "GuardianCreate"
+      },
+      "GuardianOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "family_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Family Id"
+          },
+          "first_name": {
+            "type": "string",
+            "title": "First Name"
+          },
+          "last_name": {
+            "type": "string",
+            "title": "Last Name"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "has_account": {
+            "type": "boolean",
+            "title": "Has Account"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "family_id",
+          "first_name",
+          "last_name",
+          "email",
+          "phone",
+          "has_account",
+          "is_active"
+        ],
+        "title": "GuardianOut"
+      },
+      "GuardianUpdate": {
+        "properties": {
+          "first_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Name"
+          },
+          "last_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Name"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 254,
+                "minLength": 3
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "title": "GuardianUpdate"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "Health": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "degraded"
+            ],
+            "title": "Status"
+          },
+          "database": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "unreachable"
+            ],
+            "title": "Database"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "database",
+          "version"
+        ],
+        "title": "Health"
+      },
+      "InvitationInfo": {
+        "properties": {
+          "first_name": {
+            "type": "string",
+            "title": "First Name"
+          },
+          "nursery_name": {
+            "type": "string",
+            "title": "Nursery Name"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "account_exists": {
+            "type": "boolean",
+            "title": "Account Exists"
+          }
+        },
+        "type": "object",
+        "required": [
+          "first_name",
+          "nursery_name",
+          "email",
+          "account_exists"
+        ],
+        "title": "InvitationInfo"
+      },
+      "InvitationOut": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "title": "Token"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token",
+          "email",
+          "expires_at"
+        ],
+        "title": "InvitationOut",
+        "description": "Le jeton n'est montré qu'une fois. Tant qu'il n'y a pas d'envoi d'e-mails, la direction le transmet."
+      },
+      "LinkIn": {
+        "properties": {
+          "relationship": {
+            "$ref": "#/components/schemas/Relationship"
+          },
+          "has_parental_authority": {
+            "type": "boolean",
+            "title": "Has Parental Authority",
+            "default": false
+          },
+          "is_authorized_pickup": {
+            "type": "boolean",
+            "title": "Is Authorized Pickup",
+            "default": false
+          },
+          "is_emergency_contact": {
+            "type": "boolean",
+            "title": "Is Emergency Contact",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "relationship"
+        ],
+        "title": "LinkIn"
+      },
+      "LoginIn": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 254,
+            "minLength": 3,
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "LoginIn"
+      },
+      "MfaState": {
+        "type": "string",
+        "enum": [
+          "not_required",
+          "setup_required",
+          "required",
+          "verified"
+        ],
+        "title": "MfaState",
+        "description": "État du second facteur pour une session, renvoyé au front."
+      },
+      "MfaStatusOut": {
+        "properties": {
+          "state": {
+            "$ref": "#/components/schemas/MfaState"
+          },
+          "totp": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TotpOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "totp_setup_pending": {
+            "type": "boolean",
+            "title": "Totp Setup Pending"
+          },
+          "backup_codes_remaining": {
+            "type": "integer",
+            "title": "Backup Codes Remaining"
+          }
+        },
+        "type": "object",
+        "required": [
+          "state",
+          "totp",
+          "totp_setup_pending",
+          "backup_codes_remaining"
+        ],
+        "title": "MfaStatusOut"
+      },
+      "NurseryCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "postal_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 10
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Postal Code"
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "City"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 254
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "capacity": {
+            "type": "integer",
+            "maximum": 1000.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Capacity"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "city",
+          "capacity"
+        ],
+        "title": "NurseryCreate"
+      },
+      "NurseryOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "enterprise_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Enterprise Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "postal_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Postal Code"
+          },
+          "city": {
+            "type": "string",
+            "title": "City"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "capacity": {
+            "type": "integer",
+            "title": "Capacity"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "enterprise_id",
+          "name",
+          "address",
+          "postal_code",
+          "city",
+          "phone",
+          "email",
+          "capacity",
+          "is_active"
+        ],
+        "title": "NurseryOut"
+      },
+      "NurseryUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "postal_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 10
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Postal Code"
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 254
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "capacity": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1000.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capacity"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "title": "NurseryUpdate",
+        "description": "Champs absents : inchangés. Une crèche se désactive, elle ne se supprime pas."
+      },
+      "PasswordChangeIn": {
+        "properties": {
+          "current_password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Current Password"
+          },
+          "new_password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "New Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "current_password",
+          "new_password"
+        ],
+        "title": "PasswordChangeIn"
+      },
+      "PasswordChangedOut": {
+        "properties": {
+          "other_sessions_closed": {
+            "type": "integer",
+            "title": "Other Sessions Closed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "other_sessions_closed"
+        ],
+        "title": "PasswordChangedOut"
+      },
+      "PinIn": {
+        "properties": {
+          "pin": {
+            "type": "string",
+            "maxLength": 16,
+            "minLength": 1,
+            "title": "Pin"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Password",
+            "description": "Mot de passe actuel, pour confirmer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pin",
+          "password"
+        ],
+        "title": "PinIn"
+      },
+      "PlannedRoom": {
+        "properties": {
+          "room_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Room Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/PlannedTask"
+            },
+            "type": "array",
+            "title": "Tasks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "room_id",
+          "name",
+          "tasks"
+        ],
+        "title": "PlannedRoom"
+      },
+      "PlannedTask": {
+        "properties": {
+          "room_task_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Room Task Id"
+          },
+          "task_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Task Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "instructions": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instructions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "room_task_id",
+          "task_id",
+          "name",
+          "instructions"
+        ],
+        "title": "PlannedTask"
+      },
+      "PresenceOut": {
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          },
+          "arrived_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Arrived At"
+          },
+          "departed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Departed At"
+          },
+          "picked_up_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Picked Up By"
+          }
+        },
+        "type": "object",
+        "required": [
+          "day",
+          "arrived_at",
+          "departed_at",
+          "picked_up_by"
+        ],
+        "title": "PresenceOut"
+      },
+      "Relationship": {
+        "type": "string",
+        "enum": [
+          "parent",
+          "legal_guardian",
+          "other"
+        ],
+        "title": "Relationship"
+      },
+      "RoomCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "display_order": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Display Order",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "RoomCreate"
+      },
+      "RoomDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "nursery_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Nursery Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "display_order": {
+            "type": "integer",
+            "title": "Display Order"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/RoomTaskOut"
+            },
+            "type": "array",
+            "title": "Tasks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nursery_id",
+          "name",
+          "description",
+          "display_order",
+          "is_active",
+          "tasks"
+        ],
+        "title": "RoomDetail"
+      },
+      "RoomOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "nursery_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Nursery Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "display_order": {
+            "type": "integer",
+            "title": "Display Order"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nursery_id",
+          "name",
+          "description",
+          "display_order",
+          "is_active"
+        ],
+        "title": "RoomOut"
+      },
+      "RoomTaskIn": {
+        "properties": {
+          "frequency": {
+            "$ref": "#/components/schemas/Frequency"
+          },
+          "weekdays": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weekdays",
+            "description": "ISO : 1 = lundi … 7 = dimanche"
+          },
+          "display_order": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Display Order",
+            "default": 0
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "frequency"
+        ],
+        "title": "RoomTaskIn",
+        "description": "Affectation complète (PUT) : fréquence, jours, ordre dans la pièce, active ou non."
+      },
+      "RoomTaskOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "task": {
+            "$ref": "#/components/schemas/TaskOut"
+          },
+          "frequency": {
+            "$ref": "#/components/schemas/Frequency"
+          },
+          "weekdays": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weekdays"
+          },
+          "display_order": {
+            "type": "integer",
+            "title": "Display Order"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "task",
+          "frequency",
+          "weekdays",
+          "display_order",
+          "is_active"
+        ],
+        "title": "RoomTaskOut"
+      },
+      "RoomUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "display_order": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Order"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "title": "RoomUpdate"
+      },
+      "SessionOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "first_name": {
+            "type": "string",
+            "title": "First Name"
+          },
+          "last_name": {
+            "type": "string",
+            "title": "Last Name"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          },
+          "enterprise_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enterprise Id"
+          },
+          "mfa": {
+            "$ref": "#/components/schemas/MfaState"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "first_name",
+          "last_name",
+          "role",
+          "enterprise_id",
+          "mfa"
+        ],
+        "title": "SessionOut",
+        "description": "Utilisateur connecté et état du second facteur pour cette session.\n\n`mfa` : not_required ou verified, la session est complète ; setup_required,\nelle doit enregistrer un facteur ; required, elle doit le présenter."
+      },
+      "SheetRoom": {
+        "properties": {
+          "room_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Room Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/SheetTask"
+            },
+            "type": "array",
+            "title": "Tasks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "room_id",
+          "name",
+          "tasks"
+        ],
+        "title": "SheetRoom"
+      },
+      "SheetTask": {
+        "properties": {
+          "room_task_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Room Task Id"
+          },
+          "task_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Task Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "instructions": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instructions"
+          },
+          "done_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Done At"
+          },
+          "done_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Done By"
+          }
+        },
+        "type": "object",
+        "required": [
+          "room_task_id",
+          "task_id",
+          "name",
+          "instructions",
+          "done_at",
+          "done_by"
+        ],
+        "title": "SheetTask"
+      },
+      "StaffInvitationInfo": {
+        "properties": {
+          "first_name": {
+            "type": "string",
+            "title": "First Name"
+          },
+          "enterprise_name": {
+            "type": "string",
+            "title": "Enterprise Name"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "first_name",
+          "enterprise_name",
+          "email"
+        ],
+        "title": "StaffInvitationInfo"
+      },
+      "StaffInvitationOut": {
+        "properties": {
+          "employee": {
+            "$ref": "#/components/schemas/StaffOut"
+          },
+          "token": {
+            "type": "string",
+            "title": "Token"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "employee",
+          "token",
+          "expires_at"
+        ],
+        "title": "StaffInvitationOut",
+        "description": "Le jeton n'est montré qu'une fois. Tant qu'il n'y a pas d'envoi d'e-mails (LUN-59), la direction le transmet."
+      },
+      "StaffOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "first_name": {
+            "type": "string",
+            "title": "First Name"
+          },
+          "last_name": {
+            "type": "string",
+            "title": "Last Name"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "has_password": {
+            "type": "boolean",
+            "title": "Has Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "first_name",
+          "last_name",
+          "is_active",
+          "has_password"
+        ],
+        "title": "StaffOut"
+      },
+      "TabletActorOut": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "nursery_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Nursery Id"
+          },
+          "nursery_name": {
+            "type": "string",
+            "title": "Nursery Name"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "display_name",
+          "nursery_id",
+          "nursery_name",
+          "expires_at"
+        ],
+        "title": "TabletActorOut"
+      },
+      "TabletChild": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "first_name": {
+            "type": "string",
+            "title": "First Name"
+          },
+          "last_name": {
+            "type": "string",
+            "title": "Last Name"
+          },
+          "presence": {
+            "type": "string",
+            "enum": [
+              "absent",
+              "present",
+              "left"
+            ],
+            "title": "Presence"
+          },
+          "arrived_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Arrived At"
+          },
+          "departed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Departed At"
+          },
+          "guardians": {
+            "items": {
+              "$ref": "#/components/schemas/TabletGuardian"
+            },
+            "type": "array",
+            "title": "Guardians"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "first_name",
+          "last_name",
+          "presence",
+          "arrived_at",
+          "departed_at",
+          "guardians"
+        ],
+        "title": "TabletChild",
+        "description": "Enfant attendu aujourd'hui, avec son état et les personnes qui peuvent l'amener ou le chercher."
+      },
+      "TabletCreate": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Label",
+            "description": "Ex. « Tablette de l'entrée »"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label"
+        ],
+        "title": "TabletCreate"
+      },
+      "TabletGuardian": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "relationship": {
+            "$ref": "#/components/schemas/Relationship"
+          },
+          "is_authorized_pickup": {
+            "type": "boolean",
+            "title": "Is Authorized Pickup"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "display_name",
+          "relationship",
+          "is_authorized_pickup"
+        ],
+        "title": "TabletGuardian"
+      },
+      "TabletInfo": {
+        "properties": {
+          "tablet_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Tablet Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "nursery_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Nursery Id"
+          },
+          "nursery_name": {
+            "type": "string",
+            "title": "Nursery Name"
+          },
+          "staff": {
+            "items": {
+              "$ref": "#/components/schemas/TabletStaffMember"
+            },
+            "type": "array",
+            "title": "Staff"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tablet_id",
+          "label",
+          "nursery_id",
+          "nursery_name",
+          "staff"
+        ],
+        "title": "TabletInfo"
+      },
+      "TabletLoginIn": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "pin": {
+            "type": "string",
+            "maxLength": 16,
+            "minLength": 1,
+            "title": "Pin"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "pin"
+        ],
+        "title": "TabletLoginIn"
+      },
+      "TabletOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "nursery_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Nursery Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked At"
+          },
+          "last_seen_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Seen At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nursery_id",
+          "label",
+          "created_at",
+          "expires_at",
+          "revoked_at",
+          "last_seen_at"
+        ],
+        "title": "TabletOut",
+        "description": "Tablette enrôlée. Le jeton d'appareil n'est jamais renvoyé : il est posé en cookie sur la tablette."
+      },
+      "TabletSheet": {
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          },
+          "rooms": {
+            "items": {
+              "$ref": "#/components/schemas/SheetRoom"
+            },
+            "type": "array",
+            "title": "Rooms"
+          }
+        },
+        "type": "object",
+        "required": [
+          "day",
+          "rooms"
+        ],
+        "title": "TabletSheet"
+      },
+      "TabletStaffMember": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "pin_set": {
+            "type": "boolean",
+            "title": "Pin Set"
+          },
+          "pin_locked": {
+            "type": "boolean",
+            "title": "Pin Locked"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "display_name",
+          "pin_set",
+          "pin_locked"
+        ],
+        "title": "TabletStaffMember",
+        "description": "Employé affiché sur la tablette : prénom et initiale seulement."
+      },
+      "TaskCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 150,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "instructions": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instructions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "TaskCreate"
+      },
+      "TaskOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "instructions": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instructions"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "instructions",
+          "is_active"
+        ],
+        "title": "TaskOut"
+      },
+      "TaskUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 150,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "instructions": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instructions"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "title": "TaskUpdate"
+      },
+      "TokenIn": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 20,
+            "title": "Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token"
+        ],
+        "title": "TokenIn"
+      },
+      "TotpConfirmOut": {
+        "properties": {
+          "backup_codes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Backup Codes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "backup_codes"
+        ],
+        "title": "TotpConfirmOut"
+      },
+      "TotpOut": {
+        "properties": {
+          "confirmed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Confirmed At"
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "confirmed_at",
+          "last_used_at"
+        ],
+        "title": "TotpOut"
+      },
+      "TotpSetupOut": {
+        "properties": {
+          "secret": {
+            "type": "string",
+            "title": "Secret"
+          },
+          "otpauth_uri": {
+            "type": "string",
+            "title": "Otpauth Uri"
+          }
+        },
+        "type": "object",
+        "required": [
+          "secret",
+          "otpauth_uri"
+        ],
+        "title": "TotpSetupOut",
+        "description": "Secret à saisir dans l'application d'authentification, ou URI à afficher en QR code.\n\nRenvoyé une seule fois : il n'est plus lisible ensuite, même par la direction."
+      },
+      "UserRole": {
+        "type": "string",
+        "enum": [
+          "developer",
+          "owner",
+          "employee",
+          "guardian"
+        ],
+        "title": "UserRole"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "app__accounts__schemas__AcceptedOut": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "AcceptedOut"
+      },
+      "app__family__schemas__AcceptedOut": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "account_created": {
+            "type": "boolean",
+            "title": "Account Created"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "account_created"
+        ],
+        "title": "AcceptedOut"
+      }
+    }
+  }
+}
