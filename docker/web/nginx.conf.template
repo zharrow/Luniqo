@@ -31,20 +31,29 @@ http {
     uwsgi_temp_path /tmp/nginx/uwsgi;
     scgi_temp_path /tmp/nginx/scgi;
 
-    # DNS interne de Docker. Les adresses des services sont mises dans des
-    # variables : nginx les résout à chaque requête (cache de 10 s) et non une
+    # DNS interne de Docker. Le paramètre resolve des serveurs ci-dessous fait
+    # réinterroger ce DNS (toutes les 10 s) au lieu de résoudre les noms une
     # seule fois au démarrage. Conséquences :
     # - la passerelle démarre même si un service est absent (réponse 502) ;
     # - un service recréé avec une nouvelle IP est retrouvé sans redémarrer nginx.
     resolver 127.0.0.11 valid=10s ipv6=off;
     resolver_timeout 2s;
 
-    # En-têtes de sécurité des réponses de l'API. Les fichiers du front ont les
-    # leurs, CSP comprise (security-headers.conf) : la CSP stricte du front
-    # bloquerait Swagger UI (/api/docs), qui charge ses scripts depuis un CDN.
-    add_header X-Content-Type-Options nosniff always;
-    add_header X-Frame-Options SAMEORIGIN always;
-    add_header Referrer-Policy strict-origin-when-cross-origin always;
+    # Groupes de serveurs (upstream) : contrairement à un proxy_pass vers une
+    # variable, ils gardent des connexions ouvertes vers les services
+    # (keepalive). Sans elles, chaque requête ouvrait une nouvelle connexion
+    # TCP vers le front : la passerelle plafonnait à 850 requêtes/s environ
+    # (banc de mesure du 2026-10-29). zone : mémoire partagée exigée par resolve.
+    upstream front {
+        zone front 64k;
+        server __FRONT_ADDR__ resolve;
+        keepalive 16;
+    }
+    upstream api {
+        zone api 64k;
+        server __API_ADDR__ resolve;
+        keepalive 16;
+    }
 
     # En-têtes transmis aux services : hôte d'origine et adresse du client.
     # X-Forwarded-For est remplacé, pas complété : la passerelle est le seul
@@ -56,37 +65,33 @@ http {
     proxy_set_header X-Forwarded-For $remote_addr;
     proxy_set_header X-Forwarded-Proto $scheme;
     proxy_connect_timeout 2s;
+    # Connexions persistantes vers les services : HTTP/1.1 et en-tête
+    # Connection vidé. Posés ici, au niveau http : un proxy_set_header dans un
+    # bloc location remplacerait tous ceux d'au-dessus (X-Forwarded-For…).
+    proxy_http_version 1.1;
+    proxy_set_header Connection "";
 
     server {
         listen 8080;
 
-        set $api_upstream http://__API_ADDR__;
-
-        # Front v2 : application monopage construite par Vite (ADR-002).
-        # Une adresse sans fichier correspondant (/accueil, /connexion…) reçoit
-        # index.html : c'est le routeur du navigateur qui affiche la page.
-        root /srv/front;
+        # Front v2 (conteneur front) : pages et fichiers statiques. Le front
+        # pose lui-même ses en-têtes (CSP, cache) : la passerelle n'en ajoute
+        # aucun ici, sinon certains seraient envoyés en double.
         location / {
-            try_files $uri /index.html;
-            include /etc/nginx/security-headers.conf;
-            # Jamais gardé en cache sans revalidation : une nouvelle version
-            # est prise au chargement suivant.
-            add_header Cache-Control "no-cache" always;
-        }
-
-        # Fichiers produits par Vite : leur nom contient l'empreinte de leur
-        # contenu, ils ne changent jamais. Fichier absent : 404, pas index.html.
-        location /assets/ {
-            try_files $uri =404;
-            include /etc/nginx/security-headers.conf;
-            add_header Cache-Control "public, max-age=31536000, immutable" always;
+            proxy_pass http://front;
         }
 
         # API FastAPI. L'URI est transmise telle quelle : les routes de l'API
         # commencent elles-mêmes par /api.
         location /api/ {
-            proxy_pass $api_upstream;
+            proxy_pass http://api;
             proxy_read_timeout 30s;
+            # En-têtes de sécurité des réponses de l'API. Pas la CSP stricte
+            # du front : elle bloquerait Swagger UI (/api/docs), qui charge ses
+            # scripts depuis un CDN.
+            add_header X-Content-Type-Options nosniff always;
+            add_header X-Frame-Options SAMEORIGIN always;
+            add_header Referrer-Policy strict-origin-when-cross-origin always;
         }
 
         # Service absent ou en erreur : page d'attente plutôt qu'une erreur brute.

@@ -1,0 +1,63 @@
+# Modèle de configuration nginx du front. entrypoint.sh remplace les marqueurs
+# __XXX__ par les arguments reçus au run, puis écrit le résultat dans /tmp/nginx.
+
+# Nombre de processus workers. Fixé explicitement : "auto" compterait les
+# cœurs de la machine hôte, sans tenir compte de la limite CPU du conteneur.
+worker_processes __WORKER_PROCESSES__;
+
+# Le système de fichiers de l'image peut être en lecture seule : le PID va
+# dans /tmp (tmpfs), les logs sur la sortie standard récupérée par Docker.
+pid /tmp/nginx/nginx.pid;
+error_log /dev/stderr warn;
+
+events {
+    # Connexions simultanées maximum par worker.
+    worker_connections __WORKER_CONNECTIONS__;
+}
+
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+
+    access_log /dev/stdout;
+    sendfile on;
+    server_tokens off;
+
+    # Fichiers temporaires dans /tmp, accessible en écriture à l'utilisateur app.
+    client_body_temp_path /tmp/nginx/client_body;
+    proxy_temp_path /tmp/nginx/proxy;
+    fastcgi_temp_path /tmp/nginx/fastcgi;
+    uwsgi_temp_path /tmp/nginx/uwsgi;
+    scgi_temp_path /tmp/nginx/scgi;
+
+    server {
+        listen 8080;
+
+        # Front v2 : application monopage construite par Vite (ADR-002).
+        # Une adresse sans fichier correspondant (/accueil, /connexion…) reçoit
+        # index.html : c'est le routeur du navigateur qui affiche la page.
+        root /srv/front;
+        location / {
+            try_files $uri /index.html;
+            include /etc/nginx/security-headers.conf;
+            # Jamais gardé en cache sans revalidation : une nouvelle version
+            # est prise au chargement suivant.
+            add_header Cache-Control "no-cache" always;
+        }
+
+        # Fichiers produits par Vite : leur nom contient l'empreinte de leur
+        # contenu, ils ne changent jamais. Fichier absent : 404, pas index.html.
+        location /assets/ {
+            try_files $uri =404;
+            include /etc/nginx/security-headers.conf;
+            add_header Cache-Control "public, max-age=31536000, immutable" always;
+        }
+
+        # Utilisé par le healthcheck : ne dépend que de nginx.
+        location = /healthz {
+            access_log off;
+            default_type text/plain;
+            return 200 "ok\n";
+        }
+    }
+}

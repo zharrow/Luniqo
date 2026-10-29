@@ -5,8 +5,8 @@
 #   api     lint (ruff), tests unitaires et tests d'intégration sur une vraie PostgreSQL
 #   front   front v2 (front/) : contrat d'API à jour, lint, typage, tests unitaires,
 #           tests de composants et stories dans Chromium, build, build de Storybook
-#   images  construction des 4 images Docker (web construit le front v2), démarrage
-#           de la pile, sondes, puis parcours Playwright contre la vraie API
+#   images  construction des 5 images Docker (front construit le front v2, web le
+#           relaie), démarrage de la pile, sondes, puis parcours Playwright contre la vraie API
 #   ci-docker  la chaîne du TP Docker : conteneurs lint puis test (docker/pipeline.sh)
 #
 # Les actions tierces sont épinglées par SHA de commit (le numéro de version en
@@ -156,7 +156,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Construction des 4 images (aucune image Docker Hub)
+      - name: Construction des 5 images (aucune image Docker Hub)
         run: docker compose build
 
       - name: Tailles des images
@@ -183,8 +183,12 @@ jobs:
           code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/api/v2/nurseries)
           echo "/api/v2/nurseries sans session -> $code"
           [ "$code" = 401 ]
-          # Le front est servi avec sa politique de sécurité du contenu.
+          # Le front (conteneur front, relayé par web) garde sa politique de
+          # sécurité du contenu, et la passerelle n'ajoute aucun en-tête en double.
           curl -sI http://localhost:8080/connexion | grep -qi "^content-security-policy: default-src 'self'"
+          [ "$(curl -sI http://localhost:8080/connexion | grep -ci '^x-frame-options')" = 1 ]
+          # L'API a ses propres en-têtes, sans la CSP du front (Swagger UI).
+          ! curl -sI http://localhost:8080/api/health | grep -qi '^content-security-policy'
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
