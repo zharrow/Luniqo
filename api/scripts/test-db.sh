@@ -4,13 +4,16 @@
 #   scripts/test-db.sh up     démarre la base sur 127.0.0.1:55432 et affiche les variables à exporter
 #   scripts/test-db.sh down   l'arrête ; ses données (en mémoire, tmpfs) disparaissent
 #
+# Deux sessions de travail en parallèle : TEST_DB_CONTAINER et TEST_DB_PORT
+# donnent à chacune sa propre base (ex. luniqo-test-db-2 sur 55433).
+#
 # Construite avec l'image luniqo/db du TP Docker (aucune image Docker Hub) :
 # même PostgreSQL que la pile, rien de persistant, joignable seulement depuis
 # la machine. Le mot de passe est fixe et public : cette base ne contient que
 # des données de test et n'existe que le temps des tests.
 set -eu
 
-NAME=luniqo-test-db
+NAME="${TEST_DB_CONTAINER:-luniqo-test-db}"
 PORT="${TEST_DB_PORT:-55432}"
 IMAGE="${TEST_DB_IMAGE:-luniqo/db:1.0}"
 PASSWORD=luniqo-test

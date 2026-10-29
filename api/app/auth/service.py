@@ -85,20 +85,32 @@ async def login(repo: AuthRepository, email: str, password: str, client: Client,
 
     if needs_rehash:
         user.password_hash = await passwords.hash_password(password)
+    # Mot de passe correct : si un second facteur est exigé, la session reste
+    # en attente jusqu'à ce qu'il soit présenté (ADR-004).
+    return await open_session(repo, user, client, now, previous_token=previous_token)
 
+
+async def open_session(repo: AuthRepository, user: AppUser, client: Client, now: datetime, *,
+                       previous_token: str | None, mfa_verified: bool = False,
+                       detail: str | None = None) -> LoginResult:
+    """Ouvre une session web pour un compte dont l'identité vient d'être prouvée.
+
+    `mfa_verified` : la preuve vaut déjà les deux facteurs (passkey vérifiée
+    par la biométrie ou le code de l'appareil, ADR-004).
+    """
     # Nouveau jeton à chaque connexion ; l'éventuelle session précédente du
     # navigateur est supprimée (pas de fixation de session).
     if previous_token:
         await repo.delete_session(token_digest(previous_token))
     token = new_token()
-    # Mot de passe correct : si un second facteur est exigé, la session reste
-    # en attente jusqu'à ce qu'il soit présenté (ADR-004).
     has_factor = await repo.has_second_factor(user.id)
     session = UserSession(token_digest=token_digest(token), user_id=user.id, created_at=now, last_seen_at=now,
                           ip=client.ip, user_agent=client.user_agent, kind=SessionKind.WEB.value,
-                          mfa_required=mfa_policy.second_factor_required(user.role, has_factor))
+                          mfa_required=mfa_policy.second_factor_required(user.role, has_factor),
+                          mfa_verified_at=now if mfa_verified else None)
     repo.add_session(session)
-    repo.add_event(_event(AuthEventType.LOGIN_SUCCEEDED, client, now, user_id=user.id, email=email))
+    repo.add_event(_event(AuthEventType.LOGIN_SUCCEEDED, client, now, user_id=user.id, email=user.email,
+                          detail=detail))
     await repo.commit()
     return LoginResult(user=user, token=token, session=session, has_factor=has_factor)
 

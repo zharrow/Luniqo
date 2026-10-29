@@ -6,8 +6,9 @@ Elle remplace progressivement l'accès direct du navigateur à Supabase de la v1
 État au 2026-10-10 : **parcours central complet côté API** (LUN-003 à LUN-011) ;
 fiche de ménage : pièces, catalogue des tâches et fréquences (LUN-76), coches depuis la tablette (LUN-77), historique et export (LUN-78). Comptes des employés par invitation et changement de mot de passe (LUN-55). Purge RGPD des sessions expirées, du journal au-delà de 6 mois et des invitations expirées (LUN-54, 2026-10-27).
 Second facteur obligatoire pour la direction et l'éditeur
-([ADR-004](../M2/decisions/ADR-004-double-authentification.md), LUN-006) : TOTP
-et codes de secours ; les passkeys suivent. Pas encore de données réelles
+([ADR-004](../M2/decisions/ADR-004-double-authentification.md), LUN-006) : passkeys
+(Face ID, Touch ID, Windows Hello…, LUN-69, 2026-10-27), TOTP et codes de secours ; connexion
+sans mot de passe par passkey. Pas encore de données réelles
 (LUN-019, LUN-021) : ne pas exposer en dehors d'un environnement de test.
 
 ## Routes
@@ -24,6 +25,12 @@ et codes de secours ; les passkeys suivent. Pas encore de données réelles
 | `POST /api/v2/auth/mfa/verify` | Présenter le second facteur (code TOTP ou code de secours) : la session devient complète. 429 si trop de tentatives |
 | `DELETE /api/v2/auth/mfa/totp` | Retirer le TOTP (comptes où il est facultatif ; 409 pour la direction) |
 | `POST /api/v2/auth/mfa/backup-codes` | Nouveaux codes de secours, les anciens sont annulés |
+| `GET /api/v2/auth/passkeys` | Passkeys du compte (nom, synchronisée ou non, dates de création et de dernier usage) |
+| `POST /api/v2/auth/passkeys/registration/options` | Options pour `navigator.credentials.create()` (défi à usage unique, 5 minutes) |
+| `POST /api/v2/auth/passkeys` | Enregistrer la passkey créée par le navigateur (avec un nom) ; renvoie 10 codes de secours si c'est le premier facteur ; ferme les autres sessions |
+| `PATCH`, `DELETE /api/v2/auth/passkeys/{id}` | Renommer ou retirer une passkey (409 si c'est le dernier facteur de la direction) |
+| `POST /api/v2/auth/passkeys/verify/options`, `…/verify` | Présenter le second facteur avec une passkey du compte |
+| `POST /api/v2/auth/passkeys/login/options`, `…/login` | Se connecter sans mot de passe : la passkey vaut les deux facteurs, la session est complète d'emblée ; pose le cookie de session |
 | `GET /api/v2/nurseries` | Crèches accessibles : toutes celles de l'entreprise (direction, `?include_inactive=true` pour les fermées), celles accordées (employé) |
 | `POST /api/v2/nurseries` | Créer une crèche dans son entreprise (direction) |
 | `GET /api/v2/nurseries/{id}` | Lire une crèche (404 si inexistante **ou** inaccessible) |
@@ -71,13 +78,18 @@ Après le mot de passe, `/login` renvoie `mfa` :
 | `mfa` | Signification | Ce que la session peut faire |
 |---|---|---|
 | `not_required` | Compte sans second facteur (employé, famille) | tout ce que son rôle permet |
-| `setup_required` | Direction ou éditeur sans facteur enregistré | `/me`, déconnexion, activer un TOTP |
-| `required` | Un facteur existe et doit être présenté | `/me`, déconnexion, `/mfa/verify` |
+| `setup_required` | Direction ou éditeur sans facteur enregistré | `/me`, déconnexion, enregistrer une passkey ou activer un TOTP |
+| `required` | Un facteur existe et doit être présenté | `/me`, déconnexion, `/mfa/verify`, `/passkeys/verify` |
 | `verified` | Second facteur présenté | tout ce que son rôle permet |
 
 Toute autre route répond **403 « Second facteur requis »** tant que la session est en
 attente : le contrôle est dans `CurrentUser`. Ajouter, changer ou retirer un facteur
 exige une preuve d'identité de moins de 15 minutes et ferme les autres sessions.
+
+Une passkey vérifiée par la biométrie ou le code de l'appareil vaut les deux
+facteurs : `/passkeys/login` ouvre directement une session `verified`. Les passkeys
+sont liées au domaine de la première origine d'`APP_ORIGINS` (`localhost` en
+développement) ; seules les origines de ce domaine sont admises.
 
 ### Qui accède à quoi
 
@@ -120,6 +132,7 @@ api/
 │   ├── family/        invitations des parents, consultation famille
 │   ├── cleaning/      fiche de ménage : pièces, catalogue, fréquences (règles pures : policy.py)
 │   ├── mfa/           second facteur : TOTP chiffré (crypto.py), codes de secours, règles pures (policy.py)
+│   ├── passkeys/      passkeys WebAuthn (py_webauthn) : enregistrement, second facteur, connexion sans mot de passe
 │   ├── purge/         purge RGPD : durées de conservation (policy.py), commande python -m app.purge
 │   ├── security.py    contrôle de l'en-tête Origin (CSRF)
 │   ├── config.py      configuration lue dans l'environnement
@@ -189,9 +202,9 @@ cd api
 python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements-dev.txt
 
-pytest                          # tests unitaires, sans base de données (309 au 2026-10-27)
+pytest                          # tests unitaires, sans base de données (332 au 2026-10-27)
 
-# Tests d'intégration sur une vraie PostgreSQL (164 au 2026-10-27), base jetable
+# Tests d'intégration sur une vraie PostgreSQL (211 au 2026-10-27), base jetable
 # construite avec l'image luniqo/db du TP Docker (cd ../docker && docker compose build db) :
 scripts/test-db.sh up           # affiche la ligne export TEST_DB_... à copier
 export TEST_DB_ADDR=127.0.0.1:55432 TEST_DB_NAME=luniqo_test TEST_DB_PASSWORD=luniqo-test

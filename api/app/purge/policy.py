@@ -6,7 +6,8 @@ Une donnée n'est gardée que tant qu'elle sert (RGPD, art. 5.1.e) :
 - journal auth_event : 6 mois (CNIL, journalisation : 6 mois à 1 an ;
   décision de Florent du 2026-10-08) ;
 - invitation (employé, famille) : jusqu'à son expiration. Sa création et son
-  acceptation restent dans le journal.
+  acceptation restent dans le journal ;
+- défi de passkey (LUN-69) : jusqu'à son expiration (5 minutes).
 
 Chaque date limite reprend la règle d'expiration du module concerné : la purge
 ne supprime jamais ce que l'API accepterait encore.
@@ -34,6 +35,7 @@ class Cutoffs:
     tablet_session_created: datetime
     auth_event: datetime
     invitation_expires: datetime
+    challenge_expires: datetime
 
 
 def cutoffs(now: datetime) -> Cutoffs:
@@ -45,4 +47,5 @@ def cutoffs(now: datetime) -> Cutoffs:
         tablet_session_created=now - tablet_policy.ACTION_SESSION_LIFETIME,
         auth_event=now - AUTH_EVENT_RETENTION,
         invitation_expires=now,
+        challenge_expires=now,
     )

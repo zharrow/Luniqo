@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.models import AppUser, AuthEvent, AuthEventType, UserSession
 from app.auth.policy import FailureStats
 from app.mfa.models import TotpFactor
+from app.passkeys.models import Passkey
 
 
 class AuthRepository(Protocol):
@@ -38,10 +39,11 @@ class SqlAuthRepository:
         return await self.session.scalar(select(AppUser).where(AppUser.email == email))
 
     async def has_second_factor(self, user_id: uuid.UUID) -> bool:
-        """Le compte a-t-il un facteur confirmé ? Les codes de secours n'en sont pas un (récupération)."""
-        return bool(await self.session.scalar(
-            select(exists().where(TotpFactor.user_id == user_id, TotpFactor.confirmed_at.is_not(None)))
-        ))
+        """Le compte a-t-il un facteur, TOTP confirmé ou passkey ? Les codes de secours servent à la récupération."""
+        return bool(await self.session.scalar(select(
+            exists().where(TotpFactor.user_id == user_id, TotpFactor.confirmed_at.is_not(None))
+            | exists().where(Passkey.user_id == user_id)
+        )))
 
     async def get_session(self, token_digest: bytes) -> tuple[UserSession, AppUser] | None:
         row = (

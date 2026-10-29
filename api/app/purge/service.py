@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.accounts.models import StaffInvitation
 from app.auth.models import AuthEvent, SessionKind, UserSession
 from app.family.models import Invitation
+from app.passkeys.models import WebauthnChallenge
 from app.purge import policy
 
 
@@ -22,6 +23,7 @@ class PurgeReport:
     auth_events: int
     staff_invitations: int
     family_invitations: int
+    webauthn_challenges: int
 
 
 async def _delete(db: AsyncSession, statement: Delete) -> int:
@@ -45,6 +47,9 @@ async def purge(db: AsyncSession, now: datetime) -> PurgeReport:
             StaffInvitation.expires_at <= limit.invitation_expires)),
         family_invitations=await _delete(db, delete(Invitation).where(
             Invitation.expires_at <= limit.invitation_expires)),
+        # Défi de passkey non présenté dans le délai : il ne vaut déjà plus rien.
+        webauthn_challenges=await _delete(db, delete(WebauthnChallenge).where(
+            WebauthnChallenge.expires_at <= limit.challenge_expires)),
     )
     await db.commit()
     return report

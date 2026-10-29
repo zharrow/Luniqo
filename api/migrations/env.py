@@ -13,6 +13,7 @@ import app.cleaning.models  # noqa: F401
 import app.family.models  # noqa: F401
 import app.mfa.models  # noqa: F401
 import app.nurseries.models  # noqa: F401
+import app.passkeys.models  # noqa: F401
 import app.tablets.models  # noqa: F401
 from app.config import get_settings
 from app.models import Base
