@@ -9,19 +9,19 @@ Chaque ligne cite son ticket Jira `LUN-<n>`.
 
 ### Ajouté
 
-- Historique des fiches de ménage : tâches cochées sur une période, annulées comprises, filtrables par pièce, et export CSV pour un contrôle (tableur en français, formules neutralisées) (LUN-78).
+- Historique des fiches de ménage : tâches cochées sur une période, annulées comprises, filtrables par pièce, et export CSV pour un contrôle (tableur en français, formules neutralisées) (LUN-71).
 - Comptes des employés : la direction crée le compte et transmet un lien d'invitation à usage unique, l'employé choisit son mot de passe ; départ d'un salarié avec fermeture immédiate de ses sessions ; changement de mot de passe qui ferme les autres sessions (LUN-55).
 - Protection des branches `develop`, `staging` et `main` : PR obligatoire, relectures, CI et conventions de PR obligatoires, ni suppression ni push forcé ; tags de version non modifiables ; branche par défaut `develop` ; configuration exportée dans `.github/rulesets/` (LUN-60).
 - Purge RGPD : sessions expirées, journal des connexions au-delà de 6 mois et invitations expirées supprimés à chaque démarrage de l'API et par la commande `python -m app.purge` (LUN-54).
-- Passkeys (Face ID, Touch ID, Windows Hello…) côté API : enregistrement de plusieurs passkeys nommées, second facteur après le mot de passe, connexion sans mot de passe qui vaut les deux facteurs ; la direction peut garder une passkey seule comme facteur (LUN-69).
-- Front v2 (`front/`, React + Vite) : connexion, second facteur (code ou code de secours), activation d'une application d'authentification avec ses codes de secours, déconnexion, et un premier écran qui liste les crèches accessibles. Client d'API typé, généré depuis le schéma OpenAPI ; Storybook pour documenter les composants ; tests unitaires, de composants, de stories (accessibilité comprise) et parcours de bout en bout (LUN-114).
-- CI : vérification du front v2 (contrat d'API à jour, lint, typage, tests, build, Storybook) et parcours Playwright contre la pile démarrée (LUN-114).
+- Passkeys (Face ID, Touch ID, Windows Hello…) côté API : enregistrement de plusieurs passkeys nommées, second facteur après le mot de passe, connexion sans mot de passe qui vaut les deux facteurs ; la direction peut garder une passkey seule comme facteur (LUN-62).
+- Front v2 (`front/`, React + Vite) : connexion, second facteur (code ou code de secours), activation d'une application d'authentification avec ses codes de secours, déconnexion, et un premier écran qui liste les crèches accessibles. Client d'API typé, généré depuis le schéma OpenAPI ; Storybook pour documenter les composants ; tests unitaires, de composants, de stories (accessibilité comprise) et parcours de bout en bout (LUN-107).
+- CI : vérification du front v2 (contrat d'API à jour, lint, typage, tests, build, Storybook) et parcours Playwright contre la pile démarrée (LUN-107).
 - TP Docker, consigne supplémentaire : conteneurs de CI `lint` (ruff, ShellCheck, refus de toute image Docker Hub) et `test` (tests unitaires et d'intégration sur une base jetable), enchaînés par `docker/pipeline.sh` (lint → test → déploiement de la pile) et lancés à chaque PR par la CI GitHub (LUN-115).
 - TP Docker : banc de mesure de la consommation CPU des conteneurs (`docker/bench/bench.sh`, générateur de charge wrk), au repos, sous charge et pendant la CI, avec le coût de Docker lui-même (LUN-115).
 
 ### Modifié
 
-- La pile Docker sert le front v2 depuis l'image `web` (nginx), avec une politique de sécurité du contenu stricte et un cache adapté ; le conteneur du front Next.js v1 est retiré, la pile compte 4 images. La v1 reste en production sur Vercel jusqu'à la bascule (LUN-114).
+- La pile Docker sert le front v2 depuis l'image `web` (nginx), avec une politique de sécurité du contenu stricte et un cache adapté ; le conteneur du front Next.js v1 est retiré, la pile compte 4 images. La v1 reste en production sur Vercel jusqu'à la bascule (LUN-107).
 
 ### Sécurité
 
@@ -31,8 +31,13 @@ Chaque ligne cite son ticket Jira `LUN-<n>`.
 
 Première version numérotée. Elle rassemble le travail fait avant l'adoption de
 ce journal, l'organisation du projet (LUN-60) et la fiche de ménage côté API
-(LUN-76, LUN-77). Les clés sont celles de Jira ; un ticket du backlog d'origine a
+(LUN-69, LUN-70). Les clés sont celles de Jira ; un ticket du backlog d'origine a
 pour clé son ancien numéro + 38 (`LUN-006` est devenu `LUN-44`).
+
+> Clés corrigées le 2026-10-29 (LUN-116) : cette section citait à l'origine
+> `LUN-76` et `LUN-77`, calculées avec une règle fausse pour les stories ; les
+> PR et les commits de la version gardent ces anciennes clés
+> ([correspondance](docs/projet/JIRA.md#8-anciennes-clés-citées-avant-le-2026-10-29)).
 
 ### Ajouté
 
@@ -48,8 +53,8 @@ pour clé son ancien numéro + 38 (`LUN-006` est devenu `LUN-44`).
 - Organisation du projet : README pour les développeurs, CONTRIBUTING (branches `develop` / `staging` / `main`, SemVer, cycle de vie des tickets, Definition of Done), ce journal, import du backlog dans Jira (LUN-60).
 - Vision produit : 4 personas et une story map avec la découpe du MVP ; diagramme `gitGraph` du circuit complet des branches (LUN-60).
 - Automatisations GitHub : CI sur `develop`, `staging` et `main` ; contrôle des noms de branche, des cibles et des titres de PR ; étiquettes `front`, `back`, `infra`, `doc` posées selon les fichiers modifiés ; modèle de PR (LUN-60).
-- Fiche de ménage, côté API : pièces de chaque crèche, catalogue des tâches de l'entreprise, fréquences (chaque jour, certains jours, le premier jour donné du mois) et fiche du jour en heure de Paris ; pièces fictives dans le jeu de démonstration (LUN-76).
-- Fiche de ménage remplie depuis la tablette : l'employé identifié par PIN coche les tâches du jour (heure et auteur fixés par le serveur, noms recopiés tels qu'au moment de la coche) ; décocher le jour même annule la coche sans l'effacer (LUN-77).
+- Fiche de ménage, côté API : pièces de chaque crèche, catalogue des tâches de l'entreprise, fréquences (chaque jour, certains jours, le premier jour donné du mois) et fiche du jour en heure de Paris ; pièces fictives dans le jeu de démonstration (LUN-69).
+- Fiche de ménage remplie depuis la tablette : l'employé identifié par PIN coche les tâches du jour (heure et auteur fixés par le serveur, noms recopiés tels qu'au moment de la coche) ; décocher le jour même annule la coche sans l'effacer (LUN-70).
 
 ### Corrigé
 

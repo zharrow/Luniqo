@@ -48,7 +48,7 @@ parcours qui doit fonctionner de bout en bout :
 |---|---|---|
 | Rôle | Application d'origine, **gelée** : seuls les correctifs de sécurité y entrent | Réécriture progressive avec un vrai backend |
 | Technologies | Next.js 16, React 18, Supabase Cloud (accès direct à la base depuis le navigateur) | API : FastAPI (Python 3.14), PostgreSQL 18, SQLAlchemy asynchrone, Alembic. Front : React + Vite, TanStack Router et Query, client typé généré depuis le schéma OpenAPI, Storybook ([ADR-002](M2/decisions/ADR-002-front-v2.md)) |
-| État au 2026-10-27 | En production sur Vercel, gelée jusqu'à la bascule vers la v2 | Parcours central et fiche de ménage complets **côté API**, second facteur, purge RGPD. Front v2 : connexion avec second facteur et premier écran (LUN-114) |
+| État au 2026-10-27 | En production sur Vercel, gelée jusqu'à la bascule vers la v2 | Parcours central et fiche de ménage complets **côté API**, second facteur, purge RGPD. Front v2 : connexion avec second facteur et premier écran (LUN-107) |
 
 Pourquoi réécrire : [ADR-001](M2/decisions/ADR-001-reecriture-backend.md). La
 logique métier et les contrôles d'accès de la v1 s'exécutent dans le navigateur.
@@ -177,8 +177,8 @@ orchestrer avec docker compose. Version rendue : tag `tp-docker-v1`.
 | Image | Rôle pour le TP | Contenu |
 |---|---|---|
 | `base` | socle commun | Alpine Linux construit depuis `scratch`, tini, utilisateur non-root |
-| `web` | **serveur web** | nginx, seul point d'entrée, relaie vers l'API ; depuis LUN-114, construit et sert aussi le front v2 |
-| `front` | **front** (au tag du rendu) | l'application Next.js v1, en serveur autonome ; retirée de la pile depuis LUN-114 |
+| `web` | **serveur web** | nginx, seul point d'entrée, relaie vers l'API ; depuis LUN-107, construit et sert aussi le front v2 |
+| `front` | **front** (au tag du rendu) | l'application Next.js v1, en serveur autonome ; retirée de la pile depuis LUN-107 |
 | `api` | **back** | l'API FastAPI de la v2 (dossier [`api/`](api/)) |
 | `db` | base de données | PostgreSQL 18, données dans un volume |
 
@@ -196,7 +196,7 @@ orchestrer avec docker compose. Version rendue : tag `tp-docker-v1`.
 Tout le détail (architecture, choix, mesures, problèmes rencontrés) est dans
 [`docker/README.md`](docker/README.md).
 
-Depuis LUN-114, la pile n'a plus de conteneur `front` : le front v2 est construit
+Depuis LUN-107, la pile n'a plus de conteneur `front` : le front v2 est construit
 dans l'image `web` et servi par nginx ([ADR-002](M2/decisions/ADR-002-front-v2.md)).
 Le tableau ci-dessus décrit la version rendue.
 
