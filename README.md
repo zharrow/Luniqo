@@ -11,6 +11,17 @@ Ce README s'adresse aux développeurs qui rejoignent le projet. Pour contribuer
 **Nouvel arrivant ?** Commencer par [ONBOARDING.md](ONBOARDING.md) : le parcours
 pas à pas, du premier accès à la première PR fusionnée.
 
+> **TP Docker (M2, Ynov Toulouse)** : tout le rendu est dans le dossier
+> [`docker/`](docker/), sur cette branche par défaut (`develop`), figé au tag
+> [`tp-docker-v2`](https://github.com/zharrow/Luniqo/tree/tp-docker-v2/docker).
+>
+> - Point d'entrée : [docker/README.md](docker/README.md) (architecture, choix des
+>   images, ressources, SIGTERM, ordre de démarrage, CI en conteneurs, banc CPU)
+> - [Schéma des communications](docker/README.md#schéma-des-communications)
+> - [Correspondance avec le barème](docker/README.md#correspondance-avec-le-barème),
+>   critère par critère
+> - Résumé et commande de lancement : [section ci-dessous](#lancer-luniqo-avec-docker-cours-docker-m2)
+
 ## Le projet
 
 ### D'où il vient
@@ -172,8 +183,16 @@ dossier [`M2/`](M2/) contient les preuves et la documentation de ce diplôme.
 
 Le dossier [`docker/`](docker/) répond au TP « Projet - Docker Cloud » du M2
 (Ynov Toulouse) : concevoir ses propres images, sans Docker Hub, et les
-orchestrer avec docker compose. Rendu : le dernier commit avant la date butoir
-(le sujet initial a été rendu au tag `tp-docker-v1`).
+orchestrer avec docker compose. Rendu : tag
+[`tp-docker-v2`](https://github.com/zharrow/Luniqo/tree/tp-docker-v2/docker)
+(2026-10-29, avec la consigne supplémentaire) ; le sujet initial avait été rendu
+au tag `tp-docker-v1`.
+
+```bash
+cd docker && docker compose up -d --build   # http://localhost:8080
+./pipeline.sh --no-deploy                   # conteneurs lint puis test
+bench/bench.sh                              # consommation CPU de chaque conteneur (pile démarrée)
+```
 
 | Image | Rôle pour le TP | Contenu |
 |---|---|---|
@@ -194,7 +213,9 @@ orchestrer avec docker compose. Rendu : le dernier commit avant la date butoir
 | Limitations de ressources expliquées | Justifiées par des mesures réelles (repos et charge) dans le [README du dossier docker](docker/README.md) |
 | SIGTERM gérés | Chaque service s'arrête proprement (signal adapté à chaque programme) ; toute la pile s'arrête en moins d'une seconde |
 | Ordre de démarrage | `db` et `front` en parallèle, puis `api` quand la base est saine, puis `web` quand l'API et le front sont sains (healthchecks) |
-| Schéma des communications | Dans le [README du dossier docker](docker/README.md), avec les réseaux et les ports |
+| Schéma des communications | Dans le [README du dossier docker](docker/README.md#schéma-des-communications), avec les réseaux et les ports |
+| Consigne supplémentaire : 2 conteneurs de CI/CD | `lint` et `test` ([docker-compose.ci.yml](docker/docker-compose.ci.yml)), enchaînés par [pipeline.sh](docker/pipeline.sh) : un échec du lint ou des tests bloque le déploiement |
+| Benchmark de la consommation CPU | [docker/bench/](docker/bench/README.md), résultats bruts dans `docker/bench/resultats/` |
 
 Tout le détail (architecture, choix, mesures, problèmes rencontrés) est dans
 [`docker/README.md`](docker/README.md).
