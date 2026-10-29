@@ -75,7 +75,7 @@ docker/pipeline.sh [--no-deploy]   # conteneurs lint (ruff, ShellCheck, FROM aut
 docker/bench/bench.sh              # consommation CPU de chaque conteneur (pile démarrée), résultat dans docker/bench/resultats/
 ```
 
-Le compose construit l'API depuis `../api` ; l'image `web` construit le front v2 (`front/`, contexte = racine du dépôt) et sert ses fichiers.
+Le compose construit l'API depuis `../api` ; l'image `front` construit le front v2 (`front/`, contexte = racine du dépôt) et sert ses fichiers avec nginx, la passerelle `web` les relaie (LUN-117).
 
 `pnpm db:reset` lance le même script que `seed`. Ne jamais l'exécuter sans savoir quelle base est visée (voir règle 6 d'AGENTS.md).
 

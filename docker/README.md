@@ -3,22 +3,25 @@
 [Luniqo](../README.md) est un logiciel de gestion de crèches. Ce TP, rangé
 dans `docker/` du dépôt [Luniqo](https://github.com/zharrow/Luniqo),
 le fait tourner dans une architecture de conteneurs orchestrés
-avec docker compose : une **passerelle web** (nginx) qui sert aussi le **front
-v2** (React + Vite), une **API** (FastAPI) et une **base de données**
-(PostgreSQL). Toutes les images sont construites à partir de rien
-(`FROM scratch`) : **aucune image ne vient de Docker Hub**.
+avec docker compose : une **passerelle web** (nginx), le **front v2**
+(React + Vite, servi par son propre nginx), une **API** (FastAPI) et une
+**base de données** (PostgreSQL), plus deux conteneurs de CI (lint, tests) et
+un générateur de charge pour le banc de mesure. Toutes les images sont
+construites à partir de rien (`FROM scratch`) : **aucune image ne vient de
+Docker Hub**.
 
-> **Rendu du TP** : le tag [`tp-docker-v1`](https://github.com/zharrow/Luniqo/tree/tp-docker-v1/docker)
-> (5 images, dont un front Next.js servi par son propre conteneur). Depuis
-> LUN-107 et [ADR-002](../M2/decisions/ADR-002-front-v2.md), le front v2 est une
-> application monopage : ses fichiers sont construits dans l'image `web` et
-> servis par nginx. La pile compte donc 4 images. Ce README décrit la pile
-> actuelle ; les mesures de l'ancienne image `front` restent au tag.
+> **Rendu du TP** : le dernier commit avant la date butoir, qui comprend la
+> consigne supplémentaire (conteneurs de CI). Le sujet initial a été rendu au
+> tag [`tp-docker-v1`](https://github.com/zharrow/Luniqo/tree/tp-docker-v1/docker),
+> où le front était le serveur Next.js de la v1. Depuis
+> [ADR-002](../M2/decisions/ADR-002-front-v2.md), le front v2 est une application
+> monopage : l'image [`front`](front/README.md) construit ses fichiers et les sert
+> avec un nginx dédié, et la passerelle `web` les relaie (LUN-117).
 
 | Exigence du sujet | Réponse |
 |---|---|
-| 0 image Docker Hub, images personnalisées | 4 images construites depuis `scratch` ([détail](#zéro-image-docker-hub)) |
-| Au moins un front, un back, un serveur web | front v2 (React + Vite, construit dans l'image `web`), `api` (FastAPI), `web` (nginx), plus `db` (PostgreSQL). Au tag `tp-docker-v1` : une image `front` Next.js distincte |
+| 0 image Docker Hub, images personnalisées | 8 images construites depuis `scratch` : 5 pour la pile, 3 pour la CI et le banc ([détail](#zéro-image-docker-hub)) ; refus de toute autre image vérifié à chaque passage du [lint](lint/README.md) |
+| Au moins un front, un back, un serveur web | **`front`** (front v2 React + Vite, servi par nginx), **`api`** (back FastAPI), **`web`** (serveur web : passerelle nginx), plus `db` (PostgreSQL) |
 | Arguments de ressources au run et dans le compose | `.env` → `docker-compose.yml` → limites cgroups + arguments applicatifs ([détail](#orchestration)) |
 | Consigne supplémentaire : au moins 2 conteneurs d'orchestration ou de CI/CD (scaling, lint, test) | **`lint`** et **`test`** (plus une base de test jetable), enchaînés par `pipeline.sh` : lint → tests → déploiement de la pile ([détail](#intégration-continue-en-conteneurs)) |
 | Benchmark de la consommation CPU des conteneurs | `bench/bench.sh` et le générateur de charge **`bench`** : CPU de chaque conteneur au repos, sous charge et pendant la CI, et coût de Docker lui-même ([détail](#banc-de-mesure--consommation-cpu)) |
@@ -39,8 +42,9 @@ v2** (React + Vite), une **API** (FastAPI) et une **base de données**
 
 Prérequis : Docker récent avec le plugin compose (Docker Desktop, OrbStack ou
 Docker Engine), machine amd64 ou arm64, accès à internet pour le build (dépôts
-Alpine, PyPI et npm). Testé avec Docker 29. Image `web` (front v2 compris)
-construite sans cache en 16,5 s (2026-10-27, Mac Apple Silicon).
+Alpine, PyPI et npm). Testé avec Docker 29. Build du front v2 compris en
+16,5 s sans cache (2026-10-27, Mac Apple Silicon, alors dans l'image `web`) ;
+toute la pile en 9 s avec le cache (2026-10-29).
 
 ```sh
 git clone https://github.com/zharrow/Luniqo.git && cd Luniqo/docker
@@ -82,7 +86,8 @@ production sur Vercel, gelée, jusqu'à la bascule vers la v2 (ADR-002).
 ├── base/                  image de base : Alpine depuis scratch + tini + utilisateur app
 ├── db/                    PostgreSQL 18
 ├── api/                   image de l'API FastAPI (le code est dans ../api)
-├── web/                   passerelle nginx, seul point d'entrée ; construit et sert le front v2 (../front)
+├── front/                 front v2 : construit les fichiers (../front) et les sert avec nginx
+├── web/                   passerelle nginx, seul point d'entrée : relaie vers front et api
 ├── lint/                  CI : ruff, ShellCheck, contrôle « zéro image Docker Hub »
 ├── test/                  CI : pytest, tests unitaires et d'intégration de l'API
 └── bench/                 banc de mesure CPU (bench.sh) et générateur de charge (wrk)
@@ -101,7 +106,8 @@ flowchart LR
     base -- "+ postgresql18" --> db["luniqo/db"]
     base -- "+ python3 + venv" --> api["luniqo/api"]
     base -- "+ nodejs + pnpm<br/>(étape de build, jetée)" --> build["build du front<br/>vite build"]
-    build -- "fichiers statiques" --> web
+    build -- "fichiers statiques" --> frontimg
+    base -- "+ nginx" --> frontimg["luniqo/front"]
     base -- "+ nginx" --> web["luniqo/web"]
     base -- "+ ruff (binaire) + shellcheck" --> lint["luniqo/lint (CI)"]
     base -- "+ python3 + venv<br/>+ pytest" --> test["luniqo/test (CI)"]
@@ -115,12 +121,14 @@ flowchart LR
 | `luniqo/base:1.0` | 23 Mo | Alpine (BusyBox, apk), tini, utilisateur `app`, outils `tp-resources` et `common.sh` |
 | `luniqo/db:1.0` | 83 Mo | PostgreSQL 18.6 |
 | `luniqo/api:0.1` | 186 Mo | Python 3.14, FastAPI, SQLAlchemy, psycopg, Alembic, le code de l'API |
-| `luniqo/web:2.0` | 29 Mo | nginx 1.30, modèle de configuration, page d'indisponibilité, fichiers du front v2 (636 Kio). Ni Node.js ni sources : ils ne servent qu'à l'étape de build |
+| `luniqo/front:2.0` | 28 Mo | nginx 1.30, modèle de configuration et en-têtes du front, fichiers du front v2 (19 fichiers, 636 Kio). Ni Node.js ni sources : ils ne servent qu'à l'étape de build |
+| `luniqo/web:3.0` | 27 Mo | nginx 1.30, modèle de configuration, page d'indisponibilité |
 | `luniqo/lint:1.0` | 83 Mo | ruff 0.16.10 (binaire seul, 21,6 Mo), ShellCheck 0.11 (21,1 Mo), script `lint.sh`. Ni Python ni pip |
 | `luniqo/test:1.0` | 278 Mo | Python 3.14, dépendances de l'API et outils de test (pytest, httpx2), lanceur `run_pytest.py`. Le code est monté au run, pas copié |
 | `luniqo/bench:1.0` | 28 Mo | wrk 4.2.0, script `charge.sh` |
 
-Au tag `tp-docker-v1`, l'image `luniqo/front:1.0` (serveur Next.js) pesait 302 Mo.
+Au tag `tp-docker-v1`, l'image `luniqo/front:1.0` (serveur Next.js de la v1)
+pesait 302 Mo.
 
 ### Schéma des communications
 
@@ -130,7 +138,10 @@ flowchart LR
 
     subgraph host["Machine hôte"]
         subgraph edge["réseau edge · port publié"]
-            web["web · serveur web<br/>nginx :8080<br/>+ fichiers du front v2"]
+            web["web · serveur web<br/>passerelle nginx :8080"]
+        end
+        subgraph frontend["réseau frontend · internal"]
+            front["front<br/>nginx :8080<br/>fichiers du front v2"]
         end
         subgraph backend["réseau backend · internal"]
             api["api · back<br/>FastAPI :8000"]
@@ -142,8 +153,9 @@ flowchart LR
     end
 
     browser -- "① HTTP :8080" --> web
-    web -- "② /api/* → api:8000" --> api
-    api -- "③ SQL → db:5432" --> db
+    web -- "② / → front:8080" --> front
+    web -- "③ /api/* → api:8000" --> api
+    api -- "④ SQL → db:5432" --> db
     db --- vol
     secret -.-> db
     secret -.-> api
@@ -152,9 +164,10 @@ flowchart LR
 
 | # | De | Vers | Protocole | Réseau | Rôle |
 |---|---|---|---|---|---|
-| ① | navigateur | web `:8080` | HTTP | hôte → `edge` | seul point d'entrée ; nginx sert directement les fichiers du front v2 (tout ce qui n'est pas `/api/`) |
-| ② | web | api `:8000` | HTTP | `backend` | nginx relaie `/api/*` ; le front appelle l'API sur la même origine, le cookie de session `HttpOnly` part de lui-même |
-| ③ | api | db `:5432` | PostgreSQL | `backend` | requêtes SQL, migrations au démarrage |
+| ① | navigateur | web `:8080` | HTTP | hôte → `edge` | seul point d'entrée |
+| ② | web | front `:8080` | HTTP | `frontend` | nginx relaie tout ce qui n'est pas `/api/` : pages et fichiers du front v2, avec les en-têtes posés par le front (CSP, cache) |
+| ③ | web | api `:8000` | HTTP | `backend` | nginx relaie `/api/*` ; le front appelle l'API sur la même origine, le cookie de session `HttpOnly` part de lui-même |
+| ④ | api | db `:5432` | PostgreSQL | `backend` | requêtes SQL, migrations au démarrage |
 
 Les conteneurs se trouvent par leur **nom de service** grâce au DNS interne de
 Docker : aucune adresse IP n'est écrite en dur.
@@ -164,6 +177,7 @@ Docker : aucune adresse IP n'est écrite en dur.
 | Réseau | Type | Membres | Pourquoi |
 |---|---|---|---|
 | `edge` | bridge | web | Réseau d'où part le port publié sur l'hôte. |
+| `frontend` | bridge, `internal: true` | web, front | Le front n'est joint que par la passerelle : ni port publié, ni accès à internet, ni accès à l'API ou à la base (vérifié le 2026-10-29). |
 | `backend` | bridge, `internal: true` | web, api, db | Communications internes. `internal` coupe toute sortie vers l'extérieur : l'API et la base sont **injoignables depuis l'hôte et sans accès à internet**. |
 
 Vérifié :
@@ -192,7 +206,7 @@ Alpine (`apk`), paquets Python (PyPI) et paquets JavaScript (npm, versions du
 
 Vérifiable : `grep FROM */Dockerfile` ne montre que `scratch`, une étape interne
 (`rootfs-${TARGETARCH}`, `build`) ou `luniqo/base:1.0`, et
-`docker compose config --images` ne liste que nos 4 images `luniqo/*` (de même
+`docker compose config --images` ne liste que nos 5 images `luniqo/*` (de même
 pour `-f docker-compose.ci.yml` et `-f docker-compose.bench.yml`).
 
 **Vérifié automatiquement** depuis la consigne supplémentaire : le conteneur
@@ -205,7 +219,8 @@ erreur arrête la chaîne avant le déploiement.
 | Image | Rôle | Dépendances | Port | Arguments de l'application | Signal d'arrêt |
 |---|---|---|---|---|---|
 | [base](base/README.md) | socle commun | `tini` | | (build) `ALPINE_VERSION` | |
-| [web](web/README.md) | **serveur web** : passerelle et **front** v2 | `nginx` (+ `nodejs`, `pnpm` à l'étape de build) | 8080 | `NGINX_WORKER_PROCESSES`, `NGINX_WORKER_CONNECTIONS`, `API_ADDR` | `SIGQUIT` |
+| [web](web/README.md) | **serveur web** : passerelle, relaie le front et l'API | `nginx` | 8080 (publié) | `NGINX_WORKER_PROCESSES`, `NGINX_WORKER_CONNECTIONS`, `FRONT_ADDR`, `API_ADDR` | `SIGQUIT` |
+| [front](front/README.md) | **front** : application v2 (React + Vite) | `nginx` (+ `nodejs`, `pnpm` à l'étape de build) | 8080 | `NGINX_WORKER_PROCESSES`, `NGINX_WORKER_CONNECTIONS` | `SIGQUIT` |
 | [api](api/README.md) | **back** : API | `python3` + venv | 8000 | `API_WORKERS`, `DB_POOL_SIZE`, `DB_ADDR`, `DB_NAME`, `DB_USER`, `DB_PASSWORD_FILE`, `SEED_DEMO` | `SIGTERM` |
 | [db](db/README.md) | base de données | `postgresql18` | 5432 | `DB_NAME`, `DB_USER`, `DB_PASSWORD_FILE`, `DB_MAX_CONNECTIONS`, `DB_SHARED_BUFFERS` | `SIGINT` |
 | [lint](lint/README.md) | **CI** : lint | `ruff` (binaire seul), `shellcheck` | aucun réseau | `LINT_RUFF_FORMAT` | `SIGTERM` (`tini -g`) |
@@ -245,6 +260,8 @@ utilisable sans `.env`.
 | `API_WORKERS=1` | `environment: API_WORKERS` | `-e API_WORKERS=1` |
 | `API_DB_POOL_SIZE=8` | `environment: DB_POOL_SIZE` | `-e DB_POOL_SIZE=8` |
 | `API_SEED_DEMO=true` | `environment: SEED_DEMO` | `-e SEED_DEMO=true` |
+| `FRONT_CPUS=0.25` / `FRONT_MEMORY=32M` / `FRONT_PIDS=16` | `deploy.resources.limits` | `--cpus 0.25 --memory 32m --pids-limit 16` |
+| `FRONT_WORKER_PROCESSES=1` / `FRONT_WORKER_CONNECTIONS=512` | `environment: NGINX_WORKER_*` | `-e NGINX_WORKER_PROCESSES=1 ...` |
 | `WEB_CPUS=0.25` / `WEB_MEMORY=32M` / `WEB_PIDS=16` | `deploy.resources.limits` | `--cpus 0.25 --memory 32m --pids-limit 16` |
 | `WEB_WORKER_PROCESSES=1` / `WEB_WORKER_CONNECTIONS=512` | `environment: NGINX_WORKER_*` | `-e NGINX_WORKER_PROCESSES=1 ...` |
 | `WEB_PUBLISHED_PORT=8080` | `ports: "8080:8080"` | `-p 8080:8080` |
@@ -273,14 +290,16 @@ Mesures du 2026-10-08 (`docker stats`, Mac Apple Silicon sous OrbStack) :
 |---|---|---|---|---|---|---|
 | db | 1.0 | 256 Mo | 48 | 20 à 45 Mo, 11 pids | 32 Mo, 18 pids, 12 % CPU | Les requêtes SQL sont le travail le plus coûteux. `shared_buffers` = 25 % de la mémoire. Un processus par connexion : `pids` couvre `max_connections` (20) + processus de fond. |
 | api | 0.5 | 128 Mo | 32 | 69 Mo, 3 pids | 73 Mo, 6 pids, 49 % CPU | Un worker pour un demi-cœur. Routes asynchrones : aucune création de thread par requête. |
-| web | 0.25 | 32 Mo | 16 | 3 à 5 Mo, 3 pids | 4 à 6 Mo, 3 pids, 6 % CPU | nginx relaie l'API et sert des fichiers statiques. Mesuré à nouveau le 2026-10-27 en servant le front v2 : 10,5 Mo, 3 pids. |
+| web | 0.25 | 32 Mo | 16 | 3 à 5 Mo, 3 pids | 4 à 6 Mo, 3 pids, 6 % CPU | nginx ne fait que relayer. 2026-10-29, en relais du front : 2,5 à 3,4 Mo, 0,24 cœur (95 % de sa limite) à 11 900 pages/s : c'est elle le goulot des pages. |
+| front | 0.25 | 32 Mo | 16 | 2,4 à 3,0 Mo, 0,004 cœur | 2,4 à 2,9 Mo, 0,19 à 0,20 cœur (77 à 79 %) | nginx sert des fichiers statiques : c'est le conteneur sollicité par les pages. |
 
-Charges : 3 000 requêtes `/api/v2/nurseries` (route alors ouverte ; protégée par session depuis LUN-004) à 60 simultanées (db, api, web).
-Au tag `tp-docker-v1`, le serveur Next.js (`front`) occupait en plus 72 à 151 Mo
-et jusqu'à un cœur entier : le front v2 n'a plus de serveur, nginx sert ses fichiers.
+Charges : 3 000 requêtes `/api/v2/nurseries` (route alors ouverte ; protégée par session depuis LUN-004) à 60 simultanées (db, api, web) ; front et web mesurés le 2026-10-29 par le [banc de mesure](#banc-de-mesure--consommation-cpu).
+Au tag `tp-docker-v1`, le serveur Next.js (`front:1.0`) occupait 72 à 151 Mo
+et jusqu'à un cœur entier : le front v2 n'a plus de serveur applicatif, nginx
+sert ses fichiers.
 
-Total : 1,75 cœur et 416 Mo au maximum, pour une consommation réelle au repos
-d'environ 130 Mo (mesurée le 2026-10-27 : db 29 Mo, api 90 Mo, web 10,5 Mo).
+Total : 2 cœurs et 448 Mo au maximum, pour une consommation réelle au repos
+d'environ 130 Mo (2026-10-29, fin de la phase de repos du banc : api 89 Mo, db 35 Mo, front et web 3 Mo chacun).
 
 Débit mesuré, sans aucune erreur : 3 000 requêtes d'API en 8,8 s (environ 340
 par seconde). L'API plafonne alors à 49 % de CPU, c'est-à-dire **exactement sa
@@ -320,6 +339,7 @@ qu'un shell l'avale ; **chaque programme l'intercepte** et s'arrête proprement.
 | web | `SIGQUIT` | nginx termine les requêtes en cours puis s'arrête (`SIGTERM` serait un arrêt brutal pour nginx). | 10 s | < 1 s, code 0 |
 | api | `SIGTERM` | uvicorn refuse les nouvelles connexions, termine les requêtes en cours (10 s au plus), puis l'application ferme son pool de connexions. | 15 s | < 1 s, code 143 (*) |
 | db | `SIGINT` | « fast shutdown » : transactions annulées, point de reprise écrit, arrêt. `SIGTERM` attendrait la déconnexion de tous les clients. | 30 s | < 1 s, code 0 |
+| front | `SIGQUIT` | Même nginx que web : il termine les requêtes en cours puis s'arrête. Pendant ce temps, la passerelle affiche sa page d'indisponibilité. | 10 s | 0,32 s, code 0 |
 | lint | `SIGTERM` | `tini -g` envoie le signal au script **et** à l'outil en cours (ruff ou ShellCheck), pas seulement au script. | 5 s | 0,17 s, code 143 |
 | test | `SIGINT` | pytest s'interrompt comme sur un Ctrl-C : nettoyage des fixtures, rapport JUnit écrit, code 2. Un blocage trouvé dans les threads d'anyio a été corrigé ([détail](test/README.md#le-blocage-trouvé-et-sa-correction)). | 15 s | 10 essais sur 10 propres, < 1 s (une fois 5,2 s) |
 | test-db | `SIGINT` | Même image que db. | 10 s | 0,15 s, code 0 |
@@ -344,10 +364,13 @@ sequenceDiagram
     participant C as docker compose
     participant D as db
     participant A as api
+    participant F as front
     participant W as web
-    C->>C: build base, puis db, api, web (dont le build du front)
+    C->>C: build base, puis db, api, front (dont le build du front v2), web
     C->>D: démarre (initdb si volume vide)
+    C->>F: démarre (en même temps : il ne dépend de rien)
     D-->>C: healthy (pg_isready)
+    F-->>C: healthy (GET /healthz)
     C->>A: démarre : migrations, données de démo
     A-->>C: healthy (GET /api/health → SELECT 1)
     C->>W: démarre
@@ -358,10 +381,13 @@ sequenceDiagram
 | Dépendance | Condition | Pourquoi |
 |---|---|---|
 | api → db | `service_healthy`, `restart: true` | L'API applique les migrations au démarrage : la base doit répondre. `restart: true` relance l'API quand compose recrée la base. |
+| web → front | `service_healthy` | La passerelle n'ouvre qu'une fois les pages disponibles. |
 | web → api | `service_healthy` | La passerelle n'ouvre qu'une fois l'API prête. Elle résout les noms à chaque requête : elle démarrerait sans elle, mais `/api/` servirait la page d'indisponibilité. |
 
-Démarrage mesuré au tag `tp-docker-v1` : 18,5 s pour les 4 services depuis un volume vide, autant avec des données existantes,
-l'essentiel étant l'attente des healthchecks (intervalle de 5 s).
+Démarrage mesuré le 2026-10-29 : 24,2 s pour les 4 services depuis un volume
+vide, 19,0 s avec des données existantes (18,5 s au tag `tp-docker-v1`). Arrêt
+de toute la pile : 0,82 s, codes de sortie 0 (143 pour l'API, voir plus bas). L'essentiel est l'attente
+des healthchecks (intervalle de 5 s).
 
 **Panne de la base, mesurée** : base arrêtée, `/api/health` répond 503 en 1 s et
 l'API passe `unhealthy` ; base relancée, l'API redevient `healthy` d'elle-même.
@@ -498,30 +524,42 @@ la pile. Méthode complète, image du générateur et limites de la mesure :
 [bench/README.md](bench/README.md).
 
 Résultats `[RÉEL]` du 2026-10-29, trois passages, Mac Apple M4 (10 cœurs),
-OrbStack. Pile actuelle (`f500052`) :
+OrbStack. Pile actuelle (5 images : db, api, front, web, avec connexions
+persistantes de la passerelle) :
 
 | Phase | Pile (total) | Conteneur le plus sollicité | VM Docker | Coût de Docker (VM − conteneurs) | Débit |
 |---|---|---|---|---|---|
-| Repos, 30 s | 0,016 cœur | api 0,007 | 0,07 cœur | 0,05 cœur | |
-| Charge API (`/api/health`) | 0,55 cœur | **api 0,475, 95 % de sa limite de 0,5** | 0,72 | 0,15 | 466 à 486 req/s |
-| Charge front v2 (`/connexion`) | 0,25 cœur | **web 0,238, 95 % de sa limite de 0,25** | 0,77 | 0,36 | 14 300 à 14 700 req/s |
-| Chaîne de CI (lint + 543 tests, 58 à 60 s) | 0,01 cœur | test 0,79 en moyenne (45 à 47 s de CPU) | 0,99 | 0,09 | |
+| Repos, 30 s | 0,02 cœur | api 0,007 | 0,07 cœur | 0,05 cœur | |
+| Charge API (`/api/health`) | 0,54 cœur | **api 0,47 à 0,48, 95 % de sa limite de 0,5** | 0,71 | 0,15 à 0,16 | 399 à 520 req/s |
+| Charge front v2 (`/connexion`) | 0,44 cœur | **web 0,24, 95 % de sa limite de 0,25** ; front 0,19 à 0,20 (78 %) | 1,06 à 1,08 | 0,45 à 0,47 | 11 600 à 11 900 req/s |
+| Chaîne de CI (lint + 543 tests, 58 à 59 s) | 0,02 cœur | test 0,79 en moyenne (46 s de CPU) | 1,00 à 1,02 | 0,10 | |
 
 Ce qu'on en retient :
 
-- **Au repos, les conteneurs ne coûtent presque rien** : 0,016 cœur pour toute
+- **Au repos, les conteneurs ne coûtent presque rien** : 0,02 cœur pour toute
   la pile, 0,07 pour la VM Docker entière. Une VM classique ferait tourner un
   système complet par service.
 - **Les limites `cpus` jouent leur rôle** : sous charge, le conteneur sollicité
   plafonne à 95 % de sa limite, à chaque passage, et les autres ne sont pas
   touchés.
-- **Le coût de Docker suit le trafic réseau, pas le calcul** : environ 10 % en
-  plus du travail des conteneurs pour les tests, 27 % sous charge API, 87 % à
-  14 500 petites requêtes par seconde. C'est le réseau virtuel, compté hors des
-  conteneurs.
-- **Le front v2 coûte environ 340 fois moins de CPU par page** que l'ancien
-  front Next.js (17 µs contre 5,8 ms, mesuré sur la pile précédente : 163 à
-  183 pages/s pour un cœur entier).
+- **Le coût de Docker suit le trafic réseau, pas le calcul** : environ 12 % en
+  plus du travail des conteneurs pour les tests, 29 % sous charge API, 76 % à
+  11 800 petites requêtes par seconde, qui traversent deux fois le réseau
+  virtuel (passerelle puis front). Ce travail est compté hors des conteneurs.
+- **La mesure a corrigé la passerelle.** Avec le front dans son propre
+  conteneur, la première version de `web` ouvrait une connexion vers lui à
+  chaque requête : 822 à 882 pages/s. Avec des connexions persistantes
+  (`upstream` + `keepalive`, [détail](web/README.md#résolution-des-services-et-connexions-persistantes)) :
+  11 600 à 11 900. C'est 18 % de moins que lorsque `web` servait lui-même ces
+  fichiers (14 300 à 14 700 pages/s, deux nginx au lieu d'un) : le prix,
+  mesuré, d'une image front distincte.
+- **Le front v2 coûte environ 150 fois moins de CPU par page** que l'ancien
+  front Next.js : 37 µs pour les deux nginx, contre 5,8 ms de rendu serveur
+  (163 à 183 pages/s pour un cœur entier, pile du commit `3532e25`).
+
+Les mesures des étapes précédentes (front Next.js ; front servi par `web` ;
+front distinct sans connexions persistantes) sont gardées dans
+[bench/resultats/](bench/resultats/), chacune avec son commit.
 
 Mesures à refaire sur le VPS (Linux, sans VM) quand il existera.
 
@@ -536,7 +574,7 @@ consomme).
 |---|---|---|
 | Taille | 23 Mo de base partagée + 6 à 163 Mo par image | Un OS complet par VM, de l'ordre du Go chacune |
 | Démarrage | 18,5 s pour toute la pile (mesure du tag `tp-docker-v1`), surtout l'attente volontaire des healthchecks | Démarrage d'un OS complet par VM |
-| Mémoire au repos | Environ 130 Mo pour les trois services | Chaque VM réserve la mémoire de son propre OS |
+| Mémoire au repos | Environ 130 Mo pour les quatre services (mesuré le 2026-10-29) | Chaque VM réserve la mémoire de son propre OS |
 | Limites | Une ligne par limite, modifiable en recréant le conteneur | Fixées à la création de la VM |
 | Reproductibilité | Dockerfiles et compose versionnés ; `docker compose up --build` recrée tout | Installation manuelle ou outillage supplémentaire (Packer, Ansible...) |
 | Isolation | Noyau partagé : d'où le durcissement (non-root, `cap_drop`, lecture seule) | Noyau séparé : isolation plus forte |
@@ -549,7 +587,7 @@ que fera Luniqo sur son VPS.
 | Critère | Où le trouver |
 |---|---|
 | Mise en forme du rendu | Ce README, un README par image, commentaires dans chaque Dockerfile et dans le compose |
-| Explication des dépendances installées | « Dépendances installées » de [base](base/README.md), [db](db/README.md), [api](api/README.md), [web](web/README.md), [lint](lint/README.md), [test](test/README.md), [bench](bench/README.md) (et [front](https://github.com/zharrow/Luniqo/blob/tp-docker-v1/docker/front/README.md) au tag du rendu) |
+| Explication des dépendances installées | « Dépendances installées » de [base](base/README.md), [db](db/README.md), [api](api/README.md), [front](front/README.md), [web](web/README.md), [lint](lint/README.md), [test](test/README.md), [bench](bench/README.md) |
 | Explication des manipulations sur l'OS | « Manipulations sur l'OS » de chaque README d'image |
 | Explication des arguments attendus | « Arguments attendus » de chaque README d'image |
 | Explications sur les entrypoints choisis | « Entrypoint » de chaque README d'image + [choix communs](#les-images) |

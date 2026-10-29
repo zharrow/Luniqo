@@ -54,7 +54,7 @@ Pourquoi réécrire : [ADR-001](M2/decisions/ADR-001-reecriture-backend.md). La
 logique métier et les contrôles d'accès de la v1 s'exécutent dans le navigateur.
 
 ```
-Navigateur ──HTTP :8080──▶ web (nginx) ──/──────▶ fichiers du front v2 (React + Vite), servis par nginx
+Navigateur ──HTTP :8080──▶ web (nginx) ──/──────▶ front (nginx : fichiers du front v2, React + Vite)
                                        └─/api/──▶ api (FastAPI, v2) ──SQL──▶ db (PostgreSQL)
 
 v1 : Vercel (Next.js) ──▶ Supabase Cloud, hors de la pile Docker
@@ -81,8 +81,8 @@ git switch develop          # branche d'intégration : on part toujours d'elle
 
 ```bash
 cd docker
-docker compose up -d --build     # construit les 4 images et lance les 3 services
-docker compose ps                # db, api et web doivent être "healthy"
+docker compose up -d --build     # construit les 5 images et lance les 4 services
+docker compose ps                # db, api, front et web doivent être "healthy"
 ```
 
 | Adresse | Contenu |
@@ -172,22 +172,25 @@ dossier [`M2/`](M2/) contient les preuves et la documentation de ce diplôme.
 
 Le dossier [`docker/`](docker/) répond au TP « Projet - Docker Cloud » du M2
 (Ynov Toulouse) : concevoir ses propres images, sans Docker Hub, et les
-orchestrer avec docker compose. Version rendue : tag `tp-docker-v1`.
+orchestrer avec docker compose. Rendu : le dernier commit avant la date butoir
+(le sujet initial a été rendu au tag `tp-docker-v1`).
 
 | Image | Rôle pour le TP | Contenu |
 |---|---|---|
 | `base` | socle commun | Alpine Linux construit depuis `scratch`, tini, utilisateur non-root |
-| `web` | **serveur web** | nginx, seul point d'entrée, relaie vers l'API ; depuis LUN-107, construit et sert aussi le front v2 |
-| `front` | **front** (au tag du rendu) | l'application Next.js v1, en serveur autonome ; retirée de la pile depuis LUN-107 |
+| `web` | **serveur web** | nginx, seul point d'entrée : relaie vers le front et l'API |
+| `front` | **front** | le front v2 (React + Vite), construit puis servi par un nginx dédié |
 | `api` | **back** | l'API FastAPI de la v2 (dossier [`api/`](api/)) |
 | `db` | base de données | PostgreSQL 18, données dans un volume |
+| `lint`, `test` | **CI** (consigne supplémentaire) | lint (ruff, ShellCheck, refus de toute image Docker Hub) puis tests de l'API sur une base jetable, enchaînés par `docker/pipeline.sh` |
+| `bench` | banc de mesure | générateur de charge wrk pour mesurer la consommation CPU des conteneurs |
 
 | Exigence | Réponse |
 |---|---|
 | Aucune image Docker Hub | Toutes les images partent de `scratch` (archive officielle d'Alpine) ou de notre image `base` ; compose ne fait jamais de `pull` |
 | Au moins un front, un back et un serveur web | `front`, `api` et `web`, plus `db` |
-| Arguments de ressources au run et dans le compose | Limites CPU, mémoire et processus réglées dans [`docker/.env`](docker/.env), plus des arguments applicatifs alignés sur ces limites (workers, connexions, mémoire de Node.js...) |
-| Dépendances, manipulations sur l'OS, arguments, entrypoints expliqués | Un README par image : [base](docker/base/README.md), [db](docker/db/README.md), [api](docker/api/README.md), [web](docker/web/README.md), et [front](https://github.com/zharrow/Luniqo/blob/tp-docker-v1/docker/front/README.md) au tag du rendu |
+| Arguments de ressources au run et dans le compose | Limites CPU, mémoire et processus réglées dans [`docker/.env`](docker/.env), plus des arguments applicatifs alignés sur ces limites (workers, connexions, pool de la base...) |
+| Dépendances, manipulations sur l'OS, arguments, entrypoints expliqués | Un README par image : [base](docker/base/README.md), [db](docker/db/README.md), [api](docker/api/README.md), [front](docker/front/README.md), [web](docker/web/README.md), [lint](docker/lint/README.md), [test](docker/test/README.md), [bench](docker/bench/README.md) |
 | Limitations de ressources expliquées | Justifiées par des mesures réelles (repos et charge) dans le [README du dossier docker](docker/README.md) |
 | SIGTERM gérés | Chaque service s'arrête proprement (signal adapté à chaque programme) ; toute la pile s'arrête en moins d'une seconde |
 | Ordre de démarrage | `db` et `front` en parallèle, puis `api` quand la base est saine, puis `web` quand l'API et le front sont sains (healthchecks) |
@@ -196,9 +199,9 @@ orchestrer avec docker compose. Version rendue : tag `tp-docker-v1`.
 Tout le détail (architecture, choix, mesures, problèmes rencontrés) est dans
 [`docker/README.md`](docker/README.md).
 
-Depuis LUN-107, la pile n'a plus de conteneur `front` : le front v2 est construit
-dans l'image `web` et servi par nginx ([ADR-002](M2/decisions/ADR-002-front-v2.md)).
-Le tableau ci-dessus décrit la version rendue.
+Au tag `tp-docker-v1`, l'image `front` était le serveur Next.js de la v1. Depuis
+[ADR-002](M2/decisions/ADR-002-front-v2.md), elle construit et sert le front v2
+(LUN-117).
 
 ## Carte du dépôt
 
@@ -206,7 +209,7 @@ Le tableau ci-dessus décrit la version rendue.
 app/, components/, lib/   front v1 (Next.js), gelé
 api/                      API v2 (FastAPI) : code, migrations, tests
 front/                    front v2 (React + Vite) : écrans, Storybook, tests
-docker/                   conteneurisation : 4 images, compose
+docker/                   conteneurisation : 5 images de la pile, 3 de CI et de mesure, composes
 supabase/                 migrations SQL de la v1
 .github/                  CI, conventions de PR, étiquettes, modèle de PR
 docs/projet/              organisation du projet : Jira, import du backlog

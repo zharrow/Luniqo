@@ -1,8 +1,8 @@
 # Contexte = racine du dépôt : on ne laisse passer que le front v2 et les
-# fichiers de l'image web, sans dépendances ni artefacts locaux.
+# fichiers de l'image front, sans dépendances ni artefacts locaux.
 *
 !front/
-!docker/web/
+!docker/front/
 front/node_modules
 front/dist
 front/storybook-static
