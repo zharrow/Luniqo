@@ -180,8 +180,6 @@ orchestrer avec docker compose. Rendu : le dernier commit avant la date butoir
 | `base` | socle commun | Alpine Linux construit depuis `scratch`, tini, utilisateur non-root |
 | `web` | **serveur web** | nginx, seul point d'entrée : relaie vers le front et l'API |
 | `front` | **front** | le front v2 (React + Vite), construit puis servi par un nginx dédié |
-| `web` | **serveur web** | nginx, seul point d'entrée, relaie vers l'API ; depuis LUN-107, construit et sert aussi le front v2 |
-| `front` | **front** (au tag du rendu) | l'application Next.js v1, en serveur autonome ; retirée de la pile depuis LUN-107 |
 | `api` | **back** | l'API FastAPI de la v2 (dossier [`api/`](api/)) |
 | `db` | base de données | PostgreSQL 18, données dans un volume |
 | `lint`, `test` | **CI** (consigne supplémentaire) | lint (ruff, ShellCheck, refus de toute image Docker Hub) puis tests de l'API sur une base jetable, enchaînés par `docker/pipeline.sh` |
@@ -204,9 +202,6 @@ Tout le détail (architecture, choix, mesures, problèmes rencontrés) est dans
 Au tag `tp-docker-v1`, l'image `front` était le serveur Next.js de la v1. Depuis
 [ADR-002](M2/decisions/ADR-002-front-v2.md), elle construit et sert le front v2
 (LUN-117).
-Depuis LUN-107, la pile n'a plus de conteneur `front` : le front v2 est construit
-dans l'image `web` et servi par nginx ([ADR-002](M2/decisions/ADR-002-front-v2.md)).
-Le tableau ci-dessus décrit la version rendue.
 
 ## Carte du dépôt
 
