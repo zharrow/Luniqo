@@ -45,7 +45,33 @@ trois. Fichiers bruts dans [resultats/](resultats/). Le code de la pile est
 celui du commit indiqué dans chaque fichier ; le banc lui-même n'était pas
 encore commité.
 
-### Pile actuelle (`develop`, `f500052` : db, api, web avec le front v2)
+### Pile actuelle (LUN-117 : db, api, front, web ; passerelle avec connexions persistantes)
+
+Trois passages, fichiers `2026-10-29-1123` à `1131` (code de `2469853` plus les
+modifications de LUN-117, non commitées au moment de la mesure).
+
+| Phase | Conteneur le plus sollicité | Pile (total) | Générateur | VM Docker | **Coût de Docker** | Débit |
+|---|---|---|---|---|---|---|
+| Repos | api 0,007 cœur | 0,019 à 0,023 | | 0,065 à 0,068 | **0,044 à 0,049** | |
+| Charge API | **api 0,470 à 0,477 cœur, 94 à 95 % de sa limite** ; web 0,026 à 0,030 | 0,540 à 0,542 | 0,011 à 0,013 | 0,706 à 0,716 | **0,151 à 0,163** | 399 à 520 req/s |
+| Charge front | **web 0,235 à 0,239 cœur, 94 à 96 % de sa limite (0,25)** ; front 0,193 à 0,197 (77 à 79 %) | 0,438 à 0,444 | 0,167 à 0,169 | 1,057 à 1,082 | **0,452 à 0,469** | **11 596 à 11 940 req/s** ; médiane 0,9 ms, 99e centile 72 à 73 ms |
+| Chaîne de CI (58 à 59 s) | test 45,7 à 46,3 s de CPU ; lint 0,8 s ; test-db 5,1 à 5,2 s | 0,015 à 0,016 | | 1,002 à 1,015 | **0,103 à 0,108** | 543 tests |
+
+**La passerelle avant et après les connexions persistantes** (même pile, trois
+passages chacune, fichiers `1111` à `1118` puis `1123` à `1131`) :
+
+| | Sans `keepalive` (`proxy_pass` vers une variable) | Avec `upstream` + `keepalive` |
+|---|---|---|
+| Débit des pages | 822 à 882 req/s | 11 596 à 11 940 req/s |
+| CPU de `web` (charge front) | 0,234 à 0,237 cœur (94 %) | 0,235 à 0,239 cœur (95 %) |
+| CPU du front | 0,040 à 0,041 cœur | 0,193 à 0,197 cœur |
+| CPU de `web` (charge API) | 0,041 à 0,043 cœur | 0,026 à 0,030 cœur |
+
+Pour le même CPU, la passerelle relaie 13 à 14 fois plus de pages : sans
+connexions persistantes, elle passait l'essentiel de son temps à ouvrir et
+fermer des connexions TCP vers le front.
+
+### Étape intermédiaire (`f500052` : front servi par l'image `web`)
 
 | Phase | Conteneur le plus sollicité | Pile (total) | Générateur | VM Docker | **Coût de Docker** | Débit |
 |---|---|---|---|---|---|---|
@@ -65,45 +91,55 @@ encore commité.
 
 ## Ce que les mesures montrent
 
+Chiffres de la pile actuelle, sauf mention contraire.
+
 **1. Au repos, les conteneurs ne coûtent presque rien.** Toute la pile
-consomme 0,015 à 0,020 cœur (0,2 % de la machine au plus), et la VM Docker
-entière 0,07 à 0,08 cœur, moteur compris. Un conteneur inactif est un processus endormi, pas un
-système qui tourne à vide comme une VM.
+consomme 0,02 cœur (0,2 % de la machine), et la VM Docker entière 0,07 cœur,
+moteur compris. Un conteneur inactif est un processus endormi, pas un système
+qui tourne à vide comme une VM.
 
 **2. Les limites jouent leur rôle.** Sous charge, le conteneur sollicité
-plafonne à 95 % de sa limite, à chaque passage : l'API à 0,475 cœur pour 0,5,
-nginx à 0,238 pour 0,25, l'ancien Next.js à 0,95 pour 1. Les autres conteneurs
-ne sont pas touchés (la base reste sous 0,05 cœur). Le goulot est toujours le
-conteneur limité, jamais la machine (11 % des cœurs au plus).
+plafonne à 95 % de sa limite, à chaque passage : l'API à 0,47 cœur pour 0,5,
+la passerelle à 0,24 pour 0,25 (et, sur la pile précédente, Next.js à 0,95
+pour 1). Les autres conteneurs ne sont pas touchés (la base reste sous 0,05
+cœur). Le goulot est toujours un conteneur limité, jamais la machine (11 % des
+cœurs au plus).
 
 **3. Le coût de Docker suit le trafic réseau, pas le calcul.**
 
 | Situation | Travail des conteneurs | Coût de Docker | Surcoût |
 |---|---|---|---|
-| Chaîne de CI (calcul, peu de réseau) | 0,89 cœur | 0,09 cœur | ≈ 10 % |
-| Charge API (≈ 475 req/s) | 0,56 cœur | 0,15 cœur | ≈ 27 % |
-| Charge front (≈ 14 500 req/s) | 0,41 cœur | 0,36 cœur | ≈ 87 % |
+| Chaîne de CI (calcul, peu de réseau) | 0,90 cœur | 0,10 cœur | ≈ 12 % |
+| Charge API (≈ 470 req/s) | 0,55 cœur | 0,16 cœur | ≈ 29 % |
+| Charge front (≈ 11 800 req/s, deux passages par le réseau virtuel) | 0,61 cœur | 0,46 cœur | ≈ 76 % |
 
 Chaque requête traverse le réseau virtuel (pont, interfaces virtuelles) et le
 noyau de la VM. Ce travail n'est compté dans le cgroup d'aucun conteneur. Pour
-un calcul comme les tests, Docker ajoute environ 10 %. Pour des milliers de
+un calcul comme les tests, Docker ajoute environ 12 %. Pour des milliers de
 petites requêtes par seconde, presque autant que le travail lui-même.
 
-**4. Le front v2 coûte environ 340 fois moins de CPU par page.** L'ancien
-front calculait chaque page sur le serveur : 5,8 ms de CPU par page (0,98 cœur
-pour 170 pages/s). Le front v2 est un ensemble de fichiers servis par nginx :
-17 µs par requête (0,246 cœur pour 14 500 req/s). C'est une conséquence
-directe d'[ADR-002](../../M2/decisions/ADR-002-front-v2.md).
+**4. Une image de plus a un coût, mesuré.** Séparer le front de la passerelle
+ajoute un saut réseau et un second nginx : 11 600 à 11 900 pages/s contre
+14 300 à 14 700 quand `web` servait les fichiers (−18 %), et 0,19 cœur de plus
+(le front) sous charge. Sans connexions persistantes, la perte était de 94 %
+(822 à 882 pages/s) : c'est la mesure qui a fait corriger la passerelle.
 
-**5. Le générateur de charge pèse peu.** wrk consomme 0,01 cœur sous charge
-API et 0,17 cœur à 14 500 req/s. Il tourne dans la même VM et reste loin de sa
+**5. Le front v2 coûte environ 150 fois moins de CPU par page.** L'ancien
+front calculait chaque page sur le serveur : 5,8 ms de CPU par page (0,98 cœur
+pour 170 pages/s, pile précédente). Le front v2 est un ensemble de fichiers :
+37 µs par requête pour les deux nginx (0,44 cœur pour 11 800 req/s). C'est une
+conséquence directe d'[ADR-002](../../M2/decisions/ADR-002-front-v2.md).
+
+**6. Le générateur de charge pèse peu.** wrk consomme 0,01 cœur sous charge
+API et 0,17 cœur à 11 800 req/s. Il tourne dans la même VM et reste loin de sa
 limite (1 cœur) : il ne fausse pas la mesure.
 
 Conséquence pour le dimensionnement : pour une micro-crèche (12 enfants, une
-poignée d'utilisateurs simultanés), les limites actuelles (1,75 cœur au total
-pour la pile) laissent une marge de plusieurs ordres de grandeur. Le premier
-réglage à relever, si le trafic grandissait, serait `API_CPUS` avec
-`API_WORKERS` (voir [le README du TP](../README.md#les-limitations-de-ressources-conteneur-par-conteneur)).
+poignée d'utilisateurs simultanés), les limites actuelles (2 cœurs au total
+pour la pile) laissent une marge de plusieurs ordres de grandeur. Les premiers
+réglages à relever, si le trafic grandissait, seraient `API_CPUS` avec
+`API_WORKERS`, puis `WEB_CPUS` avec `WEB_WORKER_PROCESSES` (voir [le README du
+TP](../README.md#les-limitations-de-ressources-conteneur-par-conteneur)).
 
 ## Limites de la mesure
 

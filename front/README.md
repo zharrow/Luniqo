@@ -3,7 +3,8 @@
 Application monopage React + Vite qui remplace progressivement le front v1
 (Next.js + Supabase), selon [ADR-002](../M2/decisions/ADR-002-front-v2.md).
 Elle ne parle qu'à l'API v2 ([api/](../api/README.md)), sur la même origine :
-la passerelle nginx sert ses fichiers et relaie `/api/`.
+le conteneur `front` de la pile Docker sert ses fichiers avec nginx, et la passerelle
+`web` relaie `/` vers lui et `/api/` vers l'API.
 
 État au 2026-10-27 (LUN-114) : squelette, connexion avec second facteur
 (présentation d'un code, activation d'une application d'authentification,

@@ -21,6 +21,7 @@ Chaque ligne cite son ticket Jira `LUN-<n>`.
 
 ### Modifié
 
+- La pile Docker retrouve une image `front` distincte : elle construit le front v2 et le sert avec un nginx dédié (politique de sécurité du contenu, cache) ; la passerelle `web` ne fait plus que relayer le front et l'API (LUN-117).
 - La pile Docker sert le front v2 depuis l'image `web` (nginx), avec une politique de sécurité du contenu stricte et un cache adapté ; le conteneur du front Next.js v1 est retiré, la pile compte 4 images. La v1 reste en production sur Vercel jusqu'à la bascule (LUN-114).
 
 ### Sécurité

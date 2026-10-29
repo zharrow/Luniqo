@@ -8,7 +8,7 @@
 | Rendu | Lien git, dernier commit avant la date butoir : dépôt public `zharrow/Luniqo`, dossier `docker/` |
 | Oral | Aucun (Florent, 2026-10-27) |
 | Compétences RNCP | C2.1.1 (environnements, déploiement), C1.5 (schéma d'architecture), C2.2.2 (tests), C2.2.3 (sécurité), C4.1.2 (healthchecks, première brique de supervision) |
-| Statut | Sujet initial couvert au tag `tp-docker-v1` (2026-10-08). **Consigne supplémentaire et benchmark couverts** le 2026-10-29 (LUN-115, branche `infra/LUN-115-ci-docker`) : conteneurs `lint` et `test` enchaînés par `pipeline.sh`, banc de mesure CPU. Reste : PR, décision sur l'image front (voir « Reste à faire »), tag de rendu |
+| Statut | Sujet initial couvert au tag `tp-docker-v1` (2026-10-08). **Consigne supplémentaire et benchmark couverts** le 2026-10-29 (LUN-115, branche `infra/LUN-115-ci-docker`) : conteneurs `lint` et `test` enchaînés par `pipeline.sh`, banc de mesure CPU. Image front distincte rétablie le 2026-10-29 (LUN-117). Reste : tag de rendu |
 
 ## Contraintes imposées par le sujet
 
@@ -37,7 +37,8 @@ Exclusions : pas de migration des données de la v1, pas de bascule du front ver
 | Compose, `.env`, secret, réseaux `edge` / `backend` | `docker/` | Fait |
 | Documentation : README principal + un README par image, schémas Mermaid, correspondance avec le barème | `docker/` | Fait |
 | Squelette de l'API v2 : modèle, migration Alembic, données synthétiques, 7 tests unitaires | `api/` | Fait, tests au vert |
-| Image `front` : Next.js en serveur autonome ; `next.config.mjs` (`output: 'standalone'`), route `app/healthz/route.ts`, exclusion dans `proxy.ts` | `docker/front/`, racine | Fait, mesuré ; **retirée** par LUN-114 (front v2 servi par `web`), conservée au tag `tp-docker-v1` |
+| Image `front` : Next.js en serveur autonome ; `next.config.mjs` (`output: 'standalone'`), route `app/healthz/route.ts`, exclusion dans `proxy.ts` | `docker/front/`, racine | Fait, mesuré ; retirée par LUN-107 (front v2 servi par `web`), conservée au tag `tp-docker-v1` |
+| Image `front` v2 : build Vite, fichiers servis par un nginx dédié (CSP, cache), réseau interne `frontend` ; `web` redevient la passerelle | `docker/front/`, `docker/web/` | Fait, mesuré (2026-10-29, LUN-117) |
 | Image `lint` : ruff (binaire seul), ShellCheck, contrôle « zéro image Docker Hub » sur les `FROM`, sans réseau | `docker/lint/` | Fait, mesuré (2026-10-29) |
 | Image `test` : pytest, tests unitaires et d'intégration sur une base `test-db` jetable (image `luniqo/db`, données en tmpfs) | `docker/test/` | Fait, mesuré (2026-10-29) |
 | Chaîne lint → test → déploiement : `docker-compose.ci.yml`, `pipeline.sh`, job « Chaîne de CI en conteneurs » de la CI GitHub | `docker/`, `.github/workflows/ci.yml` | Fait, échecs provoqués vérifiés |
@@ -104,7 +105,7 @@ Matière directe pour la soutenance et pour le BC04 (anomalie → diagnostic →
 | ~~Préparer l'explication orale~~ | — | Sans objet : pas d'oral (Florent, 2026-10-27) |
 | ~~Arrêter l'ancienne pile `tp-docker`~~ | Constaté le 2026-10-08 | `docker compose ls` ne liste plus que `luniqo` |
 | ~~Ticket Jira de la consigne supplémentaire~~ | Fait le 2026-10-29 | LUN-115, créé via le serveur MCP d'Atlassian |
-| **Image front distincte ?** | À trancher par Florent avant le rendu | Depuis LUN-114, le front v2 est construit dans l'image `web` : la pile n'a plus d'image « front » à elle, alors que le sujet en demande une. Le rendu retenu (dernier commit avant la date butoir) doit contenir lint et test, donc postérieur à LUN-114 |
+| ~~**Image front distincte ?**~~ | Tranché par Florent le 2026-10-29 : oui (LUN-117) | Le squelette du front v2 (LUN-107) avait mis ses fichiers dans l'image `web`. Image `luniqo/front:2.0` : construit et sert le front v2 avec un nginx dédié ; `luniqo/web:3.0` redevient la passerelle seule |
 | Tag de rendu | Après fusion | `tp-docker-v2` sur le commit rendu |
 
 ## Suivi
