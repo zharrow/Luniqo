@@ -7,6 +7,7 @@
 #           tests de composants et stories dans Chromium, build, build de Storybook
 #   images  construction des 4 images Docker (web construit le front v2), démarrage
 #           de la pile, sondes, puis parcours Playwright contre la vraie API
+#   ci-docker  la chaîne du TP Docker : conteneurs lint puis test (docker/pipeline.sh)
 #
 # Les actions tierces sont épinglées par SHA de commit (le numéro de version en
 # commentaire) : une étiquette peut être déplacée, un SHA non.
@@ -219,3 +220,31 @@ jobs:
       - name: Arrêt de la pile
         if: always()
         run: docker compose down -v
+
+  ci-docker:
+    name: Chaîne de CI en conteneurs (lint → test, TP Docker)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: docker
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Mêmes contrôles que le job api, mais dans nos images luniqo/lint et
+      # luniqo/test : elles sont ainsi construites et éprouvées à chaque PR.
+      # LINT_RUFF_FORMAT=github : erreurs de ruff en annotations sur la PR.
+      - name: lint → test (pipeline.sh, sans déploiement)
+        env:
+          LINT_RUFF_FORMAT: github
+        run: ./pipeline.sh --no-deploy
+
+      - name: Conserver les rapports (ruff, ShellCheck, FROM, JUnit)
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: rapports-ci-docker
+          path: docker/reports
+          retention-days: 30

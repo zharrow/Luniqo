@@ -1,0 +1,55 @@
+# Générateur de charge du banc de mesure. Piloté par bench/bench.sh, qui le
+# lance contre une pile déjà démarrée :
+#   docker compose -f docker-compose.bench.yml run --rm charge
+#
+# Il rejoint le réseau edge de la pile pour joindre la passerelle par son nom
+# (web:8080), sans passer par le port publié sur l'hôte.
+name: luniqo-bench
+
+services:
+  # Image de base, comme dans docker-compose.yml : construite, jamais lancée.
+  base:
+    build:
+      context: ./base
+      args:
+        ALPINE_VERSION: ${ALPINE_VERSION:-3.24.2}
+    image: luniqo/base:1.0
+    pull_policy: build
+    scale: 0
+    network_mode: none
+
+  charge:
+    build:
+      context: ./bench
+      additional_contexts:
+        luniqo/base:1.0: service:base
+    image: luniqo/bench:1.0
+    pull_policy: build
+    restart: "no"
+    read_only: true
+    tmpfs:
+      - /tmp:size=8m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      BENCH_URL: ${BENCH_URL:-http://web:8080/api/health}
+      BENCH_DURATION: ${BENCH_DURATION:-30}
+      BENCH_CONNECTIONS: ${BENCH_CONNECTIONS:-32}
+      BENCH_THREADS: ${BENCH_THREADS:-2}
+    networks:
+      - pile
+    deploy:
+      resources:
+        limits:
+          cpus: "${BENCH_CPUS:-1.0}"
+          memory: ${BENCH_MEMORY:-32M}
+          pids: ${BENCH_PIDS:-8}
+    stop_grace_period: 5s
+
+networks:
+  # Réseau de la pile (créé par docker-compose.yml), pas un nouveau réseau.
+  pile:
+    external: true
+    name: ${STACK_PROJECT:-luniqo}_edge

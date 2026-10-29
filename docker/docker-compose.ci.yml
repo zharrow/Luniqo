@@ -1,0 +1,155 @@
+# Chaîne d'intégration continue en conteneurs : lint → test.
+# Lancement complet (puis déploiement de la pile) : ./pipeline.sh
+# Une étape seule : docker compose -f docker-compose.ci.yml run --rm lint
+#
+# Contrairement à docker-compose.yml, ces conteneurs ne sont pas des services
+# qui tournent en continu : chacun fait son travail une fois et s'arrête. Son
+# code de sortie (0 = réussi) décide de la suite.
+#
+# Les ${VARIABLE:-défaut} sont lues dans .env, comme pour la pile.
+name: luniqo-ci
+
+# Durcissement repris de docker-compose.yml (une ancre YAML ne traverse pas
+# les fichiers), sans le redémarrage automatique.
+x-job: &job
+  pull_policy: build
+  # Une tâche de CI s'exécute une fois : la relancer après un échec masquerait l'échec.
+  restart: "no"
+  read_only: true
+  tmpfs:
+    - /tmp:size=16m
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+
+services:
+  # Image de base, comme dans docker-compose.yml : construite, jamais lancée.
+  base:
+    build:
+      context: ./base
+      args:
+        ALPINE_VERSION: ${ALPINE_VERSION:-3.24.2}
+    image: luniqo/base:1.0
+    pull_policy: build
+    scale: 0
+    network_mode: none
+
+  lint:
+    <<: *job
+    build:
+      context: ./lint
+      additional_contexts:
+        luniqo/base:1.0: service:base
+        # Pour lire la version de ruff dans requirements-dev.txt.
+        luniqo-api: ../api
+    image: luniqo/lint:1.0
+    environment:
+      LINT_RUFF_FORMAT: ${LINT_RUFF_FORMAT:-concise}
+    # « git checkout » : le code est monté en lecture seule, le lint ne peut
+    # pas modifier ce qu'il vérifie. Seuls api/ et docker/ sont montés : ni
+    # le .env de l'application ni le reste du dépôt.
+    volumes:
+      - ../api:/workspace/api:ro
+      - .:/workspace/docker:ro
+      - reports:/reports
+    # Le lint n'a besoin d'aucun réseau.
+    network_mode: none
+    deploy:
+      resources:
+        limits:
+          cpus: "${LINT_CPUS:-1.0}"
+          memory: ${LINT_MEMORY:-128M}
+          pids: ${LINT_PIDS:-16}
+    stop_grace_period: 5s
+
+  # Base PostgreSQL jetable : image luniqo/db de la pile, données en mémoire
+  # (tmpfs), détruites avec le conteneur. Jamais exposée sur l'hôte.
+  test-db:
+    <<: *job
+    # Elle doit tourner pendant tout le test : elle est arrêtée par
+    # pipeline.sh (docker compose down), pas relancée si elle plante.
+    build:
+      context: ./db
+      additional_contexts:
+        luniqo/base:1.0: service:base
+    image: luniqo/db:1.0
+    environment:
+      # Le nom finit par _test : les tests refusent toute autre base.
+      DB_NAME: luniqo_test
+      DB_USER: luniqo
+      DB_MAX_CONNECTIONS: ${TEST_DB_MAX_CONNECTIONS:-30}
+      DB_SHARED_BUFFERS: ${TEST_DB_SHARED_BUFFERS:-32MB}
+    secrets:
+      - db_password
+    # Les données vont en mémoire, à app (uid 10001), droits 0700 exigés par
+    # PostgreSQL. Ce tmpfs est compté dans la limite mémoire du conteneur.
+    tmpfs:
+      - /tmp:size=16m
+      - /var/lib/postgresql/data:uid=10001,gid=10001,mode=0700,size=${TEST_DB_TMPFS:-128m}
+    networks:
+      - ci
+    deploy:
+      resources:
+        limits:
+          cpus: "${TEST_DB_CPUS:-1.0}"
+          memory: ${TEST_DB_MEMORY:-256M}
+          pids: ${TEST_DB_PIDS:-48}
+    stop_grace_period: 10s
+
+  test:
+    <<: *job
+    build:
+      context: ./test
+      additional_contexts:
+        luniqo/base:1.0: service:base
+        luniqo-api: ../api
+    image: luniqo/test:1.0
+    environment:
+      TEST_DB_ADDR: test-db:5432
+      TEST_DB_NAME: luniqo_test
+      TEST_DB_USER: luniqo
+      # Options supplémentaires de pytest (lues par pytest lui-même), par ex.
+      # PYTEST_ADDOPTS="-x -k cleaning" pour s'arrêter au premier échec.
+      PYTEST_ADDOPTS: ${PYTEST_ADDOPTS:-}
+      # Secondes laissées à pytest pour s'arrêter après le signal d'arrêt,
+      # avant une sortie forcée (inférieur au stop_grace_period de 15 s).
+      TEST_STOP_TIMEOUT: ${TEST_STOP_TIMEOUT:-5}
+    secrets:
+      - db_password
+    volumes:
+      - ../api:/workspace/api:ro
+      - reports:/reports
+    networks:
+      - ci
+    deploy:
+      resources:
+        limits:
+          cpus: "${TEST_CPUS:-1.0}"
+          memory: ${TEST_MEMORY:-512M}
+          pids: ${TEST_PIDS:-32}
+    # Barrières de la chaîne : le test ne démarre qu'après un lint réussi
+    # (code de sortie 0) et une base de test saine (healthcheck).
+    depends_on:
+      lint:
+        condition: service_completed_successfully
+      test-db:
+        condition: service_healthy
+    stop_grace_period: 15s
+
+networks:
+  # Réseau interne : test et test-db se parlent, sans accès à l'extérieur.
+  ci:
+    internal: true
+
+volumes:
+  # Rapports des étapes (équivalent des « artefacts » d'une CI), récupérés
+  # dans docker/reports/ par pipeline.sh.
+  reports:
+
+secrets:
+  # Toujours le fichier de développement, même si DB_PASSWORD_FILE désigne
+  # celui d'un vrai déploiement : la base de test ne contient que des données
+  # de test et disparaît avec son conteneur.
+  db_password:
+    file: ./secrets/db_password.dev

@@ -1,2 +1,7 @@
 TP.md
 .DS_Store
+# Sujet mis à jour et exemples de code fournis par le cours (non redistribués)
+TP-UPDATE.md
+docs/
+# Rapports produits par pipeline.sh (artefacts, régénérés à chaque passage)
+reports/
