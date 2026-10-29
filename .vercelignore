@@ -3,3 +3,7 @@
 # racine) pour une fonction serverless et dépasse la limite de 12 fonctions du
 # plan Hobby (ANO-003). Ne concerne pas app/api/ (routes Stripe de la v1).
 /api
+
+# Front v2 (React + Vite, ADR-002) : servi par l'image nginx de la pile Docker,
+# pas par Vercel. La v1 reste seule en production jusqu'à la bascule.
+/front

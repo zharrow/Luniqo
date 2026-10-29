@@ -1,0 +1,9 @@
+node_modules
+dist
+storybook-static
+*.tsbuildinfo
+# Captures et rapports des tests (Vitest, Playwright).
+.vitest
+test-results
+playwright-report
+debug-storybook.log

@@ -118,60 +118,20 @@ services:
         restart: true
     stop_grace_period: 15s
 
-  front:
-    <<: *common
-    build:
-      # Contexte = racine du dépôt (le code Next.js). Dockerfile.dockerignore,
-      # à côté du Dockerfile, n'en laisse passer que le code du front.
-      context: ..
-      dockerfile: docker/front/Dockerfile
-      additional_contexts:
-        luniqo/base:1.0: service:base
-      # Inscrites dans le code du navigateur au build. Les valeurs réelles du
-      # projet Supabase de la v1 viennent du .env de l'application (racine du
-      # dépôt, non versionné), passé à compose avec --env-file (voir README).
-      # Sans lui : valeurs factices, les pages s'affichent mais la connexion échoue.
-      args:
-        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-http://127.0.0.1:54321}
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-cle-publique-non-configuree}
-        NEXT_PUBLIC_APP_URL: http://localhost:${WEB_PUBLISHED_PORT:-8080}
-    image: luniqo/front:1.0
-    # Variables du serveur Next.js (actions serveur, clé service_role...) :
-    # celles de l'application, si les fichiers existent.
-    env_file:
-      - path: ../.env
-        required: false
-      - path: ../.env.local
-        required: false
-    environment:
-      NODE_HEAP_MB: ${FRONT_NODE_HEAP_MB:-192}
-    # /tmp plus grand que pour les autres services : il reçoit le cache de
-    # Next.js. Ce tmpfs est compté dans la limite mémoire.
-    tmpfs:
-      - /tmp:size=64m
-    deploy:
-      resources:
-        limits:
-          cpus: "${FRONT_CPUS:-1.0}"
-          memory: ${FRONT_MEMORY:-384M}
-          pids: ${FRONT_PIDS:-48}
-    # edge et non backend : le serveur Next.js appelle Supabase Cloud, il lui
-    # faut une sortie vers internet. Aucun port publié : on passe par web.
-    networks:
-      - edge
-    stop_grace_period: 10s
-
   web:
     <<: *common
     build:
-      context: ./web
+      # Contexte = racine du dépôt : l'image construit le front v2 (front/).
+      # Dockerfile.dockerignore, à côté du Dockerfile, n'en laisse passer que
+      # front/ et docker/web/.
+      context: ..
+      dockerfile: docker/web/Dockerfile
       additional_contexts:
         luniqo/base:1.0: service:base
-    image: luniqo/web:1.0
+    image: luniqo/web:2.0
     environment:
       NGINX_WORKER_PROCESSES: ${WEB_WORKER_PROCESSES:-1}
       NGINX_WORKER_CONNECTIONS: ${WEB_WORKER_CONNECTIONS:-512}
-      FRONT_ADDR: front:3000
       API_ADDR: api:8000
     deploy:
       resources:
@@ -185,16 +145,14 @@ services:
     networks:
       - edge
       - backend
-    # La passerelle n'ouvre ses portes qu'une fois le front et l'API prêts.
+    # La passerelle n'ouvre ses portes qu'une fois l'API prête.
     depends_on:
-      front:
-        condition: service_healthy
       api:
         condition: service_healthy
     stop_grace_period: 10s
 
 networks:
-  # Réseau exposé : port publié par web, sortie vers internet (front → Supabase).
+  # Réseau exposé : port publié par web.
   edge:
   # Réseau interne : pas de sortie vers l'extérieur, invisible depuis l'hôte.
   backend:
