@@ -6,7 +6,7 @@ Elle ne parle qu'à l'API v2 ([api/](../api/README.md)), sur la même origine :
 le conteneur `front` de la pile Docker sert ses fichiers avec nginx, et la passerelle
 `web` relaie `/` vers lui et `/api/` vers l'API.
 
-État au 2026-10-27 (LUN-114) : squelette, connexion avec second facteur
+État au 2026-10-27 (LUN-107) : squelette, connexion avec second facteur
 (présentation d'un code, activation d'une application d'authentification,
 codes de secours), espace connecté avec la liste des crèches. La v1 reste en
 production jusqu'à la bascule, prévue quand la v2 sera complète.

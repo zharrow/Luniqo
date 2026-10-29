@@ -90,10 +90,18 @@ livraison »). D'ici là, `staging` et `main` sont vérifiées par la même CI.
 | `hotfix/` | un défaut **en production** | `main` | `main`, puis report |
 
 Nom : `<préfixe>/LUN-<n>-<description-en-minuscules-avec-tirets>`, par exemple
-`feat/LUN-72-mode-tablette`. La clé `LUN-<n>` s'écrit comme dans Jira, **sans
+`feat/LUN-65-mode-tablette`. La clé `LUN-<n>` s'écrit comme dans Jira, **sans
 zéro devant** (`LUN-60`, jamais `LUN-060`) : c'est elle qui relie la branche, ses
 commits et sa PR au ticket. GitHub supprime automatiquement une branche de
 travail après sa fusion.
+
+**Ne citer que la clé du ticket traité**, dans la branche, les commits, le titre
+et la description de la PR. Jira relie la PR à toute clé qu'il y trouve et fait
+avancer ces tickets aussi (douze tickets changés à tort par une simple mention,
+constaté le 2026-10-29). Pour renvoyer à un autre ticket, écrire son titre.
+Vérifier une clé dans Jira avant de l'écrire : jusqu'au 2026-10-29, celles des
+stories et sous-tâches étaient calculées de travers
+([anciennes clés](docs/projet/JIRA.md#8-anciennes-clés-citées-avant-le-2026-10-29)).
 
 ### Seul ce qui est fini entre dans `develop`
 
@@ -116,15 +124,15 @@ gitGraph
     branch staging
     checkout main
     branch develop
-    branch feat/LUN-72-mode-tablette
+    branch feat/LUN-65-mode-tablette
     commit id: "écran PIN"
     commit id: "pointage"
     checkout develop
-    merge feat/LUN-72-mode-tablette id: "PR feat LUN-72"
-    branch feat/LUN-76-pieces-menage
+    merge feat/LUN-65-mode-tablette id: "PR feat LUN-65"
+    branch feat/LUN-69-pieces-menage
     commit id: "pièces et tâches"
     checkout develop
-    merge feat/LUN-76-pieces-menage id: "PR feat LUN-76"
+    merge feat/LUN-69-pieces-menage id: "PR feat LUN-69"
     checkout staging
     merge develop id: "promotion rc.1" tag: "v0.2.0-rc.1"
     checkout develop
@@ -283,7 +291,7 @@ Une seule version pour tout le dépôt, au format `MAJEUR.MINEUR.CORRECTIF`
 en français, avec la clé du ticket :
 
 ```
-feat(api): pointage groupé pour une fratrie (LUN-72)
+feat(api): pointage groupé pour une fratrie (LUN-65)
 fix(tablette): heure de départ en heure de Paris (LUN-125)
 docs: stratégie de branches (LUN-60)
 ```
