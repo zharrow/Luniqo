@@ -347,6 +347,506 @@
         }
       }
     },
+    "/api/v2/auth/passkeys": {
+      "get": {
+        "tags": [
+          "passkeys"
+        ],
+        "summary": "List Passkeys",
+        "description": "Passkeys du compte.",
+        "operationId": "list_passkeys_api_v2_auth_passkeys_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PasskeyOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Passkeys Api V2 Auth Passkeys Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Passkey refusée à l'enregistrement"
+          },
+          "401": {
+            "description": "Session absente ou passkey refusée"
+          },
+          "403": {
+            "description": "Second facteur à présenter d'abord ou réauthentification requise"
+          },
+          "404": {
+            "description": "Passkey introuvable pour ce compte"
+          },
+          "409": {
+            "description": "Opération sans objet dans l'état actuel"
+          },
+          "429": {
+            "description": "Trop de tentatives (en-tête Retry-After)"
+          },
+          "503": {
+            "description": "Aucune origine configurée (APP_ORIGINS)"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "passkeys"
+        ],
+        "summary": "Register",
+        "description": "Enregistre la passkey créée par le navigateur. Ferme les autres sessions du compte.",
+        "operationId": "register_api_v2_auth_passkeys_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrationIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Passkey refusée à l'enregistrement"
+          },
+          "401": {
+            "description": "Session absente ou passkey refusée"
+          },
+          "403": {
+            "description": "Second facteur à présenter d'abord ou réauthentification requise"
+          },
+          "404": {
+            "description": "Passkey introuvable pour ce compte"
+          },
+          "409": {
+            "description": "Opération sans objet dans l'état actuel"
+          },
+          "429": {
+            "description": "Trop de tentatives (en-tête Retry-After)"
+          },
+          "503": {
+            "description": "Aucune origine configurée (APP_ORIGINS)"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/auth/passkeys/registration/options": {
+      "post": {
+        "tags": [
+          "passkeys"
+        ],
+        "summary": "Registration Options",
+        "description": "Options à passer à navigator.credentials.create() pour enregistrer une passkey.\n\nOuverte à une session qui doit encore enregistrer son premier facteur\n(`setup_required`), comme à une session complète de moins de 15 minutes.",
+        "operationId": "registration_options_api_v2_auth_passkeys_registration_options_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Registration Options Api V2 Auth Passkeys Registration Options Post"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Passkey refusée à l'enregistrement"
+          },
+          "401": {
+            "description": "Session absente ou passkey refusée"
+          },
+          "403": {
+            "description": "Second facteur à présenter d'abord ou réauthentification requise"
+          },
+          "404": {
+            "description": "Passkey introuvable pour ce compte"
+          },
+          "409": {
+            "description": "Opération sans objet dans l'état actuel"
+          },
+          "429": {
+            "description": "Trop de tentatives (en-tête Retry-After)"
+          },
+          "503": {
+            "description": "Aucune origine configurée (APP_ORIGINS)"
+          }
+        }
+      }
+    },
+    "/api/v2/auth/passkeys/{passkey_id}": {
+      "patch": {
+        "tags": [
+          "passkeys"
+        ],
+        "summary": "Rename",
+        "description": "Renomme une passkey du compte.",
+        "operationId": "rename_api_v2_auth_passkeys__passkey_id__patch",
+        "parameters": [
+          {
+            "name": "passkey_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Passkey Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasskeyNameIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasskeyOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Passkey refusée à l'enregistrement"
+          },
+          "401": {
+            "description": "Session absente ou passkey refusée"
+          },
+          "403": {
+            "description": "Second facteur à présenter d'abord ou réauthentification requise"
+          },
+          "404": {
+            "description": "Passkey introuvable pour ce compte"
+          },
+          "409": {
+            "description": "Opération sans objet dans l'état actuel"
+          },
+          "429": {
+            "description": "Trop de tentatives (en-tête Retry-After)"
+          },
+          "503": {
+            "description": "Aucune origine configurée (APP_ORIGINS)"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "passkeys"
+        ],
+        "summary": "Remove",
+        "description": "Retire une passkey. La direction et l'éditeur gardent toujours au moins un facteur.",
+        "operationId": "remove_api_v2_auth_passkeys__passkey_id__delete",
+        "parameters": [
+          {
+            "name": "passkey_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Passkey Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "400": {
+            "description": "Passkey refusée à l'enregistrement"
+          },
+          "401": {
+            "description": "Session absente ou passkey refusée"
+          },
+          "403": {
+            "description": "Second facteur à présenter d'abord ou réauthentification requise"
+          },
+          "404": {
+            "description": "Passkey introuvable pour ce compte"
+          },
+          "409": {
+            "description": "Opération sans objet dans l'état actuel"
+          },
+          "429": {
+            "description": "Trop de tentatives (en-tête Retry-After)"
+          },
+          "503": {
+            "description": "Aucune origine configurée (APP_ORIGINS)"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/auth/passkeys/verify/options": {
+      "post": {
+        "tags": [
+          "passkeys"
+        ],
+        "summary": "Verification Options",
+        "description": "Options à passer à navigator.credentials.get() pour présenter le second facteur avec une passkey.",
+        "operationId": "verification_options_api_v2_auth_passkeys_verify_options_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Verification Options Api V2 Auth Passkeys Verify Options Post"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Passkey refusée à l'enregistrement"
+          },
+          "401": {
+            "description": "Session absente ou passkey refusée"
+          },
+          "403": {
+            "description": "Second facteur à présenter d'abord ou réauthentification requise"
+          },
+          "404": {
+            "description": "Passkey introuvable pour ce compte"
+          },
+          "409": {
+            "description": "Opération sans objet dans l'état actuel"
+          },
+          "429": {
+            "description": "Trop de tentatives (en-tête Retry-After)"
+          },
+          "503": {
+            "description": "Aucune origine configurée (APP_ORIGINS)"
+          }
+        }
+      }
+    },
+    "/api/v2/auth/passkeys/verify": {
+      "post": {
+        "tags": [
+          "passkeys"
+        ],
+        "summary": "Verify",
+        "description": "Présente le second facteur avec une passkey du compte : la session devient complète.",
+        "operationId": "verify_api_v2_auth_passkeys_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssertionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Passkey refusée à l'enregistrement"
+          },
+          "401": {
+            "description": "Session absente ou passkey refusée"
+          },
+          "403": {
+            "description": "Second facteur à présenter d'abord ou réauthentification requise"
+          },
+          "404": {
+            "description": "Passkey introuvable pour ce compte"
+          },
+          "409": {
+            "description": "Opération sans objet dans l'état actuel"
+          },
+          "429": {
+            "description": "Trop de tentatives (en-tête Retry-After)"
+          },
+          "503": {
+            "description": "Aucune origine configurée (APP_ORIGINS)"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/auth/passkeys/login/options": {
+      "post": {
+        "tags": [
+          "passkeys"
+        ],
+        "summary": "Login Options",
+        "description": "Options à passer à navigator.credentials.get() pour se connecter sans mot de passe.\n\nAucun compte n'est désigné : le navigateur propose les passkeys Luniqo de l'appareil.",
+        "operationId": "login_options_api_v2_auth_passkeys_login_options_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Login Options Api V2 Auth Passkeys Login Options Post"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Passkey refusée à l'enregistrement"
+          },
+          "401": {
+            "description": "Session absente ou passkey refusée"
+          },
+          "403": {
+            "description": "Second facteur à présenter d'abord ou réauthentification requise"
+          },
+          "404": {
+            "description": "Passkey introuvable pour ce compte"
+          },
+          "409": {
+            "description": "Opération sans objet dans l'état actuel"
+          },
+          "429": {
+            "description": "Trop de tentatives (en-tête Retry-After)"
+          },
+          "503": {
+            "description": "Aucune origine configurée (APP_ORIGINS)"
+          }
+        }
+      }
+    },
+    "/api/v2/auth/passkeys/login": {
+      "post": {
+        "tags": [
+          "passkeys"
+        ],
+        "summary": "Login",
+        "description": "Se connecter avec une passkey, sans mot de passe : la session est complète d'emblée.\n\nLa passkey, vérifiée par la biométrie ou le code de l'appareil, vaut les\ndeux facteurs (ADR-004). Pose le cookie de session, comme /api/v2/auth/login.",
+        "operationId": "login_api_v2_auth_passkeys_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssertionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Passkey refusée à l'enregistrement"
+          },
+          "401": {
+            "description": "Session absente ou passkey refusée"
+          },
+          "403": {
+            "description": "Second facteur à présenter d'abord ou réauthentification requise"
+          },
+          "404": {
+            "description": "Passkey introuvable pour ce compte"
+          },
+          "409": {
+            "description": "Opération sans objet dans l'état actuel"
+          },
+          "429": {
+            "description": "Trop de tentatives (en-tête Retry-After)"
+          },
+          "503": {
+            "description": "Aucune origine configurée (APP_ORIGINS)"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v2/nurseries": {
       "get": {
         "tags": [
@@ -3459,6 +3959,20 @@
         "type": "object",
         "title": "ArrivalIn"
       },
+      "AssertionIn": {
+        "properties": {
+          "credential": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Credential"
+          }
+        },
+        "type": "object",
+        "required": [
+          "credential"
+        ],
+        "title": "AssertionIn"
+      },
       "AttendanceOut": {
         "properties": {
           "id": {
@@ -5262,6 +5776,67 @@
         "title": "NurseryUpdate",
         "description": "Champs absents : inchangés. Une crèche se désactive, elle ne se supprime pas."
       },
+      "PasskeyNameIn": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Name",
+            "examples": [
+              "iPhone de Camille"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "PasskeyNameIn"
+      },
+      "PasskeyOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "backed_up": {
+            "type": "boolean",
+            "title": "Backed Up"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "backed_up",
+          "created_at",
+          "last_used_at"
+        ],
+        "title": "PasskeyOut"
+      },
       "PasswordChangeIn": {
         "properties": {
           "current_password": {
@@ -5428,6 +6003,57 @@
           "picked_up_by"
         ],
         "title": "PresenceOut"
+      },
+      "RegistrationIn": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Name",
+            "examples": [
+              "iPhone de Camille"
+            ]
+          },
+          "credential": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Credential"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "credential"
+        ],
+        "title": "RegistrationIn"
+      },
+      "RegistrationOut": {
+        "properties": {
+          "passkey": {
+            "$ref": "#/components/schemas/PasskeyOut"
+          },
+          "backup_codes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Backup Codes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "passkey",
+          "backup_codes"
+        ],
+        "title": "RegistrationOut"
       },
       "Relationship": {
         "type": "string",
