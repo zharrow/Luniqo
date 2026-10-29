@@ -71,6 +71,8 @@ Stack : React 19 + Vite 8, TypeScript 6 strict, React Compiler, TanStack Router 
 
 ```bash
 cd docker && docker compose --env-file .env --env-file ../.env up -d --build   # db, api, web ; http://localhost:8080
+docker/pipeline.sh [--no-deploy]   # conteneurs lint (ruff, ShellCheck, FROM autorisés) puis test (pytest + base jetable), puis déploiement
+docker/bench/bench.sh              # consommation CPU de chaque conteneur (pile démarrée), résultat dans docker/bench/resultats/
 ```
 
 Le compose construit l'API depuis `../api` ; l'image `web` construit le front v2 (`front/`, contexte = racine du dépôt) et sert ses fichiers.

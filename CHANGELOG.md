@@ -16,6 +16,8 @@ Chaque ligne cite son ticket Jira `LUN-<n>`.
 - Passkeys (Face ID, Touch ID, Windows Hello…) côté API : enregistrement de plusieurs passkeys nommées, second facteur après le mot de passe, connexion sans mot de passe qui vaut les deux facteurs ; la direction peut garder une passkey seule comme facteur (LUN-69).
 - Front v2 (`front/`, React + Vite) : connexion, second facteur (code ou code de secours), activation d'une application d'authentification avec ses codes de secours, déconnexion, et un premier écran qui liste les crèches accessibles. Client d'API typé, généré depuis le schéma OpenAPI ; Storybook pour documenter les composants ; tests unitaires, de composants, de stories (accessibilité comprise) et parcours de bout en bout (LUN-114).
 - CI : vérification du front v2 (contrat d'API à jour, lint, typage, tests, build, Storybook) et parcours Playwright contre la pile démarrée (LUN-114).
+- TP Docker, consigne supplémentaire : conteneurs de CI `lint` (ruff, ShellCheck, refus de toute image Docker Hub) et `test` (tests unitaires et d'intégration sur une base jetable), enchaînés par `docker/pipeline.sh` (lint → test → déploiement de la pile) et lancés à chaque PR par la CI GitHub (LUN-115).
+- TP Docker : banc de mesure de la consommation CPU des conteneurs (`docker/bench/bench.sh`, générateur de charge wrk), au repos, sous charge et pendant la CI, avec le coût de Docker lui-même (LUN-115).
 
 ### Modifié
 

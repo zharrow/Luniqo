@@ -20,6 +20,8 @@ v2** (React + Vite), une **API** (FastAPI) et une **base de données**
 | 0 image Docker Hub, images personnalisées | 4 images construites depuis `scratch` ([détail](#zéro-image-docker-hub)) |
 | Au moins un front, un back, un serveur web | front v2 (React + Vite, construit dans l'image `web`), `api` (FastAPI), `web` (nginx), plus `db` (PostgreSQL). Au tag `tp-docker-v1` : une image `front` Next.js distincte |
 | Arguments de ressources au run et dans le compose | `.env` → `docker-compose.yml` → limites cgroups + arguments applicatifs ([détail](#orchestration)) |
+| Consigne supplémentaire : au moins 2 conteneurs d'orchestration ou de CI/CD (scaling, lint, test) | **`lint`** et **`test`** (plus une base de test jetable), enchaînés par `pipeline.sh` : lint → tests → déploiement de la pile ([détail](#intégration-continue-en-conteneurs)) |
+| Benchmark de la consommation CPU des conteneurs | `bench/bench.sh` et le générateur de charge **`bench`** : CPU de chaque conteneur au repos, sous charge et pendant la CI, et coût de Docker lui-même ([détail](#banc-de-mesure--consommation-cpu)) |
 
 ## Sommaire
 
@@ -28,8 +30,10 @@ v2** (React + Vite), une **API** (FastAPI) et une **base de données**
 3. [Zéro image Docker Hub](#zéro-image-docker-hub)
 4. [Les images](#les-images)
 5. [Orchestration](#orchestration)
-6. [Docker face à la virtualisation classique](#docker-face-à-la-virtualisation-classique)
-7. [Correspondance avec le barème](#correspondance-avec-le-barème)
+6. [Intégration continue en conteneurs](#intégration-continue-en-conteneurs) (consigne supplémentaire)
+7. [Banc de mesure : consommation CPU](#banc-de-mesure--consommation-cpu)
+8. [Docker face à la virtualisation classique](#docker-face-à-la-virtualisation-classique)
+9. [Correspondance avec le barème](#correspondance-avec-le-barème)
 
 ## Démarrage rapide
 
@@ -52,6 +56,8 @@ docker compose ps                # db, api et web doivent être "healthy"
 | Documentation de l'API (Swagger) | <http://localhost:8080/api/docs> |
 | Lire les logs | `docker compose logs -f` |
 | Changer les ressources | modifier `.env` puis `docker compose up -d` |
+| Lint, tests, puis déploiement si tout est vert | `./pipeline.sh` (`--no-deploy` : lint et tests seulement) |
+| Mesurer la consommation CPU (pile démarrée) | `bench/bench.sh` |
 | Tout arrêter | `docker compose down` (ajouter `-v` pour effacer la base) |
 
 Port 8080 déjà pris sur la machine : `WEB_PUBLISHED_PORT=8081 docker compose up -d`.
@@ -66,6 +72,9 @@ production sur Vercel, gelée, jusqu'à la bascule vers la v2 (ADR-002).
 ```
 .
 ├── docker-compose.yml     orchestration des services
+├── docker-compose.ci.yml  chaîne d'intégration : lint → test (+ base de test jetable)
+├── docker-compose.bench.yml  générateur de charge du banc de mesure
+├── pipeline.sh            lint → test → déploiement, comme un serveur de CI
 ├── .env                   arguments de ressources de chaque conteneur
 ├── secrets/
 │   ├── db_password.dev    mot de passe de développement de la base (secret Docker)
@@ -73,7 +82,10 @@ production sur Vercel, gelée, jusqu'à la bascule vers la v2 (ADR-002).
 ├── base/                  image de base : Alpine depuis scratch + tini + utilisateur app
 ├── db/                    PostgreSQL 18
 ├── api/                   image de l'API FastAPI (le code est dans ../api)
-└── web/                   passerelle nginx, seul point d'entrée ; construit et sert le front v2 (../front)
+├── web/                   passerelle nginx, seul point d'entrée ; construit et sert le front v2 (../front)
+├── lint/                  CI : ruff, ShellCheck, contrôle « zéro image Docker Hub »
+├── test/                  CI : pytest, tests unitaires et d'intégration de l'API
+└── bench/                 banc de mesure CPU (bench.sh) et générateur de charge (wrk)
 ```
 
 Chaque dossier d'image contient un `README.md` qui détaille ses dépendances,
@@ -91,6 +103,9 @@ flowchart LR
     base -- "+ nodejs + pnpm<br/>(étape de build, jetée)" --> build["build du front<br/>vite build"]
     build -- "fichiers statiques" --> web
     base -- "+ nginx" --> web["luniqo/web"]
+    base -- "+ ruff (binaire) + shellcheck" --> lint["luniqo/lint (CI)"]
+    base -- "+ python3 + venv<br/>+ pytest" --> test["luniqo/test (CI)"]
+    base -- "+ wrk" --> bench["luniqo/bench (banc)"]
     src["../api<br/>code de l'API v2"] -. "contexte de build" .-> api
     front["../front<br/>front v2 (React + Vite)"] -. "contexte de build" .-> build
 ```
@@ -101,6 +116,9 @@ flowchart LR
 | `luniqo/db:1.0` | 83 Mo | PostgreSQL 18.6 |
 | `luniqo/api:0.1` | 186 Mo | Python 3.14, FastAPI, SQLAlchemy, psycopg, Alembic, le code de l'API |
 | `luniqo/web:2.0` | 29 Mo | nginx 1.30, modèle de configuration, page d'indisponibilité, fichiers du front v2 (636 Kio). Ni Node.js ni sources : ils ne servent qu'à l'étape de build |
+| `luniqo/lint:1.0` | 83 Mo | ruff 0.16.10 (binaire seul, 21,6 Mo), ShellCheck 0.11 (21,1 Mo), script `lint.sh`. Ni Python ni pip |
+| `luniqo/test:1.0` | 278 Mo | Python 3.14, dépendances de l'API et outils de test (pytest, httpx2), lanceur `run_pytest.py`. Le code est monté au run, pas copié |
+| `luniqo/bench:1.0` | 28 Mo | wrk 4.2.0, script `charge.sh` |
 
 Au tag `tp-docker-v1`, l'image `luniqo/front:1.0` (serveur Next.js) pesait 302 Mo.
 
@@ -174,7 +192,13 @@ Alpine (`apk`), paquets Python (PyPI) et paquets JavaScript (npm, versions du
 
 Vérifiable : `grep FROM */Dockerfile` ne montre que `scratch`, une étape interne
 (`rootfs-${TARGETARCH}`, `build`) ou `luniqo/base:1.0`, et
-`docker compose config --images` ne liste que nos 4 images `luniqo/*`.
+`docker compose config --images` ne liste que nos 4 images `luniqo/*` (de même
+pour `-f docker-compose.ci.yml` et `-f docker-compose.bench.yml`).
+
+**Vérifié automatiquement** depuis la consigne supplémentaire : le conteneur
+[lint](lint/README.md) refuse tout `FROM` qui ne vise pas `scratch`, une image
+`luniqo/*` ou une étape du même Dockerfile. Une image Docker Hub ajoutée par
+erreur arrête la chaîne avant le déploiement.
 
 ## Les images
 
@@ -184,6 +208,12 @@ Vérifiable : `grep FROM */Dockerfile` ne montre que `scratch`, une étape inter
 | [web](web/README.md) | **serveur web** : passerelle et **front** v2 | `nginx` (+ `nodejs`, `pnpm` à l'étape de build) | 8080 | `NGINX_WORKER_PROCESSES`, `NGINX_WORKER_CONNECTIONS`, `API_ADDR` | `SIGQUIT` |
 | [api](api/README.md) | **back** : API | `python3` + venv | 8000 | `API_WORKERS`, `DB_POOL_SIZE`, `DB_ADDR`, `DB_NAME`, `DB_USER`, `DB_PASSWORD_FILE`, `SEED_DEMO` | `SIGTERM` |
 | [db](db/README.md) | base de données | `postgresql18` | 5432 | `DB_NAME`, `DB_USER`, `DB_PASSWORD_FILE`, `DB_MAX_CONNECTIONS`, `DB_SHARED_BUFFERS` | `SIGINT` |
+| [lint](lint/README.md) | **CI** : lint | `ruff` (binaire seul), `shellcheck` | aucun réseau | `LINT_RUFF_FORMAT` | `SIGTERM` (`tini -g`) |
+| [test](test/README.md) | **CI** : tests | `python3` + venv (dépendances de l'API, pytest) | | `TEST_DB_ADDR`, `TEST_DB_NAME`, `TEST_DB_USER`, `TEST_DB_PASSWORD_FILE`, `TEST_STOP_TIMEOUT`, `PYTEST_ADDOPTS` | `SIGINT` |
+| [bench](bench/README.md) | générateur de charge du banc | `wrk` | | `BENCH_URL`, `BENCH_DURATION`, `BENCH_CONNECTIONS`, `BENCH_THREADS` | `SIGINT` (`tini -g`) |
+
+Les trois dernières ne sont pas des services : elles font leur travail une
+fois et s'arrêtent, et leur **code de sortie** est le résultat.
 
 Choix communs :
 
@@ -218,6 +248,14 @@ utilisable sans `.env`.
 | `WEB_CPUS=0.25` / `WEB_MEMORY=32M` / `WEB_PIDS=16` | `deploy.resources.limits` | `--cpus 0.25 --memory 32m --pids-limit 16` |
 | `WEB_WORKER_PROCESSES=1` / `WEB_WORKER_CONNECTIONS=512` | `environment: NGINX_WORKER_*` | `-e NGINX_WORKER_PROCESSES=1 ...` |
 | `WEB_PUBLISHED_PORT=8080` | `ports: "8080:8080"` | `-p 8080:8080` |
+| `LINT_CPUS=1.0` / `LINT_MEMORY=128M` / `LINT_PIDS=16` | `docker-compose.ci.yml`, `deploy.resources.limits` | `--cpus 1.0 --memory 128m --pids-limit 16` |
+| `LINT_RUFF_FORMAT=concise` | `environment: LINT_RUFF_FORMAT` | `-e LINT_RUFF_FORMAT=concise` |
+| `TEST_CPUS=1.0` / `TEST_MEMORY=512M` / `TEST_PIDS=32` | `docker-compose.ci.yml`, `deploy.resources.limits` | `--cpus 1.0 --memory 512m --pids-limit 32` |
+| `TEST_STOP_TIMEOUT=5` | `environment: TEST_STOP_TIMEOUT` | `-e TEST_STOP_TIMEOUT=5` |
+| `TEST_DB_CPUS=1.0` / `TEST_DB_MEMORY=256M` / `TEST_DB_PIDS=48` | `docker-compose.ci.yml`, `deploy.resources.limits` | `--cpus 1.0 --memory 256m --pids-limit 48` |
+| `TEST_DB_TMPFS=128m` | `tmpfs: /var/lib/postgresql/data:size=` | `--tmpfs /var/lib/postgresql/data:size=128m` |
+| `TEST_DB_MAX_CONNECTIONS=30` / `TEST_DB_SHARED_BUFFERS=32MB` | `environment: DB_*` | `-e DB_MAX_CONNECTIONS=30 ...` |
+| `BENCH_CPUS=1.0` / `BENCH_MEMORY=32M` / `BENCH_PIDS=8` | `docker-compose.bench.yml`, `deploy.resources.limits` | `--cpus 1.0 --memory 32m --pids-limit 8` |
 
 Les adresses entre services (`API_ADDR=api:8000`, `DB_ADDR=db:5432`...) sont
 écrites dans le compose : elles découlent des noms de services.
@@ -282,6 +320,10 @@ qu'un shell l'avale ; **chaque programme l'intercepte** et s'arrête proprement.
 | web | `SIGQUIT` | nginx termine les requêtes en cours puis s'arrête (`SIGTERM` serait un arrêt brutal pour nginx). | 10 s | < 1 s, code 0 |
 | api | `SIGTERM` | uvicorn refuse les nouvelles connexions, termine les requêtes en cours (10 s au plus), puis l'application ferme son pool de connexions. | 15 s | < 1 s, code 143 (*) |
 | db | `SIGINT` | « fast shutdown » : transactions annulées, point de reprise écrit, arrêt. `SIGTERM` attendrait la déconnexion de tous les clients. | 30 s | < 1 s, code 0 |
+| lint | `SIGTERM` | `tini -g` envoie le signal au script **et** à l'outil en cours (ruff ou ShellCheck), pas seulement au script. | 5 s | 0,17 s, code 143 |
+| test | `SIGINT` | pytest s'interrompt comme sur un Ctrl-C : nettoyage des fixtures, rapport JUnit écrit, code 2. Un blocage trouvé dans les threads d'anyio a été corrigé ([détail](test/README.md#le-blocage-trouvé-et-sa-correction)). | 15 s | 10 essais sur 10 propres, < 1 s (une fois 5,2 s) |
+| test-db | `SIGINT` | Même image que db. | 10 s | 0,15 s, code 0 |
+| bench | `SIGINT` | wrk arrête la charge et affiche quand même ses statistiques ; SIGTERM le tuerait sans résultat. | 5 s | 0,33 s, code 0, statistiques affichées |
 
 (*) Après un arrêt propre, uvicorn se renvoie le signal reçu pour que son parent
 sache pourquoi il s'est arrêté : le code vaut alors 128 + 15. Un `SIGKILL` aurait
@@ -343,6 +385,146 @@ l'API passe `unhealthy` ; base relancée, l'API redevient `healthy` d'elle-même
 | secret Docker | Mot de passe hors des variables d'environnement. |
 | en-têtes HTTP (web) | Front : politique de sécurité du contenu stricte (tout vient de Luniqo, aucun script en ligne), `X-Frame-Options: DENY`, `Permissions-Policy`, `nosniff`, `Referrer-Policy`, cache immuable des fichiers à empreinte. API : `nosniff`, `SAMEORIGIN`, `Referrer-Policy`. Version de nginx masquée partout. |
 
+## Intégration continue en conteneurs
+
+Consigne supplémentaire du sujet : au moins deux conteneurs associés à
+l'orchestration ou à la CI/CD, parmi le scaling, le lint et les tests. Nous
+avons retenu **lint** et **test**, qui contrôlent le vrai code de Luniqo et
+décident ensemble du déploiement.
+
+Chaque étape est un conteneur, et **le code de sortie est le contrat** : 0, la
+suite peut démarrer ; autre chose, la chaîne s'arrête et rien n'est déployé.
+`pipeline.sh` joue le rôle du serveur de CI (Jenkins, GitLab Runner, GitHub
+Actions) :
+
+```mermaid
+flowchart LR
+    src[("../api et docker/<br/>montés en lecture seule")]
+    subgraph ci["docker-compose.ci.yml (projet luniqo-ci)"]
+        lint["lint<br/>ruff · ShellCheck<br/>FROM autorisés<br/>(aucun réseau)"]
+        test["test<br/>pytest : unitaires<br/>+ intégration"]
+        subgraph net["réseau ci · internal"]
+            testdb[("test-db<br/>luniqo/db<br/>données en tmpfs")]
+        end
+        reports[("volume reports")]
+    end
+    pile["docker-compose.yml<br/>db · api · web"]
+
+    src -.-> lint
+    src -.-> test
+    lint -- "code 0<br/>service_completed_successfully" --> test
+    testdb -- "healthy<br/>service_healthy" --> test
+    test -- "① SQL :5432" --> testdb
+    lint -.-> reports
+    test -.-> reports
+    test -- "code 0 : pipeline.sh déploie<br/>up -d --build --wait" --> pile
+```
+
+| Conteneur | Image | Rôle | Réseau | Ressources (défaut) |
+|---|---|---|---|---|
+| `lint` | [luniqo/lint](lint/README.md) | ruff sur `api/` (règles de sécurité comprises), ShellCheck sur les scripts des images, contrôle « zéro image Docker Hub » sur les Dockerfiles | **aucun** (`network_mode: none`) | 1 cœur, 128 Mo, 16 pids |
+| `test-db` | [luniqo/db](db/README.md) | PostgreSQL jetable pour les tests d'intégration ; données en tmpfs, détruites avec le conteneur | `ci` (interne) | 1 cœur, 256 Mo tmpfs compris, 48 pids |
+| `test` | [luniqo/test](test/README.md) | 543 tests de l'API (pytest), dont les tests d'intégration sur `test-db` | `ci` (interne) | 1 cœur, 512 Mo, 32 pids |
+
+| # | De | Vers | Protocole | Réseau | Rôle |
+|---|---|---|---|---|---|
+| ① | test | test-db `:5432` | PostgreSQL | `ci` (`internal: true`) | migrations, puis une transaction annulée par test |
+
+Ni `lint` ni `test` n'ont accès à internet, et rien n'est joignable depuis
+l'hôte.
+
+### Lancer la chaîne
+
+```sh
+./pipeline.sh                    # lint → test → déploiement de la pile si tout est vert
+./pipeline.sh --no-deploy        # lint → test seulement
+docker compose -f docker-compose.ci.yml run --rm lint     # une étape seule
+PYTEST_ADDOPTS="-x -k cleaning" ./pipeline.sh --no-deploy # options de pytest
+```
+
+Les rapports (`ruff.txt`, `shellcheck.txt`, `images.txt`, `pytest.xml` au
+format JUnit) sont recopiés dans `docker/reports/`, comme les « artefacts »
+d'une CI.
+
+Mesuré le 2026-10-29 sur `develop` : chaîne verte en 88 s (lint 0,7 s de CPU,
+543 tests en 50 s), puis pile déployée et saine. Les échecs ont été provoqués
+volontairement pour vérifier les barrières :
+
+| Défaut introduit | Résultat |
+|---|---|
+| `FROM python:3.12-alpine` dans un Dockerfile | `lint=1 test=absent` : le test ne démarre pas, rien n'est déployé |
+| Un test faux (`assert 1 + 1 == 3`) | `lint=0 test=1` : rien n'est déployé, la version en place continue de tourner |
+| `docker stop` pendant les tests | code 2, rapport JUnit écrit ([détail](test/README.md#gestion-des-signaux-darrêt)) |
+
+### Dépendances et ordre de démarrage
+
+| Dépendance | Condition | Pourquoi |
+|---|---|---|
+| test → lint | `service_completed_successfully` | Le test ne démarre qu'après un lint **terminé avec le code 0**. C'est la barrière de la chaîne. |
+| test → test-db | `service_healthy` | Les tests d'intégration appliquent les migrations dès le début : la base doit répondre (`pg_isready`). |
+| déploiement → test | dans `pipeline.sh` | La pile n'est reconstruite et relancée que si lint et test ont rendu 0. |
+
+**Piège mesuré : ne pas se fier au code de `docker compose up`.** Avec Compose
+5.5.0, `docker compose up --abort-on-container-failure lint test` rend **0**
+quand le lint échoue et que la chaîne est interrompue. Un script qui s'y fie,
+comme l'exemple fourni avec le sujet, déclarerait la chaîne réussie.
+`pipeline.sh` lit donc le code de sortie de chaque conteneur
+(`docker compose ps -a`), et considère une étape qui n'a pas tourné comme un
+échec.
+
+### Choix
+
+| Choix | Pourquoi |
+|---|---|
+| Lint et test plutôt que le scaling | Ils contrôlent le vrai code du projet et protègent le déploiement. Le scaling de l'exemple du cours demande Docker Swarm, qui ignore `build`, `depends_on` et `additional_contexts`, sur lesquels repose toute la pile. Il faut aussi monter le socket Docker dans un conteneur, ce qui revient à lui donner un accès root à l'hôte. Enfin, l'API applique ses migrations au démarrage : plusieurs répliques les lanceraient en même temps. |
+| Compose séparé (`docker-compose.ci.yml`) | Les conteneurs de CI s'exécutent une fois (`restart: "no"`), la pile tourne en continu. Les mélanger obligerait à exclure la CI de chaque `docker compose up`. |
+| Code monté en lecture seule, pas copié | La même image vérifie n'importe quelle version du code, et une étape de CI ne peut pas modifier ce qu'elle contrôle. |
+| Versions de ruff et pytest lues dans `api/requirements-dev.txt` | Mêmes versions que la CI GitHub et les postes de développement : un seul fichier fait foi. |
+| Base de test dédiée, en mémoire | Jamais la base de la pile (le nom doit finir par `_test`, les tests la vident) ; rien ne survit au passage. |
+| Mot de passe de `test-db` : toujours `secrets/db_password.dev` | Même si `DB_PASSWORD_FILE` désigne le secret d'un vrai déploiement, il ne finit jamais dans une base jetable. |
+
+La CI GitHub (`.github/workflows/ci.yml`) lance aussi cette chaîne à chaque PR
+(job « Chaîne de CI en conteneurs ») : les images de CI sont construites et
+éprouvées en continu, pas seulement sur un poste.
+
+## Banc de mesure : consommation CPU
+
+Demandé en cours : mesurer la consommation CPU due aux conteneurs.
+[`bench/bench.sh`](bench/bench.sh) lit le **temps CPU exact** de chaque
+conteneur (compteur `usage_usec` de son cgroup, avant et après chaque phase) et
+celui de la VM qui fait tourner Docker sur le Mac. La charge est envoyée par
+wrk depuis l'image maison [`luniqo/bench`](bench/README.md), sur le réseau de
+la pile. Méthode complète, image du générateur et limites de la mesure :
+[bench/README.md](bench/README.md).
+
+Résultats `[RÉEL]` du 2026-10-29, trois passages, Mac Apple M4 (10 cœurs),
+OrbStack. Pile actuelle (`f500052`) :
+
+| Phase | Pile (total) | Conteneur le plus sollicité | VM Docker | Coût de Docker (VM − conteneurs) | Débit |
+|---|---|---|---|---|---|
+| Repos, 30 s | 0,016 cœur | api 0,007 | 0,07 cœur | 0,05 cœur | |
+| Charge API (`/api/health`) | 0,55 cœur | **api 0,475, 95 % de sa limite de 0,5** | 0,72 | 0,15 | 466 à 486 req/s |
+| Charge front v2 (`/connexion`) | 0,25 cœur | **web 0,238, 95 % de sa limite de 0,25** | 0,77 | 0,36 | 14 300 à 14 700 req/s |
+| Chaîne de CI (lint + 543 tests, 58 à 60 s) | 0,01 cœur | test 0,79 en moyenne (45 à 47 s de CPU) | 0,99 | 0,09 | |
+
+Ce qu'on en retient :
+
+- **Au repos, les conteneurs ne coûtent presque rien** : 0,016 cœur pour toute
+  la pile, 0,07 pour la VM Docker entière. Une VM classique ferait tourner un
+  système complet par service.
+- **Les limites `cpus` jouent leur rôle** : sous charge, le conteneur sollicité
+  plafonne à 95 % de sa limite, à chaque passage, et les autres ne sont pas
+  touchés.
+- **Le coût de Docker suit le trafic réseau, pas le calcul** : environ 10 % en
+  plus du travail des conteneurs pour les tests, 27 % sous charge API, 87 % à
+  14 500 petites requêtes par seconde. C'est le réseau virtuel, compté hors des
+  conteneurs.
+- **Le front v2 coûte environ 340 fois moins de CPU par page** que l'ancien
+  front Next.js (17 µs contre 5,8 ms, mesuré sur la pile précédente : 163 à
+  183 pages/s pour un cœur entier).
+
+Mesures à refaire sur le VPS (Linux, sans VM) quand il existera.
+
 ## Docker face à la virtualisation classique
 
 Une machine virtuelle émule une machine complète, avec son propre noyau et son
@@ -367,7 +549,7 @@ que fera Luniqo sur son VPS.
 | Critère | Où le trouver |
 |---|---|
 | Mise en forme du rendu | Ce README, un README par image, commentaires dans chaque Dockerfile et dans le compose |
-| Explication des dépendances installées | « Dépendances installées » de [base](base/README.md), [db](db/README.md), [api](api/README.md), [web](web/README.md) (et [front](https://github.com/zharrow/Luniqo/blob/tp-docker-v1/docker/front/README.md) au tag du rendu) |
+| Explication des dépendances installées | « Dépendances installées » de [base](base/README.md), [db](db/README.md), [api](api/README.md), [web](web/README.md), [lint](lint/README.md), [test](test/README.md), [bench](bench/README.md) (et [front](https://github.com/zharrow/Luniqo/blob/tp-docker-v1/docker/front/README.md) au tag du rendu) |
 | Explication des manipulations sur l'OS | « Manipulations sur l'OS » de chaque README d'image |
 | Explication des arguments attendus | « Arguments attendus » de chaque README d'image |
 | Explications sur les entrypoints choisis | « Entrypoint » de chaque README d'image + [choix communs](#les-images) |
@@ -375,4 +557,7 @@ que fera Luniqo sur son VPS.
 | Limitations de ressources expliquées | [Les limitations de ressources, conteneur par conteneur](#les-limitations-de-ressources-conteneur-par-conteneur) |
 | SIGTERM gérés | [Gestion de SIGTERM](#gestion-de-sigterm) + « Gestion des signaux d'arrêt » de chaque image |
 | Dépendances entre conteneurs | [Dépendances entre conteneurs et ordre de démarrage](#dépendances-entre-conteneurs-et-ordre-de-démarrage) |
-| Schéma des communications | [Schéma des communications](#schéma-des-communications) |
+| Schéma des communications | [Schéma des communications](#schéma-des-communications) (pile) et [chaîne de CI](#intégration-continue-en-conteneurs) |
+| Consigne supp. : Docker pour le scaling ou la CI/CD (1) | Conteneur **lint** : [lint/README.md](lint/README.md), [Intégration continue en conteneurs](#intégration-continue-en-conteneurs) |
+| Consigne supp. : Docker pour le scaling ou la CI/CD (2) | Conteneur **test** (et sa base `test-db`) : [test/README.md](test/README.md), [`docker-compose.ci.yml`](docker-compose.ci.yml), [`pipeline.sh`](pipeline.sh) |
+| Benchmark CPU (demandé en cours) | [Banc de mesure : consommation CPU](#banc-de-mesure--consommation-cpu), [bench/README.md](bench/README.md), résultats bruts dans [bench/resultats/](bench/resultats/) |
