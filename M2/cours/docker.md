@@ -37,7 +37,7 @@ Exclusions : pas de migration des données de la v1, pas de bascule du front ver
 | Compose, `.env`, secret, réseaux `edge` / `backend` | `docker/` | Fait |
 | Documentation : README principal + un README par image, schémas Mermaid, correspondance avec le barème | `docker/` | Fait |
 | Squelette de l'API v2 : modèle, migration Alembic, données synthétiques, 7 tests unitaires | `api/` | Fait, tests au vert |
-| Image `front` : Next.js en serveur autonome ; `next.config.mjs` (`output: 'standalone'`), route `app/healthz/route.ts`, exclusion dans `proxy.ts` | `docker/front/`, racine | Fait, mesuré ; **retirée** par LUN-114 (front v2 servi par `web`), conservée au tag `tp-docker-v1` |
+| Image `front` : Next.js en serveur autonome ; `next.config.mjs` (`output: 'standalone'`), route `app/healthz/route.ts`, exclusion dans `proxy.ts` | `docker/front/`, racine | Fait, mesuré ; **retirée** par LUN-107 (front v2 servi par `web`), conservée au tag `tp-docker-v1` |
 | Image `lint` : ruff (binaire seul), ShellCheck, contrôle « zéro image Docker Hub » sur les `FROM`, sans réseau | `docker/lint/` | Fait, mesuré (2026-10-29) |
 | Image `test` : pytest, tests unitaires et d'intégration sur une base `test-db` jetable (image `luniqo/db`, données en tmpfs) | `docker/test/` | Fait, mesuré (2026-10-29) |
 | Chaîne lint → test → déploiement : `docker-compose.ci.yml`, `pipeline.sh`, job « Chaîne de CI en conteneurs » de la CI GitHub | `docker/`, `.github/workflows/ci.yml` | Fait, échecs provoqués vérifiés |
@@ -104,7 +104,7 @@ Matière directe pour la soutenance et pour le BC04 (anomalie → diagnostic →
 | ~~Préparer l'explication orale~~ | — | Sans objet : pas d'oral (Florent, 2026-10-27) |
 | ~~Arrêter l'ancienne pile `tp-docker`~~ | Constaté le 2026-10-08 | `docker compose ls` ne liste plus que `luniqo` |
 | ~~Ticket Jira de la consigne supplémentaire~~ | Fait le 2026-10-29 | LUN-115, créé via le serveur MCP d'Atlassian |
-| **Image front distincte ?** | À trancher par Florent avant le rendu | Depuis LUN-114, le front v2 est construit dans l'image `web` : la pile n'a plus d'image « front » à elle, alors que le sujet en demande une. Le rendu retenu (dernier commit avant la date butoir) doit contenir lint et test, donc postérieur à LUN-114 |
+| **Image front distincte ?** | À trancher par Florent avant le rendu | Depuis LUN-107, le front v2 est construit dans l'image `web` : la pile n'a plus d'image « front » à elle, alors que le sujet en demande une. Le rendu retenu (dernier commit avant la date butoir) doit contenir lint et test, donc postérieur à LUN-107 |
 | Tag de rendu | Après fusion | `tp-docker-v2` sur le commit rendu |
 
 ## Suivi

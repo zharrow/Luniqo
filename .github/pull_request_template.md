@@ -1,4 +1,4 @@
-<!-- Titre : Conventional Commit avec la clé Jira, par exemple « feat(api): pointage groupé (LUN-72) ». -->
+<!-- Titre : Conventional Commit avec la clé Jira, par exemple « feat(api): pointage groupé (LUN-65) ». -->
 
 ## Ticket
 

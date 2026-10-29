@@ -6,7 +6,7 @@
 | Date | 2026-10-10, décision le 2026-10-27 |
 | Décideur | Florent `[RÉEL]`. L'assistant a fait la recherche, la comparaison et la recommandation ; Florent lui a délégué le choix du routeur après recherche (2026-10-27) |
 | Équipe concernée | `[SIMULÉ]` Mateo Fernández (front / UX) réalisera les écrans, Kwame Asante (QA / DevOps) les tests de bout en bout et la CI. Aucun avis ne leur est attribué ici |
-| Ticket | LUN-113, sous-tâche de la story LUN-79 (Socle du front v2) |
+| Ticket | LUN-106, sous-tâche de la story LUN-72 (Socle du front v2) |
 | Prolonge | [ADR-001](ADR-001-reecriture-backend.md), qui gardait Next.js « pendant la transition » et renvoyait ce choix ici |
 | Compétences | C1.3.1 (veille, sources), C1.3.2 (choix d'architecture), C2.1.1 (environnements et outils), C2.2.3 (sécurité, accessibilité) |
 
@@ -14,7 +14,7 @@
 
 Faits relevés dans le dépôt le 2026-10-10 :
 
-- **Toute la logique est dans l'API v2** (FastAPI) : contrôle d'accès, règles métier, horodatage. Le front n'a plus qu'à afficher et à saisir. Tout le MVP de la story map est fait côté API (LUN-41 à LUN-49, LUN-55, LUN-76 à LUN-78) ; **aucun écran v2 n'existe**.
+- **Toute la logique est dans l'API v2** (FastAPI) : contrôle d'accès, règles métier, horodatage. Le front n'a plus qu'à afficher et à saisir. Tout le MVP de la story map est fait côté API (LUN-41 à LUN-49, LUN-55, LUN-69 à LUN-71) ; **aucun écran v2 n'existe**.
 - **L'authentification passe par un cookie de session `HttpOnly`** (`__Host-luniqo_session`), le front et l'API étant servis sur la même origine par la passerelle nginx (`/` → front, `/api/` → API). Le code du navigateur ne voit jamais de jeton. L'API refuse toute requête d'écriture dont l'en-tête `Origin` est absent ou étranger (ADR-003).
 - **Tout est derrière une connexion**, sauf quelques pages publiques (politique de confidentialité, accueil). Le référencement ne compte que pour elles.
 - **La v1 doit de toute façon être réécrite écran par écran** : 139 pages sur 141 sont des composants client branchés sur Supabase (CLAUDE.md). Ce qui se réutilise quel que soit le choix : composants shadcn/ui, Tailwind, palette « Douceur Professionnelle ».
@@ -47,7 +47,7 @@ Faits relevés dans le dépôt le 2026-10-10 :
 2. Une image et un conteneur de moins à exploiter, et plus de saturation du processeur au rendu.
 3. L'export statique de Next.js (B) garde la complexité de Next.js sans ses avantages, et bloque les routes à identifiant.
 
-Le coût est celui que React signale : assembler soi-même routeur, données et gestion des erreurs. La section suivante fixe ces choix une fois pour toutes, pour que le squelette (LUN-114) les porte dès le départ.
+Le coût est celui que React signale : assembler soi-même routeur, données et gestion des erreurs. La section suivante fixe ces choix une fois pour toutes, pour que le squelette (LUN-107) les porte dès le départ.
 
 ## Pratiques retenues pour le squelette
 
@@ -131,7 +131,7 @@ Choix délégué par Florent le 2026-10-27 : rechercher la meilleure option, pui
 ### 8. Tablette
 
 - **Grandes cibles tactiles** (au moins 44 px, au-delà du minimum de 24 px de WCAG 2.2) et parcours en un ou deux appuis.
-- **Pas d'écriture hors ligne** : un pointage ou une coche porte l'heure du serveur (LUN-48, LUN-77), une file d'attente hors ligne la fausserait. Le front affiche clairement la perte de réseau et bloque la saisie.
+- **Pas d'écriture hors ligne** : un pointage ou une coche porte l'heure du serveur (LUN-48, LUN-70), une file d'attente hors ligne la fausserait. Le front affiche clairement la perte de réseau et bloque la saisie.
 - **Application installable (PWA) reportée** : utile plus tard pour l'icône et le plein écran, sans objet pour le squelette. Le verrouillage de la tablette sur Luniqo relève du système (accès guidé, gestion des appareils) : **à vérifier** le moment venu.
 
 ### 9. Accessibilité
@@ -156,7 +156,7 @@ Les parcours tournent contre la vraie API plutôt que contre des simulations : c
 
 ### 12. Documentation des composants : Storybook
 
-Demandé par Florent le 2026-10-27, installé avec le squelette (LUN-114).
+Demandé par Florent le 2026-10-27, installé avec le squelette (LUN-107).
 
 - **Storybook 10** (10.6.5 au 2026-10-27) avec `@storybook/react-vite` : il reprend la configuration Vite du front. Une *story* par état utile d'un composant (chargement, vide, erreur, désactivé, grande cible tablette) : c'est la documentation vivante du design system « Douceur Professionnelle » et des composants partagés, consultable sans lancer l'API.
 - **Les stories servent aussi de tests** : `@storybook/addon-vitest` les exécute comme tests de composants dans Vitest en mode navigateur (§ 10), et `@storybook/addon-a11y` y ajoute un contrôle d'accessibilité (axe). Une story qui ne s'affiche plus fait échouer la CI.
@@ -182,7 +182,7 @@ Demandé par Florent le 2026-10-27, installé avec le squelette (LUN-114).
 
 ## Conséquences
 
-- LUN-114 : squelette `front/` avec les pratiques ci-dessus et Storybook, écran de connexion et second facteur comme premier écran, types générés vérifiés en CI, build copié dans l'image `web` (configuration nginx `try_files` vers `index.html`, en-têtes, CSP), premiers tests à chaque niveau, puis mesure de la taille et du temps de build.
+- LUN-107 : squelette `front/` avec les pratiques ci-dessus et Storybook, écran de connexion et second facteur comme premier écran, types générés vérifiés en CI, build copié dans l'image `web` (configuration nginx `try_files` vers `index.html`, en-têtes, CSP), premiers tests à chaque niveau, puis mesure de la taille et du temps de build.
 - Le registre des choix techniques passe la ligne « Front gardé en Next.js pendant la transition » au statut « remplacé ».
 - La CI gagne une tâche front : lint, typage, tests (stories comprises), build, contrôle des types générés.
 - La bascule de la v1 vers la v2 en production est un jalon du planning : v2 complète, VPS et environnement PROD prêts.

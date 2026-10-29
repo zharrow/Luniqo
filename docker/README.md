@@ -10,7 +10,7 @@ v2** (React + Vite), une **API** (FastAPI) et une **base de données**
 
 > **Rendu du TP** : le tag [`tp-docker-v1`](https://github.com/zharrow/Luniqo/tree/tp-docker-v1/docker)
 > (5 images, dont un front Next.js servi par son propre conteneur). Depuis
-> LUN-114 et [ADR-002](../M2/decisions/ADR-002-front-v2.md), le front v2 est une
+> LUN-107 et [ADR-002](../M2/decisions/ADR-002-front-v2.md), le front v2 est une
 > application monopage : ses fichiers sont construits dans l'image `web` et
 > servis par nginx. La pile compte donc 4 images. Ce README décrit la pile
 > actuelle ; les mesures de l'ancienne image `front` restent au tag.

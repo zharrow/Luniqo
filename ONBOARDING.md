@@ -122,7 +122,7 @@ Lire [CONTRIBUTING.md](CONTRIBUTING.md) en entier. L'essentiel :
 |---|---|
 | Ticket | Tout travail part d'un ticket `LUN-<n>` dans Jira |
 | Branche | `<préfixe>/LUN-<n>-description-courte`, depuis `develop` ; préfixes `feat/`, `fix/`, `docs/`, `infra/`, `chore/` |
-| Commit | [Conventional Commits](https://www.conventionalcommits.org/fr/v1.0.0/) en français, clé en fin de ligne : `feat(api): pointage groupé (LUN-72)` |
+| Commit | [Conventional Commits](https://www.conventionalcommits.org/fr/v1.0.0/) en français, clé en fin de ligne : `feat(api): pointage groupé (LUN-65)` |
 | PR | vers `develop`, titre au format d'un commit, [modèle](.github/pull_request_template.md) rempli, une PR par ticket |
 | Relecture | au moins une personne ; front par Pauline ou Thomas, back par Julien ou Thomas |
 | Fini | la [Definition of Done](CONTRIBUTING.md#5-definition-of-done) est cochée |
@@ -140,7 +140,7 @@ Trois règles ne se discutent pas ([CONTRIBUTING, §6](CONTRIBUTING.md#6-règles
 
 **Vérifier** : la CI refuse une branche mal nommée ou une PR sans clé
 ([pr-conventions.yml](.github/workflows/pr-conventions.yml)). Savoir dire quel
-nom aurait la branche du ticket LUN-72 « mode tablette » (`feat/LUN-72-mode-tablette`).
+nom aurait la branche du ticket LUN-65 « mode tablette » (`feat/LUN-65-mode-tablette`).
 
 ## 5. Premier ticket : de la branche à la PR fusionnée
 

@@ -4,10 +4,10 @@ API de la v2 de Luniqo, en FastAPI ([ADR-001](../M2/decisions/ADR-001-reecriture
 Elle remplace progressivement l'accès direct du navigateur à Supabase de la v1.
 
 État au 2026-10-10 : **parcours central complet côté API** (LUN-003 à LUN-011) ;
-fiche de ménage : pièces, catalogue des tâches et fréquences (LUN-76), coches depuis la tablette (LUN-77), historique et export (LUN-78). Comptes des employés par invitation et changement de mot de passe (LUN-55). Purge RGPD des sessions expirées, du journal au-delà de 6 mois et des invitations expirées (LUN-54, 2026-10-27).
+fiche de ménage : pièces, catalogue des tâches et fréquences (LUN-69), coches depuis la tablette (LUN-70), historique et export (LUN-71). Comptes des employés par invitation et changement de mot de passe (LUN-55). Purge RGPD des sessions expirées, du journal au-delà de 6 mois et des invitations expirées (LUN-54, 2026-10-27).
 Second facteur obligatoire pour la direction et l'éditeur
 ([ADR-004](../M2/decisions/ADR-004-double-authentification.md), LUN-006) : passkeys
-(Face ID, Touch ID, Windows Hello…, LUN-69, 2026-10-27), TOTP et codes de secours ; connexion
+(Face ID, Touch ID, Windows Hello…, LUN-62, 2026-10-27), TOTP et codes de secours ; connexion
 sans mot de passe par passkey. Pas encore de données réelles
 (LUN-019, LUN-021) : ne pas exposer en dehors d'un environnement de test.
 
