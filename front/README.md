@@ -12,7 +12,8 @@ codes de secours), espace connecté avec la liste des crèches (LUN-107) ;
 tablettes d'une crèche pour la direction : enrôlement de l'appareil, liste,
 révocation (LUN-87) ; mode tablette (`/tablette`, hors de l'espace connecté) :
 choix de l'employé et PIN sur un pavé à grands boutons (LUN-88), puis pointage
-des arrivées et départs des enfants (LUN-89). La v1 reste en
+des arrivées et départs des enfants (LUN-89) ; présences du jour d'une crèche pour
+la direction et les employés, relues toutes les 30 secondes (LUN-91). La v1 reste en
 production jusqu'à la bascule, prévue quand la v2 sera complète.
 
 ## Lancer
