@@ -14,7 +14,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Login
+         * Ouvre une session et pose le cookie de session
          * @description Ouvre une session et pose le cookie de session.
          *
          *     Si `mfa` vaut `required` ou `setup_required`, la session n'ouvre encore que
@@ -37,7 +37,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Logout
+         * Supprime la session en base et efface le cookie
          * @description Supprime la session en base et efface le cookie. Sans session, ne fait rien.
          */
         post: operations["logout_api_v2_auth_logout_post"];
@@ -55,7 +55,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Me
+         * Utilisateur de la session en cours, même en attente du second facteur
          * @description Utilisateur de la session en cours, même en attente du second facteur.
          */
         get: operations["me_api_v2_auth_me_get"];
@@ -75,7 +75,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get Status
+         * État du second facteur du compte et de la session
          * @description État du second facteur du compte et de la session.
          */
         get: operations["get_status_api_v2_auth_mfa_get"];
@@ -97,12 +97,12 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Start Totp
+         * Commence l'activation d'une application d'authentification (ou son remplacement)
          * @description Commence l'activation d'une application d'authentification (ou son remplacement).
          */
         post: operations["start_totp_api_v2_auth_mfa_totp_post"];
         /**
-         * Remove Totp
+         * Retire l'application d'authentification (comptes où le second facteur est facultatif)
          * @description Retire l'application d'authentification (comptes où le second facteur est facultatif).
          */
         delete: operations["remove_totp_api_v2_auth_mfa_totp_delete"];
@@ -121,7 +121,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Confirm Totp
+         * Active l'application d'authentification avec un premier code
          * @description Active l'application d'authentification avec un premier code. Ferme les autres sessions du compte.
          */
         post: operations["confirm_totp_api_v2_auth_mfa_totp_confirm_post"];
@@ -141,7 +141,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Verify
+         * Présente le second facteur (code TOTP ou code de secours)
          * @description Présente le second facteur (code TOTP ou code de secours) : la session devient complète.
          */
         post: operations["verify_api_v2_auth_mfa_verify_post"];
@@ -161,7 +161,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Regenerate Backup Codes
+         * Crée 10 nouveaux codes de secours
          * @description Crée 10 nouveaux codes de secours ; les anciens ne valent plus rien.
          */
         post: operations["regenerate_backup_codes_api_v2_auth_mfa_backup_codes_post"];
@@ -179,13 +179,13 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List Passkeys
+         * Passkeys du compte
          * @description Passkeys du compte.
          */
         get: operations["list_passkeys_api_v2_auth_passkeys_get"];
         put?: never;
         /**
-         * Register
+         * Enregistre la passkey créée par le navigateur
          * @description Enregistre la passkey créée par le navigateur. Ferme les autres sessions du compte.
          */
         post: operations["register_api_v2_auth_passkeys_post"];
@@ -205,7 +205,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Registration Options
+         * Options à passer à navigator.credentials.create() pour enregistrer une passkey
          * @description Options à passer à navigator.credentials.create() pour enregistrer une passkey.
          *
          *     Ouverte à une session qui doit encore enregistrer son premier facteur
@@ -229,14 +229,14 @@ export interface paths {
         put?: never;
         post?: never;
         /**
-         * Remove
+         * Retire une passkey
          * @description Retire une passkey. La direction et l'éditeur gardent toujours au moins un facteur.
          */
         delete: operations["remove_api_v2_auth_passkeys__passkey_id__delete"];
         options?: never;
         head?: never;
         /**
-         * Rename
+         * Renomme une passkey du compte
          * @description Renomme une passkey du compte.
          */
         patch: operations["rename_api_v2_auth_passkeys__passkey_id__patch"];
@@ -252,7 +252,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Verification Options
+         * Options à passer à navigator.credentials.get() pour présenter le second facteur avec une passkey
          * @description Options à passer à navigator.credentials.get() pour présenter le second facteur avec une passkey.
          */
         post: operations["verification_options_api_v2_auth_passkeys_verify_options_post"];
@@ -272,7 +272,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Verify
+         * Présente le second facteur avec une passkey du compte
          * @description Présente le second facteur avec une passkey du compte : la session devient complète.
          */
         post: operations["verify_api_v2_auth_passkeys_verify_post"];
@@ -292,7 +292,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Login Options
+         * Options à passer à navigator.credentials.get() pour se connecter sans mot de passe
          * @description Options à passer à navigator.credentials.get() pour se connecter sans mot de passe.
          *
          *     Aucun compte n'est désigné : le navigateur propose les passkeys Luniqo de l'appareil.
@@ -314,7 +314,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Login
+         * Se connecter avec une passkey, sans mot de passe
          * @description Se connecter avec une passkey, sans mot de passe : la session est complète d'emblée.
          *
          *     La passkey, vérifiée par la biométrie ou le code de l'appareil, vaut les
@@ -335,13 +335,13 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List Nurseries
+         * Crèches accessibles
          * @description Crèches accessibles : toutes celles de l'entreprise pour la direction, celles accordées pour un employé.
          */
         get: operations["list_nurseries_api_v2_nurseries_get"];
         put?: never;
         /**
-         * Create Nursery
+         * Crée une crèche dans l'entreprise de la direction connectée
          * @description Crée une crèche dans l'entreprise de la direction connectée.
          */
         post: operations["create_nursery_api_v2_nurseries_post"];
@@ -358,14 +358,20 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Nursery */
+        /**
+         * Une crèche
+         * @description Une crèche : celles de l'entreprise pour la direction, celles accordées pour un employé.
+         */
         get: operations["get_nursery_api_v2_nurseries__nursery_id__get"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        /** Update Nursery */
+        /**
+         * Modifie la crèche
+         * @description Modifie la crèche ; seuls les champs envoyés changent. `is_active: false` la ferme (tablettes comprises).
+         */
         patch: operations["update_nursery_api_v2_nurseries__nursery_id__patch"];
         trace?: never;
     };
@@ -377,7 +383,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List Nursery Staff
+         * Employés qui ont accès à cette crèche
          * @description Employés qui ont accès à cette crèche.
          */
         get: operations["list_nursery_staff_api_v2_nurseries__nursery_id__staff_get"];
@@ -398,13 +404,13 @@ export interface paths {
         };
         get?: never;
         /**
-         * Grant Access
+         * Donne à un employé de l'entreprise l'accès à cette crèche
          * @description Donne à un employé de l'entreprise l'accès à cette crèche. Sans effet s'il l'a déjà.
          */
         put: operations["grant_access_api_v2_nurseries__nursery_id__staff__user_id__put"];
         post?: never;
         /**
-         * Revoke Access
+         * Retire l'accès
          * @description Retire l'accès ; effet immédiat, l'accès étant vérifié à chaque requête. Sans effet s'il n'existait pas.
          */
         delete: operations["revoke_access_api_v2_nurseries__nursery_id__staff__user_id__delete"];
@@ -421,13 +427,13 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List Employees
+         * Employés de l'entreprise et crèches auxquelles chacun a accès
          * @description Employés de l'entreprise et crèches auxquelles chacun a accès.
          */
         get: operations["list_employees_api_v2_staff_get"];
         put?: never;
         /**
-         * Invite Employee
+         * Crée le compte d'un employé de l'entreprise, sans mot de passe, et son lien d'invitation (7 jours)
          * @description Crée le compte d'un employé de l'entreprise, sans mot de passe, et son lien d'invitation (7 jours).
          *
          *     L'accès aux crèches se donne ensuite, même avant l'acceptation : `PUT /nurseries/{id}/staff/{user_id}`.
@@ -446,11 +452,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Tablets */
+        /**
+         * Tablettes de la crèche, révoquées et expirées comprises
+         * @description Tablettes de la crèche, révoquées et expirées comprises.
+         */
         get: operations["list_tablets_api_v2_nurseries__nursery_id__tablets_get"];
         put?: never;
         /**
-         * Enroll Tablet
+         * Enrôle l'appareil qui envoie la requête comme tablette de cette crèche
          * @description Enrôle **l'appareil qui envoie la requête** comme tablette de cette crèche.
          *
          *     La direction se connecte sur la tablette elle-même, l'enrôle, puis se
@@ -474,7 +483,7 @@ export interface paths {
         put?: never;
         post?: never;
         /**
-         * Revoke Tablet
+         * Révoque la tablette (perte, vol, remplacement) et ferme ses sessions d'action
          * @description Révoque la tablette (perte, vol, remplacement) et ferme ses sessions d'action. Effet immédiat.
          */
         delete: operations["revoke_tablet_api_v2_nurseries__nursery_id__tablets__tablet_id__delete"];
@@ -492,7 +501,7 @@ export interface paths {
         };
         get?: never;
         /**
-         * Set My Pin
+         * L'employé choisit ou change son PIN de tablette, en confirmant son mot de passe
          * @description L'employé choisit ou change son PIN de tablette, en confirmant son mot de passe. Débloque le PIN.
          */
         put: operations["set_my_pin_api_v2_auth_me_pin_put"];
@@ -513,7 +522,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Unlock Pin
+         * La direction débloque le PIN d'un employé de son entreprise
          * @description La direction débloque le PIN d'un employé de son entreprise.
          */
         post: operations["unlock_pin_api_v2_staff__user_id__pin_unlock_post"];
@@ -531,7 +540,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Tablet Info
+         * Crèche de la tablette et employés qui peuvent s'y identifier (prénom et initiale)
          * @description Crèche de la tablette et employés qui peuvent s'y identifier (prénom et initiale).
          */
         get: operations["tablet_info_api_v2_tablet_get"];
@@ -551,18 +560,18 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Tablet Session
+         * Employé de la session d'action en cours
          * @description Employé de la session d'action en cours.
          */
         get: operations["tablet_session_api_v2_tablet_session_get"];
         put?: never;
         /**
-         * Open Tablet Session
+         * Ouvre une session d'action de 2 minutes par PIN, pour la crèche de la tablette
          * @description Ouvre une session d'action de 2 minutes par PIN, pour la crèche de la tablette.
          */
         post: operations["open_tablet_session_api_v2_tablet_session_post"];
         /**
-         * End Tablet Session
+         * Ferme la session d'action (l'employé a fini son geste)
          * @description Ferme la session d'action (l'employé a fini son geste).
          */
         delete: operations["end_tablet_session_api_v2_tablet_session_delete"];
@@ -578,10 +587,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Families */
+        /**
+         * Familles de la crèche, désactivées comprises, par ordre alphabétique
+         * @description Familles de la crèche, désactivées comprises, par ordre alphabétique.
+         */
         get: operations["list_families_api_v2_nurseries__nursery_id__families_get"];
         put?: never;
-        /** Create Family */
+        /**
+         * Crée une famille
+         * @description Crée une famille ; ses enfants et ses responsables s'ajoutent ensuite.
+         */
         post: operations["create_family_api_v2_nurseries__nursery_id__families_post"];
         delete?: never;
         options?: never;
@@ -596,14 +611,20 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Family */
+        /**
+         * La famille, ses enfants et ses responsables
+         * @description La famille, ses enfants et ses responsables.
+         */
         get: operations["get_family_api_v2_nurseries__nursery_id__families__family_id__get"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        /** Update Family */
+        /**
+         * Modifie la famille
+         * @description Modifie la famille ; seuls les champs envoyés changent.
+         */
         patch: operations["update_family_api_v2_nurseries__nursery_id__families__family_id__patch"];
         trace?: never;
     };
@@ -615,7 +636,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List Children
+         * Enfants de la crèche
          * @description Enfants de la crèche. Par défaut, tous sauf les enfants partis ; `?status=` pour filtrer.
          */
         get: operations["list_children_api_v2_nurseries__nursery_id__children_get"];
@@ -636,7 +657,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Create Child */
+        /**
+         * Inscrit un enfant dans la famille (statut `adaptation` par défaut)
+         * @description Inscrit un enfant dans la famille (statut `adaptation` par défaut).
+         */
         post: operations["create_child_api_v2_nurseries__nursery_id__families__family_id__children_post"];
         delete?: never;
         options?: never;
@@ -652,7 +676,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get Child
+         * Fiche de l'enfant et ses responsables, avec leurs autorisations
          * @description Fiche de l'enfant et ses responsables, avec leurs autorisations.
          */
         get: operations["get_child_api_v2_nurseries__nursery_id__children__child_id__get"];
@@ -661,7 +685,10 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Update Child */
+        /**
+         * Modifie l'enfant
+         * @description Modifie l'enfant. Le départ se déclare avec `status: departed` et `exit_date` ; un retour efface la sortie.
+         */
         patch: operations["update_child_api_v2_nurseries__nursery_id__children__child_id__patch"];
         trace?: never;
     };
@@ -674,7 +701,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Create Guardian */
+        /**
+         * Ajoute un responsable à la famille
+         * @description Ajoute un responsable à la famille. Le relier à chaque enfant : `PUT /children/{id}/guardians/{id}`.
+         */
         post: operations["create_guardian_api_v2_nurseries__nursery_id__families__family_id__guardians_post"];
         delete?: never;
         options?: never;
@@ -695,7 +725,10 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Update Guardian */
+        /**
+         * Modifie le responsable
+         * @description Modifie le responsable ; seuls les champs envoyés changent.
+         */
         patch: operations["update_guardian_api_v2_nurseries__nursery_id__guardians__guardian_id__patch"];
         trace?: never;
     };
@@ -708,12 +741,15 @@ export interface paths {
         };
         get?: never;
         /**
-         * Link Guardian
+         * Relie un responsable à un enfant de la même famille, ou met à jour ses autorisations
          * @description Relie un responsable à un enfant **de la même famille**, ou met à jour ses autorisations.
          */
         put: operations["link_guardian_api_v2_nurseries__nursery_id__children__child_id__guardians__guardian_id__put"];
         post?: never;
-        /** Unlink Guardian */
+        /**
+         * Retire le lien entre le responsable et l'enfant
+         * @description Retire le lien entre le responsable et l'enfant. Sans effet s'il n'existait pas.
+         */
         delete: operations["unlink_guardian_api_v2_nurseries__nursery_id__children__child_id__guardians__guardian_id__delete"];
         options?: never;
         head?: never;
@@ -728,7 +764,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Tablet Children
+         * Enfants attendus aujourd'hui dans la crèche de la tablette, avec leur état de présence
          * @description Enfants attendus aujourd'hui dans la crèche de la tablette, avec leur état de présence.
          */
         get: operations["tablet_children_api_v2_tablet_children_get"];
@@ -750,7 +786,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Tablet Arrival
+         * Pointe l'arrivée, à l'heure du serveur (pas d'heure saisie sur la tablette)
          * @description Pointe l'arrivée, à l'heure du serveur (pas d'heure saisie sur la tablette).
          */
         post: operations["tablet_arrival_api_v2_tablet_children__child_id__arrival_post"];
@@ -770,7 +806,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Tablet Departure
+         * Pointe le départ avec la personne venue chercher l'enfant, qui doit être autorisée pour lui
          * @description Pointe le départ avec la personne venue chercher l'enfant, qui doit être autorisée pour lui.
          */
         post: operations["tablet_departure_api_v2_tablet_children__child_id__departure_post"];
@@ -788,7 +824,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Day Attendance
+         * Présences d'un jour (aujourd'hui, heure de Paris, par défaut)
          * @description Présences d'un jour (aujourd'hui, heure de Paris, par défaut).
          */
         get: operations["day_attendance_api_v2_nurseries__nursery_id__attendance_get"];
@@ -808,7 +844,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Present Children
+         * Enfants présents en ce moment (arrivée pointée, départ non pointé)
          * @description Enfants présents en ce moment (arrivée pointée, départ non pointé).
          */
         get: operations["present_children_api_v2_nurseries__nursery_id__attendance_present_get"];
@@ -830,7 +866,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Invite Guardian
+         * Crée un lien d'invitation (7 jours, usage unique)
          * @description Crée un lien d'invitation (7 jours, usage unique) ; annule les invitations précédentes de ce responsable.
          */
         post: operations["invite_guardian_api_v2_nurseries__nursery_id__guardians__guardian_id__invitation_post"];
@@ -850,7 +886,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Lookup Invitation
+         * Ce que le parent voit en ouvrant son lien
          * @description Ce que le parent voit en ouvrant son lien : prénom, crèche, adresse du futur compte.
          */
         post: operations["lookup_invitation_api_v2_invitations_lookup_post"];
@@ -870,7 +906,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Accept Invitation
+         * Crée le compte famille (mot de passe choisi) ou relie un compte famille existant (son mot de passe)
          * @description Crée le compte famille (mot de passe choisi) ou relie un compte famille existant (son mot de passe).
          */
         post: operations["accept_invitation_api_v2_invitations_accept_post"];
@@ -888,7 +924,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * My Children
+         * Enfants dont je suis responsable avec autorité parentale, et leur présence du jour
          * @description Enfants dont je suis responsable avec autorité parentale, et leur présence du jour.
          */
         get: operations["my_children_api_v2_family_children_get"];
@@ -908,7 +944,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * My Child
+         * Fiche de mon enfant
          * @description Fiche de mon enfant : responsables (sans coordonnées) et présences des `days` derniers jours.
          */
         get: operations["my_child_api_v2_family_children__child_id__get"];
@@ -928,12 +964,15 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List Tasks
+         * Catalogue des tâches de ménage de l'entreprise, commun à toutes ses crèches
          * @description Catalogue des tâches de ménage de l'entreprise, commun à toutes ses crèches.
          */
         get: operations["list_tasks_api_v2_cleaning_tasks_get"];
         put?: never;
-        /** Create Task */
+        /**
+         * Ajoute une tâche au catalogue
+         * @description Ajoute une tâche au catalogue ; elle se prévoit ensuite pièce par pièce, crèche par crèche.
+         */
         post: operations["create_task_api_v2_cleaning_tasks_post"];
         delete?: never;
         options?: never;
@@ -955,7 +994,7 @@ export interface paths {
         options?: never;
         head?: never;
         /**
-         * Update Task
+         * Renommer, préciser la consigne, désactiver
          * @description Renommer, préciser la consigne, désactiver : la tâche disparaît alors des fiches de toutes les crèches.
          */
         patch: operations["update_task_api_v2_cleaning_tasks__task_id__patch"];
@@ -968,10 +1007,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Rooms */
+        /**
+         * Pièces de la crèche dans l'ordre de la fiche
+         * @description Pièces de la crèche dans l'ordre de la fiche ; `include_inactive` ajoute les pièces désactivées.
+         */
         get: operations["list_rooms_api_v2_nurseries__nursery_id__rooms_get"];
         put?: never;
-        /** Create Room */
+        /**
+         * Ajoute une pièce à la crèche
+         * @description Ajoute une pièce à la crèche ; ses tâches se prévoient ensuite avec `PUT …/rooms/{id}/tasks/{id}`.
+         */
         post: operations["create_room_api_v2_nurseries__nursery_id__rooms_post"];
         delete?: never;
         options?: never;
@@ -987,7 +1032,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get Room
+         * La pièce et toutes ses tâches, désactivées comprises, dans l'ordre de la fiche
          * @description La pièce et toutes ses tâches, désactivées comprises, dans l'ordre de la fiche.
          */
         get: operations["get_room_api_v2_nurseries__nursery_id__rooms__room_id__get"];
@@ -996,7 +1041,10 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Update Room */
+        /**
+         * Renommer, réordonner ou désactiver la pièce
+         * @description Renommer, réordonner ou désactiver la pièce : désactivée, elle disparaît de la fiche du jour.
+         */
         patch: operations["update_room_api_v2_nurseries__nursery_id__rooms__room_id__patch"];
         trace?: never;
     };
@@ -1009,7 +1057,7 @@ export interface paths {
         };
         get?: never;
         /**
-         * Set Room Task
+         * Prévoit une tâche du catalogue dans la pièce, ou remplace sa fréquence
          * @description Prévoit une tâche du catalogue dans la pièce, ou remplace sa fréquence. `is_active: false` la retire.
          */
         put: operations["set_room_task_api_v2_nurseries__nursery_id__rooms__room_id__tasks__task_id__put"];
@@ -1028,7 +1076,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Day Plan
+         * Tâches prévues un jour donné (aujourd'hui, heure de Paris, par défaut), pièce par pièce
          * @description Tâches prévues un jour donné (aujourd'hui, heure de Paris, par défaut), pièce par pièce.
          */
         get: operations["day_plan_api_v2_nurseries__nursery_id__cleaning_plan_get"];
@@ -1048,7 +1096,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Cleaning History
+         * Tâches cochées sur une période (366 jours au plus), annulées comprises, dans l'ordre chronologique
          * @description Tâches cochées sur une période (366 jours au plus), annulées comprises, dans l'ordre chronologique.
          *
          *     Les noms sont ceux du jour de la coche. Ce qui était prévu et n'a pas été
@@ -1071,7 +1119,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Cleaning History Csv
+         * Mêmes lignes que l'historique, à ouvrir dans un tableur ou à imprimer pour un contrôle
          * @description Mêmes lignes que l'historique, à ouvrir dans un tableur ou à imprimer pour un contrôle.
          *
          *     Séparateur « ; » et BOM UTF-8 : un tableur réglé en français l'ouvre avec ses accents. Heures en heure de Paris.
@@ -1093,7 +1141,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Tablet Sheet
+         * Fiche du jour de la crèche de la tablette
          * @description Fiche du jour de la crèche de la tablette : tâches prévues, pièce par pièce, et celles déjà cochées.
          */
         get: operations["tablet_sheet_api_v2_tablet_cleaning_get"];
@@ -1115,12 +1163,12 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Tablet Check
+         * Coche une tâche prévue aujourd'hui
          * @description Coche une tâche prévue aujourd'hui. Heure et auteur fixés par le serveur, pas saisis sur la tablette.
          */
         post: operations["tablet_check_api_v2_tablet_cleaning__room_task_id__check_post"];
         /**
-         * Tablet Uncheck
+         * Décoche une tâche cochée par erreur aujourd'hui
          * @description Décoche une tâche cochée par erreur aujourd'hui. La coche reste dans l'historique, marquée annulée.
          */
         delete: operations["tablet_uncheck_api_v2_tablet_cleaning__room_task_id__check_delete"];
@@ -1139,7 +1187,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Reinvite Employee
+         * Nouveau lien pour un employé qui n'a pas encore choisi son mot de passe
          * @description Nouveau lien pour un employé qui n'a pas encore choisi son mot de passe ; le précédent est annulé.
          */
         post: operations["reinvite_employee_api_v2_staff__user_id__invitation_post"];
@@ -1163,7 +1211,7 @@ export interface paths {
         options?: never;
         head?: never;
         /**
-         * Update Employee
+         * Corriger le nom, ou désactiver le compte (départ)
          * @description Corriger le nom, ou désactiver le compte (départ) : ses sessions web et de tablette tombent aussitôt.
          */
         patch: operations["update_employee_api_v2_staff__user_id__patch"];
@@ -1179,7 +1227,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Lookup Invitation
+         * Ce que l'employé voit en ouvrant son lien
          * @description Ce que l'employé voit en ouvrant son lien : prénom, entreprise, adresse de connexion.
          */
         post: operations["lookup_invitation_api_v2_staff_invitations_lookup_post"];
@@ -1199,7 +1247,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Accept Invitation
+         * L'employé choisit son mot de passe (politique de LUN-41)
          * @description L'employé choisit son mot de passe (politique de LUN-41) ; il se connecte ensuite normalement.
          */
         post: operations["accept_invitation_api_v2_staff_invitations_accept_post"];
@@ -1218,7 +1266,7 @@ export interface paths {
         };
         get?: never;
         /**
-         * Change Password
+         * Change son mot de passe (l'actuel est exigé)
          * @description Change son mot de passe (l'actuel est exigé) ; les autres sessions du compte, tablette comprise, sont fermées.
          */
         put: operations["change_password_api_v2_auth_me_password_put"];
@@ -1237,7 +1285,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Health
+         * État de l'API et de sa connexion à la base
          * @description État de l'API et de sa connexion à la base. Utilisé par le healthcheck Docker.
          */
         get: operations["health_api_health_get"];
@@ -1253,21 +1301,40 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        /** AcceptIn */
-        AcceptIn: {
-            /** Token */
-            token: string;
-            /** Password */
-            password: string;
-        };
-        /** ArrivalIn */
+        /**
+         * ArrivalIn
+         * @example {}
+         */
         ArrivalIn: {
-            /** Dropped Off By */
+            /**
+             * Dropped Off By
+             * @description Responsable qui dépose l'enfant, s'il est enregistré (facultatif)
+             */
             dropped_off_by?: string | null;
         };
-        /** AssertionIn */
+        /**
+         * AssertionIn
+         * @example {
+         *       "credential": {
+         *         "authenticatorAttachment": "platform",
+         *         "clientExtensionResults": {},
+         *         "id": "q2v8Xk1yS3eWb0dT",
+         *         "rawId": "q2v8Xk1yS3eWb0dT",
+         *         "response": {
+         *           "authenticatorData": "SZYN5YgOjGh0NBcP",
+         *           "clientDataJSON": "eyJ0eXBlIjoid2ViYXV0aG4uZ2V0In0",
+         *           "signature": "MEUCIQDx2y4",
+         *           "userHandle": "c2FyYWgtZGVtbw"
+         *         },
+         *         "type": "public-key"
+         *       }
+         *     }
+         */
         AssertionIn: {
-            /** Credential */
+            /**
+             * Credential
+             * @description Réponse du navigateur, sérialisée par `PublicKeyCredential.toJSON()` après navigator.credentials.get()
+             */
             credential: {
                 [key: string]: unknown;
             };
@@ -1289,6 +1356,7 @@ export interface components {
             /**
              * Day
              * Format: date
+             * @description Jour de la présence, à Paris
              */
             day: string;
             /**
@@ -1296,20 +1364,38 @@ export interface components {
              * Format: date-time
              */
             arrived_at: string;
-            /** Arrival By */
+            /**
+             * Arrival By
+             * @description Employé qui a pointé l'arrivée (prénom et initiale)
+             */
             arrival_by: string | null;
-            /** Dropped Off By */
+            /**
+             * Dropped Off By
+             * @description Responsable qui a amené l'enfant, s'il a été indiqué
+             */
             dropped_off_by: string | null;
-            /** Departed At */
+            /**
+             * Departed At
+             * @description Null tant que l'enfant est présent
+             */
             departed_at: string | null;
-            /** Departure By */
+            /**
+             * Departure By
+             * @description Employé qui a pointé le départ
+             */
             departure_by: string | null;
-            /** Picked Up By */
+            /**
+             * Picked Up By
+             * @description Responsable venu chercher l'enfant
+             */
             picked_up_by: string | null;
         };
         /** BackupCodesOut */
         BackupCodesOut: {
-            /** Backup Codes */
+            /**
+             * Backup Codes
+             * @description 10 codes à usage unique, montrés une seule fois
+             */
             backup_codes: string[];
         };
         /** CheckOut */
@@ -1372,12 +1458,23 @@ export interface components {
             done_at: string;
             /** Done By */
             done_by: string;
-            /** Cancelled At */
+            /**
+             * Cancelled At
+             * @description Coche annulée (décochée le jour même)
+             */
             cancelled_at: string | null;
             /** Cancelled By */
             cancelled_by: string | null;
         };
-        /** ChildCreate */
+        /**
+         * ChildCreate
+         * @example {
+         *       "birth_date": "2025-03-14",
+         *       "enrollment_date": "2026-09-01",
+         *       "first_name": "Léa",
+         *       "last_name": "Martin"
+         *     }
+         */
         ChildCreate: {
             /** First Name */
             first_name: string;
@@ -1391,9 +1488,13 @@ export interface components {
             /**
              * Enrollment Date
              * Format: date
+             * @description Premier jour d'accueil ; pas avant la naissance
              */
             enrollment_date: string;
-            /** @default adaptation */
+            /**
+             * @description adaptation, active ou suspended ; departed se déclare ensuite
+             * @default adaptation
+             */
             status: components["schemas"]["ChildStatus"];
         };
         /** ChildDetail */
@@ -1428,7 +1529,10 @@ export interface components {
              * Format: date
              */
             enrollment_date: string;
-            /** Exit Date */
+            /**
+             * Exit Date
+             * @description Dernier jour d'accueil, pour un enfant parti
+             */
             exit_date: string | null;
             /** Guardians */
             guardians: components["schemas"]["ChildGuardianOut"][];
@@ -1476,7 +1580,10 @@ export interface components {
              * Format: date
              */
             enrollment_date: string;
-            /** Exit Date */
+            /**
+             * Exit Date
+             * @description Dernier jour d'accueil, pour un enfant parti
+             */
             exit_date: string | null;
         };
         /**
@@ -1487,6 +1594,13 @@ export interface components {
         /**
          * ChildUpdate
          * @description Champs absents : inchangés. Passer au statut « departed » exige `exit_date`.
+         * @example {
+         *       "status": "active"
+         *     }
+         * @example {
+         *       "exit_date": "2027-07-30",
+         *       "status": "departed"
+         *     }
          */
         ChildUpdate: {
             /** First Name */
@@ -1501,9 +1615,17 @@ export interface components {
             /** Exit Date */
             exit_date?: string | null;
         };
-        /** CodeIn */
+        /**
+         * CodeIn
+         * @example {
+         *       "code": "123456"
+         *     }
+         */
         CodeIn: {
-            /** Code */
+            /**
+             * Code
+             * @description Code TOTP (6 chiffres) ou code de secours (XXXX-XXXX-XXXX) ; espaces et tirets tolérés
+             */
             code: string;
         };
         /** DayPlan */
@@ -1516,15 +1638,28 @@ export interface components {
             /** Rooms */
             rooms: components["schemas"]["PlannedRoom"][];
         };
-        /** DepartureIn */
+        /**
+         * DepartureIn
+         * @example {
+         *       "picked_up_by": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+         *     }
+         */
         DepartureIn: {
             /**
              * Picked Up By
              * Format: uuid
+             * @description Responsable de l'enfant, autorisé à venir le chercher
              */
             picked_up_by: string;
         };
-        /** EmployeeCreate */
+        /**
+         * EmployeeCreate
+         * @example {
+         *       "email": "camille.martin@example.com",
+         *       "first_name": "Camille",
+         *       "last_name": "Martin"
+         *     }
+         */
         EmployeeCreate: {
             /** Email */
             email: string;
@@ -1546,16 +1681,31 @@ export interface components {
             first_name: string;
             /** Last Name */
             last_name: string;
-            /** Is Active */
+            /**
+             * Is Active
+             * @description Faux : salarié parti, il ne peut plus se connecter
+             */
             is_active: boolean;
-            /** Has Password */
+            /**
+             * Has Password
+             * @description Faux tant que l'employé invité n'a pas choisi son mot de passe
+             */
             has_password: boolean;
-            /** Nursery Ids */
+            /**
+             * Nursery Ids
+             * @description Crèches auxquelles l'employé a accès
+             */
             nursery_ids: string[];
         };
         /**
          * EmployeeUpdate
          * @description Champs absents : inchangés. `is_active: false` = départ du salarié, sessions fermées sur-le-champ.
+         * @example {
+         *       "last_name": "Martin-Durand"
+         *     }
+         * @example {
+         *       "is_active": false
+         *     }
          */
         EmployeeUpdate: {
             /** First Name */
@@ -1564,6 +1714,18 @@ export interface components {
             last_name?: string | null;
             /** Is Active */
             is_active?: boolean | null;
+        };
+        /**
+         * Error
+         * @description Corps de toute erreur levée par l'API (hors validation, voir 422).
+         */
+        Error: {
+            /**
+             * Detail
+             * @description Message en français, affichable tel quel
+             * @example Crèche introuvable
+             */
+            detail: string;
         };
         /** FamilyChild */
         FamilyChild: {
@@ -1581,6 +1743,7 @@ export interface components {
             status: components["schemas"]["ChildStatus"];
             /**
              * Today
+             * @description Présence du jour, à Paris
              * @enum {string}
              */
             today: "absent" | "present" | "left";
@@ -1605,6 +1768,7 @@ export interface components {
             status: components["schemas"]["ChildStatus"];
             /**
              * Today
+             * @description Présence du jour, à Paris
              * @enum {string}
              */
             today: "absent" | "present" | "left";
@@ -1619,7 +1783,10 @@ export interface components {
             birth_date: string;
             /** Contacts */
             contacts: components["schemas"]["FamilyContact"][];
-            /** Presences */
+            /**
+             * Presences
+             * @description Présences des `days` derniers jours, les plus récentes d'abord
+             */
             presences: components["schemas"]["PresenceOut"][];
         };
         /**
@@ -1635,9 +1802,20 @@ export interface components {
             /** Is Authorized Pickup */
             is_authorized_pickup: boolean;
         };
-        /** FamilyCreate */
+        /**
+         * FamilyCreate
+         * @example {
+         *       "address": "1 rue de l'Exemple",
+         *       "city": "Toulouse",
+         *       "label": "Famille Martin",
+         *       "postal_code": "31000"
+         *     }
+         */
         FamilyCreate: {
-            /** Label */
+            /**
+             * Label
+             * @description Nom affiché de la famille
+             */
             label: string;
             /** Address */
             address?: string | null;
@@ -1696,7 +1874,13 @@ export interface components {
             /** Is Active */
             is_active: boolean;
         };
-        /** FamilyUpdate */
+        /**
+         * FamilyUpdate
+         * @description Champs absents : inchangés. Une famille se désactive, elle ne se supprime pas.
+         * @example {
+         *       "city": "Escalquens"
+         *     }
+         */
         FamilyUpdate: {
             /** Label */
             label?: string | null;
@@ -1714,7 +1898,15 @@ export interface components {
          * @enum {string}
          */
         Frequency: "daily" | "weekly" | "monthly";
-        /** GuardianCreate */
+        /**
+         * GuardianCreate
+         * @example {
+         *       "email": "camille.martin@example.com",
+         *       "first_name": "Camille",
+         *       "last_name": "Martin",
+         *       "phone": "0600000000"
+         *     }
+         */
         GuardianCreate: {
             /** First Name */
             first_name: string;
@@ -1745,12 +1937,20 @@ export interface components {
             email: string | null;
             /** Phone */
             phone: string | null;
-            /** Has Account */
+            /**
+             * Has Account
+             * @description Le responsable a un compte famille (invitation acceptée)
+             */
             has_account: boolean;
             /** Is Active */
             is_active: boolean;
         };
-        /** GuardianUpdate */
+        /**
+         * GuardianUpdate
+         * @example {
+         *       "phone": "0611111111"
+         *     }
+         */
         GuardianUpdate: {
             /** First Name */
             first_name?: string | null;
@@ -1791,7 +1991,10 @@ export interface components {
             nursery_name: string;
             /** Email */
             email: string;
-            /** Account Exists */
+            /**
+             * Account Exists
+             * @description Un compte famille existe déjà avec cette adresse : son mot de passe sera demandé au lieu d'en choisir un
+             */
             account_exists: boolean;
         };
         /**
@@ -1799,26 +2002,44 @@ export interface components {
          * @description Le jeton n'est montré qu'une fois. Tant qu'il n'y a pas d'envoi d'e-mails, la direction le transmet.
          */
         InvitationOut: {
-            /** Token */
+            /**
+             * Token
+             * @description Jeton du lien d'invitation, à usage unique
+             */
             token: string;
-            /** Email */
+            /**
+             * Email
+             * @description Adresse du futur compte famille
+             */
             email: string;
             /**
              * Expires At
              * Format: date-time
+             * @description 7 jours après la création
              */
             expires_at: string;
         };
-        /** LinkIn */
+        /**
+         * LinkIn
+         * @description Lien complet (PUT) : les autorisations absentes valent faux.
+         * @example {
+         *       "has_parental_authority": true,
+         *       "is_authorized_pickup": true,
+         *       "is_emergency_contact": true,
+         *       "relationship": "parent"
+         *     }
+         */
         LinkIn: {
             relationship: components["schemas"]["Relationship"];
             /**
              * Has Parental Authority
+             * @description Ouvre la consultation de l'enfant dans l'espace famille
              * @default false
              */
             has_parental_authority: boolean;
             /**
              * Is Authorized Pickup
+             * @description Peut venir chercher l'enfant : sans elle, le départ est refusé
              * @default false
              */
             is_authorized_pickup: boolean;
@@ -1828,7 +2049,13 @@ export interface components {
              */
             is_emergency_contact: boolean;
         };
-        /** LoginIn */
+        /**
+         * LoginIn
+         * @example {
+         *       "email": "direction@example.com",
+         *       "password": "mot de passe de démonstration"
+         *     }
+         */
         LoginIn: {
             /** Email */
             email: string;
@@ -1843,14 +2070,33 @@ export interface components {
         MfaState: "not_required" | "setup_required" | "required" | "verified";
         /** MfaStatusOut */
         MfaStatusOut: {
+            /** @description État du second facteur pour la session en cours */
             state: components["schemas"]["MfaState"];
+            /** @description Application d'authentification active ; null s'il n'y en a pas */
             totp: components["schemas"]["TotpOut"] | null;
-            /** Totp Setup Pending */
+            /**
+             * Totp Setup Pending
+             * @description Une activation est commencée et attend son premier code
+             */
             totp_setup_pending: boolean;
-            /** Backup Codes Remaining */
+            /**
+             * Backup Codes Remaining
+             * @description Codes de secours encore utilisables
+             */
             backup_codes_remaining: number;
         };
-        /** NurseryCreate */
+        /**
+         * NurseryCreate
+         * @example {
+         *       "address": "1 rue de l'Exemple",
+         *       "capacity": 12,
+         *       "city": "Toulouse",
+         *       "email": "contact@example.com",
+         *       "name": "Les Petits Pas",
+         *       "phone": "0500000000",
+         *       "postal_code": "31000"
+         *     }
+         */
         NurseryCreate: {
             /** Name */
             name: string;
@@ -1891,14 +2137,26 @@ export interface components {
             phone: string | null;
             /** Email */
             email: string | null;
-            /** Capacity */
+            /**
+             * Capacity
+             * @description Nombre d'enfants accueillis simultanément au plus
+             */
             capacity: number;
-            /** Is Active */
+            /**
+             * Is Active
+             * @description Faux : crèche fermée, ses tablettes ne fonctionnent plus
+             */
             is_active: boolean;
         };
         /**
          * NurseryUpdate
          * @description Champs absents : inchangés. Une crèche se désactive, elle ne se supprime pas.
+         * @example {
+         *       "capacity": 10
+         *     }
+         * @example {
+         *       "is_active": false
+         *     }
          */
         NurseryUpdate: {
             /** Name */
@@ -1918,12 +2176,14 @@ export interface components {
             /** Is Active */
             is_active?: boolean | null;
         };
-        /** PasskeyNameIn */
+        /**
+         * PasskeyNameIn
+         * @example {
+         *       "name": "iPhone de Camille"
+         *     }
+         */
         PasskeyNameIn: {
-            /**
-             * Name
-             * @example iPhone de Camille
-             */
+            /** Name */
             name: string;
         };
         /** PasskeyOut */
@@ -1933,19 +2193,34 @@ export interface components {
              * Format: uuid
              */
             id: string;
-            /** Name */
+            /**
+             * Name
+             * @description Nom choisi à l'enregistrement, pour la reconnaître dans la liste
+             */
             name: string;
-            /** Backed Up */
+            /**
+             * Backed Up
+             * @description Passkey sauvegardée ou synchronisée (trousseau iCloud, Google…)
+             */
             backed_up: boolean;
             /**
              * Created At
              * Format: date-time
              */
             created_at: string;
-            /** Last Used At */
+            /**
+             * Last Used At
+             * @description Dernière utilisation ; null si jamais utilisée
+             */
             last_used_at: string | null;
         };
-        /** PasswordChangeIn */
+        /**
+         * PasswordChangeIn
+         * @example {
+         *       "current_password": "ancien mot de passe",
+         *       "new_password": "nouveau mot de passe, 15 caractères au moins"
+         *     }
+         */
         PasswordChangeIn: {
             /** Current Password */
             current_password: string;
@@ -1954,12 +2229,24 @@ export interface components {
         };
         /** PasswordChangedOut */
         PasswordChangedOut: {
-            /** Other Sessions Closed */
+            /**
+             * Other Sessions Closed
+             * @description Sessions fermées sur les autres appareils, tablette comprise
+             */
             other_sessions_closed: number;
         };
-        /** PinIn */
+        /**
+         * PinIn
+         * @example {
+         *       "password": "mot de passe de démonstration",
+         *       "pin": "4826"
+         *     }
+         */
         PinIn: {
-            /** Pin */
+            /**
+             * Pin
+             * @description 4 chiffres, ni identiques ni en suite
+             */
             pin: string;
             /**
              * Password
@@ -2013,14 +2300,34 @@ export interface components {
             /** Picked Up By */
             picked_up_by: string | null;
         };
-        /** RegistrationIn */
+        /**
+         * RegistrationIn
+         * @example {
+         *       "credential": {
+         *         "authenticatorAttachment": "platform",
+         *         "clientExtensionResults": {},
+         *         "id": "q2v8Xk1yS3eWb0dT",
+         *         "rawId": "q2v8Xk1yS3eWb0dT",
+         *         "response": {
+         *           "attestationObject": "o2NmbXRkbm9uZQ",
+         *           "clientDataJSON": "eyJ0eXBlIjoid2ViYXV0aG4uY3JlYXRlIn0",
+         *           "transports": [
+         *             "internal",
+         *             "hybrid"
+         *           ]
+         *         },
+         *         "type": "public-key"
+         *       },
+         *       "name": "iPhone de Camille"
+         *     }
+         */
         RegistrationIn: {
-            /**
-             * Name
-             * @example iPhone de Camille
-             */
+            /** Name */
             name: string;
-            /** Credential */
+            /**
+             * Credential
+             * @description Réponse du navigateur, sérialisée par `PublicKeyCredential.toJSON()` après navigator.credentials.create()
+             */
             credential: {
                 [key: string]: unknown;
             };
@@ -2028,7 +2335,10 @@ export interface components {
         /** RegistrationOut */
         RegistrationOut: {
             passkey: components["schemas"]["PasskeyOut"];
-            /** Backup Codes */
+            /**
+             * Backup Codes
+             * @description Codes de secours créés avec le premier facteur du compte, montrés une seule fois ; null s'il en avait déjà
+             */
             backup_codes: string[] | null;
         };
         /**
@@ -2036,14 +2346,25 @@ export interface components {
          * @enum {string}
          */
         Relationship: "parent" | "legal_guardian" | "other";
-        /** RoomCreate */
+        /**
+         * RoomCreate
+         * @example {
+         *       "description": "Grande salle, tapis et jeux",
+         *       "display_order": 1,
+         *       "name": "Salle d'activité"
+         *     }
+         */
         RoomCreate: {
-            /** Name */
+            /**
+             * Name
+             * @description Unique dans la crèche
+             */
             name: string;
             /** Description */
             description?: string | null;
             /**
              * Display Order
+             * @description Rang de la pièce sur la fiche (croissant)
              * @default 0
              */
             display_order: number;
@@ -2095,21 +2416,41 @@ export interface components {
         /**
          * RoomTaskIn
          * @description Affectation complète (PUT) : fréquence, jours, ordre dans la pièce, active ou non.
+         * @example {
+         *       "frequency": "daily"
+         *     }
+         * @example {
+         *       "frequency": "weekly",
+         *       "weekdays": [
+         *         1,
+         *         4
+         *       ]
+         *     }
+         * @example {
+         *       "display_order": 3,
+         *       "frequency": "monthly",
+         *       "weekdays": [
+         *         1
+         *       ]
+         *     }
          */
         RoomTaskIn: {
+            /** @description daily : chaque jour ; weekly : les jours de `weekdays` ; monthly : le premier jour `weekdays` du mois */
             frequency: components["schemas"]["Frequency"];
             /**
              * Weekdays
-             * @description ISO : 1 = lundi … 7 = dimanche
+             * @description ISO : 1 = lundi … 7 = dimanche. Absent pour daily, un seul jour pour monthly
              */
             weekdays?: number[] | null;
             /**
              * Display Order
+             * @description Rang de la tâche dans la pièce
              * @default 0
              */
             display_order: number;
             /**
              * Is Active
+             * @description Faux : la tâche n'est plus prévue dans cette pièce
              * @default true
              */
             is_active: boolean;
@@ -2130,7 +2471,16 @@ export interface components {
             /** Is Active */
             is_active: boolean;
         };
-        /** RoomUpdate */
+        /**
+         * RoomUpdate
+         * @description Champs absents : inchangés. Une pièce se désactive, elle ne se supprime pas.
+         * @example {
+         *       "display_order": 2
+         *     }
+         * @example {
+         *       "is_active": false
+         *     }
+         */
         RoomUpdate: {
             /** Name */
             name?: string | null;
@@ -2161,8 +2511,12 @@ export interface components {
             /** Last Name */
             last_name: string;
             role: components["schemas"]["UserRole"];
-            /** Enterprise Id */
+            /**
+             * Enterprise Id
+             * @description Entreprise de la direction ou de l'employé ; null pour l'éditeur et les familles
+             */
             enterprise_id: string | null;
+            /** @description not_required ou verified : session complète ; setup_required : facteur à enregistrer ; required : facteur à présenter */
             mfa: components["schemas"]["MfaState"];
         };
         /** SheetRoom */
@@ -2193,9 +2547,15 @@ export interface components {
             name: string;
             /** Instructions */
             instructions: string | null;
-            /** Done At */
+            /**
+             * Done At
+             * @description Heure de la coche du jour ; null si la tâche reste à faire
+             */
             done_at: string | null;
-            /** Done By */
+            /**
+             * Done By
+             * @description Employé qui l'a cochée (prénom et initiale)
+             */
             done_by: string | null;
         };
         /** StaffInvitationInfo */
@@ -2213,11 +2573,15 @@ export interface components {
          */
         StaffInvitationOut: {
             employee: components["schemas"]["StaffOut"];
-            /** Token */
+            /**
+             * Token
+             * @description Jeton du lien d'invitation, à usage unique
+             */
             token: string;
             /**
              * Expires At
              * Format: date-time
+             * @description 7 jours après la création
              */
             expires_at: string;
         };
@@ -2234,9 +2598,15 @@ export interface components {
             first_name: string;
             /** Last Name */
             last_name: string;
-            /** Is Active */
+            /**
+             * Is Active
+             * @description Faux : salarié parti, il ne peut plus se connecter
+             */
             is_active: boolean;
-            /** Has Password */
+            /**
+             * Has Password
+             * @description Faux tant que l'employé invité n'a pas choisi son mot de passe
+             */
             has_password: boolean;
         };
         /** TabletActorOut */
@@ -2258,6 +2628,7 @@ export interface components {
             /**
              * Expires At
              * Format: date-time
+             * @description Fin de la session d'action (2 minutes après le PIN)
              */
             expires_at: string;
         };
@@ -2277,6 +2648,7 @@ export interface components {
             last_name: string;
             /**
              * Presence
+             * @description absent : pas encore arrivé ; present : arrivé ; left : reparti
              * @enum {string}
              */
             presence: "absent" | "present" | "left";
@@ -2287,7 +2659,12 @@ export interface components {
             /** Guardians */
             guardians: components["schemas"]["TabletGuardian"][];
         };
-        /** TabletCreate */
+        /**
+         * TabletCreate
+         * @example {
+         *       "label": "Tablette de l'entrée"
+         *     }
+         */
         TabletCreate: {
             /**
              * Label
@@ -2302,10 +2679,16 @@ export interface components {
              * Format: uuid
              */
             id: string;
-            /** Display Name */
+            /**
+             * Display Name
+             * @description Prénom et initiale du nom
+             */
             display_name: string;
             relationship: components["schemas"]["Relationship"];
-            /** Is Authorized Pickup */
+            /**
+             * Is Authorized Pickup
+             * @description Seuls ces responsables peuvent emmener l'enfant
+             */
             is_authorized_pickup: boolean;
         };
         /** TabletInfo */
@@ -2327,11 +2710,18 @@ export interface components {
             /** Staff */
             staff: components["schemas"]["TabletStaffMember"][];
         };
-        /** TabletLoginIn */
+        /**
+         * TabletLoginIn
+         * @example {
+         *       "pin": "4826",
+         *       "user_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+         *     }
+         */
         TabletLoginIn: {
             /**
              * User Id
              * Format: uuid
+             * @description Employé choisi dans la liste de `GET /tablet`
              */
             user_id: string;
             /** Pin */
@@ -2362,11 +2752,15 @@ export interface components {
             /**
              * Expires At
              * Format: date-time
+             * @description Fin de l'enrôlement (90 jours) : la direction enrôle à nouveau
              */
             expires_at: string;
             /** Revoked At */
             revoked_at: string | null;
-            /** Last Seen At */
+            /**
+             * Last Seen At
+             * @description Dernière requête reçue de la tablette
+             */
             last_seen_at: string | null;
         };
         /** TabletSheet */
@@ -2389,18 +2783,39 @@ export interface components {
              * Format: uuid
              */
             id: string;
-            /** Display Name */
+            /**
+             * Display Name
+             * @description Prénom et initiale du nom, ex. « Camille M. »
+             */
             display_name: string;
-            /** Pin Set */
+            /**
+             * Pin Set
+             * @description L'employé a choisi son PIN
+             */
             pin_set: boolean;
-            /** Pin Locked */
+            /**
+             * Pin Locked
+             * @description PIN bloqué après 3 erreurs ; la direction le débloque
+             */
             pin_locked: boolean;
         };
-        /** TaskCreate */
+        /**
+         * TaskCreate
+         * @example {
+         *       "instructions": "Produit virucide, laisser agir 5 minutes",
+         *       "name": "Désinfecter les plans de change"
+         *     }
+         */
         TaskCreate: {
-            /** Name */
+            /**
+             * Name
+             * @description Unique dans le catalogue de l'entreprise
+             */
             name: string;
-            /** Instructions */
+            /**
+             * Instructions
+             * @description Consigne affichée sur la tablette
+             */
             instructions?: string | null;
         };
         /** TaskOut */
@@ -2417,7 +2832,13 @@ export interface components {
             /** Is Active */
             is_active: boolean;
         };
-        /** TaskUpdate */
+        /**
+         * TaskUpdate
+         * @description Champs absents : inchangés. Désactivée, la tâche disparaît des fiches de toutes les crèches.
+         * @example {
+         *       "instructions": "Produit virucide, rincer"
+         *     }
+         */
         TaskUpdate: {
             /** Name */
             name?: string | null;
@@ -2426,14 +2847,22 @@ export interface components {
             /** Is Active */
             is_active?: boolean | null;
         };
-        /** TokenIn */
+        /**
+         * TokenIn
+         * @example {
+         *       "token": "jeton-recu-dans-le-lien-d-invitation"
+         *     }
+         */
         TokenIn: {
             /** Token */
             token: string;
         };
         /** TotpConfirmOut */
         TotpConfirmOut: {
-            /** Backup Codes */
+            /**
+             * Backup Codes
+             * @description Codes de secours créés avec le premier facteur, montrés une seule fois ; null si le compte en avait déjà
+             */
             backup_codes: string[] | null;
         };
         /** TotpOut */
@@ -2453,9 +2882,15 @@ export interface components {
          *     Renvoyé une seule fois : il n'est plus lisible ensuite, même par la direction.
          */
         TotpSetupOut: {
-            /** Secret */
+            /**
+             * Secret
+             * @description Secret en base32, à saisir à la main
+             */
             secret: string;
-            /** Otpauth Uri */
+            /**
+             * Otpauth Uri
+             * @description URI otpauth:// à afficher en QR code
+             */
             otpauth_uri: string;
         };
         /**
@@ -2476,16 +2911,51 @@ export interface components {
             /** Context */
             ctx?: Record<string, never>;
         };
+        /**
+         * AcceptIn
+         * @example {
+         *       "password": "mot de passe choisi, 15 caractères au moins",
+         *       "token": "jeton-recu-dans-le-lien-d-invitation"
+         *     }
+         */
+        app__accounts__schemas__AcceptIn: {
+            /** Token */
+            token: string;
+            /**
+             * Password
+             * @description 15 caractères au moins, ni courant ni prévisible
+             */
+            password: string;
+        };
         /** AcceptedOut */
         app__accounts__schemas__AcceptedOut: {
             /** Email */
             email: string;
         };
+        /**
+         * AcceptIn
+         * @example {
+         *       "password": "mot de passe choisi, 15 caractères au moins",
+         *       "token": "jeton-recu-dans-le-lien-d-invitation"
+         *     }
+         */
+        app__family__schemas__AcceptIn: {
+            /** Token */
+            token: string;
+            /**
+             * Password
+             * @description Mot de passe choisi, ou celui du compte famille existant
+             */
+            password: string;
+        };
         /** AcceptedOut */
         app__family__schemas__AcceptedOut: {
             /** Email */
             email: string;
-            /** Account Created */
+            /**
+             * Account Created
+             * @description Faux : l'invitation a été reliée à un compte famille existant
+             */
             account_created: boolean;
         };
     };
@@ -2519,12 +2989,23 @@ export interface operations {
                     "application/json": components["schemas"]["SessionOut"];
                 };
             };
-            /** @description Identifiants invalides ou session absente */
+            /** @description Identifiants invalides */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Origine de la requête refusée */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -2535,12 +3016,16 @@ export interface operations {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
-            /** @description Trop de tentatives (en-tête Retry-After) */
+            /** @description Trop de tentatives, réessayez plus tard */
             429: {
                 headers: {
+                    /** @description Secondes à attendre avant de réessayer */
+                    "Retry-After"?: number;
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
         };
     };
@@ -2559,6 +3044,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Origine de la requête refusée */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
         };
     };
@@ -2580,12 +3074,14 @@ export interface operations {
                     "application/json": components["schemas"]["SessionOut"];
                 };
             };
-            /** @description Identifiants invalides ou session absente */
+            /** @description Authentification requise */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
         };
     };
@@ -2607,40 +3103,61 @@ export interface operations {
                     "application/json": components["schemas"]["MfaStatusOut"];
                 };
             };
-            /** @description Session absente ou code invalide */
+            /** @description Code invalide ; Authentification requise */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Second facteur à présenter d'abord, réauthentification requise ou TOTP bloqué */
+            /** @description Présentez d'abord votre second facteur ; Reconnectez-vous pour modifier vos facteurs (connexion de plus de 15 minutes) ; Application d'authentification bloquée après trop d'échecs : utilisez un code de secours */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Opération sans objet dans l'état actuel */
+            /** @description Aucune application d'authentification active */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Aucun second facteur attendu pour cette session ; Aucune activation en cours ; Second facteur obligatoire pour ce rôle : remplacez-le au lieu de le retirer */
             409: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Trop de tentatives (en-tête Retry-After) */
+            /** @description Trop de tentatives, réessayez plus tard */
             429: {
                 headers: {
+                    /** @description Secondes à attendre avant de réessayer */
+                    "Retry-After"?: number;
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Clé de chiffrement absente ou différente */
+            /** @description Second facteur momentanément indisponible */
             503: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
         };
     };
@@ -2662,40 +3179,61 @@ export interface operations {
                     "application/json": components["schemas"]["TotpSetupOut"];
                 };
             };
-            /** @description Session absente ou code invalide */
+            /** @description Code invalide ; Authentification requise */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Second facteur à présenter d'abord, réauthentification requise ou TOTP bloqué */
+            /** @description Présentez d'abord votre second facteur ; Reconnectez-vous pour modifier vos facteurs (connexion de plus de 15 minutes) ; Application d'authentification bloquée après trop d'échecs : utilisez un code de secours ; Origine de la requête refusée */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Opération sans objet dans l'état actuel */
+            /** @description Aucune application d'authentification active */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Aucun second facteur attendu pour cette session ; Aucune activation en cours ; Second facteur obligatoire pour ce rôle : remplacez-le au lieu de le retirer */
             409: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Trop de tentatives (en-tête Retry-After) */
+            /** @description Trop de tentatives, réessayez plus tard */
             429: {
                 headers: {
+                    /** @description Secondes à attendre avant de réessayer */
+                    "Retry-After"?: number;
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Clé de chiffrement absente ou différente */
+            /** @description Second facteur momentanément indisponible */
             503: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
         };
     };
@@ -2715,40 +3253,61 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Session absente ou code invalide */
+            /** @description Code invalide ; Authentification requise */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Second facteur à présenter d'abord, réauthentification requise ou TOTP bloqué */
+            /** @description Présentez d'abord votre second facteur ; Reconnectez-vous pour modifier vos facteurs (connexion de plus de 15 minutes) ; Application d'authentification bloquée après trop d'échecs : utilisez un code de secours ; Origine de la requête refusée */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Opération sans objet dans l'état actuel */
+            /** @description Aucune application d'authentification active */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Aucun second facteur attendu pour cette session ; Aucune activation en cours ; Second facteur obligatoire pour ce rôle : remplacez-le au lieu de le retirer */
             409: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Trop de tentatives (en-tête Retry-After) */
+            /** @description Trop de tentatives, réessayez plus tard */
             429: {
                 headers: {
+                    /** @description Secondes à attendre avant de réessayer */
+                    "Retry-After"?: number;
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Clé de chiffrement absente ou différente */
+            /** @description Second facteur momentanément indisponible */
             503: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
         };
     };
@@ -2774,26 +3333,41 @@ export interface operations {
                     "application/json": components["schemas"]["TotpConfirmOut"];
                 };
             };
-            /** @description Session absente ou code invalide */
+            /** @description Code invalide ; Authentification requise */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Second facteur à présenter d'abord, réauthentification requise ou TOTP bloqué */
+            /** @description Présentez d'abord votre second facteur ; Reconnectez-vous pour modifier vos facteurs (connexion de plus de 15 minutes) ; Application d'authentification bloquée après trop d'échecs : utilisez un code de secours ; Origine de la requête refusée */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Opération sans objet dans l'état actuel */
+            /** @description Aucune application d'authentification active */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Aucun second facteur attendu pour cette session ; Aucune activation en cours ; Second facteur obligatoire pour ce rôle : remplacez-le au lieu de le retirer */
             409: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -2804,19 +3378,25 @@ export interface operations {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
-            /** @description Trop de tentatives (en-tête Retry-After) */
+            /** @description Trop de tentatives, réessayez plus tard */
             429: {
                 headers: {
+                    /** @description Secondes à attendre avant de réessayer */
+                    "Retry-After"?: number;
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Clé de chiffrement absente ou différente */
+            /** @description Second facteur momentanément indisponible */
             503: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
         };
     };
@@ -2842,26 +3422,41 @@ export interface operations {
                     "application/json": components["schemas"]["SessionOut"];
                 };
             };
-            /** @description Session absente ou code invalide */
+            /** @description Code invalide ; Authentification requise */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Second facteur à présenter d'abord, réauthentification requise ou TOTP bloqué */
+            /** @description Présentez d'abord votre second facteur ; Reconnectez-vous pour modifier vos facteurs (connexion de plus de 15 minutes) ; Application d'authentification bloquée après trop d'échecs : utilisez un code de secours ; Origine de la requête refusée */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Opération sans objet dans l'état actuel */
+            /** @description Aucune application d'authentification active */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Aucun second facteur attendu pour cette session ; Aucune activation en cours ; Second facteur obligatoire pour ce rôle : remplacez-le au lieu de le retirer */
             409: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -2872,19 +3467,25 @@ export interface operations {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
-            /** @description Trop de tentatives (en-tête Retry-After) */
+            /** @description Trop de tentatives, réessayez plus tard */
             429: {
                 headers: {
+                    /** @description Secondes à attendre avant de réessayer */
+                    "Retry-After"?: number;
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Clé de chiffrement absente ou différente */
+            /** @description Second facteur momentanément indisponible */
             503: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
         };
     };
@@ -2906,40 +3507,61 @@ export interface operations {
                     "application/json": components["schemas"]["BackupCodesOut"];
                 };
             };
-            /** @description Session absente ou code invalide */
+            /** @description Code invalide ; Authentification requise */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Second facteur à présenter d'abord, réauthentification requise ou TOTP bloqué */
+            /** @description Présentez d'abord votre second facteur ; Reconnectez-vous pour modifier vos facteurs (connexion de plus de 15 minutes) ; Application d'authentification bloquée après trop d'échecs : utilisez un code de secours ; Origine de la requête refusée */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Opération sans objet dans l'état actuel */
+            /** @description Aucune application d'authentification active */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Aucun second facteur attendu pour cette session ; Aucune activation en cours ; Second facteur obligatoire pour ce rôle : remplacez-le au lieu de le retirer */
             409: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Trop de tentatives (en-tête Retry-After) */
+            /** @description Trop de tentatives, réessayez plus tard */
             429: {
                 headers: {
+                    /** @description Secondes à attendre avant de réessayer */
+                    "Retry-After"?: number;
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Clé de chiffrement absente ou différente */
+            /** @description Second facteur momentanément indisponible */
             503: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
         };
     };
@@ -2961,54 +3583,79 @@ export interface operations {
                     "application/json": components["schemas"]["PasskeyOut"][];
                 };
             };
-            /** @description Passkey refusée à l'enregistrement */
+            /** @description Passkey refusée */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Session absente ou passkey refusée */
+            /** @description Passkey refusée ; Authentification requise */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Second facteur à présenter d'abord ou réauthentification requise */
+            /** @description Présentez d'abord votre second facteur ; Reconnectez-vous pour modifier vos facteurs (connexion de plus de 15 minutes) */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Passkey introuvable pour ce compte */
+            /** @description Passkey introuvable */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Opération sans objet dans l'état actuel */
+            /** @description Aucun second facteur attendu pour cette session ; Aucune passkey enregistrée pour ce compte ; Aucun enregistrement en cours, ou délai dépassé : recommencez ; 10 passkeys au plus : retirez-en une d'abord ; Cette passkey est déjà enregistrée ; Second facteur obligatoire pour ce rôle : enregistrez-en un autre avant de retirer celui-ci */
             409: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Trop de tentatives (en-tête Retry-After) */
-            429: {
+            /** @description Nom de passkey vide ou trop long */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Aucune origine configurée (APP_ORIGINS) */
+            /** @description Trop de tentatives, réessayez plus tard */
+            429: {
+                headers: {
+                    /** @description Secondes à attendre avant de réessayer */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Passkeys momentanément indisponibles */
             503: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
         };
     };
@@ -3034,63 +3681,79 @@ export interface operations {
                     "application/json": components["schemas"]["RegistrationOut"];
                 };
             };
-            /** @description Passkey refusée à l'enregistrement */
+            /** @description Passkey refusée */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Session absente ou passkey refusée */
+            /** @description Passkey refusée ; Authentification requise */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Second facteur à présenter d'abord ou réauthentification requise */
+            /** @description Présentez d'abord votre second facteur ; Reconnectez-vous pour modifier vos facteurs (connexion de plus de 15 minutes) ; Origine de la requête refusée */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Passkey introuvable pour ce compte */
+            /** @description Passkey introuvable */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Opération sans objet dans l'état actuel */
+            /** @description Aucun second facteur attendu pour cette session ; Aucune passkey enregistrée pour ce compte ; Aucun enregistrement en cours, ou délai dépassé : recommencez ; 10 passkeys au plus : retirez-en une d'abord ; Cette passkey est déjà enregistrée ; Second facteur obligatoire pour ce rôle : enregistrez-en un autre avant de retirer celui-ci */
             409: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Validation Error */
+            /** @description Nom de passkey vide ou trop long */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["Error"] | components["schemas"]["HTTPValidationError"];
                 };
             };
-            /** @description Trop de tentatives (en-tête Retry-After) */
+            /** @description Trop de tentatives, réessayez plus tard */
             429: {
                 headers: {
+                    /** @description Secondes à attendre avant de réessayer */
+                    "Retry-After"?: number;
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Aucune origine configurée (APP_ORIGINS) */
+            /** @description Passkeys momentanément indisponibles */
             503: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
         };
     };
@@ -3114,54 +3777,79 @@ export interface operations {
                     };
                 };
             };
-            /** @description Passkey refusée à l'enregistrement */
+            /** @description Passkey refusée */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Session absente ou passkey refusée */
+            /** @description Passkey refusée ; Authentification requise */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Second facteur à présenter d'abord ou réauthentification requise */
+            /** @description Présentez d'abord votre second facteur ; Reconnectez-vous pour modifier vos facteurs (connexion de plus de 15 minutes) ; Origine de la requête refusée */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Passkey introuvable pour ce compte */
+            /** @description Passkey introuvable */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Opération sans objet dans l'état actuel */
+            /** @description Aucun second facteur attendu pour cette session ; Aucune passkey enregistrée pour ce compte ; Aucun enregistrement en cours, ou délai dépassé : recommencez ; 10 passkeys au plus : retirez-en une d'abord ; Cette passkey est déjà enregistrée ; Second facteur obligatoire pour ce rôle : enregistrez-en un autre avant de retirer celui-ci */
             409: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Trop de tentatives (en-tête Retry-After) */
-            429: {
+            /** @description Nom de passkey vide ou trop long */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Aucune origine configurée (APP_ORIGINS) */
+            /** @description Trop de tentatives, réessayez plus tard */
+            429: {
+                headers: {
+                    /** @description Secondes à attendre avant de réessayer */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Passkeys momentanément indisponibles */
             503: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
         };
     };
@@ -3183,63 +3871,79 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Passkey refusée à l'enregistrement */
+            /** @description Passkey refusée */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Session absente ou passkey refusée */
+            /** @description Passkey refusée ; Authentification requise */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Second facteur à présenter d'abord ou réauthentification requise */
+            /** @description Présentez d'abord votre second facteur ; Reconnectez-vous pour modifier vos facteurs (connexion de plus de 15 minutes) ; Origine de la requête refusée */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Passkey introuvable pour ce compte */
+            /** @description Passkey introuvable */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Opération sans objet dans l'état actuel */
+            /** @description Aucun second facteur attendu pour cette session ; Aucune passkey enregistrée pour ce compte ; Aucun enregistrement en cours, ou délai dépassé : recommencez ; 10 passkeys au plus : retirez-en une d'abord ; Cette passkey est déjà enregistrée ; Second facteur obligatoire pour ce rôle : enregistrez-en un autre avant de retirer celui-ci */
             409: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Validation Error */
+            /** @description Nom de passkey vide ou trop long */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["Error"] | components["schemas"]["HTTPValidationError"];
                 };
             };
-            /** @description Trop de tentatives (en-tête Retry-After) */
+            /** @description Trop de tentatives, réessayez plus tard */
             429: {
                 headers: {
+                    /** @description Secondes à attendre avant de réessayer */
+                    "Retry-After"?: number;
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Aucune origine configurée (APP_ORIGINS) */
+            /** @description Passkeys momentanément indisponibles */
             503: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
         };
     };
@@ -3267,63 +3971,79 @@ export interface operations {
                     "application/json": components["schemas"]["PasskeyOut"];
                 };
             };
-            /** @description Passkey refusée à l'enregistrement */
+            /** @description Passkey refusée */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Session absente ou passkey refusée */
+            /** @description Passkey refusée ; Authentification requise */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Second facteur à présenter d'abord ou réauthentification requise */
+            /** @description Présentez d'abord votre second facteur ; Reconnectez-vous pour modifier vos facteurs (connexion de plus de 15 minutes) ; Origine de la requête refusée ; Second facteur requis */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Passkey introuvable pour ce compte */
+            /** @description Passkey introuvable */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Opération sans objet dans l'état actuel */
+            /** @description Aucun second facteur attendu pour cette session ; Aucune passkey enregistrée pour ce compte ; Aucun enregistrement en cours, ou délai dépassé : recommencez ; 10 passkeys au plus : retirez-en une d'abord ; Cette passkey est déjà enregistrée ; Second facteur obligatoire pour ce rôle : enregistrez-en un autre avant de retirer celui-ci */
             409: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Validation Error */
+            /** @description Nom de passkey vide ou trop long */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["Error"] | components["schemas"]["HTTPValidationError"];
                 };
             };
-            /** @description Trop de tentatives (en-tête Retry-After) */
+            /** @description Trop de tentatives, réessayez plus tard */
             429: {
                 headers: {
+                    /** @description Secondes à attendre avant de réessayer */
+                    "Retry-After"?: number;
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Aucune origine configurée (APP_ORIGINS) */
+            /** @description Passkeys momentanément indisponibles */
             503: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
         };
     };
@@ -3347,54 +4067,79 @@ export interface operations {
                     };
                 };
             };
-            /** @description Passkey refusée à l'enregistrement */
+            /** @description Passkey refusée */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Session absente ou passkey refusée */
+            /** @description Passkey refusée ; Authentification requise */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Second facteur à présenter d'abord ou réauthentification requise */
+            /** @description Présentez d'abord votre second facteur ; Reconnectez-vous pour modifier vos facteurs (connexion de plus de 15 minutes) ; Origine de la requête refusée */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Passkey introuvable pour ce compte */
+            /** @description Passkey introuvable */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Opération sans objet dans l'état actuel */
+            /** @description Aucun second facteur attendu pour cette session ; Aucune passkey enregistrée pour ce compte ; Aucun enregistrement en cours, ou délai dépassé : recommencez ; 10 passkeys au plus : retirez-en une d'abord ; Cette passkey est déjà enregistrée ; Second facteur obligatoire pour ce rôle : enregistrez-en un autre avant de retirer celui-ci */
             409: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Trop de tentatives (en-tête Retry-After) */
-            429: {
+            /** @description Nom de passkey vide ou trop long */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Aucune origine configurée (APP_ORIGINS) */
+            /** @description Trop de tentatives, réessayez plus tard */
+            429: {
+                headers: {
+                    /** @description Secondes à attendre avant de réessayer */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Passkeys momentanément indisponibles */
             503: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
         };
     };
@@ -3420,63 +4165,79 @@ export interface operations {
                     "application/json": components["schemas"]["SessionOut"];
                 };
             };
-            /** @description Passkey refusée à l'enregistrement */
+            /** @description Passkey refusée */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Session absente ou passkey refusée */
+            /** @description Passkey refusée ; Authentification requise */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Second facteur à présenter d'abord ou réauthentification requise */
+            /** @description Présentez d'abord votre second facteur ; Reconnectez-vous pour modifier vos facteurs (connexion de plus de 15 minutes) ; Origine de la requête refusée */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Passkey introuvable pour ce compte */
+            /** @description Passkey introuvable */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Opération sans objet dans l'état actuel */
+            /** @description Aucun second facteur attendu pour cette session ; Aucune passkey enregistrée pour ce compte ; Aucun enregistrement en cours, ou délai dépassé : recommencez ; 10 passkeys au plus : retirez-en une d'abord ; Cette passkey est déjà enregistrée ; Second facteur obligatoire pour ce rôle : enregistrez-en un autre avant de retirer celui-ci */
             409: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Validation Error */
+            /** @description Nom de passkey vide ou trop long */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["Error"] | components["schemas"]["HTTPValidationError"];
                 };
             };
-            /** @description Trop de tentatives (en-tête Retry-After) */
+            /** @description Trop de tentatives, réessayez plus tard */
             429: {
                 headers: {
+                    /** @description Secondes à attendre avant de réessayer */
+                    "Retry-After"?: number;
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Aucune origine configurée (APP_ORIGINS) */
+            /** @description Passkeys momentanément indisponibles */
             503: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
         };
     };
@@ -3500,54 +4261,79 @@ export interface operations {
                     };
                 };
             };
-            /** @description Passkey refusée à l'enregistrement */
+            /** @description Passkey refusée */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Session absente ou passkey refusée */
+            /** @description Passkey refusée */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Second facteur à présenter d'abord ou réauthentification requise */
+            /** @description Présentez d'abord votre second facteur ; Reconnectez-vous pour modifier vos facteurs (connexion de plus de 15 minutes) ; Origine de la requête refusée */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Passkey introuvable pour ce compte */
+            /** @description Passkey introuvable */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Opération sans objet dans l'état actuel */
+            /** @description Aucun second facteur attendu pour cette session ; Aucune passkey enregistrée pour ce compte ; Aucun enregistrement en cours, ou délai dépassé : recommencez ; 10 passkeys au plus : retirez-en une d'abord ; Cette passkey est déjà enregistrée ; Second facteur obligatoire pour ce rôle : enregistrez-en un autre avant de retirer celui-ci */
             409: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Trop de tentatives (en-tête Retry-After) */
-            429: {
+            /** @description Nom de passkey vide ou trop long */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Aucune origine configurée (APP_ORIGINS) */
+            /** @description Trop de tentatives, réessayez plus tard */
+            429: {
+                headers: {
+                    /** @description Secondes à attendre avant de réessayer */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Passkeys momentanément indisponibles */
             503: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
         };
     };
@@ -3573,63 +4359,79 @@ export interface operations {
                     "application/json": components["schemas"]["SessionOut"];
                 };
             };
-            /** @description Passkey refusée à l'enregistrement */
+            /** @description Passkey refusée */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Session absente ou passkey refusée */
+            /** @description Passkey refusée */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Second facteur à présenter d'abord ou réauthentification requise */
+            /** @description Présentez d'abord votre second facteur ; Reconnectez-vous pour modifier vos facteurs (connexion de plus de 15 minutes) ; Origine de la requête refusée */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Passkey introuvable pour ce compte */
+            /** @description Passkey introuvable */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Opération sans objet dans l'état actuel */
+            /** @description Aucun second facteur attendu pour cette session ; Aucune passkey enregistrée pour ce compte ; Aucun enregistrement en cours, ou délai dépassé : recommencez ; 10 passkeys au plus : retirez-en une d'abord ; Cette passkey est déjà enregistrée ; Second facteur obligatoire pour ce rôle : enregistrez-en un autre avant de retirer celui-ci */
             409: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Validation Error */
+            /** @description Nom de passkey vide ou trop long */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["Error"] | components["schemas"]["HTTPValidationError"];
                 };
             };
-            /** @description Trop de tentatives (en-tête Retry-After) */
+            /** @description Trop de tentatives, réessayez plus tard */
             429: {
                 headers: {
+                    /** @description Secondes à attendre avant de réessayer */
+                    "Retry-After"?: number;
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Aucune origine configurée (APP_ORIGINS) */
+            /** @description Passkeys momentanément indisponibles */
             503: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
         };
     };
@@ -3653,26 +4455,23 @@ export interface operations {
                     "application/json": components["schemas"]["NurseryOut"][];
                 };
             };
-            /** @description Session absente ou expirée */
+            /** @description Authentification requise */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Rôle insuffisant */
+            /** @description Action non autorisée pour ce rôle ; Second facteur requis */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Crèche inexistante ou inaccessible */
-            404: {
-                headers: {
-                    [name: string]: unknown;
+                content: {
+                    "application/json": components["schemas"]["Error"];
                 };
-                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -3707,26 +4506,23 @@ export interface operations {
                     "application/json": components["schemas"]["NurseryOut"];
                 };
             };
-            /** @description Session absente ou expirée */
+            /** @description Authentification requise */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Rôle insuffisant */
+            /** @description Action non autorisée pour ce rôle ; Origine de la requête refusée ; Second facteur requis */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Crèche inexistante ou inaccessible */
-            404: {
-                headers: {
-                    [name: string]: unknown;
+                content: {
+                    "application/json": components["schemas"]["Error"];
                 };
-                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -3759,26 +4555,32 @@ export interface operations {
                     "application/json": components["schemas"]["NurseryOut"];
                 };
             };
-            /** @description Session absente ou expirée */
+            /** @description Authentification requise */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Rôle insuffisant */
+            /** @description Action non autorisée pour ce rôle ; Second facteur requis */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Crèche inexistante ou inaccessible */
+            /** @description Crèche introuvable */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -3815,34 +4617,40 @@ export interface operations {
                     "application/json": components["schemas"]["NurseryOut"];
                 };
             };
-            /** @description Session absente ou expirée */
+            /** @description Authentification requise */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Rôle insuffisant */
+            /** @description Action non autorisée pour ce rôle ; Origine de la requête refusée ; Second facteur requis ; Seule la direction peut gérer cette crèche */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Crèche inexistante ou inaccessible */
+            /** @description Crèche introuvable */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Validation Error */
+            /** @description Le champ name ne peut pas être vide */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["Error"] | components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -3867,26 +4675,32 @@ export interface operations {
                     "application/json": components["schemas"]["StaffOut"][];
                 };
             };
-            /** @description Session absente ou expirée */
+            /** @description Authentification requise */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Rôle insuffisant */
+            /** @description Action non autorisée pour ce rôle ; Second facteur requis ; Seule la direction peut gérer cette crèche */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Crèche inexistante ou inaccessible */
+            /** @description Crèche introuvable */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -3918,26 +4732,32 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Session absente ou expirée */
+            /** @description Authentification requise */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Rôle insuffisant */
+            /** @description Action non autorisée pour ce rôle ; Origine de la requête refusée ; Second facteur requis ; Seule la direction peut gérer cette crèche */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Crèche inexistante ou inaccessible */
+            /** @description Employé introuvable ; Crèche introuvable */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -3969,26 +4789,32 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Session absente ou expirée */
+            /** @description Authentification requise */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Rôle insuffisant */
+            /** @description Action non autorisée pour ce rôle ; Origine de la requête refusée ; Second facteur requis ; Seule la direction peut gérer cette crèche */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Crèche inexistante ou inaccessible */
+            /** @description Crèche introuvable */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -4019,26 +4845,23 @@ export interface operations {
                     "application/json": components["schemas"]["EmployeeOut"][];
                 };
             };
-            /** @description Session absente ou expirée */
+            /** @description Authentification requise */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Rôle insuffisant */
+            /** @description Action non autorisée pour ce rôle ; Second facteur requis */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Crèche inexistante ou inaccessible */
-            404: {
-                headers: {
-                    [name: string]: unknown;
+                content: {
+                    "application/json": components["schemas"]["Error"];
                 };
-                content?: never;
             };
         };
     };
@@ -4062,6 +4885,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffInvitationOut"];
+                };
+            };
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Origine de la requête refusée ; Second facteur requis */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Cette adresse est déjà utilisée par un compte */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
                 };
             };
             /** @description Validation Error */
@@ -4093,6 +4943,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TabletOut"][];
+                };
+            };
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Second facteur requis ; Seule la direction peut gérer cette crèche */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Crèche introuvable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
                 };
             };
             /** @description Validation Error */
@@ -4130,6 +5007,33 @@ export interface operations {
                     "application/json": components["schemas"]["TabletOut"];
                 };
             };
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Origine de la requête refusée ; Second facteur requis ; Seule la direction peut gérer cette crèche */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Crèche introuvable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -4159,6 +5063,33 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Origine de la requête refusée ; Second facteur requis ; Seule la direction peut gérer cette crèche */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Tablette introuvable ; Crèche introuvable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -4191,13 +5122,40 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Validation Error */
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Le PIN de tablette est réservé aux employés ; Mot de passe incorrect ; Origine de la requête refusée ; Second facteur requis */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Le PIN doit contenir exactement 4 chiffres. ; Ce PIN est trop prévisible (chiffres identiques). ; Ce PIN est trop prévisible (suite de chiffres). */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["Error"] | components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Trop de tentatives, réessayez plus tard */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
                 };
             };
         };
@@ -4219,6 +5177,33 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Origine de la requête refusée ; Second facteur requis */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Employé introuvable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -4249,6 +5234,15 @@ export interface operations {
                     "application/json": components["schemas"]["TabletInfo"];
                 };
             };
+            /** @description Tablette non enrôlée, expirée ou révoquée */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
     tablet_session_api_v2_tablet_session_get: {
@@ -4267,6 +5261,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TabletActorOut"];
+                };
+            };
+            /** @description Session de tablette absente ou expirée : saisir le PIN ; Tablette non enrôlée, expirée ou révoquée */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
                 };
             };
         };
@@ -4293,6 +5296,33 @@ export interface operations {
                     "application/json": components["schemas"]["TabletActorOut"];
                 };
             };
+            /** @description PIN incorrect ; Tablette non enrôlée, expirée ou révoquée */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Origine de la requête refusée */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description PIN non défini : le choisir depuis l'espace employé */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -4300,6 +5330,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description PIN bloqué après 3 erreurs : demandez à la direction de le débloquer */
+            423: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Trop d'erreurs de PIN sur cette tablette, réessayez plus tard */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
                 };
             };
         };
@@ -4319,6 +5367,24 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Session de tablette absente ou expirée : saisir le PIN ; Tablette non enrôlée, expirée ou révoquée */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Origine de la requête refusée */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
         };
     };
@@ -4340,6 +5406,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FamilyOut"][];
+                };
+            };
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Second facteur requis */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Crèche introuvable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
                 };
             };
             /** @description Validation Error */
@@ -4377,6 +5470,33 @@ export interface operations {
                     "application/json": components["schemas"]["FamilyOut"];
                 };
             };
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Origine de la requête refusée ; Second facteur requis ; Seule la direction peut gérer cette crèche */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Crèche introuvable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -4409,12 +5529,32 @@ export interface operations {
                     "application/json": components["schemas"]["FamilyDetail"];
                 };
             };
-            /** @description Inexistant ou hors de cette crèche */
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Second facteur requis */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Famille introuvable ; Crèche introuvable */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -4452,20 +5592,40 @@ export interface operations {
                     "application/json": components["schemas"]["FamilyOut"];
                 };
             };
-            /** @description Inexistant ou hors de cette crèche */
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Origine de la requête refusée ; Second facteur requis ; Seule la direction peut gérer cette crèche */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Famille introuvable ; Crèche introuvable */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Validation Error */
+            /** @description Le champ first_name ne peut pas être vide */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["Error"] | components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -4490,6 +5650,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChildOut"][];
+                };
+            };
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Second facteur requis */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Crèche introuvable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
                 };
             };
             /** @description Validation Error */
@@ -4528,12 +5715,32 @@ export interface operations {
                     "application/json": components["schemas"]["ChildOut"];
                 };
             };
-            /** @description Inexistant ou hors de cette crèche */
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Origine de la requête refusée ; Second facteur requis ; Seule la direction peut gérer cette crèche */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Famille introuvable ; Crèche introuvable */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -4567,12 +5774,32 @@ export interface operations {
                     "application/json": components["schemas"]["ChildDetail"];
                 };
             };
-            /** @description Inexistant ou hors de cette crèche */
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Second facteur requis */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Enfant introuvable ; Crèche introuvable */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -4610,20 +5837,40 @@ export interface operations {
                     "application/json": components["schemas"]["ChildOut"];
                 };
             };
-            /** @description Inexistant ou hors de cette crèche */
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Origine de la requête refusée ; Second facteur requis ; Seule la direction peut gérer cette crèche */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Enfant introuvable ; Crèche introuvable */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Validation Error */
+            /** @description Le champ first_name ne peut pas être vide ; Un enfant parti a une date de sortie, et seulement lui */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["Error"] | components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -4653,12 +5900,32 @@ export interface operations {
                     "application/json": components["schemas"]["GuardianOut"];
                 };
             };
-            /** @description Inexistant ou hors de cette crèche */
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Origine de la requête refusée ; Second facteur requis ; Seule la direction peut gérer cette crèche */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Famille introuvable ; Crèche introuvable */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -4696,20 +5963,40 @@ export interface operations {
                     "application/json": components["schemas"]["GuardianOut"];
                 };
             };
-            /** @description Inexistant ou hors de cette crèche */
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Origine de la requête refusée ; Second facteur requis ; Seule la direction peut gérer cette crèche */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Responsable introuvable ; Crèche introuvable */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Validation Error */
+            /** @description Le champ first_name ne peut pas être vide */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["Error"] | components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -4738,20 +6025,40 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Inexistant ou hors de cette crèche */
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Origine de la requête refusée ; Second facteur requis ; Seule la direction peut gérer cette crèche */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Enfant introuvable ; Responsable introuvable ; Crèche introuvable */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Validation Error */
+            /** @description Le responsable n'appartient pas à la famille */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["Error"] | components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -4776,12 +6083,32 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Inexistant ou hors de cette crèche */
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Origine de la requête refusée ; Second facteur requis ; Seule la direction peut gérer cette crèche */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Enfant introuvable ; Crèche introuvable */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -4812,6 +6139,15 @@ export interface operations {
                     "application/json": components["schemas"]["TabletChild"][];
                 };
             };
+            /** @description Session de tablette absente ou expirée : saisir le PIN ; Tablette non enrôlée, expirée ou révoquée */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
     tablet_arrival_api_v2_tablet_children__child_id__arrival_post: {
@@ -4838,13 +6174,49 @@ export interface operations {
                     "application/json": components["schemas"]["AttendanceOut"];
                 };
             };
-            /** @description Validation Error */
+            /** @description Session de tablette absente ou expirée : saisir le PIN ; Tablette non enrôlée, expirée ou révoquée */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Origine de la requête refusée */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Enfant introuvable dans cette crèche */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Enfant non attendu (suspendu, parti ou pas encore inscrit) ; Arrivée déjà pointée */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Cette personne n'est pas un responsable de l'enfant */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["Error"] | components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -4871,6 +6243,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AttendanceOut"];
+                };
+            };
+            /** @description Session de tablette absente ou expirée : saisir le PIN ; Tablette non enrôlée, expirée ou révoquée */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Cette personne n'est pas autorisée à venir chercher l'enfant : prévenir la direction ; Origine de la requête refusée */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Enfant introuvable dans cette crèche */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Aucune arrivée pointée pour cet enfant */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
                 };
             };
             /** @description Validation Error */
@@ -4906,6 +6314,33 @@ export interface operations {
                     "application/json": components["schemas"]["AttendanceOut"][];
                 };
             };
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Second facteur requis */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Crèche introuvable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -4935,6 +6370,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AttendanceOut"][];
+                };
+            };
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Second facteur requis */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Crèche introuvable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
                 };
             };
             /** @description Validation Error */
@@ -4969,13 +6431,40 @@ export interface operations {
                     "application/json": components["schemas"]["InvitationOut"];
                 };
             };
-            /** @description Validation Error */
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Origine de la requête refusée ; Second facteur requis ; Seule la direction peut gérer cette crèche */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Responsable introuvable ; Crèche introuvable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Ce responsable n'a pas d'adresse e-mail */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["Error"] | components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -5002,6 +6491,24 @@ export interface operations {
                     "application/json": components["schemas"]["InvitationInfo"];
                 };
             };
+            /** @description Origine de la requête refusée */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Invitation inconnue, expirée ou déjà utilisée */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -5022,7 +6529,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["AcceptIn"];
+                "application/json": components["schemas"]["app__family__schemas__AcceptIn"];
             };
         };
         responses: {
@@ -5035,13 +6542,40 @@ export interface operations {
                     "application/json": components["schemas"]["app__family__schemas__AcceptedOut"];
                 };
             };
-            /** @description Validation Error */
+            /** @description Un compte existe déjà avec cette adresse : saisir son mot de passe ; Origine de la requête refusée */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Invitation inconnue, expirée ou déjà utilisée */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Cette adresse est déjà utilisée par un compte qui n'est pas un compte famille : contactez la crèche */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Ce mot de passe est trop courant. */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["Error"] | components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -5062,6 +6596,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FamilyChild"][];
+                };
+            };
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Second facteur requis */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
                 };
             };
         };
@@ -5088,12 +6640,32 @@ export interface operations {
                     "application/json": components["schemas"]["FamilyChildDetail"];
                 };
             };
-            /** @description Hors de ma famille */
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Second facteur requis */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Enfant introuvable */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -5124,6 +6696,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TaskOut"][];
+                };
+            };
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Second facteur requis */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
                 };
             };
             /** @description Validation Error */
@@ -5159,12 +6749,32 @@ export interface operations {
                     "application/json": components["schemas"]["TaskOut"];
                 };
             };
-            /** @description Nom déjà pris */
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Origine de la requête refusée ; Second facteur requis */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Une tâche du catalogue porte déjà ce nom */
             409: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -5201,27 +6811,49 @@ export interface operations {
                     "application/json": components["schemas"]["TaskOut"];
                 };
             };
-            /** @description Inexistant ou hors de cette crèche ou entreprise */
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Origine de la requête refusée ; Second facteur requis */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Tâche introuvable */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Nom déjà pris */
+            /** @description Une tâche du catalogue porte déjà ce nom */
             409: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Validation Error */
+            /** @description Le champ name ne peut pas être vide */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["Error"] | components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -5246,6 +6878,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RoomOut"][];
+                };
+            };
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Second facteur requis */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Crèche introuvable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
                 };
             };
             /** @description Validation Error */
@@ -5283,12 +6942,41 @@ export interface operations {
                     "application/json": components["schemas"]["RoomOut"];
                 };
             };
-            /** @description Nom déjà pris */
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Origine de la requête refusée ; Second facteur requis ; Seule la direction peut gérer cette crèche */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Crèche introuvable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Une pièce de cette crèche porte déjà ce nom */
             409: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -5322,12 +7010,32 @@ export interface operations {
                     "application/json": components["schemas"]["RoomDetail"];
                 };
             };
-            /** @description Inexistant ou hors de cette crèche ou entreprise */
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Second facteur requis */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Pièce introuvable ; Crèche introuvable */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -5365,27 +7073,49 @@ export interface operations {
                     "application/json": components["schemas"]["RoomOut"];
                 };
             };
-            /** @description Inexistant ou hors de cette crèche ou entreprise */
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Origine de la requête refusée ; Second facteur requis ; Seule la direction peut gérer cette crèche */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Pièce introuvable ; Crèche introuvable */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Nom déjà pris */
+            /** @description Une pièce de cette crèche porte déjà ce nom */
             409: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Validation Error */
+            /** @description Le champ name ne peut pas être vide */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["Error"] | components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -5416,27 +7146,49 @@ export interface operations {
                     "application/json": components["schemas"]["RoomTaskOut"];
                 };
             };
-            /** @description Inexistant ou hors de cette crèche ou entreprise */
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Origine de la requête refusée ; Second facteur requis ; Seule la direction peut gérer cette crèche */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Pièce introuvable ; Tâche introuvable ; Crèche introuvable */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Nom déjà pris */
+            /** @description Cette tâche vient d'être ajoutée à la pièce : recharger */
             409: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Validation Error */
+            /** @description Tâche désactivée dans le catalogue */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["Error"] | components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -5461,6 +7213,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DayPlan"];
+                };
+            };
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Second facteur requis */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Crèche introuvable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
                 };
             };
             /** @description Validation Error */
@@ -5501,20 +7280,40 @@ export interface operations {
                     "application/json": components["schemas"]["CheckRecord"][];
                 };
             };
-            /** @description Inexistant ou hors de cette crèche ou entreprise */
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Second facteur requis */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Pièce introuvable ; Crèche introuvable */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Validation Error */
+            /** @description La date de début suit la date de fin */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["Error"] | components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -5543,23 +7342,43 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "text/csv": unknown;
+                    "text/csv": string;
                 };
             };
-            /** @description Inexistant ou hors de cette crèche ou entreprise */
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Second facteur requis */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Pièce introuvable ; Crèche introuvable */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
-            /** @description Validation Error */
+            /** @description La date de début suit la date de fin */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["Error"] | components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -5582,6 +7401,15 @@ export interface operations {
                     "application/json": components["schemas"]["TabletSheet"];
                 };
             };
+            /** @description Session de tablette absente ou expirée : saisir le PIN ; Tablette non enrôlée, expirée ou révoquée */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
     tablet_check_api_v2_tablet_cleaning__room_task_id__check_post: {
@@ -5602,6 +7430,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CheckOut"];
+                };
+            };
+            /** @description Session de tablette absente ou expirée : saisir le PIN ; Tablette non enrôlée, expirée ou révoquée */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Origine de la requête refusée */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Tâche introuvable dans cette crèche */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Cette tâche n'est pas prévue aujourd'hui ; Tâche déjà cochée aujourd'hui */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
                 };
             };
             /** @description Validation Error */
@@ -5633,6 +7497,42 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Session de tablette absente ou expirée : saisir le PIN ; Tablette non enrôlée, expirée ou révoquée */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Origine de la requête refusée */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Tâche introuvable dans cette crèche */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Cette tâche n'est pas cochée aujourd'hui */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -5662,6 +7562,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffInvitationOut"];
+                };
+            };
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Origine de la requête refusée ; Second facteur requis */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Employé introuvable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Ce compte a déjà son mot de passe, ou il est désactivé */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
                 };
             };
             /** @description Validation Error */
@@ -5699,13 +7635,40 @@ export interface operations {
                     "application/json": components["schemas"]["StaffOut"];
                 };
             };
-            /** @description Validation Error */
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Origine de la requête refusée ; Second facteur requis */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Employé introuvable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Le champ first_name ne peut pas être vide */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["Error"] | components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -5732,6 +7695,24 @@ export interface operations {
                     "application/json": components["schemas"]["StaffInvitationInfo"];
                 };
             };
+            /** @description Origine de la requête refusée */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Invitation inconnue, expirée ou déjà utilisée */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -5752,7 +7733,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["AcceptIn"];
+                "application/json": components["schemas"]["app__accounts__schemas__AcceptIn"];
             };
         };
         responses: {
@@ -5765,13 +7746,31 @@ export interface operations {
                     "application/json": components["schemas"]["app__accounts__schemas__AcceptedOut"];
                 };
             };
-            /** @description Validation Error */
+            /** @description Origine de la requête refusée */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Invitation inconnue, expirée ou déjà utilisée */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Ce mot de passe est trop courant. */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["Error"] | components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -5798,13 +7797,40 @@ export interface operations {
                     "application/json": components["schemas"]["PasswordChangedOut"];
                 };
             };
-            /** @description Validation Error */
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Mot de passe actuel incorrect ; Origine de la requête refusée ; Second facteur requis */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Ce mot de passe est trop courant. */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["Error"] | components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Trop de tentatives, réessayez plus tard */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
                 };
             };
         };
@@ -5827,7 +7853,7 @@ export interface operations {
                     "application/json": components["schemas"]["Health"];
                 };
             };
-            /** @description Service Unavailable */
+            /** @description Base injoignable */
             503: {
                 headers: {
                     [name: string]: unknown;
