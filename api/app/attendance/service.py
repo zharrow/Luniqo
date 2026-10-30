@@ -54,6 +54,13 @@ async def day_presences(db: AsyncSession, nursery_id: uuid.UUID, day: date) -> l
     return [Presence(*row) for row in rows]
 
 
+async def period_presences(db: AsyncSession, nursery_id: uuid.UUID, start: date, end: date) -> list[Presence]:
+    """Présences de `start` à `end` inclus, par jour puis par heure d'arrivée."""
+    statement = _presences().where(Attendance.nursery_id == nursery_id, Attendance.day.between(start, end))
+    rows = await db.execute(statement.order_by(Attendance.day, Attendance.arrived_at))
+    return [Presence(*row) for row in rows]
+
+
 async def present_now(db: AsyncSession, nursery_id: uuid.UUID) -> list[Presence]:
     statement = _presences().where(Attendance.nursery_id == nursery_id, Attendance.departed_at.is_(None))
     rows = await db.execute(statement.order_by(Child.last_name, Child.first_name))

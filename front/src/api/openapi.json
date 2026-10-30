@@ -7235,6 +7235,334 @@
         ]
       }
     },
+    "/api/v2/nurseries/{nursery_id}/attendance/history": {
+      "get": {
+        "tags": [
+          "pointage"
+        ],
+        "summary": "Présences sur une période (366 jours au plus), par jour puis par heure d'arrivée",
+        "description": "Présences sur une période (366 jours au plus), par jour puis par heure d'arrivée.",
+        "operationId": "attendance_history_api_v2_nurseries__nursery_id__attendance_history_get",
+        "parameters": [
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Premier jour (7 jours avant `to` par défaut)",
+              "title": "From"
+            },
+            "description": "Premier jour (7 jours avant `to` par défaut)"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Dernier jour (aujourd'hui à Paris par défaut)",
+              "title": "To"
+            },
+            "description": "Dernier jour (aujourd'hui à Paris par défaut)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttendanceOut"
+                  },
+                  "title": "Response Attendance History Api V2 Nurseries  Nursery Id  Attendance History Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentification requise",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Authentification requise": {
+                    "value": {
+                      "detail": "Authentification requise"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Action non autorisée pour ce rôle ; Second facteur requis",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Action non autorisée pour ce rôle": {
+                    "value": {
+                      "detail": "Action non autorisée pour ce rôle"
+                    }
+                  },
+                  "Second facteur requis": {
+                    "value": {
+                      "detail": "Second facteur requis"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Crèche introuvable",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Crèche introuvable": {
+                    "value": {
+                      "detail": "Crèche introuvable"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "La date de début suit la date de fin ; Période limitée à 366 jours par requête",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "La date de début suit la date de fin": {
+                    "value": {
+                      "detail": "La date de début suit la date de fin"
+                    }
+                  },
+                  "Période limitée à 366 jours par requête": {
+                    "value": {
+                      "detail": "Période limitée à 366 jours par requête"
+                    }
+                  }
+                },
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    },
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "webSession": []
+          }
+        ]
+      }
+    },
+    "/api/v2/nurseries/{nursery_id}/attendance/history.csv": {
+      "get": {
+        "tags": [
+          "pointage"
+        ],
+        "summary": "Mêmes lignes que l'historique, à ouvrir dans un tableur (contrôle, facturation, déclaration)",
+        "description": "Mêmes lignes que l'historique, à ouvrir dans un tableur (contrôle, facturation, déclaration).\n\nSéparateur « ; » et BOM UTF-8 : un tableur réglé en français l'ouvre avec ses accents. Heures en heure de Paris.",
+        "operationId": "attendance_history_csv_api_v2_nurseries__nursery_id__attendance_history_csv_get",
+        "parameters": [
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Premier jour (7 jours avant `to` par défaut)",
+              "title": "From"
+            },
+            "description": "Premier jour (7 jours avant `to` par défaut)"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Dernier jour (aujourd'hui à Paris par défaut)",
+              "title": "To"
+            },
+            "description": "Dernier jour (aujourd'hui à Paris par défaut)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Présences au format CSV (tableur)",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentification requise",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Authentification requise": {
+                    "value": {
+                      "detail": "Authentification requise"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Action non autorisée pour ce rôle ; Second facteur requis",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Action non autorisée pour ce rôle": {
+                    "value": {
+                      "detail": "Action non autorisée pour ce rôle"
+                    }
+                  },
+                  "Second facteur requis": {
+                    "value": {
+                      "detail": "Second facteur requis"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Crèche introuvable",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Crèche introuvable": {
+                    "value": {
+                      "detail": "Crèche introuvable"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "La date de début suit la date de fin ; Période limitée à 366 jours par requête",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "La date de début suit la date de fin": {
+                    "value": {
+                      "detail": "La date de début suit la date de fin"
+                    }
+                  },
+                  "Période limitée à 366 jours par requête": {
+                    "value": {
+                      "detail": "Période limitée à 366 jours par requête"
+                    }
+                  }
+                },
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    },
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "webSession": []
+          }
+        ]
+      }
+    },
     "/api/v2/nurseries/{nursery_id}/guardians/{guardian_id}/invitation": {
       "post": {
         "tags": [
@@ -9114,13 +9442,18 @@
             }
           },
           "422": {
-            "description": "La date de début suit la date de fin",
+            "description": "La date de début suit la date de fin ; Période limitée à 366 jours par requête",
             "content": {
               "application/json": {
                 "examples": {
                   "La date de début suit la date de fin": {
                     "value": {
                       "detail": "La date de début suit la date de fin"
+                    }
+                  },
+                  "Période limitée à 366 jours par requête": {
+                    "value": {
+                      "detail": "Période limitée à 366 jours par requête"
                     }
                   }
                 },
@@ -9295,13 +9628,18 @@
             }
           },
           "422": {
-            "description": "La date de début suit la date de fin",
+            "description": "La date de début suit la date de fin ; Période limitée à 366 jours par requête",
             "content": {
               "application/json": {
                 "examples": {
                   "La date de début suit la date de fin": {
                     "value": {
                       "detail": "La date de début suit la date de fin"
+                    }
+                  },
+                  "Période limitée à 366 jours par requête": {
+                    "value": {
+                      "detail": "Période limitée à 366 jours par requête"
                     }
                   }
                 },

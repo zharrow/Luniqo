@@ -153,6 +153,80 @@ async def test_retour_dans_la_journee(clients, world, clock):
     assert len((await owner.get(f"/api/v2/nurseries/{world['nord'].id}/attendance")).json()) == 2
 
 
+# --- Historique et export (LUN-93) ----------------------------------------------------
+
+async def two_days(clients, world, clock):
+    """Léo le 15 juillet (amené et cherché par Alice), Emma le 16 juillet, toujours présente."""
+    tablet = await ready_tablet(clients, world)
+    leo = f"/api/v2/tablet/children/{world['leo'].id}"
+    assert (await tablet.post(f"{leo}/arrival", json={"dropped_off_by": str(world["alice"].id)})).status_code == 201
+    clock["now"] = MORNING + timedelta(hours=8)
+    # Session par PIN de 2 minutes : l'employée tape à nouveau son PIN pour chaque geste espacé.
+    assert (await pin_login(tablet, world["lea"])).status_code == 201
+    assert (await tablet.post(f"{leo}/departure", json={"picked_up_by": str(world["alice"].id)})).status_code == 200
+    clock["now"] = MORNING + timedelta(days=1)
+    assert (await pin_login(tablet, world["lea"])).status_code == 201
+    assert (await tablet.post(f"/api/v2/tablet/children/{world['emma'].id}/arrival", json={})).status_code == 201
+    owner = clients()
+    await login(owner, "direction@a.test")
+    return owner, f"/api/v2/nurseries/{world['nord'].id}/attendance/history"
+
+
+async def test_historique_sur_une_periode(clients, world, clock, db):
+    owner, url = await two_days(clients, world, clock)
+    # Nina, à la crèche Sud, le même jour : absente de l'historique de la crèche Nord.
+    db.add(Attendance(id=uuid.uuid4(), child_id=world["nina"].id, nursery_id=world["sud"].id,
+                      day=date(2026, 7, 15), arrived_at=MORNING))
+    await db.flush()
+    period = (await owner.get(url, params={"from": "2026-07-14", "to": "2026-07-16"})).json()
+    assert [(p["day"], p["child_name"]) for p in period] == [("2026-07-15", "Léo Garnier"),
+                                                              ("2026-07-16", "Emma Lambert")]
+    assert period[0]["picked_up_by"] == "Alice G." and period[1]["departed_at"] is None
+    # Par défaut : les 7 derniers jours, aujourd'hui compris (16 juillet).
+    assert len((await owner.get(url)).json()) == 2
+    assert [p["child_name"] for p in (await owner.get(url, params={"from": "2026-07-16"})).json()] == ["Emma Lambert"]
+
+
+async def test_export_csv_des_presences(clients, world, clock, db):
+    owner, url = await two_days(clients, world, clock)
+    # Un nom qui commence par « = » reste du texte dans le tableur (injection de formule, OWASP).
+    world["emma"].first_name = "=Emma"
+    await db.flush()
+    response = await owner.get(f"{url}.csv", params={"from": "2026-07-14", "to": "2026-07-16"})
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "text/csv; charset=utf-8"
+    assert response.headers["content-disposition"] == 'attachment; filename="presences_2026-07-14_2026-07-16.csv"'
+    assert response.headers["cache-control"] == "no-store"
+    assert response.text.split("\r\n") == [
+        "\ufeffJour;Enfant;Arrivée;Arrivée pointée par;Amené·e par;Départ;Départ pointé par;Parti·e avec",
+        "15/07/2026;Léo Garnier;09:00;Lea T.;Alice G.;17:00;Lea T.;Alice G.",
+        "16/07/2026;'=Emma Lambert;09:00;Lea T.;;;;",
+        "",
+    ]
+
+
+@pytest.mark.parametrize(("params", "message"), [
+    ({"from": "2026-07-16", "to": "2026-07-15"}, "La date de début suit la date de fin"),
+    ({"from": "2025-07-14", "to": "2026-07-15"}, "Période limitée à 366 jours par requête"),
+])
+async def test_periode_refusee(clients, world, clock, params, message):
+    owner = clients()
+    await login(owner, "direction@a.test")
+    url = f"/api/v2/nurseries/{world['nord'].id}/attendance/history"
+    for path in (url, f"{url}.csv"):
+        response = await owner.get(path, params=params)
+        assert response.status_code == 422 and response.json() == {"detail": message}
+
+
+async def test_historique_isole_par_creche(clients, world, clock):
+    _, url = await two_days(clients, world, clock)
+    for email in ("sans_acces@a.test", "direction@b.test"):
+        stranger = clients()
+        await login(stranger, email)
+        assert (await stranger.get(url)).status_code == 404
+        assert (await stranger.get(f"{url}.csv")).status_code == 404
+
+
 # --- Refus --------------------------------------------------------------------------
 
 @pytest.mark.parametrize(("child", "expected"), [("suspendu", 409), ("futur", 409), ("nina", 404)])
