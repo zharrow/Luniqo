@@ -101,23 +101,25 @@ test('direction : enrôlement de la tablette puis révocation', async ({ page, c
   expect(errors).toEqual([])
 })
 
-test("tablette : enrôlée par la direction, puis PIN de l'employé", async ({ page, context, playwright, baseURL }) => {
+test("tablette : enrôlée par la direction, puis PIN de l'employé", async ({ page, context, browser, baseURL }) => {
   const errors = watchConsole(page)
   const backupCode = backupCodes.shift()
   test.skip(backupCode === undefined, "Codes de secours absents : le parcours d'activation doit passer avant.")
   // Les écritures exigent l'en-tête Origin de Luniqo (ADR-003), que le navigateur envoie seul.
   const origin = { Origin: baseURL ?? '' }
 
-  // L'employé choisit son PIN depuis son compte (écran à venir) : par l'API.
-  const employee = await playwright.request.newContext({ baseURL })
-  const employeeLogin = await employee.post('/api/v2/auth/login', {
-    data: { email: 'employe@demo.test', password },
-    headers: origin,
-  })
-  expect(employeeLogin.ok()).toBe(true)
-  const pin = await employee.put('/api/v2/auth/me/pin', { data: { pin: '4826', password }, headers: origin })
-  expect(pin.status()).toBe(204)
-  await employee.dispose()
+  // L'employé choisit son PIN depuis son espace, dans son propre navigateur.
+  const employeeContext = await browser.newContext({ baseURL })
+  const employee = await employeeContext.newPage()
+  await employee.goto('/connexion')
+  await login(employee, 'employe@demo.test')
+  await employee.getByRole('link', { name: 'Choisir ou changer mon PIN de tablette' }).click()
+  await employee.getByLabel('Nouveau PIN (4 chiffres)').fill('4826')
+  await employee.getByLabel('Nouveau PIN, une seconde fois').fill('4826')
+  await employee.getByLabel('Mot de passe actuel').fill(password)
+  await employee.getByRole('button', { name: 'Enregistrer mon PIN' }).click()
+  await expect(employee.getByText('PIN enregistré : utilisez-le dès maintenant sur la tablette.')).toBeVisible()
+  await employeeContext.close()
 
   // La direction se connecte sur la tablette et l'enrôle (écran d'enrôlement testé à part), puis s'en va.
   await page.goto('/connexion')

@@ -24,6 +24,7 @@ Chaque ligne cite son ticket Jira `LUN-<n>`.
 - Front v2, mode tablette (`/tablette`) : la tablette enrôlée affiche les employés de sa crèche ; l'employé choisit son nom et tape son PIN sur un pavé à grands boutons (ou au clavier), vérifié par l'API ; messages pour un PIN incorrect, bloqué ou non choisi ; l'employé identifié termine sa session, qui se ferme aussi d'elle-même au bout de 2 minutes (LUN-88).
 - Front v2, mode tablette : après son PIN, l'employé pointe les enfants attendus aujourd'hui, rangés en « À accueillir », « Présents » et « Partis » ; arrivée en précisant, s'il le veut, qui amène l'enfant ; départ avec la personne qui vient le chercher, choisie parmi celles autorisées (les autres sont signalées) ; heure du serveur, confirmation affichée, retour au PIN si la session a expiré (LUN-89).
 - Front v2 : présences du jour d'une crèche, pour la direction et les employés, depuis l'accueil : présents en ce moment, arrivées et départs, puis une ligne par arrivée avec les heures (Paris), qui a pointé et qui a amené ou cherché l'enfant ; relues toutes les 30 secondes (LUN-91).
+- Front v2 : l'employé choisit ou change son PIN de tablette depuis son accueil (saisi deux fois, confirmé par son mot de passe) ; un nouveau PIN débloque aussi un PIN bloqué. Jusqu'ici, aucun écran ne le permettait (LUN-119).
 
 ### Modifié
 
