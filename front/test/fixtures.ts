@@ -33,3 +33,13 @@ export const nursery: Schemas['NurseryOut'] = {
   capacity: 12,
   is_active: true,
 }
+
+export const tablet: Schemas['TabletOut'] = {
+  id: '00000000-0000-4000-8000-0000000000a1',
+  nursery_id: nursery.id,
+  label: "Tablette de l'entrée",
+  created_at: '2026-10-30T08:00:00Z',
+  expires_at: '2027-01-28T08:00:00Z',
+  revoked_at: null,
+  last_seen_at: '2026-10-30T09:15:00Z',
+}

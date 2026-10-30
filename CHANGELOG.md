@@ -20,6 +20,7 @@ Chaque ligne cite son ticket Jira `LUN-<n>`.
 - CI : vérification du front v2 (contrat d'API à jour, lint, typage, tests, build, Storybook) et parcours Playwright contre la pile démarrée (LUN-107).
 - TP Docker, consigne supplémentaire : conteneurs de CI `lint` (ruff, ShellCheck, refus de toute image Docker Hub) et `test` (tests unitaires et d'intégration sur une base jetable), enchaînés par `docker/pipeline.sh` (lint → test → déploiement de la pile) et lancés à chaque PR par la CI GitHub (LUN-115).
 - TP Docker : banc de mesure de la consommation CPU des conteneurs (`docker/bench/bench.sh`, générateur de charge wrk), au repos, sous charge et pendant la CI, avec le coût de Docker lui-même (LUN-115).
+- Front v2 : la direction gère les tablettes de chaque crèche, depuis l'accueil : enrôlement de l'appareil sur lequel la page est ouverte (le jeton reste dans un cookie que le JavaScript ne lit pas), liste avec l'état de chaque tablette (active, expirée, révoquée) et révocation après confirmation (LUN-87).
 
 ### Modifié
 

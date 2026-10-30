@@ -6,9 +6,11 @@ Elle ne parle qu'à l'API v2 ([api/](../api/README.md)), sur la même origine :
 le conteneur `front` de la pile Docker sert ses fichiers avec nginx, et la passerelle
 `web` relaie `/` vers lui et `/api/` vers l'API.
 
-État au 2026-10-27 (LUN-107) : squelette, connexion avec second facteur
+État au 2026-10-30 : squelette, connexion avec second facteur
 (présentation d'un code, activation d'une application d'authentification,
-codes de secours), espace connecté avec la liste des crèches. La v1 reste en
+codes de secours), espace connecté avec la liste des crèches (LUN-107) ;
+tablettes d'une crèche pour la direction : enrôlement de l'appareil, liste,
+révocation (LUN-87). La v1 reste en
 production jusqu'à la bascule, prévue quand la v2 sera complète.
 
 ## Lancer
@@ -24,7 +26,8 @@ pnpm dev          # http://localhost:5173, /api relayé vers la passerelle (loca
 
 Comptes de démonstration (données fictives) : `employe@demo.test`,
 `direction@demo.test` (second facteur à enregistrer à la première connexion),
-mot de passe `API_SEED_DEMO_PASSWORD`. La pile seule sert aussi le front :
+mot de passe `API_SEED_DEMO_PASSWORD` (15 caractères au moins : sinon l'API ne
+crée aucun compte et l'écrit dans son journal). La pile seule sert aussi le front :
 <http://localhost:8080>.
 
 ## Scripts
