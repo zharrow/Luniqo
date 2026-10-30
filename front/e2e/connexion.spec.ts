@@ -165,3 +165,18 @@ test("tablette : enrôlée par la direction, puis PIN de l'employé", async ({ p
   await expect(page.getByRole('heading', { name: 'Qui êtes-vous ?' })).toBeVisible()
   expect(errors).toEqual([])
 })
+
+test('présences du jour : le pointage fait sur la tablette, vu depuis le web', async ({ page }) => {
+  const errors = watchConsole(page)
+  await page.goto('/connexion')
+  await login(page, 'employe@demo.test')
+  await page.getByRole('link', { name: 'Présences de Crèche Démo Nord' }).click()
+  await expect(page.getByRole('heading', { name: 'Présences du jour · Crèche Démo Nord' })).toBeVisible()
+
+  // Arrivée puis départ de Léo, pointés par Lucas sur la tablette au parcours précédent.
+  const leo = page.getByRole('row', { name: /Léo Garnier/ })
+  await expect(leo).toContainText('parti·e avec Alice G.')
+  await expect(leo).toContainText('pointé par Lucas B.')
+  await expect(page.getByText('Départs', { exact: true }).locator('xpath=following-sibling::dd')).toHaveText('1')
+  expect(errors).toEqual([])
+})

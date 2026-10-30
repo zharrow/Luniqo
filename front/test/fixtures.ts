@@ -125,3 +125,41 @@ export const tabletChildren: Schemas['TabletChild'][] = [
     guardians: lambert,
   },
 ]
+
+const presence: Schemas['AttendanceOut'] = {
+  id: '00000000-0000-4000-8000-0000000000b1',
+  child_id: '00000000-0000-4000-8000-0000000000d1',
+  child_name: 'Léo Garnier',
+  day: '2026-10-30',
+  arrived_at: '2026-10-30T07:45:00Z',
+  arrival_by: 'Lucas B.',
+  dropped_off_by: 'Alice G.',
+  departed_at: null,
+  departure_by: null,
+  picked_up_by: null,
+}
+
+/** Présences du jour d'une crèche (`GET /api/v2/nurseries/{id}/attendance`), par heure d'arrivée. */
+export const dayAttendance: Schemas['AttendanceOut'][] = [
+  presence,
+  {
+    ...presence,
+    id: '00000000-0000-4000-8000-0000000000b2',
+    child_id: '00000000-0000-4000-8000-0000000000d3',
+    child_name: 'Jules Lambert',
+    arrived_at: '2026-10-30T08:10:00Z',
+    dropped_off_by: null,
+    departed_at: '2026-10-30T11:30:00Z',
+    departure_by: 'Lucas B.',
+    picked_up_by: 'Jeanne L.',
+  },
+  {
+    ...presence,
+    id: '00000000-0000-4000-8000-0000000000b3',
+    child_id: '00000000-0000-4000-8000-0000000000d2',
+    child_name: 'Emma Lambert',
+    arrived_at: '2026-10-30T08:20:00Z',
+    arrival_by: 'Inès M.',
+    dropped_off_by: 'Sophie L.',
+  },
+]

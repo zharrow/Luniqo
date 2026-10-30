@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { Tablet } from 'lucide-react'
+import { ClipboardList, Tablet } from 'lucide-react'
 
 import { $api } from '@/api/client'
 import { NurseryList } from '@/features/nurseries/nursery-list'
@@ -9,6 +9,8 @@ export const Route = createFileRoute('/_app/accueil')({
 })
 
 const STAFF_ROLES = new Set(['owner', 'employee'])
+
+const LINK = 'inline-flex min-h-11 items-center gap-2 text-primary underline underline-offset-4'
 
 function HomePage() {
   const { session } = Route.useRouteContext()
@@ -27,21 +29,30 @@ function HomePage() {
             nurseries={nurseries.data}
             pending={nurseries.isPending}
             error={nurseries.error}
-            actions={
-              session.role === 'owner'
-                ? (nursery) => (
-                    <Link
-                      to="/creches/$nurseryId/tablettes"
-                      params={{ nurseryId: nursery.id }}
-                      aria-label={`Tablettes de ${nursery.name}`}
-                      className="inline-flex min-h-11 items-center gap-2 text-primary underline underline-offset-4"
-                    >
-                      <Tablet aria-hidden="true" className="size-4" />
-                      Tablettes
-                    </Link>
-                  )
-                : undefined
-            }
+            actions={(nursery) => (
+              <div className="flex flex-wrap gap-x-5">
+                <Link
+                  to="/creches/$nurseryId/presences"
+                  params={{ nurseryId: nursery.id }}
+                  aria-label={`Présences de ${nursery.name}`}
+                  className={LINK}
+                >
+                  <ClipboardList aria-hidden="true" className="size-4" />
+                  Présences
+                </Link>
+                {session.role === 'owner' && (
+                  <Link
+                    to="/creches/$nurseryId/tablettes"
+                    params={{ nurseryId: nursery.id }}
+                    aria-label={`Tablettes de ${nursery.name}`}
+                    className={LINK}
+                  >
+                    <Tablet aria-hidden="true" className="size-4" />
+                    Tablettes
+                  </Link>
+                )}
+              </div>
+            )}
           />
         </section>
       ) : (
