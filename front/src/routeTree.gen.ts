@@ -14,6 +14,7 @@ import { Route as AppRouteRouteImport } from './routes/_app/route'
 import { Route as ConnexionRouteRouteImport } from './routes/connexion/route'
 import { Route as TabletteRouteImport } from './routes/tablette'
 import { Route as AppAccueilRouteImport } from './routes/_app/accueil'
+import { Route as AppMonPinRouteImport } from './routes/_app/mon-pin'
 import { Route as ConnexionIndexRouteImport } from './routes/connexion/index'
 import { Route as ConnexionActivationRouteImport } from './routes/connexion/activation'
 import { Route as ConnexionSecondFacteurRouteImport } from './routes/connexion/second-facteur'
@@ -42,6 +43,11 @@ const TabletteRoute = TabletteRouteImport.update({
 const AppAccueilRoute = AppAccueilRouteImport.update({
   id: '/accueil',
   path: '/accueil',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppMonPinRoute = AppMonPinRouteImport.update({
+  id: '/mon-pin',
+  path: '/mon-pin',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const ConnexionIndexRoute = ConnexionIndexRouteImport.update({
@@ -77,6 +83,7 @@ export interface FileRoutesByFullPath {
   '/connexion': typeof ConnexionRouteRouteWithChildren
   '/tablette': typeof TabletteRoute
   '/accueil': typeof AppAccueilRoute
+  '/mon-pin': typeof AppMonPinRoute
   '/connexion/activation': typeof ConnexionActivationRoute
   '/connexion/second-facteur': typeof ConnexionSecondFacteurRoute
   '/connexion/': typeof ConnexionIndexRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/tablette': typeof TabletteRoute
   '/accueil': typeof AppAccueilRoute
+  '/mon-pin': typeof AppMonPinRoute
   '/connexion/activation': typeof ConnexionActivationRoute
   '/connexion/second-facteur': typeof ConnexionSecondFacteurRoute
   '/connexion': typeof ConnexionIndexRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/connexion': typeof ConnexionRouteRouteWithChildren
   '/tablette': typeof TabletteRoute
   '/_app/accueil': typeof AppAccueilRoute
+  '/_app/mon-pin': typeof AppMonPinRoute
   '/connexion/activation': typeof ConnexionActivationRoute
   '/connexion/second-facteur': typeof ConnexionSecondFacteurRoute
   '/connexion/': typeof ConnexionIndexRoute
@@ -113,6 +122,7 @@ export interface FileRouteTypes {
     | '/connexion'
     | '/tablette'
     | '/accueil'
+    | '/mon-pin'
     | '/connexion/activation'
     | '/connexion/second-facteur'
     | '/connexion/'
@@ -123,6 +133,7 @@ export interface FileRouteTypes {
     | '/'
     | '/tablette'
     | '/accueil'
+    | '/mon-pin'
     | '/connexion/activation'
     | '/connexion/second-facteur'
     | '/connexion'
@@ -135,6 +146,7 @@ export interface FileRouteTypes {
     | '/connexion'
     | '/tablette'
     | '/_app/accueil'
+    | '/_app/mon-pin'
     | '/connexion/activation'
     | '/connexion/second-facteur'
     | '/connexion/'
@@ -186,6 +198,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAccueilRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/_app/mon-pin': {
+      id: '/_app/mon-pin'
+      path: '/mon-pin'
+      fullPath: '/mon-pin'
+      preLoaderRoute: typeof AppMonPinRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/connexion/': {
       id: '/connexion/'
       path: '/'
@@ -226,12 +245,14 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteRouteChildren {
   AppAccueilRoute: typeof AppAccueilRoute
+  AppMonPinRoute: typeof AppMonPinRoute
   AppCrechesNurseryIdPresencesRoute: typeof AppCrechesNurseryIdPresencesRoute
   AppCrechesNurseryIdTablettesRoute: typeof AppCrechesNurseryIdTablettesRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppAccueilRoute: AppAccueilRoute,
+  AppMonPinRoute: AppMonPinRoute,
   AppCrechesNurseryIdPresencesRoute: AppCrechesNurseryIdPresencesRoute,
   AppCrechesNurseryIdTablettesRoute: AppCrechesNurseryIdTablettesRoute,
 }

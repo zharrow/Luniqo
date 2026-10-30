@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { ClipboardList, Tablet } from 'lucide-react'
+import { ClipboardList, KeyRound, Tablet } from 'lucide-react'
 
 import { $api } from '@/api/client'
 import { NurseryList } from '@/features/nurseries/nursery-list'
@@ -20,7 +20,7 @@ function HomePage() {
   return (
     <div className="grid gap-6">
       <h1 className="text-2xl font-semibold">Bonjour {session.first_name}</h1>
-      {isStaff ? (
+      {isStaff && (
         <section aria-labelledby="creches" className="grid gap-3">
           <h2 id="creches" className="text-lg font-medium">
             Vos crèches
@@ -55,9 +55,19 @@ function HomePage() {
             )}
           />
         </section>
-      ) : (
-        <p className="text-muted-foreground">Votre espace arrive bientôt.</p>
       )}
+      {session.role === 'employee' && (
+        <section aria-labelledby="tablette" className="grid gap-2">
+          <h2 id="tablette" className="text-lg font-medium">
+            Tablette
+          </h2>
+          <Link to="/mon-pin" className={LINK}>
+            <KeyRound aria-hidden="true" className="size-4" />
+            Choisir ou changer mon PIN de tablette
+          </Link>
+        </section>
+      )}
+      {!isStaff && <p className="text-muted-foreground">Votre espace arrive bientôt.</p>}
     </div>
   )
 }
