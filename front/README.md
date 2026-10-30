@@ -9,8 +9,9 @@ le conteneur `front` de la pile Docker sert ses fichiers avec nginx, et la passe
 État au 2026-10-30 : squelette, connexion avec second facteur
 (présentation d'un code, activation d'une application d'authentification,
 codes de secours), espace connecté avec la liste des crèches (LUN-107) ;
-mode tablette (`/tablette`, hors de l'espace connecté) : choix de l'employé
-et PIN sur un pavé à grands boutons (LUN-88). La v1 reste en
+tablettes d'une crèche pour la direction : enrôlement de l'appareil, liste,
+révocation (LUN-87) ; mode tablette (`/tablette`, hors de l'espace connecté) :
+choix de l'employé et PIN sur un pavé à grands boutons (LUN-88). La v1 reste en
 production jusqu'à la bascule, prévue quand la v2 sera complète.
 
 ## Lancer
@@ -27,8 +28,8 @@ pnpm dev          # http://localhost:5173, /api relayé vers la passerelle (loca
 Comptes de démonstration (données fictives) : `employe@demo.test`,
 `direction@demo.test` (second facteur à enregistrer à la première connexion),
 mot de passe `API_SEED_DEMO_PASSWORD` : 15 caractères au moins, sinon l'API ne
-crée aucun compte (elle l'écrit dans son journal) ; entre apostrophes dans
-`.env` s'il contient un `$`, que Docker Compose interpréterait comme une variable. La pile seule sert aussi le front :
+crée aucun compte (elle l'écrit dans son journal) ; sans `$`, que Docker Compose
+interprète comme une variable (ou entre apostrophes dans `.env`). La pile seule sert aussi le front :
 <http://localhost:8080>.
 
 ## Scripts

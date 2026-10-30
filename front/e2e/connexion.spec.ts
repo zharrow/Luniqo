@@ -73,6 +73,34 @@ test("direction : activation de l'application d'authentification, puis second fa
   expect(errors).toEqual([])
 })
 
+test('direction : enrôlement de la tablette puis révocation', async ({ page, context }) => {
+  const errors = watchConsole(page)
+  const backupCode = backupCodes.shift()
+  test.skip(backupCode === undefined, "Codes de secours absents : le parcours d'activation doit passer avant.")
+  await page.goto('/connexion')
+  await login(page, 'direction@demo.test')
+  await page.getByLabel('Code à 6 chiffres ou code de secours').fill(backupCode ?? '')
+  await page.getByRole('button', { name: 'Valider' }).click()
+
+  await page.getByRole('link', { name: 'Tablettes de Crèche Démo Nord' }).click()
+  await expect(page.getByRole('heading', { name: 'Tablettes de Crèche Démo Nord' })).toBeVisible()
+  await page.getByLabel('Nom de la tablette').fill('Tablette du parcours e2e')
+  await page.getByRole('button', { name: 'Enrôler cet appareil' }).click()
+  await expect(page.getByText(/« Tablette du parcours e2e » est enrôlée sur cet appareil/)).toBeVisible()
+
+  // Le jeton d'appareil n'est jamais lisible par le JavaScript : cookie HttpOnly posé par l'API.
+  const device = (await context.cookies()).find((cookie) => cookie.name.endsWith('luniqo_device'))
+  expect(device).toMatchObject({ httpOnly: true, sameSite: 'Strict' })
+  expect(await page.evaluate<string>('document.cookie')).not.toContain('luniqo_device')
+
+  const card = page.getByRole('listitem').filter({ hasText: 'Tablette du parcours e2e' })
+  await expect(card.getByText('Active', { exact: true })).toBeVisible()
+  await card.getByRole('button', { name: 'Révoquer' }).click()
+  await card.getByRole('button', { name: 'Confirmer la révocation' }).click()
+  await expect(card.getByText('Révoquée', { exact: true })).toBeVisible()
+  expect(errors).toEqual([])
+})
+
 test("tablette : enrôlée par la direction, puis PIN de l'employé", async ({ page, context, playwright, baseURL }) => {
   const errors = watchConsole(page)
   const backupCode = backupCodes.shift()
