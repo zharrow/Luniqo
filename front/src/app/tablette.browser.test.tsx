@@ -5,7 +5,7 @@ import { render } from 'vitest-browser-react'
 
 import type { Schemas } from '@/api/types'
 
-import { employee, tabletActor, tabletInfo } from '../../test/fixtures'
+import { employee, tabletActor, tabletChildren, tabletInfo } from '../../test/fixtures'
 import { test } from '../../test/msw'
 import { App, createApp } from './app'
 
@@ -13,6 +13,8 @@ async function start() {
   const app = createApp(createMemoryHistory({ initialEntries: ['/tablette'] }))
   return { app, screen: await render(<App instance={app} />) }
 }
+
+const childrenOfDay = http.get('/api/v2/tablet/children', () => HttpResponse.json(tabletChildren))
 
 const noActionSession = http.get('/api/v2/tablet/session', () =>
   HttpResponse.json({ detail: 'Session de tablette absente ou expirée : saisir le PIN' }, { status: 401 }),
@@ -46,6 +48,7 @@ describe('mode tablette', () => {
         actor = { ...tabletActor, expires_at: new Date(Date.now() + 120_000).toISOString() }
         return HttpResponse.json(actor, { status: 201 })
       }),
+      childrenOfDay,
       http.delete('/api/v2/tablet/session', () => {
         actor = null
         return new HttpResponse(null, { status: 204 })
@@ -111,10 +114,106 @@ describe('mode tablette', () => {
         if (actor !== null && new Date(actor.expires_at).getTime() <= Date.now()) actor = null
         return actor === null ? HttpResponse.json({ detail: 'x' }, { status: 401 }) : HttpResponse.json(actor)
       }),
+      childrenOfDay,
     )
     const { screen } = await start()
     // Session déjà ouverte au chargement : l'employé identifié est affiché.
     await expect.element(screen.getByRole('heading', { name: 'Bonjour Lucas B.' })).toBeVisible()
     await expect.element(screen.getByRole('heading', { name: 'Qui êtes-vous ?' })).toBeVisible()
+  })
+
+  describe('pointage', () => {
+    const session = http.get('/api/v2/tablet/session', () =>
+      HttpResponse.json({ ...tabletActor, expires_at: new Date(Date.now() + 120_000).toISOString() }),
+    )
+    const [leo, emma] = tabletChildren as [Schemas['TabletChild'], Schemas['TabletChild']]
+
+    test("arrivée sans préciser qui amène l'enfant, puis liste relue", async ({ worker }) => {
+      let children = tabletChildren
+      let sent: unknown = null
+      worker.use(
+        http.get('/api/v2/tablet', () => HttpResponse.json(tabletInfo)),
+        session,
+        http.get('/api/v2/tablet/children', () => HttpResponse.json(children)),
+        http.post(`/api/v2/tablet/children/${leo.id}/arrival`, async ({ request }) => {
+          sent = await request.json()
+          children = children.map((child) =>
+            child.id === leo.id ? { ...child, presence: 'present', arrived_at: '2026-10-30T07:58:00Z' } : child,
+          )
+          return HttpResponse.json(
+            {
+              id: '00000000-0000-4000-8000-0000000000b1',
+              child_id: leo.id,
+              child_name: 'Léo Garnier',
+              day: '2026-10-30',
+              arrived_at: '2026-10-30T07:58:00Z',
+              arrival_by: 'Lucas B.',
+              dropped_off_by: null,
+              departed_at: null,
+              departure_by: null,
+              picked_up_by: null,
+            },
+            { status: 201 },
+          )
+        }),
+      )
+      const { screen } = await start()
+      await screen.getByRole('button', { name: /Léo Garnier/ }).click()
+      await expect.element(screen.getByRole('heading', { name: 'Arrivée de Léo Garnier' })).toBeVisible()
+      await screen.getByRole('button', { name: "Pointer l'arrivée" }).click()
+
+      await expect.element(screen.getByText('Arrivée de Léo Garnier pointée à 08:58.')).toBeVisible()
+      expect(sent).toEqual({ dropped_off_by: null })
+      await expect
+        .element(screen.getByRole('button', { name: /Léo Garnier/ }).getByText('Arrivé·e à 08:58'))
+        .toBeVisible()
+      await expect.element(screen.getByRole('heading', { name: 'Présents (2)' })).toBeVisible()
+    })
+
+    test("départ : la personne autorisée part avec l'enfant ; un refus de l'API reste affiché", async ({ worker }) => {
+      const sent: unknown[] = []
+      worker.use(
+        http.get('/api/v2/tablet', () => HttpResponse.json(tabletInfo)),
+        session,
+        childrenOfDay,
+        http.post(`/api/v2/tablet/children/${emma.id}/departure`, async ({ request }) => {
+          sent.push(await request.json())
+          return HttpResponse.json(
+            { detail: "Cette personne n'est pas autorisée à venir chercher l'enfant : prévenir la direction" },
+            { status: 403 },
+          )
+        }),
+      )
+      const { app, screen } = await start()
+      await screen.getByRole('button', { name: /Emma Lambert/ }).click()
+      await screen.getByRole('radio', { name: /Sophie L\./ }).click()
+      await screen.getByRole('button', { name: 'Pointer le départ' }).click()
+
+      await expect
+        .element(
+          screen.getByText("Cette personne n'est pas autorisée à venir chercher l'enfant : prévenir la direction"),
+        )
+        .toBeVisible()
+      expect(sent).toEqual([{ picked_up_by: '00000000-0000-4000-8000-0000000000f3' }])
+      // Un 403 du pointage ne renvoie ni vers la connexion ni vers le second facteur.
+      expect(app.router.state.location.pathname).toBe('/tablette')
+    })
+
+    test("session expirée pendant le pointage : retour au choix de l'employé, avec la raison", async ({ worker }) => {
+      worker.use(
+        http.get('/api/v2/tablet', () => HttpResponse.json(tabletInfo)),
+        session,
+        childrenOfDay,
+        http.post(`/api/v2/tablet/children/${leo.id}/arrival`, () =>
+          HttpResponse.json({ detail: 'Session de tablette absente ou expirée : saisir le PIN' }, { status: 401 }),
+        ),
+      )
+      const { screen } = await start()
+      await screen.getByRole('button', { name: /Léo Garnier/ }).click()
+      await screen.getByRole('button', { name: "Pointer l'arrivée" }).click()
+
+      await expect.element(screen.getByRole('heading', { name: 'Qui êtes-vous ?' })).toBeVisible()
+      await expect.element(screen.getByText('Session terminée : saisissez à nouveau votre PIN.')).toBeVisible()
+    })
   })
 })

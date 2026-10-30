@@ -11,7 +11,8 @@ le conteneur `front` de la pile Docker sert ses fichiers avec nginx, et la passe
 codes de secours), espace connecté avec la liste des crèches (LUN-107) ;
 tablettes d'une crèche pour la direction : enrôlement de l'appareil, liste,
 révocation (LUN-87) ; mode tablette (`/tablette`, hors de l'espace connecté) :
-choix de l'employé et PIN sur un pavé à grands boutons (LUN-88). La v1 reste en
+choix de l'employé et PIN sur un pavé à grands boutons (LUN-88), puis pointage
+des arrivées et départs des enfants (LUN-89). La v1 reste en
 production jusqu'à la bascule, prévue quand la v2 sera complète.
 
 ## Lancer
@@ -92,6 +93,12 @@ route.
   `pnpm-workspace.yaml`. Relire ce qu'un générateur installe (voir « shadcn/ui »).
 - **Storybook** : 10.6.2 au moins, serveur sur `127.0.0.1` seulement, aucun
   `.env` lu, jamais dans l'image de production (ADR-002 § 12).
+
+### Tests dans le navigateur
+
+`expect.element(…).toHaveTextContent(…)` de Vitest a échoué deux fois alors que le
+texte reçu, affiché dans l'erreur, était exactement l'attendu (cause non trouvée,
+2026-10-30). Utiliser plutôt `getByText(…)` limité à l'élément, puis `toBeVisible()`.
 
 ### shadcn/ui
 

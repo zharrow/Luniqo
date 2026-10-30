@@ -64,3 +64,64 @@ export const tablet: Schemas['TabletOut'] = {
   revoked_at: null,
   last_seen_at: '2026-10-30T09:15:00Z',
 }
+
+const garnier: Schemas['TabletGuardian'][] = [
+  {
+    id: '00000000-0000-4000-8000-0000000000f1',
+    display_name: 'Alice G.',
+    relationship: 'parent',
+    is_authorized_pickup: true,
+  },
+  {
+    id: '00000000-0000-4000-8000-0000000000f2',
+    display_name: 'Karim G.',
+    relationship: 'parent',
+    is_authorized_pickup: true,
+  },
+]
+
+const lambert: Schemas['TabletGuardian'][] = [
+  {
+    id: '00000000-0000-4000-8000-0000000000f3',
+    display_name: 'Sophie L.',
+    relationship: 'parent',
+    is_authorized_pickup: true,
+  },
+  {
+    id: '00000000-0000-4000-8000-0000000000f4',
+    display_name: 'Jeanne L.',
+    relationship: 'other',
+    is_authorized_pickup: false,
+  },
+]
+
+/** Enfants attendus aujourd'hui sur la tablette (`GET /api/v2/tablet/children`). */
+export const tabletChildren: Schemas['TabletChild'][] = [
+  {
+    id: '00000000-0000-4000-8000-0000000000d1',
+    first_name: 'Léo',
+    last_name: 'Garnier',
+    presence: 'absent',
+    arrived_at: null,
+    departed_at: null,
+    guardians: garnier,
+  },
+  {
+    id: '00000000-0000-4000-8000-0000000000d2',
+    first_name: 'Emma',
+    last_name: 'Lambert',
+    presence: 'present',
+    arrived_at: '2026-10-30T07:45:00Z',
+    departed_at: null,
+    guardians: lambert,
+  },
+  {
+    id: '00000000-0000-4000-8000-0000000000d3',
+    first_name: 'Jules',
+    last_name: 'Lambert',
+    presence: 'left',
+    arrived_at: '2026-10-30T08:10:00Z',
+    departed_at: '2026-10-30T11:30:00Z',
+    guardians: lambert,
+  },
+]

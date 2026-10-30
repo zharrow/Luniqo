@@ -1,16 +1,21 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { CircleCheck } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { $api } from '@/api/client'
 import { ApiError, errorMessage } from '@/api/errors'
 import type { Schemas } from '@/api/types'
 import { FormError } from '@/components/form-error'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { ActorPanel } from '@/features/tablet-mode/actor-panel'
+import { ChildrenBoard } from '@/features/tablet-mode/children-board'
 import { PinPad } from '@/features/tablet-mode/pin-pad'
+import { PresenceForm } from '@/features/tablet-mode/presence-form'
 import { actorQuery } from '@/features/tablet-mode/queries'
 import { StaffPicker } from '@/features/tablet-mode/staff-picker'
+import { formatTime } from '@/lib/dates'
 
 /**
  * Mode tablette : hors de l'espace connecté. La tablette est reconnue par son
@@ -80,7 +85,15 @@ function TabletPage() {
   return (
     <Screen title={info.data.nursery_name} subtitle={info.data.label}>
       {actor.data ? (
-        <ActorPanel actor={actor.data} onEnd={() => end.mutate({})} ending={end.isPending} />
+        <ActorWorkspace
+          actor={actor.data}
+          onEnd={() => end.mutate({})}
+          ending={end.isPending}
+          onSessionLost={() => {
+            setNotice('Session terminée : saisissez à nouveau votre PIN.')
+            queryClient.setQueryData(actorQuery.queryKey, null)
+          }}
+        />
       ) : member === null ? (
         <section aria-labelledby="qui" className="grid gap-5">
           <h2 id="qui" className="text-2xl font-semibold">
@@ -101,6 +114,87 @@ function TabletPage() {
         />
       )}
     </Screen>
+  )
+}
+
+type ActorWorkspaceProps = {
+  actor: Schemas['TabletActorOut']
+  onEnd: () => void
+  ending: boolean
+  /** La session d'action a expiré côté API (401) : retour au choix de l'employé. */
+  onSessionLost: () => void
+}
+
+/**
+ * Espace de l'employé identifié : pointage des enfants. Démonté à la fin de la
+ * session, il n'emporte rien d'un employé au suivant (enfant choisi, message).
+ */
+function ActorWorkspace({ actor, onEnd, ending, onSessionLost }: ActorWorkspaceProps) {
+  const expected = $api.useQuery('get', '/api/v2/tablet/children')
+  const [child, setChild] = useState<Schemas['TabletChild'] | null>(null)
+  const [done, setDone] = useState<string | null>(null)
+
+  function pointed(message: string) {
+    setDone(message)
+    setChild(null)
+    void expected.refetch()
+  }
+  function failed(error: unknown) {
+    if (error instanceof ApiError && error.status === 401) onSessionLost()
+  }
+  const arrival = $api.useMutation('post', '/api/v2/tablet/children/{child_id}/arrival', {
+    onSuccess: (presence) => pointed(`Arrivée de ${presence.child_name} pointée à ${formatTime(presence.arrived_at)}.`),
+    onError: failed,
+  })
+  const departure = $api.useMutation('post', '/api/v2/tablet/children/{child_id}/departure', {
+    onSuccess: (presence) =>
+      pointed(`Départ de ${presence.child_name} pointé à ${formatTime(presence.departed_at ?? presence.arrived_at)}.`),
+    onError: failed,
+  })
+  const sending = arrival.isPending || departure.isPending
+  const refusal = arrival.error ?? departure.error
+
+  function select(next: Schemas['TabletChild']) {
+    arrival.reset()
+    departure.reset()
+    setDone(null)
+    setChild(next)
+  }
+
+  function submit(selected: Schemas['TabletChild'], guardianId: string | null) {
+    const params = { path: { child_id: selected.id } }
+    if (selected.presence === 'present') {
+      if (guardianId !== null) departure.mutate({ params, body: { picked_up_by: guardianId } })
+    } else {
+      arrival.mutate({ params, body: { dropped_off_by: guardianId } })
+    }
+  }
+
+  return (
+    <div className="grid gap-6">
+      <ActorPanel actor={actor} onEnd={onEnd} ending={ending} />
+      {done !== null && (
+        <Alert>
+          <CircleCheck aria-hidden="true" />
+          <AlertDescription className="text-lg">{done}</AlertDescription>
+        </Alert>
+      )}
+      {child !== null ? (
+        <PresenceForm
+          child={child}
+          onSubmit={(guardianId) => submit(child, guardianId)}
+          onCancel={() => setChild(null)}
+          pending={sending}
+          error={refusal === null ? null : errorMessage(refusal)}
+        />
+      ) : expected.isPending ? (
+        <p>Chargement des enfants…</p>
+      ) : expected.isError ? (
+        <FormError message={errorMessage(expected.error)} />
+      ) : (
+        <ChildrenBoard expected={expected.data} onSelect={select} />
+      )}
+    </div>
   )
 }
 
