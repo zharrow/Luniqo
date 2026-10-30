@@ -33,3 +33,24 @@ export const nursery: Schemas['NurseryOut'] = {
   capacity: 12,
   is_active: true,
 }
+
+/** Tablette de la Crèche Démo Nord, vue depuis la tablette elle-même (`GET /api/v2/tablet`). */
+export const tabletInfo: Schemas['TabletInfo'] = {
+  tablet_id: '00000000-0000-4000-8000-0000000000a1',
+  label: "Tablette de l'entrée",
+  nursery_id: nursery.id,
+  nursery_name: nursery.name,
+  staff: [
+    { id: employee.id, display_name: 'Lucas B.', pin_set: true, pin_locked: false },
+    { id: '00000000-0000-4000-8000-000000000003', display_name: 'Inès M.', pin_set: false, pin_locked: false },
+    { id: '00000000-0000-4000-8000-000000000004', display_name: 'Nora P.', pin_set: true, pin_locked: true },
+  ],
+}
+
+export const tabletActor: Schemas['TabletActorOut'] = {
+  user_id: employee.id,
+  display_name: 'Lucas B.',
+  nursery_id: nursery.id,
+  nursery_name: nursery.name,
+  expires_at: '2026-10-30T09:32:00Z',
+}

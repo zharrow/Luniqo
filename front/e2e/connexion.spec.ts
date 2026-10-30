@@ -24,6 +24,9 @@ async function login(page: Page, email: string, secret = password) {
 
 test.describe.configure({ mode: 'serial' })
 
+// Codes de secours de la direction, montrés à l'activation : les parcours suivants s'en servent.
+let backupCodes: string[] = []
+
 test('employé : connexion puis ses crèches, sans second facteur', async ({ page }) => {
   const errors = watchConsole(page)
   await page.goto('/accueil')
@@ -54,6 +57,7 @@ test("direction : activation de l'application d'authentification, puis second fa
   await page.getByLabel("Code affiché par l'application").fill(totp(secret))
   await page.getByRole('button', { name: 'Activer' }).click()
   await expect(page.getByRole('list', { name: 'Codes de secours' }).getByRole('listitem')).toHaveCount(10)
+  backupCodes = await page.getByRole('list', { name: 'Codes de secours' }).getByRole('listitem').allTextContents()
   await page.getByRole('button', { name: "J'ai noté mes codes" }).click()
   await expect(page.getByRole('heading', { name: 'Bonjour Camille' })).toBeVisible()
   await expect(page.getByText('Micro-crèche Démo Sud')).toBeVisible()
@@ -66,5 +70,58 @@ test("direction : activation de l'application d'authentification, puis second fa
   await page.getByLabel('Code à 6 chiffres ou code de secours').fill(totp(secret, 1))
   await page.getByRole('button', { name: 'Valider' }).click()
   await expect(page.getByRole('heading', { name: 'Bonjour Camille' })).toBeVisible()
+  expect(errors).toEqual([])
+})
+
+test("tablette : enrôlée par la direction, puis PIN de l'employé", async ({ page, context, playwright, baseURL }) => {
+  const errors = watchConsole(page)
+  const backupCode = backupCodes.shift()
+  test.skip(backupCode === undefined, "Codes de secours absents : le parcours d'activation doit passer avant.")
+  // Les écritures exigent l'en-tête Origin de Luniqo (ADR-003), que le navigateur envoie seul.
+  const origin = { Origin: baseURL ?? '' }
+
+  // L'employé choisit son PIN depuis son compte (écran à venir) : par l'API.
+  const employee = await playwright.request.newContext({ baseURL })
+  const employeeLogin = await employee.post('/api/v2/auth/login', {
+    data: { email: 'employe@demo.test', password },
+    headers: origin,
+  })
+  expect(employeeLogin.ok()).toBe(true)
+  const pin = await employee.put('/api/v2/auth/me/pin', { data: { pin: '4826', password }, headers: origin })
+  expect(pin.status()).toBe(204)
+  await employee.dispose()
+
+  // La direction se connecte sur la tablette et l'enrôle (écran d'enrôlement testé à part), puis s'en va.
+  await page.goto('/connexion')
+  await login(page, 'direction@demo.test')
+  await page.getByLabel('Code à 6 chiffres ou code de secours').fill(backupCode ?? '')
+  await page.getByRole('button', { name: 'Valider' }).click()
+  await expect(page.getByRole('heading', { name: 'Bonjour Camille' })).toBeVisible()
+  const nurseries = (await (await page.request.get('/api/v2/nurseries')).json()) as { id: string; name: string }[]
+  const north = nurseries.find((nursery) => nursery.name === 'Crèche Démo Nord')
+  const enrolled = await page.request.post(`/api/v2/nurseries/${north?.id ?? ''}/tablets`, {
+    data: { label: 'Tablette du parcours PIN' },
+    headers: origin,
+  })
+  expect(enrolled.status()).toBe(201)
+  await page.getByRole('button', { name: 'Se déconnecter' }).click()
+
+  await page.goto('/tablette')
+  await expect(page.getByRole('heading', { name: /Crèche Démo Nord/ })).toBeVisible()
+  // Inès travaille dans l'autre crèche : la tablette ne la propose pas (isolation par l'API).
+  await expect(page.getByRole('button', { name: /Inès/ })).toHaveCount(0)
+  await page.getByRole('button', { name: 'Lucas B.' }).click()
+  await page.getByLabel('PIN de Lucas B.').fill('1357')
+  await expect(page.getByRole('alert')).toHaveText('PIN incorrect')
+  await page.getByLabel('PIN de Lucas B.').fill('4826')
+  await expect(page.getByRole('heading', { name: 'Bonjour Lucas B.' })).toBeVisible()
+
+  // Session d'action de 2 minutes : cookie HttpOnly posé par l'API, illisible par le JavaScript.
+  const action = (await context.cookies()).find((cookie) => cookie.name.endsWith('luniqo_tablet'))
+  expect(action).toMatchObject({ httpOnly: true, sameSite: 'Strict' })
+  expect(await page.evaluate<string>('document.cookie')).not.toContain('luniqo_tablet')
+
+  await page.getByRole('button', { name: 'Terminer' }).click()
+  await expect(page.getByRole('heading', { name: 'Qui êtes-vous ?' })).toBeVisible()
   expect(errors).toEqual([])
 })
