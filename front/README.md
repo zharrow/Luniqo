@@ -10,7 +10,8 @@ le conteneur `front` de la pile Docker sert ses fichiers avec nginx, et la passe
 (présentation d'un code, activation d'une application d'authentification,
 codes de secours), espace connecté avec la liste des crèches (LUN-107) ;
 tablettes d'une crèche pour la direction : enrôlement de l'appareil, liste,
-révocation (LUN-87). La v1 reste en
+révocation (LUN-87) ; mode tablette (`/tablette`, hors de l'espace connecté) :
+choix de l'employé et PIN sur un pavé à grands boutons (LUN-88). La v1 reste en
 production jusqu'à la bascule, prévue quand la v2 sera complète.
 
 ## Lancer
@@ -26,8 +27,9 @@ pnpm dev          # http://localhost:5173, /api relayé vers la passerelle (loca
 
 Comptes de démonstration (données fictives) : `employe@demo.test`,
 `direction@demo.test` (second facteur à enregistrer à la première connexion),
-mot de passe `API_SEED_DEMO_PASSWORD` (15 caractères au moins : sinon l'API ne
-crée aucun compte et l'écrit dans son journal). La pile seule sert aussi le front :
+mot de passe `API_SEED_DEMO_PASSWORD` : 15 caractères au moins, sinon l'API ne
+crée aucun compte (elle l'écrit dans son journal) ; sans `$`, que Docker Compose
+interprète comme une variable (ou entre apostrophes dans `.env`). La pile seule sert aussi le front :
 <http://localhost:8080>.
 
 ## Scripts
@@ -72,6 +74,10 @@ route.
   la CI échoue si `src/api/` ne correspond plus au code de l'API (`pnpm api:types`).
 - **Aucun secret ni jeton dans le navigateur.** La session est un cookie
   `HttpOnly` posé par l'API ; les variables `VITE_*` sont publiques.
+- **Mode tablette** : la tablette est reconnue par un cookie d'appareil, l'employé
+  par son PIN, vérifié par l'API seule. Ses 401 (« PIN incorrect », tablette non
+  enrôlée) restent à l'écran : le renvoi global vers `/connexion` ne s'applique
+  pas à `/tablette` (`app/app.tsx`).
 - **Les gardes de route ne protègent que l'affichage.** Toute autorisation
   reste dans l'API.
 - **Adresse de retour (`?redirect=`) limitée aux chemins de Luniqo**

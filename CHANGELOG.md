@@ -21,6 +21,7 @@ Chaque ligne cite son ticket Jira `LUN-<n>`.
 - TP Docker, consigne supplémentaire : conteneurs de CI `lint` (ruff, ShellCheck, refus de toute image Docker Hub) et `test` (tests unitaires et d'intégration sur une base jetable), enchaînés par `docker/pipeline.sh` (lint → test → déploiement de la pile) et lancés à chaque PR par la CI GitHub (LUN-115).
 - TP Docker : banc de mesure de la consommation CPU des conteneurs (`docker/bench/bench.sh`, générateur de charge wrk), au repos, sous charge et pendant la CI, avec le coût de Docker lui-même (LUN-115).
 - Front v2 : la direction gère les tablettes de chaque crèche, depuis l'accueil : enrôlement de l'appareil sur lequel la page est ouverte (le jeton reste dans un cookie que le JavaScript ne lit pas), liste avec l'état de chaque tablette (active, expirée, révoquée) et révocation après confirmation (LUN-87).
+- Front v2, mode tablette (`/tablette`) : la tablette enrôlée affiche les employés de sa crèche ; l'employé choisit son nom et tape son PIN sur un pavé à grands boutons (ou au clavier), vérifié par l'API ; messages pour un PIN incorrect, bloqué ou non choisi ; l'employé identifié termine sa session, qui se ferme aussi d'elle-même au bout de 2 minutes (LUN-88).
 
 ### Modifié
 

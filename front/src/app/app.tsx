@@ -17,7 +17,8 @@ export function createApp(history?: RouterHistory) {
   function onApiError(error: Error, meta: Record<string, unknown> | undefined) {
     if (!(error instanceof ApiError) || meta?.handlesAuthErrors === true) return
     const { pathname, href } = router.state.location
-    if (pathname.startsWith('/connexion')) return
+    // La tablette a sa propre authentification (appareil, puis PIN) : ses 401 restent à l'écran.
+    if (pathname.startsWith('/connexion') || pathname.startsWith('/tablette')) return
     if (error.status === 401) {
       queryClient.removeQueries({ queryKey: ['session'] })
       void router.navigate({ to: '/connexion', search: { redirect: href } })
