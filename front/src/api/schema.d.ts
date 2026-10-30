@@ -856,6 +856,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/nurseries/{nursery_id}/attendance/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Présences sur une période (366 jours au plus), par jour puis par heure d'arrivée
+         * @description Présences sur une période (366 jours au plus), par jour puis par heure d'arrivée.
+         */
+        get: operations["attendance_history_api_v2_nurseries__nursery_id__attendance_history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/nurseries/{nursery_id}/attendance/history.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Mêmes lignes que l'historique, à ouvrir dans un tableur (contrôle, facturation, déclaration)
+         * @description Mêmes lignes que l'historique, à ouvrir dans un tableur (contrôle, facturation, déclaration).
+         *
+         *     Séparateur « ; » et BOM UTF-8 : un tableur réglé en français l'ouvre avec ses accents. Heures en heure de Paris.
+         */
+        get: operations["attendance_history_csv_api_v2_nurseries__nursery_id__attendance_history_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/nurseries/{nursery_id}/guardians/{guardian_id}/invitation": {
         parameters: {
             query?: never;
@@ -6410,6 +6452,132 @@ export interface operations {
             };
         };
     };
+    attendance_history_api_v2_nurseries__nursery_id__attendance_history_get: {
+        parameters: {
+            query?: {
+                /** @description Premier jour (7 jours avant `to` par défaut) */
+                from?: string | null;
+                /** @description Dernier jour (aujourd'hui à Paris par défaut) */
+                to?: string | null;
+            };
+            header?: never;
+            path: {
+                nursery_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttendanceOut"][];
+                };
+            };
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Second facteur requis */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Crèche introuvable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description La date de début suit la date de fin ; Période limitée à 366 jours par requête */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"] | components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    attendance_history_csv_api_v2_nurseries__nursery_id__attendance_history_csv_get: {
+        parameters: {
+            query?: {
+                /** @description Premier jour (7 jours avant `to` par défaut) */
+                from?: string | null;
+                /** @description Dernier jour (aujourd'hui à Paris par défaut) */
+                to?: string | null;
+            };
+            header?: never;
+            path: {
+                nursery_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Présences au format CSV (tableur) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Second facteur requis */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Crèche introuvable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description La date de début suit la date de fin ; Période limitée à 366 jours par requête */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"] | components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     invite_guardian_api_v2_nurseries__nursery_id__guardians__guardian_id__invitation_post: {
         parameters: {
             query?: never;
@@ -7307,7 +7475,7 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
-            /** @description La date de début suit la date de fin */
+            /** @description La date de début suit la date de fin ; Période limitée à 366 jours par requête */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -7372,7 +7540,7 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
-            /** @description La date de début suit la date de fin */
+            /** @description La date de début suit la date de fin ; Période limitée à 366 jours par requête */
             422: {
                 headers: {
                     [name: string]: unknown;

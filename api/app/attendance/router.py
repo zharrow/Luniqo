@@ -10,12 +10,13 @@ import uuid
 from datetime import date
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, Response, status
 
 from app.attendance import policy, service
 from app.attendance.schemas import ArrivalIn, AttendanceOut, DepartureIn, TabletChild, TabletGuardian
 from app.auth.dependencies import NowDep
 from app.db import SessionDep
+from app.exports import BAD_RANGE, FromQuery, ToQuery, csv_cell, csv_response, csv_responses, history_range, local_time
 from app.nurseries.dependencies import ReadableNursery
 from app.openapi import error_responses
 from app.tablets.dependencies import CurrentActor
@@ -101,3 +102,39 @@ async def day_attendance(context: ReadableNursery, db: SessionDep, now: NowDep,
 async def present_children(context: ReadableNursery, db: SessionDep) -> list[AttendanceOut]:
     """Enfants présents en ce moment (arrivée pointée, départ non pointé)."""
     return [AttendanceOut.of(presence) for presence in await service.present_now(db, context.nursery.id)]
+
+
+async def _period(context, db, now, start: date | None, end: date | None) -> tuple[date, date, list[service.Presence]]:
+    try:
+        start, end = history_range(start, end, policy.local_day(now))
+    except ValueError as error:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(error)) from None
+    return start, end, await service.period_presences(db, context.nursery.id, start, end)
+
+
+@router.get("/nurseries/{nursery_id}/attendance/history", responses=error_responses(*BAD_RANGE))
+async def attendance_history(context: ReadableNursery, db: SessionDep, now: NowDep, start: FromQuery = None,
+                             end: ToQuery = None) -> list[AttendanceOut]:
+    """Présences sur une période (366 jours au plus), par jour puis par heure d'arrivée."""
+    _, _, presences = await _period(context, db, now, start, end)
+    return [AttendanceOut.of(presence) for presence in presences]
+
+
+@router.get("/nurseries/{nursery_id}/attendance/history.csv", response_class=Response,
+            responses=csv_responses("Présences au format CSV (tableur)", *BAD_RANGE))
+async def attendance_history_csv(context: ReadableNursery, db: SessionDep, now: NowDep, start: FromQuery = None,
+                                 end: ToQuery = None) -> Response:
+    """Mêmes lignes que l'historique, à ouvrir dans un tableur (contrôle, facturation, déclaration).
+
+    Séparateur « ; » et BOM UTF-8 : un tableur réglé en français l'ouvre avec ses accents. Heures en heure de Paris.
+    """
+    start, end, presences = await _period(context, db, now, start, end)
+    rows = []
+    for presence in presences:
+        out = AttendanceOut.of(presence)
+        rows.append([out.day.strftime("%d/%m/%Y"), csv_cell(out.child_name), local_time(out.arrived_at),
+                     csv_cell(out.arrival_by), csv_cell(out.dropped_off_by), local_time(out.departed_at),
+                     csv_cell(out.departure_by), csv_cell(out.picked_up_by)])
+    header = ["Jour", "Enfant", "Arrivée", "Arrivée pointée par", "Amené·e par", "Départ", "Départ pointé par",
+              "Parti·e avec"]
+    return csv_response(header, rows, f"presences_{start.isoformat()}_{end.isoformat()}.csv")

@@ -59,6 +59,8 @@ sans mot de passe par passkey. Pas encore de données réelles
 | `POST /api/v2/tablet/children/{child_id}/arrival` | Pointer l'arrivée (heure du serveur), avec le responsable qui dépose l'enfant si connu |
 | `POST /api/v2/tablet/children/{child_id}/departure` | Pointer le départ ; refusé si la personne n'est pas autorisée à venir chercher l'enfant |
 | `GET /api/v2/nurseries/{id}/attendance`, `…/attendance/present` | Présences d'un jour (`?day=`, aujourd'hui à Paris par défaut), enfants présents maintenant |
+| `GET /api/v2/nurseries/{id}/attendance/history` | Présences sur une période (`?from=&to=`, 7 derniers jours par défaut, 366 au plus), par jour puis heure d'arrivée |
+| `GET /api/v2/nurseries/{id}/attendance/history.csv` | Même historique en CSV pour un tableur (séparateur `;`, BOM UTF-8, heures de Paris, formules neutralisées, jamais en cache) |
 | `POST /api/v2/nurseries/{id}/guardians/{guardian_id}/invitation` | Inviter un responsable à créer son compte famille : lien à usage unique, 7 jours (direction) |
 | `POST /api/v2/invitations/lookup`, `POST /api/v2/invitations/accept` | Sans session : lire l'invitation, créer le compte (ou relier un compte famille existant) ; jeton dans le corps |
 | `GET /api/v2/family/children`, `GET /api/v2/family/children/{child_id}` | Parent connecté : ses enfants (autorité parentale requise), présence du jour, présences récentes (`?days=`, 62 au plus), contacts sans coordonnées |
@@ -158,6 +160,7 @@ api/
 │   ├── passkeys/      passkeys WebAuthn (py_webauthn) : enregistrement, second facteur, connexion sans mot de passe
 │   ├── purge/         purge RGPD : durées de conservation (policy.py), commande python -m app.purge
 │   ├── security.py    contrôle de l'en-tête Origin (CSRF)
+│   ├── exports.py     historiques sur une période et exports CSV, communs au ménage et aux présences
 │   ├── openapi.py     schéma OpenAPI complété : erreurs, sécurités, présentation
 │   ├── config.py      configuration lue dans l'environnement
 │   ├── db.py          moteur SQLAlchemy asynchrone, session par requête
