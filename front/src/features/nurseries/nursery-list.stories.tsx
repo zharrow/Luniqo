@@ -40,6 +40,18 @@ export const Liste: Story = {
   },
 }
 
+/** Direction : la route ajoute ses liens à chaque crèche. */
+export const Direction: Story = {
+  args: {
+    ...Liste.args,
+    actions: (item) => (
+      <a href={`#${item.id}`} className="text-primary underline underline-offset-4">
+        Tablettes
+      </a>
+    ),
+  },
+}
+
 export const Erreur: Story = {
   args: { error: new ApiError(503, 'Le service est momentanément indisponible. Réessayez dans un instant.') },
 }

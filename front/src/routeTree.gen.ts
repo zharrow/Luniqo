@@ -16,6 +16,7 @@ import { Route as AppAccueilRouteImport } from './routes/_app/accueil'
 import { Route as ConnexionIndexRouteImport } from './routes/connexion/index'
 import { Route as ConnexionActivationRouteImport } from './routes/connexion/activation'
 import { Route as ConnexionSecondFacteurRouteImport } from './routes/connexion/second-facteur'
+import { Route as AppCrechesNurseryIdTablettesRouteImport } from './routes/_app/creches/$nurseryId/tablettes'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -51,6 +52,12 @@ const ConnexionSecondFacteurRoute = ConnexionSecondFacteurRouteImport.update({
   path: '/second-facteur',
   getParentRoute: () => ConnexionRouteRoute,
 } as any)
+const AppCrechesNurseryIdTablettesRoute =
+  AppCrechesNurseryIdTablettesRouteImport.update({
+    id: '/creches/$nurseryId/tablettes',
+    path: '/creches/$nurseryId/tablettes',
+    getParentRoute: () => AppRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/connexion/activation': typeof ConnexionActivationRoute
   '/connexion/second-facteur': typeof ConnexionSecondFacteurRoute
   '/connexion/': typeof ConnexionIndexRoute
+  '/creches/$nurseryId/tablettes': typeof AppCrechesNurseryIdTablettesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -66,6 +74,7 @@ export interface FileRoutesByTo {
   '/connexion/activation': typeof ConnexionActivationRoute
   '/connexion/second-facteur': typeof ConnexionSecondFacteurRoute
   '/connexion': typeof ConnexionIndexRoute
+  '/creches/$nurseryId/tablettes': typeof AppCrechesNurseryIdTablettesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -76,6 +85,7 @@ export interface FileRoutesById {
   '/connexion/activation': typeof ConnexionActivationRoute
   '/connexion/second-facteur': typeof ConnexionSecondFacteurRoute
   '/connexion/': typeof ConnexionIndexRoute
+  '/_app/creches/$nurseryId/tablettes': typeof AppCrechesNurseryIdTablettesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -86,6 +96,7 @@ export interface FileRouteTypes {
     | '/connexion/activation'
     | '/connexion/second-facteur'
     | '/connexion/'
+    | '/creches/$nurseryId/tablettes'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -93,6 +104,7 @@ export interface FileRouteTypes {
     | '/connexion/activation'
     | '/connexion/second-facteur'
     | '/connexion'
+    | '/creches/$nurseryId/tablettes'
   id:
     | '__root__'
     | '/'
@@ -102,6 +114,7 @@ export interface FileRouteTypes {
     | '/connexion/activation'
     | '/connexion/second-facteur'
     | '/connexion/'
+    | '/_app/creches/$nurseryId/tablettes'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -161,15 +174,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConnexionSecondFacteurRouteImport
       parentRoute: typeof ConnexionRouteRoute
     }
+    '/_app/creches/$nurseryId/tablettes': {
+      id: '/_app/creches/$nurseryId/tablettes'
+      path: '/creches/$nurseryId/tablettes'
+      fullPath: '/creches/$nurseryId/tablettes'
+      preLoaderRoute: typeof AppCrechesNurseryIdTablettesRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
   }
 }
 
 interface AppRouteRouteChildren {
   AppAccueilRoute: typeof AppAccueilRoute
+  AppCrechesNurseryIdTablettesRoute: typeof AppCrechesNurseryIdTablettesRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppAccueilRoute: AppAccueilRoute,
+  AppCrechesNurseryIdTablettesRoute: AppCrechesNurseryIdTablettesRoute,
 }
 
 const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
