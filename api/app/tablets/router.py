@@ -9,6 +9,7 @@ from app.auth.models import UserRole
 from app.config import get_settings
 from app.db import SessionDep
 from app.nurseries.dependencies import ManagedNursery, OwnerUser
+from app.openapi import error_responses
 from app.tablets import policy, service
 from app.tablets.dependencies import CurrentActor, CurrentTablet, action_cookie_name, device_cookie_name
 from app.tablets.schemas import (
@@ -30,6 +31,15 @@ _PIN_ERRORS = {
     "not_set": (status.HTTP_409_CONFLICT, "PIN non défini : le choisir depuis l'espace employé"),
     "throttled": (status.HTTP_429_TOO_MANY_REQUESTS, "Trop d'erreurs de PIN sur cette tablette, réessayez plus tard"),
 }
+_TABLET_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "Tablette introuvable")
+_EMPLOYEE_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "Employé introuvable")
+_PIN_FOR_EMPLOYEES = (status.HTTP_403_FORBIDDEN, "Le PIN de tablette est réservé aux employés")
+_WRONG_PASSWORD = (status.HTTP_403_FORBIDDEN, "Mot de passe incorrect")
+_TOO_MANY_ATTEMPTS = (status.HTTP_429_TOO_MANY_REQUESTS, "Trop de tentatives, réessayez plus tard")
+# Messages de policy.check_pin, levés tels quels.
+_WEAK_PIN = [(status.HTTP_422_UNPROCESSABLE_CONTENT, message) for message in (
+    f"Le PIN doit contenir exactement {policy.PIN_LENGTH} chiffres.",
+    "Ce PIN est trop prévisible (chiffres identiques).", "Ce PIN est trop prévisible (suite de chiffres).")]
 
 
 def _set_cookie(response: Response, name: str, value: str, max_age: int) -> None:
@@ -59,39 +69,43 @@ async def enroll_tablet(body: TabletCreate, context: ManagedNursery, db: Session
 
 @router.get("/nurseries/{nursery_id}/tablets")
 async def list_tablets(context: ManagedNursery, db: SessionDep) -> list[TabletOut]:
+    """Tablettes de la crèche, révoquées et expirées comprises."""
     return [TabletOut.model_validate(device) for device in await service.list_devices(db, context.nursery.id)]
 
 
-@router.delete("/nurseries/{nursery_id}/tablets/{tablet_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/nurseries/{nursery_id}/tablets/{tablet_id}", status_code=status.HTTP_204_NO_CONTENT,
+               responses=error_responses(_TABLET_NOT_FOUND))
 async def revoke_tablet(tablet_id: uuid.UUID, context: ManagedNursery, db: SessionDep, client: ClientDep,
                         now: NowDep) -> None:
     """Révoque la tablette (perte, vol, remplacement) et ferme ses sessions d'action. Effet immédiat."""
     if not await service.revoke(db, context.nursery, tablet_id, context.user, client, now):
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Tablette introuvable")
+        raise HTTPException(*_TABLET_NOT_FOUND)
 
 
 # --- PIN : employé et direction -----------------------------------------------
 
-@router.put("/auth/me/pin", status_code=status.HTTP_204_NO_CONTENT, tags=["authentification"])
+@router.put("/auth/me/pin", status_code=status.HTTP_204_NO_CONTENT, tags=["authentification"],
+            responses=error_responses(_PIN_FOR_EMPLOYEES, _WRONG_PASSWORD, *_WEAK_PIN, _TOO_MANY_ATTEMPTS))
 async def set_my_pin(body: PinIn, user: CurrentUser, db: SessionDep, client: ClientDep, now: NowDep) -> None:
     """L'employé choisit ou change son PIN de tablette, en confirmant son mot de passe. Débloque le PIN."""
     if user.role != UserRole.EMPLOYEE:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "Le PIN de tablette est réservé aux employés")
+        raise HTTPException(*_PIN_FOR_EMPLOYEES)
     try:
         await service.set_pin(db, user, body.password, body.pin, client, now)
     except service.TooManyAttempts:
-        raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "Trop de tentatives, réessayez plus tard") from None
+        raise HTTPException(*_TOO_MANY_ATTEMPTS) from None
     except service.WrongPassword:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "Mot de passe incorrect") from None
+        raise HTTPException(*_WRONG_PASSWORD) from None
     except policy.PinPolicyError as error:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(error)) from None
 
 
-@router.post("/staff/{user_id}/pin/unlock", status_code=status.HTTP_204_NO_CONTENT, tags=["personnel"])
+@router.post("/staff/{user_id}/pin/unlock", status_code=status.HTTP_204_NO_CONTENT, tags=["personnel"],
+             responses=error_responses(_EMPLOYEE_NOT_FOUND))
 async def unlock_pin(user_id: uuid.UUID, owner: OwnerUser, db: SessionDep, client: ClientDep, now: NowDep) -> None:
     """La direction débloque le PIN d'un employé de son entreprise."""
     if not await service.unlock_pin(db, owner, user_id, client, now):
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Employé introuvable")
+        raise HTTPException(*_EMPLOYEE_NOT_FOUND)
 
 
 # --- Tablette ------------------------------------------------------------------
@@ -104,7 +118,7 @@ async def tablet_info(tablet: CurrentTablet, db: SessionDep) -> TabletInfo:
                       nursery_name=tablet.nursery.name, staff=[TabletStaffMember.of(user) for user in members])
 
 
-@router.post("/tablet/session", status_code=status.HTTP_201_CREATED)
+@router.post("/tablet/session", status_code=status.HTTP_201_CREATED, responses=error_responses(*_PIN_ERRORS.values()))
 async def open_tablet_session(body: TabletLoginIn, tablet: CurrentTablet, db: SessionDep, client: ClientDep,
                               now: NowDep, response: Response) -> TabletActorOut:
     """Ouvre une session d'action de 2 minutes par PIN, pour la crèche de la tablette."""

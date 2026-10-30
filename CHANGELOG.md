@@ -11,6 +11,8 @@ Chaque ligne cite son ticket Jira `LUN-<n>`.
 
 - Historique des fiches de ménage : tâches cochées sur une période, annulées comprises, filtrables par pièce, et export CSV pour un contrôle (tableur en français, formules neutralisées) (LUN-71).
 - Comptes des employés : la direction crée le compte et transmet un lien d'invitation à usage unique, l'employé choisit son mot de passe ; départ d'un salarié avec fermeture immédiate de ses sessions ; changement de mot de passe qui ferme les autres sessions (LUN-55).
+- Documentation de l'API complétée (Swagger, `/api/docs`) : présentation de l'authentification et des conventions, chaque route décrite avec ses erreurs possibles et leurs messages, cookies déclarés comme schémas de sécurité, exemple pour chaque corps de requête ; schéma validé à chaque test (LUN-118).
+- Variable `API_DOCS=false` pour désactiver Swagger UI et ReDoc en production ; le schéma `/api/openapi.json` reste servi (LUN-118).
 - Protection des branches `develop`, `staging` et `main` : PR obligatoire, relectures, CI et conventions de PR obligatoires, ni suppression ni push forcé ; tags de version non modifiables ; branche par défaut `develop` ; configuration exportée dans `.github/rulesets/` (LUN-60).
 - Purge RGPD : sessions expirées, journal des connexions au-delà de 6 mois et invitations expirées supprimés à chaque démarrage de l'API et par la commande `python -m app.purge` (LUN-54).
 - Passkeys (Face ID, Touch ID, Windows Hello…) côté API : enregistrement de plusieurs passkeys nommées, second facteur après le mot de passe, connexion sans mot de passe qui vaut les deux facteurs ; la direction peut garder une passkey seule comme facteur (LUN-62).
@@ -27,6 +29,10 @@ Chaque ligne cite son ticket Jira `LUN-<n>`.
 ### Sécurité
 
 - Le blocage du TOTP au 100e échec consécutif ne dépend plus du journal des connexions : la purge ne peut plus le lever (LUN-54).
+
+### Corrigé
+
+- Le test qui interdit les dépendances synchrones (régression LUN-41) ne vérifiait aucune route : FastAPI 0.143 ne les liste plus dans `app.routes`. Il parcourt désormais les routes effectives et échoue s'il n'en trouve pas (LUN-118).
 
 ## [0.1.0] - 2026-10-10
 

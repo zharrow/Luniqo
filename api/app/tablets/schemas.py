@@ -8,6 +8,8 @@ from app.auth.passwords import MAX_LENGTH
 
 
 class TabletCreate(BaseModel):
+    model_config = ConfigDict(json_schema_extra={"examples": [{"label": "Tablette de l'entrée"}]})
+
     label: str = Field(min_length=1, max_length=100, description="Ex. « Tablette de l'entrée »")
 
 
@@ -20,18 +22,18 @@ class TabletOut(BaseModel):
     nursery_id: uuid.UUID
     label: str
     created_at: datetime
-    expires_at: datetime
+    expires_at: datetime = Field(description="Fin de l'enrôlement (90 jours) : la direction enrôle à nouveau")
     revoked_at: datetime | None
-    last_seen_at: datetime | None
+    last_seen_at: datetime | None = Field(description="Dernière requête reçue de la tablette")
 
 
 class TabletStaffMember(BaseModel):
     """Employé affiché sur la tablette : prénom et initiale seulement."""
 
     id: uuid.UUID
-    display_name: str
-    pin_set: bool
-    pin_locked: bool
+    display_name: str = Field(description="Prénom et initiale du nom, ex. « Camille M. »")
+    pin_set: bool = Field(description="L'employé a choisi son PIN")
+    pin_locked: bool = Field(description="PIN bloqué après 3 erreurs ; la direction le débloque")
 
     @classmethod
     def of(cls, user: AppUser) -> TabletStaffMember:
@@ -48,7 +50,10 @@ class TabletInfo(BaseModel):
 
 
 class TabletLoginIn(BaseModel):
-    user_id: uuid.UUID
+    model_config = ConfigDict(json_schema_extra={"examples": [
+        {"user_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6", "pin": "4826"}]})
+
+    user_id: uuid.UUID = Field(description="Employé choisi dans la liste de `GET /tablet`")
     pin: str = Field(min_length=1, max_length=16)
 
 
@@ -57,11 +62,14 @@ class TabletActorOut(BaseModel):
     display_name: str
     nursery_id: uuid.UUID
     nursery_name: str
-    expires_at: datetime
+    expires_at: datetime = Field(description="Fin de la session d'action (2 minutes après le PIN)")
 
 
 class PinIn(BaseModel):
-    pin: str = Field(min_length=1, max_length=16)
+    model_config = ConfigDict(json_schema_extra={"examples": [
+        {"pin": "4826", "password": "mot de passe de démonstration"}]})
+
+    pin: str = Field(min_length=1, max_length=16, description="4 chiffres, ni identiques ni en suite")
     password: str = Field(min_length=1, max_length=MAX_LENGTH, description="Mot de passe actuel, pour confirmer")
 
 

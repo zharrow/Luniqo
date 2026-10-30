@@ -47,12 +47,11 @@ from app.cleaning.schemas import (
 )
 from app.db import SessionDep
 from app.nurseries.dependencies import ManagedNursery, OwnerUser, ReadableNursery
+from app.openapi import error_responses
 from app.tablets.dependencies import CurrentActor
 
 router = APIRouter(prefix="/api/v2", tags=["ménage"])
 
-_NOT_FOUND = {status.HTTP_404_NOT_FOUND: {"description": "Inexistant ou hors de cette crèche ou entreprise"}}
-_CONFLICT = {status.HTTP_409_CONFLICT: {"description": "Nom déjà pris"}}
 
 # Contrainte d'unicité → message du 409. Toute autre violation reste une erreur 500 : elle signalerait un défaut.
 _DUPLICATES = {
@@ -60,6 +59,13 @@ _DUPLICATES = {
     "uq_room_nursery_name": "Une pièce de cette crèche porte déjà ce nom",
     "uq_room_task_room_task": "Cette tâche vient d'être ajoutée à la pièce : recharger",
 }
+_TASK = (status.HTTP_404_NOT_FOUND, "Tâche introuvable")
+_ROOM = (status.HTTP_404_NOT_FOUND, "Pièce introuvable")
+_TASK_TAKEN = (status.HTTP_409_CONFLICT, _DUPLICATES["uq_cleaning_task_enterprise_name"])
+_ROOM_TAKEN = (status.HTTP_409_CONFLICT, _DUPLICATES["uq_room_nursery_name"])
+_EMPTY_FIELD = (status.HTTP_422_UNPROCESSABLE_CONTENT, "Le champ name ne peut pas être vide")
+_INACTIVE_TASK = (status.HTTP_422_UNPROCESSABLE_CONTENT, "Tâche désactivée dans le catalogue")
+_BAD_RANGE = (status.HTTP_422_UNPROCESSABLE_CONTENT, "La date de début suit la date de fin")
 
 
 async def _commit(db: AsyncSession) -> None:
@@ -94,7 +100,7 @@ async def _task_of(db: AsyncSession, enterprise_id: uuid.UUID, task_id: uuid.UUI
     task = await db.scalar(select(CleaningTask).where(CleaningTask.id == task_id,
                                                       CleaningTask.enterprise_id == enterprise_id))
     if task is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Tâche introuvable")
+        raise HTTPException(*_TASK)
     return task
 
 
@@ -108,15 +114,16 @@ async def list_tasks(user: OwnerUser, db: SessionDep,
     return [TaskOut.model_validate(task) for task in await db.scalars(statement.order_by(CleaningTask.name))]
 
 
-@router.post("/cleaning-tasks", status_code=status.HTTP_201_CREATED, responses=_CONFLICT)
+@router.post("/cleaning-tasks", status_code=status.HTTP_201_CREATED, responses=error_responses(_TASK_TAKEN))
 async def create_task(body: TaskCreate, user: OwnerUser, db: SessionDep) -> TaskOut:
+    """Ajoute une tâche au catalogue ; elle se prévoit ensuite pièce par pièce, crèche par crèche."""
     task = CleaningTask(id=uuid.uuid4(), enterprise_id=user.enterprise_id, is_active=True, **body.model_dump())
     db.add(task)
     await _commit(db)
     return TaskOut.model_validate(task)
 
 
-@router.patch("/cleaning-tasks/{task_id}", responses=_NOT_FOUND | _CONFLICT)
+@router.patch("/cleaning-tasks/{task_id}", responses=error_responses(_TASK, _TASK_TAKEN, _EMPTY_FIELD))
 async def update_task(task_id: uuid.UUID, body: TaskUpdate, user: OwnerUser, db: SessionDep) -> TaskOut:
     """Renommer, préciser la consigne, désactiver : la tâche disparaît alors des fiches de toutes les crèches."""
     task = await _task_of(db, user.enterprise_id, task_id)
@@ -130,13 +137,14 @@ async def update_task(task_id: uuid.UUID, body: TaskUpdate, user: OwnerUser, db:
 async def _room_in(db: AsyncSession, nursery_id: uuid.UUID, room_id: uuid.UUID) -> Room:
     room = await db.scalar(select(Room).where(Room.id == room_id, Room.nursery_id == nursery_id))
     if room is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Pièce introuvable")
+        raise HTTPException(*_ROOM)
     return room
 
 
 @router.get("/nurseries/{nursery_id}/rooms")
 async def list_rooms(context: ReadableNursery, db: SessionDep,
                      include_inactive: Annotated[bool, Query()] = False) -> list[RoomOut]:
+    """Pièces de la crèche dans l'ordre de la fiche ; `include_inactive` ajoute les pièces désactivées."""
     statement = select(Room).where(Room.nursery_id == context.nursery.id)
     if not include_inactive:
         statement = statement.where(Room.is_active)
@@ -144,15 +152,17 @@ async def list_rooms(context: ReadableNursery, db: SessionDep,
     return [RoomOut.model_validate(room) for room in rooms]
 
 
-@router.post("/nurseries/{nursery_id}/rooms", status_code=status.HTTP_201_CREATED, responses=_CONFLICT)
+@router.post("/nurseries/{nursery_id}/rooms", status_code=status.HTTP_201_CREATED,
+             responses=error_responses(_ROOM_TAKEN))
 async def create_room(body: RoomCreate, context: ManagedNursery, db: SessionDep) -> RoomOut:
+    """Ajoute une pièce à la crèche ; ses tâches se prévoient ensuite avec `PUT …/rooms/{id}/tasks/{id}`."""
     room = Room(id=uuid.uuid4(), nursery_id=context.nursery.id, is_active=True, **body.model_dump())
     db.add(room)
     await _commit(db)
     return RoomOut.model_validate(room)
 
 
-@router.get("/nurseries/{nursery_id}/rooms/{room_id}", responses=_NOT_FOUND)
+@router.get("/nurseries/{nursery_id}/rooms/{room_id}", responses=error_responses(_ROOM))
 async def get_room(room_id: uuid.UUID, context: ReadableNursery, db: SessionDep) -> RoomDetail:
     """La pièce et toutes ses tâches, désactivées comprises, dans l'ordre de la fiche."""
     room = await _room_in(db, context.nursery.id, room_id)
@@ -160,22 +170,25 @@ async def get_room(room_id: uuid.UUID, context: ReadableNursery, db: SessionDep)
     return RoomDetail(**RoomOut.model_validate(room).model_dump(), tasks=tasks)
 
 
-@router.patch("/nurseries/{nursery_id}/rooms/{room_id}", responses=_NOT_FOUND | _CONFLICT)
+@router.patch("/nurseries/{nursery_id}/rooms/{room_id}", responses=error_responses(_ROOM, _ROOM_TAKEN, _EMPTY_FIELD))
 async def update_room(room_id: uuid.UUID, body: RoomUpdate, context: ManagedNursery, db: SessionDep) -> RoomOut:
+    """Renommer, réordonner ou désactiver la pièce : désactivée, elle disparaît de la fiche du jour."""
     room = await _room_in(db, context.nursery.id, room_id)
     _apply(room, body.model_dump(exclude_unset=True), ("name", "display_order", "is_active"))
     await _commit(db)
     return RoomOut.model_validate(room)
 
 
-@router.put("/nurseries/{nursery_id}/rooms/{room_id}/tasks/{task_id}", responses=_NOT_FOUND | _CONFLICT)
+@router.put("/nurseries/{nursery_id}/rooms/{room_id}/tasks/{task_id}",
+            responses=error_responses(_ROOM, _TASK, _INACTIVE_TASK,
+                                      (status.HTTP_409_CONFLICT, _DUPLICATES["uq_room_task_room_task"])))
 async def set_room_task(room_id: uuid.UUID, task_id: uuid.UUID, body: RoomTaskIn, context: ManagedNursery,
                         db: SessionDep) -> RoomTaskOut:
     """Prévoit une tâche du catalogue dans la pièce, ou remplace sa fréquence. `is_active: false` la retire."""
     room = await _room_in(db, context.nursery.id, room_id)
     task = await _task_of(db, context.nursery.enterprise_id, task_id)
     if body.is_active and not task.is_active:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Tâche désactivée dans le catalogue")
+        raise HTTPException(*_INACTIVE_TASK)
     room_task = await db.scalar(select(RoomTask).where(RoomTask.room_id == room.id, RoomTask.task_id == task.id))
     if room_task is None:
         room_task = RoomTask(id=uuid.uuid4(), room_id=room.id, task_id=task.id, nursery_id=room.nursery_id,
@@ -219,7 +232,7 @@ ToQuery = Annotated[date | None, Query(alias="to", description="Dernier jour (au
 RoomQuery = Annotated[uuid.UUID | None, Query(description="Une seule pièce")]
 
 
-@router.get("/nurseries/{nursery_id}/cleaning/history", responses=_NOT_FOUND)
+@router.get("/nurseries/{nursery_id}/cleaning/history", responses=error_responses(_ROOM, _BAD_RANGE))
 async def cleaning_history(context: ReadableNursery, db: SessionDep, now: NowDep, start: FromQuery = None,
                            end: ToQuery = None, room_id: RoomQuery = None) -> list[CheckRecord]:
     """Tâches cochées sur une période (366 jours au plus), annulées comprises, dans l'ordre chronologique.
@@ -238,8 +251,8 @@ def _local_time(moment: datetime | None) -> str:
 
 
 @router.get("/nurseries/{nursery_id}/cleaning/history.csv", response_class=Response,
-            responses={200: {"content": {"text/csv": {}}, "description": "Fiches au format CSV (tableur)"}}
-            | _NOT_FOUND)
+            responses={200: {"content": {"text/csv": {"schema": {"type": "string"}}},
+                              "description": "Fiches au format CSV (tableur)"}} | error_responses(_ROOM, _BAD_RANGE))
 async def cleaning_history_csv(context: ReadableNursery, db: SessionDep, now: NowDep, start: FromQuery = None,
                                end: ToQuery = None, room_id: RoomQuery = None) -> Response:
     """Mêmes lignes que l'historique, à ouvrir dans un tableur ou à imprimer pour un contrôle.
@@ -272,6 +285,10 @@ _REFUSALS = {
 }
 
 
+def _errors(*reasons: str) -> dict:
+    return error_responses(*(_REFUSALS[reason] for reason in reasons))
+
+
 def _refused(refusal: service.CheckRefused) -> HTTPException:
     code, message = _REFUSALS[refusal.reason]
     return HTTPException(code, message)
@@ -294,7 +311,8 @@ async def tablet_sheet(actor: CurrentActor, db: SessionDep, now: NowDep) -> Tabl
     return TabletSheet(day=day, rooms=rooms)
 
 
-@router.post("/tablet/cleaning/{room_task_id}/check", status_code=status.HTTP_201_CREATED)
+@router.post("/tablet/cleaning/{room_task_id}/check", status_code=status.HTTP_201_CREATED,
+             responses=_errors("not_found", "not_planned", "already_done"))
 async def tablet_check(room_task_id: uuid.UUID, actor: CurrentActor, db: SessionDep, now: NowDep) -> CheckOut:
     """Coche une tâche prévue aujourd'hui. Heure et auteur fixés par le serveur, pas saisis sur la tablette."""
     try:
@@ -305,7 +323,8 @@ async def tablet_check(room_task_id: uuid.UUID, actor: CurrentActor, db: Session
                     task_name=done.task_name, done_at=done.done_at, done_by=short_name(done.done_by_name))
 
 
-@router.delete("/tablet/cleaning/{room_task_id}/check", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/tablet/cleaning/{room_task_id}/check", status_code=status.HTTP_204_NO_CONTENT,
+               responses=_errors("not_found", "not_done"))
 async def tablet_uncheck(room_task_id: uuid.UUID, actor: CurrentActor, db: SessionDep, now: NowDep) -> None:
     """Décoche une tâche cochée par erreur aujourd'hui. La coche reste dans l'historique, marquée annulée."""
     try:

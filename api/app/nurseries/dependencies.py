@@ -22,6 +22,11 @@ from app.db import SessionDep
 from app.nurseries.access import Access, nursery_access
 from app.nurseries.models import Nursery
 from app.nurseries.repository import NurseryRepository, SqlNurseryRepository
+from app.openapi import raises
+
+ROLE_REFUSED = (status.HTTP_403_FORBIDDEN, "Action non autorisée pour ce rôle")
+NURSERY_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "Crèche introuvable")
+MANAGE_REFUSED = (status.HTTP_403_FORBIDDEN, "Seule la direction peut gérer cette crèche")
 
 
 async def get_nursery_repository(session: SessionDep) -> NurseryRepository:
@@ -32,9 +37,10 @@ NurseryRepositoryDep = Annotated[NurseryRepository, Depends(get_nursery_reposito
 
 
 def require_role(*roles: UserRole) -> Callable[[AppUser], Awaitable[AppUser]]:
+    @raises(ROLE_REFUSED)
     async def dependency(user: CurrentUser) -> AppUser:
         if user.role not in roles:
-            raise HTTPException(status.HTTP_403_FORBIDDEN, "Action non autorisée pour ce rôle")
+            raise HTTPException(*ROLE_REFUSED)
         return user
 
     return dependency
@@ -52,6 +58,7 @@ class NurseryContext:
     access: Access
 
 
+@raises(NURSERY_NOT_FOUND)
 async def readable_nursery(nursery_id: uuid.UUID, user: StaffUser, repo: NurseryRepositoryDep) -> NurseryContext:
     nursery = await repo.get(nursery_id)
     if nursery is not None:
@@ -59,12 +66,13 @@ async def readable_nursery(nursery_id: uuid.UUID, user: StaffUser, repo: Nursery
         access = nursery_access(user, nursery, granted=granted)
         if access >= Access.READ:
             return NurseryContext(nursery, user, access)
-    raise HTTPException(status.HTTP_404_NOT_FOUND, "Crèche introuvable")
+    raise HTTPException(*NURSERY_NOT_FOUND)
 
 
+@raises(MANAGE_REFUSED)
 async def managed_nursery(context: Annotated[NurseryContext, Depends(readable_nursery)]) -> NurseryContext:
     if context.access < Access.MANAGE:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "Seule la direction peut gérer cette crèche")
+        raise HTTPException(*MANAGE_REFUSED)
     return context
 
 

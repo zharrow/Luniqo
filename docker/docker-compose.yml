@@ -91,6 +91,8 @@ services:
       # Origine de la passerelle : seule autorisée à envoyer des requêtes qui
       # modifient des données (contrôle de l'en-tête Origin, ADR-003).
       APP_ORIGINS: http://localhost:${WEB_PUBLISHED_PORT:-8080}
+      # Swagger UI et ReDoc : à passer à false en production (le schéma reste servi).
+      API_DOCS: ${API_DOCS:-true}
     secrets:
       - db_password
       # Clé AES-256 qui chiffre les secrets TOTP en base (ADR-004, LUN-006).

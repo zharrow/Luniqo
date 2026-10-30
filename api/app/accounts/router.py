@@ -27,6 +27,7 @@ from app.auth.router import no_store
 from app.db import SessionDep
 from app.nurseries.dependencies import OwnerUser
 from app.nurseries.schemas import StaffOut
+from app.openapi import error_responses
 
 router = APIRouter(prefix="/api/v2", tags=["personnel"])
 
@@ -38,6 +39,14 @@ _REFUSALS = {
     "wrong_password": (status.HTTP_403_FORBIDDEN, "Mot de passe actuel incorrect"),
     "too_many_attempts": (status.HTTP_429_TOO_MANY_REQUESTS, "Trop de tentatives, réessayez plus tard"),
 }
+
+
+_WEAK_PASSWORD = (status.HTTP_422_UNPROCESSABLE_CONTENT, "Ce mot de passe est trop courant.")
+_EMPTY_FIELD = (status.HTTP_422_UNPROCESSABLE_CONTENT, "Le champ first_name ne peut pas être vide")
+
+
+def _errors(*reasons: str, weak_password: bool = False) -> dict:
+    return error_responses(*(_REFUSALS[reason] for reason in reasons), *([_WEAK_PASSWORD] if weak_password else []))
 
 
 def _refused(refusal: service.AccountRefused) -> HTTPException:
@@ -54,7 +63,7 @@ def _invitation_out(employee, invitation, token: str) -> StaffInvitationOut:
 
 # --- Direction ---------------------------------------------------------------------
 
-@router.post("/staff", status_code=status.HTTP_201_CREATED)
+@router.post("/staff", status_code=status.HTTP_201_CREATED, responses=_errors("email_taken"))
 async def invite_employee(body: EmployeeCreate, owner: OwnerUser, db: SessionDep, client: ClientDep, now: NowDep,
                           response: Response) -> StaffInvitationOut:
     """Crée le compte d'un employé de l'entreprise, sans mot de passe, et son lien d'invitation (7 jours).
@@ -70,7 +79,8 @@ async def invite_employee(body: EmployeeCreate, owner: OwnerUser, db: SessionDep
     return _invitation_out(employee, invitation, token)
 
 
-@router.post("/staff/{user_id}/invitation", status_code=status.HTTP_201_CREATED)
+@router.post("/staff/{user_id}/invitation", status_code=status.HTTP_201_CREATED,
+             responses=_errors("not_found", "already_active"))
 async def reinvite_employee(user_id: uuid.UUID, owner: OwnerUser, db: SessionDep, client: ClientDep, now: NowDep,
                             response: Response) -> StaffInvitationOut:
     """Nouveau lien pour un employé qui n'a pas encore choisi son mot de passe ; le précédent est annulé."""
@@ -82,7 +92,7 @@ async def reinvite_employee(user_id: uuid.UUID, owner: OwnerUser, db: SessionDep
     return _invitation_out(employee, invitation, token)
 
 
-@router.patch("/staff/{user_id}")
+@router.patch("/staff/{user_id}", responses=_errors("not_found") | error_responses(_EMPTY_FIELD))
 async def update_employee(user_id: uuid.UUID, body: EmployeeUpdate, owner: OwnerUser, db: SessionDep,
                           client: ClientDep, now: NowDep) -> StaffOut:
     """Corriger le nom, ou désactiver le compte (départ) : ses sessions web et de tablette tombent aussitôt."""
@@ -106,7 +116,7 @@ async def update_employee(user_id: uuid.UUID, body: EmployeeUpdate, owner: Owner
 
 # --- Employé invité ------------------------------------------------------------------
 
-@router.post("/staff-invitations/lookup")
+@router.post("/staff-invitations/lookup", responses=_errors("invalid"))
 async def lookup_invitation(body: TokenIn, db: SessionDep, now: NowDep) -> StaffInvitationInfo:
     """Ce que l'employé voit en ouvrant son lien : prénom, entreprise, adresse de connexion."""
     try:
@@ -117,7 +127,7 @@ async def lookup_invitation(body: TokenIn, db: SessionDep, now: NowDep) -> Staff
                                email=found.user.email)
 
 
-@router.post("/staff-invitations/accept")
+@router.post("/staff-invitations/accept", responses=_errors("invalid", weak_password=True))
 async def accept_invitation(body: AcceptIn, db: SessionDep, client: ClientDep, now: NowDep) -> AcceptedOut:
     """L'employé choisit son mot de passe (politique de LUN-41) ; il se connecte ensuite normalement."""
     try:
@@ -129,7 +139,8 @@ async def accept_invitation(body: AcceptIn, db: SessionDep, client: ClientDep, n
 
 # --- Mot de passe ----------------------------------------------------------------------
 
-@router.put("/auth/me/password", tags=["authentification"])
+@router.put("/auth/me/password", tags=["authentification"],
+            responses=_errors("wrong_password", "too_many_attempts", weak_password=True))
 async def change_password(body: PasswordChangeIn, user: CurrentUser, web: CurrentWebSession, db: SessionDep,
                           client: ClientDep, now: NowDep) -> PasswordChangedOut:
     """Change son mot de passe (l'actuel est exigé) ; les autres sessions du compte, tablette comprise, sont fermées."""

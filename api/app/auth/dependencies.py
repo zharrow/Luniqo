@@ -22,6 +22,11 @@ from app.auth.repository import AuthRepository, SqlAuthRepository
 from app.auth.service import Client, WebSession, authenticate
 from app.config import get_settings
 from app.db import SessionDep
+from app.openapi import raises
+
+AUTH_REQUIRED = (status.HTTP_401_UNAUTHORIZED, "Authentification requise")
+# 403 et non 401 : la session existe, il lui manque le second facteur.
+MFA_REQUIRED = (status.HTTP_403_FORBIDDEN, "Second facteur requis")
 
 
 def cookie_name() -> str:
@@ -50,22 +55,23 @@ NowDep = Annotated[datetime, Depends(get_now)]
 ClientDep = Annotated[Client, Depends(get_client)]
 
 
+@raises(AUTH_REQUIRED)
 async def current_web_session(request: Request, repo: RepositoryDep, client: ClientDep,
                               now: NowDep) -> WebSession:
     token = request.cookies.get(cookie_name())
     web = await authenticate(repo, token, client, now) if token else None
     if web is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Authentification requise")
+        raise HTTPException(*AUTH_REQUIRED)
     return web
 
 
 CurrentWebSession = Annotated[WebSession, Depends(current_web_session)]
 
 
+@raises(MFA_REQUIRED)
 async def current_user(web: CurrentWebSession) -> AppUser:
     if web.session.mfa_pending:
-        # 403 et non 401 : la session existe, il lui manque le second facteur.
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "Second facteur requis")
+        raise HTTPException(*MFA_REQUIRED)
     return web.user
 
 

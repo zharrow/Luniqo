@@ -17,6 +17,7 @@ from app.auth.schemas import SessionOut
 from app.config import get_settings
 from app.db import SessionDep
 from app.mfa.service import Refused, TooManyAttempts
+from app.openapi import error_responses, retry_after
 from app.passkeys import policy, service
 from app.passkeys.policy import RelyingParty
 from app.passkeys.schemas import AssertionIn, PasskeyNameIn, PasskeyOut, RegistrationIn, RegistrationOut
@@ -39,15 +40,14 @@ _REFUSALS = {
     "invalid_name": (status.HTTP_422_UNPROCESSABLE_CONTENT, "Nom de passkey vide ou trop long"),
 }
 
-_ERRORS = {
-    status.HTTP_400_BAD_REQUEST: {"description": "Passkey refusée à l'enregistrement"},
-    status.HTTP_401_UNAUTHORIZED: {"description": "Session absente ou passkey refusée"},
-    status.HTTP_403_FORBIDDEN: {"description": "Second facteur à présenter d'abord ou réauthentification requise"},
-    status.HTTP_404_NOT_FOUND: {"description": "Passkey introuvable pour ce compte"},
-    status.HTTP_409_CONFLICT: {"description": "Opération sans objet dans l'état actuel"},
-    status.HTTP_429_TOO_MANY_REQUESTS: {"description": "Trop de tentatives (en-tête Retry-After)"},
-    status.HTTP_503_SERVICE_UNAVAILABLE: {"description": "Aucune origine configurée (APP_ORIGINS)"},
-}
+_REJECTED = "Passkey refusée"
+_TOO_MANY_ATTEMPTS = (status.HTTP_429_TOO_MANY_REQUESTS, "Trop de tentatives, réessayez plus tard")
+# Aucune origine configurée (APP_ORIGINS) : configuration du serveur, pas une erreur de la personne.
+_UNAVAILABLE = (status.HTTP_503_SERVICE_UNAVAILABLE, "Passkeys momentanément indisponibles")
+
+_ERRORS = retry_after(error_responses(
+    *_REFUSALS.values(), (status.HTTP_400_BAD_REQUEST, _REJECTED), (status.HTTP_401_UNAUTHORIZED, _REJECTED),
+    _TOO_MANY_ATTEMPTS, _UNAVAILABLE))
 
 
 def _rp() -> RelyingParty | None:
@@ -59,11 +59,10 @@ def _http_error(exc: Exception, rejected: int = status.HTTP_401_UNAUTHORIZED) ->
         code, message = _REFUSALS[exc.reason]
         return HTTPException(code, message)
     if isinstance(exc, service.InvalidPasskey):
-        return HTTPException(rejected, "Passkey refusée")
+        return HTTPException(rejected, _REJECTED)
     if isinstance(exc, TooManyAttempts):
-        return HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "Trop de tentatives, réessayez plus tard",
-                             headers={"Retry-After": str(exc.retry_after)})
-    return HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Passkeys momentanément indisponibles")
+        return HTTPException(*_TOO_MANY_ATTEMPTS, headers={"Retry-After": str(exc.retry_after)})
+    return HTTPException(*_UNAVAILABLE)
 
 
 _HANDLED = (Refused, service.InvalidPasskey, TooManyAttempts, service.Unavailable)

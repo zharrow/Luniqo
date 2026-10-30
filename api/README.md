@@ -103,16 +103,39 @@ Règle : `app/nurseries/access.py`. Appliquée par les dépendances `ReadableNur
 `ManagedNursery` (`app/nurseries/dependencies.py`). La base la double : un accès
 `nursery_access` ne peut relier qu'un employé et une crèche de la même entreprise
 (clés étrangères composites).
-| `GET /api/docs` | Swagger UI |
-| `GET /api/redoc` | ReDoc |
-| `GET /api/openapi.json` | Schéma OpenAPI |
+
+### Documentation (OpenAPI)
+
+| Route | Rôle |
+|---|---|
+| `GET /api/openapi.json` | Schéma OpenAPI 3.1, toujours servi : le front v2 en génère son client typé |
+| `GET /api/docs` | Swagger UI, pour essayer l'API (désactivée par `API_DOCS=false`) |
+| `GET /api/redoc` | ReDoc, pour la lire (désactivée par `API_DOCS=false`) |
+
+Le schéma de FastAPI est complété par `app/openapi.py` : présentation générale (cookies,
+contrôle de l'origine, conventions), description de chaque groupe de routes, cookies déclarés
+comme schémas de sécurité, corps d'erreur `Error` (`{"detail": "…"}`) avec un exemple par message.
+
+Pour qu'une route reste documentée sans liste à tenir à la main :
+
+- une **dépendance** déclare ce qu'elle lève avec `@raises((401, "Authentification requise"))` ;
+  chaque route qui l'utilise documente ce 401, et la sécurité de la route est déduite des
+  dépendances de session ou de tablette ;
+- une **route** déclare ses propres erreurs avec `responses=error_responses(...)`, à partir des
+  mêmes tuples `(code, message)` que ceux qu'elle lève (`_REFUSALS` d'un module, constantes) ;
+- chaque route a une docstring (sa description), chaque corps de requête un exemple
+  (`json_schema_extra`), aux données fictives.
+
+`tests/test_openapi.py` vérifie tout cela et valide le schéma avec `openapi-spec-validator`.
+Swagger UI et ReDoc chargent leurs scripts depuis le CDN jsDelivr, sur l'origine qui porte les
+cookies de session : c'est pourquoi ils sont désactivés en production.
 
 ## Structure
 
 ```
 api/
 ├── app/
-│   ├── main.py        application FastAPI, routes de supervision et crèches
+│   ├── main.py        application FastAPI (create_app), sonde /api/health
 │   ├── auth/          authentification : un module par domaine
 │   │   ├── models.py        comptes, sessions, journal des événements
 │   │   ├── passwords.py     politique et hachage Argon2id
@@ -135,6 +158,7 @@ api/
 │   ├── passkeys/      passkeys WebAuthn (py_webauthn) : enregistrement, second facteur, connexion sans mot de passe
 │   ├── purge/         purge RGPD : durées de conservation (policy.py), commande python -m app.purge
 │   ├── security.py    contrôle de l'en-tête Origin (CSRF)
+│   ├── openapi.py     schéma OpenAPI complété : erreurs, sécurités, présentation
 │   ├── config.py      configuration lue dans l'environnement
 │   ├── db.py          moteur SQLAlchemy asynchrone, session par requête
 │   ├── models.py      base commune des modèles SQLAlchemy
@@ -194,6 +218,7 @@ api/
 | `SEED_DEMO_PASSWORD` | | Mot de passe des comptes de démonstration ; absent : aucun compte créé |
 | `MFA_KEY_FILE` | | Fichier de la clé AES-256 des secrets TOTP, 32 octets en base64 (prioritaire) |
 | `MFA_KEY` | | La même clé en variable, pour les tests et le développement local ; sans clé, routes du second facteur en 503 |
+| `API_DOCS` | `true` | `false` : ni Swagger UI ni ReDoc (production) ; `/api/openapi.json` reste servi |
 
 ## Développement
 
