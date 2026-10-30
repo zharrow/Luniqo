@@ -29,8 +29,9 @@ from app.family.schemas import (
     TokenIn,
 )
 from app.nurseries.dependencies import GuardianUser, ManagedNursery
+from app.openapi import error_responses
 
-router = APIRouter(prefix="/api/v2", tags=["familles"])
+router = APIRouter(prefix="/api/v2", tags=["espace famille"])
 
 _REFUSALS = {
     "no_email": (status.HTTP_422_UNPROCESSABLE_CONTENT, "Ce responsable n'a pas d'adresse e-mail"),
@@ -40,7 +41,14 @@ _REFUSALS = {
     "wrong_password": (status.HTTP_403_FORBIDDEN, "Un compte existe déjà avec cette adresse : saisir son mot de passe"),
 }
 
+_WEAK_PASSWORD = (status.HTTP_422_UNPROCESSABLE_CONTENT, "Ce mot de passe est trop courant.")
+_GUARDIAN_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "Responsable introuvable")
+_CHILD_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "Enfant introuvable")
 MAX_HISTORY_DAYS = 62
+
+
+def _errors(*reasons: str) -> dict:
+    return error_responses(*(_REFUSALS[reason] for reason in reasons))
 
 
 def _refused(refusal: service.InvitationRefused) -> HTTPException:
@@ -59,14 +67,14 @@ def _short(guardian: Guardian | None) -> str | None:
 # --- Direction -------------------------------------------------------------------
 
 @router.post("/nurseries/{nursery_id}/guardians/{guardian_id}/invitation", status_code=status.HTTP_201_CREATED,
-             tags=["enfants et familles"])
+             tags=["enfants et familles"], responses=error_responses(_GUARDIAN_NOT_FOUND, _REFUSALS["no_email"]))
 async def invite_guardian(guardian_id: uuid.UUID, context: ManagedNursery, db: SessionDep, client: ClientDep,
                           now: NowDep) -> InvitationOut:
     """Crée un lien d'invitation (7 jours, usage unique) ; annule les invitations précédentes de ce responsable."""
     guardian = await db.scalar(select(Guardian).where(Guardian.id == guardian_id,
                                                       Guardian.nursery_id == context.nursery.id, Guardian.is_active))
     if guardian is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Responsable introuvable")
+        raise HTTPException(*_GUARDIAN_NOT_FOUND)
     try:
         invitation, token = await service.invite(db, guardian, context.user, client, now)
     except service.InvitationRefused as refusal:
@@ -76,7 +84,7 @@ async def invite_guardian(guardian_id: uuid.UUID, context: ManagedNursery, db: S
 
 # --- Parent sans compte ------------------------------------------------------
 
-@router.post("/invitations/lookup")
+@router.post("/invitations/lookup", responses=error_responses(_REFUSALS["invalid"]))
 async def lookup_invitation(body: TokenIn, db: SessionDep, now: NowDep) -> InvitationInfo:
     """Ce que le parent voit en ouvrant son lien : prénom, crèche, adresse du futur compte."""
     try:
@@ -88,7 +96,8 @@ async def lookup_invitation(body: TokenIn, db: SessionDep, now: NowDep) -> Invit
                           account_exists=await service.account_for(db, found.invitation.email) is not None)
 
 
-@router.post("/invitations/accept", status_code=status.HTTP_201_CREATED)
+@router.post("/invitations/accept", status_code=status.HTTP_201_CREATED,
+             responses=_errors("invalid", "email_taken", "wrong_password") | error_responses(_WEAK_PASSWORD))
 async def accept_invitation(body: AcceptIn, db: SessionDep, client: ClientDep, now: NowDep) -> AcceptedOut:
     """Crée le compte famille (mot de passe choisi) ou relie un compte famille existant (son mot de passe)."""
     existed = None
@@ -124,13 +133,13 @@ async def my_children(user: GuardianUser, db: SessionDep, now: NowDep) -> list[F
     return result
 
 
-@router.get("/family/children/{child_id}", responses={status.HTTP_404_NOT_FOUND: {"description": "Hors de ma famille"}})
+@router.get("/family/children/{child_id}", responses=error_responses(_CHILD_NOT_FOUND))
 async def my_child(child_id: uuid.UUID, user: GuardianUser, db: SessionDep, now: NowDep,
                    days: Annotated[int, Query(ge=1, le=MAX_HISTORY_DAYS)] = 30) -> FamilyChildDetail:
     """Fiche de mon enfant : responsables (sans coordonnées) et présences des `days` derniers jours."""
     found = await service.child_of(db, user, child_id)
     if found is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Enfant introuvable")
+        raise HTTPException(*_CHILD_NOT_FOUND)
     child, nursery = found
     today, arrived, departed = await _today(db, child, now)
     end = attendance_policy.local_day(now)

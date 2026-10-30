@@ -25,19 +25,16 @@ def test_aucune_dependance_synchrone():
     # limite de processus du conteneur (pids) est dépassée. Régression LUN-003.
     import inspect
 
-    from fastapi.routing import APIRoute
-
     from app.main import app
+    from app.openapi import api_routes, dependency_calls
 
-    def walk(dependant):
-        for dependency in dependant.dependencies:
-            yield dependency.call
-            yield from walk(dependency)
-
+    routes = list(api_routes(app))
+    # Garde-fou : avec FastAPI 0.143, un parcours de `app.routes` ne voyait plus aucune route et ce test passait à vide.
+    assert len(routes) > 60
     synchronous = {
         f"{route.path} → {call.__qualname__}"
-        for route in app.routes if isinstance(route, APIRoute)
-        for call in walk(route.dependant)
+        for route in routes
+        for call in dependency_calls(route.dependant)
         if not (inspect.iscoroutinefunction(call) or inspect.isasyncgenfunction(call))
     }
     assert synchronous == set()

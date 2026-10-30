@@ -17,6 +17,7 @@ from app.attendance.schemas import ArrivalIn, AttendanceOut, DepartureIn, Tablet
 from app.auth.dependencies import NowDep
 from app.db import SessionDep
 from app.nurseries.dependencies import ReadableNursery
+from app.openapi import error_responses
 from app.tablets.dependencies import CurrentActor
 
 router = APIRouter(prefix="/api/v2", tags=["pointage"])
@@ -30,6 +31,10 @@ _REFUSALS = {
     "pickup_not_authorized": (status.HTTP_403_FORBIDDEN,
                               "Cette personne n'est pas autorisée à venir chercher l'enfant : prévenir la direction"),
 }
+
+
+def _errors(*reasons: str) -> dict:
+    return error_responses(*(_REFUSALS[reason] for reason in reasons))
 
 
 def _refused(refusal: service.AttendanceRefused) -> HTTPException:
@@ -58,7 +63,8 @@ async def tablet_children(actor: CurrentActor, db: SessionDep, now: NowDep) -> l
     return result
 
 
-@router.post("/tablet/children/{child_id}/arrival", status_code=status.HTTP_201_CREATED)
+@router.post("/tablet/children/{child_id}/arrival", status_code=status.HTTP_201_CREATED,
+             responses=_errors("not_found", "not_expected", "already_present", "unknown_guardian"))
 async def tablet_arrival(child_id: uuid.UUID, body: ArrivalIn, actor: CurrentActor, db: SessionDep,
                          now: NowDep) -> AttendanceOut:
     """Pointe l'arrivée, à l'heure du serveur (pas d'heure saisie sur la tablette)."""
@@ -69,7 +75,8 @@ async def tablet_arrival(child_id: uuid.UUID, body: ArrivalIn, actor: CurrentAct
     return AttendanceOut.of(presence)
 
 
-@router.post("/tablet/children/{child_id}/departure")
+@router.post("/tablet/children/{child_id}/departure",
+             responses=_errors("not_found", "not_present", "pickup_not_authorized"))
 async def tablet_departure(child_id: uuid.UUID, body: DepartureIn, actor: CurrentActor, db: SessionDep,
                            now: NowDep) -> AttendanceOut:
     """Pointe le départ avec la personne venue chercher l'enfant, qui doit être autorisée pour lui."""

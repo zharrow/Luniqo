@@ -32,6 +32,10 @@ class Settings:
     # Clé AES-256 qui chiffre les secrets TOTP en base (ADR-004). Absente :
     # les routes du second facteur répondent 503, le reste de l'API fonctionne.
     mfa_key: bytes | None = None
+    # Swagger UI et ReDoc. Désactivés en production (API_DOCS=false) : ils
+    # chargent leurs scripts depuis un CDN, sur l'origine qui porte les cookies
+    # de session. Le schéma /api/openapi.json reste servi (types du front).
+    docs_enabled: bool = True
 
     @property
     def database_url(self) -> str:
@@ -89,4 +93,5 @@ def get_settings() -> Settings:
         ),
         cookie_secure=os.environ.get("SESSION_COOKIE_SECURE", "true").lower() != "false",
         mfa_key=read_mfa_key(),
+        docs_enabled=os.environ.get("API_DOCS", "true").lower() != "false",
     )

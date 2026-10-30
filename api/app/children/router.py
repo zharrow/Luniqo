@@ -31,10 +31,16 @@ from app.children.schemas import (
 )
 from app.db import SessionDep
 from app.nurseries.dependencies import ManagedNursery, ReadableNursery
+from app.openapi import error_responses
 
 router = APIRouter(prefix="/api/v2/nurseries/{nursery_id}", tags=["enfants et familles"])
 
-_NOT_FOUND = {status.HTTP_404_NOT_FOUND: {"description": "Inexistant ou hors de cette crèche"}}
+_FAMILY = (status.HTTP_404_NOT_FOUND, "Famille introuvable")
+_CHILD = (status.HTTP_404_NOT_FOUND, "Enfant introuvable")
+_GUARDIAN = (status.HTTP_404_NOT_FOUND, "Responsable introuvable")
+_EMPTY_FIELD = (status.HTTP_422_UNPROCESSABLE_CONTENT, "Le champ first_name ne peut pas être vide")
+_OTHER_FAMILY = (status.HTTP_422_UNPROCESSABLE_CONTENT, "Le responsable n'appartient pas à la famille")
+_INCOHERENT_DATES = (status.HTTP_422_UNPROCESSABLE_CONTENT, "Un enfant parti a une date de sortie, et seulement lui")
 
 
 def guardian_out(guardian: Guardian) -> GuardianOut:
@@ -62,20 +68,23 @@ def _apply(target, changes: dict, required: tuple[str, ...]) -> None:
 
 @router.get("/families")
 async def list_families(context: ReadableNursery, db: SessionDep) -> list[FamilyOut]:
+    """Familles de la crèche, désactivées comprises, par ordre alphabétique."""
     families = await db.scalars(select(Family).where(Family.nursery_id == context.nursery.id).order_by(Family.label))
     return [FamilyOut.model_validate(family) for family in families]
 
 
 @router.post("/families", status_code=status.HTTP_201_CREATED)
 async def create_family(body: FamilyCreate, context: ManagedNursery, db: SessionDep) -> FamilyOut:
+    """Crée une famille ; ses enfants et ses responsables s'ajoutent ensuite."""
     family = Family(id=uuid.uuid4(), nursery_id=context.nursery.id, is_active=True, **body.model_dump())
     db.add(family)
     await db.commit()
     return FamilyOut.model_validate(family)
 
 
-@router.get("/families/{family_id}", responses=_NOT_FOUND)
+@router.get("/families/{family_id}", responses=error_responses(_FAMILY))
 async def get_family(family_id: uuid.UUID, context: ReadableNursery, db: SessionDep) -> FamilyDetail:
+    """La famille, ses enfants et ses responsables."""
     family = await _get(db, Family, context.nursery.id, family_id, "Famille")
     children = await db.scalars(select(Child).where(Child.family_id == family.id).order_by(Child.first_name))
     guardians = await db.scalars(select(Guardian).where(Guardian.family_id == family.id).order_by(Guardian.last_name))
@@ -84,9 +93,10 @@ async def get_family(family_id: uuid.UUID, context: ReadableNursery, db: Session
                         guardians=[guardian_out(guardian) for guardian in guardians])
 
 
-@router.patch("/families/{family_id}", responses=_NOT_FOUND)
+@router.patch("/families/{family_id}", responses=error_responses(_FAMILY, _EMPTY_FIELD))
 async def update_family(family_id: uuid.UUID, body: FamilyUpdate, context: ManagedNursery,
                         db: SessionDep) -> FamilyOut:
+    """Modifie la famille ; seuls les champs envoyés changent."""
     family = await _get(db, Family, context.nursery.id, family_id, "Famille")
     _apply(family, body.model_dump(exclude_unset=True), ("label", "is_active"))
     await db.commit()
@@ -108,8 +118,9 @@ async def list_children(context: ReadableNursery, db: SessionDep,
     return [ChildOut.model_validate(child) for child in children]
 
 
-@router.post("/families/{family_id}/children", status_code=status.HTTP_201_CREATED, responses=_NOT_FOUND)
+@router.post("/families/{family_id}/children", status_code=status.HTTP_201_CREATED, responses=error_responses(_FAMILY))
 async def create_child(family_id: uuid.UUID, body: ChildCreate, context: ManagedNursery, db: SessionDep) -> ChildOut:
+    """Inscrit un enfant dans la famille (statut `adaptation` par défaut)."""
     family = await _get(db, Family, context.nursery.id, family_id, "Famille")
     child = Child(id=uuid.uuid4(), family_id=family.id, nursery_id=family.nursery_id, exit_date=None,
                   **body.model_dump())
@@ -129,14 +140,15 @@ async def _child_detail(db: AsyncSession, child: Child) -> ChildDetail:
     return ChildDetail(**ChildOut.model_validate(child).model_dump(), guardians=guardians)
 
 
-@router.get("/children/{child_id}", responses=_NOT_FOUND)
+@router.get("/children/{child_id}", responses=error_responses(_CHILD))
 async def get_child(child_id: uuid.UUID, context: ReadableNursery, db: SessionDep) -> ChildDetail:
     """Fiche de l'enfant et ses responsables, avec leurs autorisations."""
     return await _child_detail(db, await _get(db, Child, context.nursery.id, child_id, "Enfant"))
 
 
-@router.patch("/children/{child_id}", responses=_NOT_FOUND)
+@router.patch("/children/{child_id}", responses=error_responses(_CHILD, _EMPTY_FIELD, _INCOHERENT_DATES))
 async def update_child(child_id: uuid.UUID, body: ChildUpdate, context: ManagedNursery, db: SessionDep) -> ChildOut:
+    """Modifie l'enfant. Le départ se déclare avec `status: departed` et `exit_date` ; un retour efface la sortie."""
     child = await _get(db, Child, context.nursery.id, child_id, "Enfant")
     changes = body.model_dump(exclude_unset=True)
     if changes.get("status") not in (None, ChildStatus.DEPARTED) and "exit_date" not in changes:
@@ -164,9 +176,10 @@ async def update_child(child_id: uuid.UUID, body: ChildUpdate, context: ManagedN
 
 # --- Responsables ----------------------------------------------------------------
 
-@router.post("/families/{family_id}/guardians", status_code=status.HTTP_201_CREATED, responses=_NOT_FOUND)
+@router.post("/families/{family_id}/guardians", status_code=status.HTTP_201_CREATED, responses=error_responses(_FAMILY))
 async def create_guardian(family_id: uuid.UUID, body: GuardianCreate, context: ManagedNursery,
                           db: SessionDep) -> GuardianOut:
+    """Ajoute un responsable à la famille. Le relier à chaque enfant : `PUT /children/{id}/guardians/{id}`."""
     family = await _get(db, Family, context.nursery.id, family_id, "Famille")
     guardian = Guardian(id=uuid.uuid4(), family_id=family.id, nursery_id=family.nursery_id, user_id=None,
                         is_active=True, **body.model_dump())
@@ -175,9 +188,10 @@ async def create_guardian(family_id: uuid.UUID, body: GuardianCreate, context: M
     return guardian_out(guardian)
 
 
-@router.patch("/guardians/{guardian_id}", responses=_NOT_FOUND)
+@router.patch("/guardians/{guardian_id}", responses=error_responses(_GUARDIAN, _EMPTY_FIELD))
 async def update_guardian(guardian_id: uuid.UUID, body: GuardianUpdate, context: ManagedNursery,
                           db: SessionDep) -> GuardianOut:
+    """Modifie le responsable ; seuls les champs envoyés changent."""
     guardian = await _get(db, Guardian, context.nursery.id, guardian_id, "Responsable")
     _apply(guardian, body.model_dump(exclude_unset=True), ("first_name", "last_name", "is_active"))
     await db.commit()
@@ -185,14 +199,14 @@ async def update_guardian(guardian_id: uuid.UUID, body: GuardianUpdate, context:
 
 
 @router.put("/children/{child_id}/guardians/{guardian_id}", status_code=status.HTTP_204_NO_CONTENT,
-            responses=_NOT_FOUND)
+            responses=error_responses(_CHILD, _GUARDIAN, _OTHER_FAMILY))
 async def link_guardian(child_id: uuid.UUID, guardian_id: uuid.UUID, body: LinkIn, context: ManagedNursery,
                         db: SessionDep) -> None:
     """Relie un responsable à un enfant **de la même famille**, ou met à jour ses autorisations."""
     child = await _get(db, Child, context.nursery.id, child_id, "Enfant")
     guardian = await _get(db, Guardian, context.nursery.id, guardian_id, "Responsable")
     if guardian.family_id != child.family_id:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Le responsable n'appartient pas à la famille")
+        raise HTTPException(*_OTHER_FAMILY)
     link = await db.get(ChildGuardian, (child.id, guardian.id))
     if link is None:
         link = ChildGuardian(child_id=child.id, guardian_id=guardian.id, family_id=child.family_id)
@@ -203,9 +217,10 @@ async def link_guardian(child_id: uuid.UUID, guardian_id: uuid.UUID, body: LinkI
 
 
 @router.delete("/children/{child_id}/guardians/{guardian_id}", status_code=status.HTTP_204_NO_CONTENT,
-               responses=_NOT_FOUND)
+               responses=error_responses(_CHILD))
 async def unlink_guardian(child_id: uuid.UUID, guardian_id: uuid.UUID, context: ManagedNursery,
                           db: SessionDep) -> None:
+    """Retire le lien entre le responsable et l'enfant. Sans effet s'il n'existait pas."""
     child = await _get(db, Child, context.nursery.id, child_id, "Enfant")
     link = await db.get(ChildGuardian, (child.id, guardian_id))
     if link is not None:

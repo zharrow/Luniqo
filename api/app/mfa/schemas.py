@@ -6,8 +6,10 @@ from app.mfa.policy import MfaState
 
 
 class CodeIn(BaseModel):
-    # Code TOTP (6 chiffres) ou code de secours (XXXX-XXXX-XXXX), espaces et tirets tolérés.
-    code: str = Field(min_length=1, max_length=32)
+    model_config = ConfigDict(json_schema_extra={"examples": [{"code": "123456"}]})
+
+    code: str = Field(min_length=1, max_length=32, description="Code TOTP (6 chiffres) ou code de secours "
+                                                               "(XXXX-XXXX-XXXX) ; espaces et tirets tolérés")
 
 
 class TotpOut(BaseModel):
@@ -18,10 +20,10 @@ class TotpOut(BaseModel):
 
 
 class MfaStatusOut(BaseModel):
-    state: MfaState
-    totp: TotpOut | None
-    totp_setup_pending: bool
-    backup_codes_remaining: int
+    state: MfaState = Field(description="État du second facteur pour la session en cours")
+    totp: TotpOut | None = Field(description="Application d'authentification active ; null s'il n'y en a pas")
+    totp_setup_pending: bool = Field(description="Une activation est commencée et attend son premier code")
+    backup_codes_remaining: int = Field(description="Codes de secours encore utilisables")
 
 
 class TotpSetupOut(BaseModel):
@@ -30,14 +32,14 @@ class TotpSetupOut(BaseModel):
     Renvoyé une seule fois : il n'est plus lisible ensuite, même par la direction.
     """
 
-    secret: str
-    otpauth_uri: str
+    secret: str = Field(description="Secret en base32, à saisir à la main")
+    otpauth_uri: str = Field(description="URI otpauth:// à afficher en QR code")
 
 
 class TotpConfirmOut(BaseModel):
-    # Codes de secours créés avec le premier facteur ; null si le compte en avait déjà.
-    backup_codes: list[str] | None
+    backup_codes: list[str] | None = Field(description="Codes de secours créés avec le premier facteur, montrés une "
+                                                       "seule fois ; null si le compte en avait déjà")
 
 
 class BackupCodesOut(BaseModel):
-    backup_codes: list[str]
+    backup_codes: list[str] = Field(description="10 codes à usage unique, montrés une seule fois")

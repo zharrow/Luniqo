@@ -8,13 +8,12 @@ from app.auth.models import AppUser, UserSession
 from app.auth.schemas import LoginIn, SessionOut, UserOut
 from app.config import get_settings
 from app.mfa.policy import session_state
+from app.openapi import error_responses, retry_after
 
 router = APIRouter(prefix="/api/v2/auth", tags=["authentification"])
 
-_ERRORS = {
-    status.HTTP_401_UNAUTHORIZED: {"description": "Identifiants invalides ou session absente"},
-    status.HTTP_429_TOO_MANY_REQUESTS: {"description": "Trop de tentatives (en-tête Retry-After)"},
-}
+INVALID_CREDENTIALS = (status.HTTP_401_UNAUTHORIZED, "Identifiants invalides")
+TOO_MANY_ATTEMPTS = (status.HTTP_429_TOO_MANY_REQUESTS, "Trop de tentatives, réessayez plus tard")
 
 
 def no_store(response: Response) -> None:
@@ -27,7 +26,7 @@ def session_out(user: AppUser, session: UserSession, has_factor: bool) -> Sessio
     return SessionOut(**UserOut.model_validate(user).model_dump(), mfa=state)
 
 
-@router.post("/login", responses=_ERRORS)
+@router.post("/login", responses=retry_after(error_responses(INVALID_CREDENTIALS, TOO_MANY_ATTEMPTS)))
 async def login(body: LoginIn, request: Request, response: Response, repo: RepositoryDep,
                 client: ClientDep, now: NowDep) -> SessionOut:
     """Ouvre une session et pose le cookie de session.
@@ -39,9 +38,9 @@ async def login(body: LoginIn, request: Request, response: Response, repo: Repos
         result = await service.login(repo, body.email, body.password, client, now,
                                      previous_token=request.cookies.get(cookie_name()))
     except service.InvalidCredentials:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Identifiants invalides") from None
+        raise HTTPException(*INVALID_CREDENTIALS) from None
     except service.TooManyAttempts as exc:
-        raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "Trop de tentatives, réessayez plus tard",
+        raise HTTPException(*TOO_MANY_ATTEMPTS,
                             headers={"Retry-After": str(exc.retry_after)}) from None
     # Pas de Max-Age : cookie de session du navigateur, effacé à sa fermeture.
     # Les expirations (30 min d'inactivité, 12 h au plus) sont tenues côté serveur.
@@ -62,7 +61,7 @@ async def logout(request: Request, response: Response, repo: RepositoryDep, clie
                            samesite="lax", path="/")
 
 
-@router.get("/me", responses={status.HTTP_401_UNAUTHORIZED: _ERRORS[status.HTTP_401_UNAUTHORIZED]})
+@router.get("/me")
 async def me(web: CurrentWebSession, repo: RepositoryDep, response: Response) -> SessionOut:
     """Utilisateur de la session en cours, même en attente du second facteur."""
     no_store(response)

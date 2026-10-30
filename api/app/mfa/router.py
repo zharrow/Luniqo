@@ -15,6 +15,7 @@ from app.db import SessionDep
 from app.mfa import service
 from app.mfa.crypto import SecretUnreadable
 from app.mfa.schemas import BackupCodesOut, CodeIn, MfaStatusOut, TotpConfirmOut, TotpOut, TotpSetupOut
+from app.openapi import error_responses, retry_after
 
 router = APIRouter(prefix="/api/v2/auth/mfa", tags=["second facteur"])
 
@@ -31,14 +32,12 @@ _REFUSALS = {
                     "Second facteur obligatoire pour ce rôle : remplacez-le au lieu de le retirer"),
 }
 
-_ERRORS = {
-    status.HTTP_401_UNAUTHORIZED: {"description": "Session absente ou code invalide"},
-    status.HTTP_403_FORBIDDEN: {"description": "Second facteur à présenter d'abord, réauthentification requise "
-                                               "ou TOTP bloqué"},
-    status.HTTP_409_CONFLICT: {"description": "Opération sans objet dans l'état actuel"},
-    status.HTTP_429_TOO_MANY_REQUESTS: {"description": "Trop de tentatives (en-tête Retry-After)"},
-    status.HTTP_503_SERVICE_UNAVAILABLE: {"description": "Clé de chiffrement absente ou différente"},
-}
+_INVALID_CODE = (status.HTTP_401_UNAUTHORIZED, "Code invalide")
+_TOO_MANY_ATTEMPTS = (status.HTTP_429_TOO_MANY_REQUESTS, "Trop de tentatives, réessayez plus tard")
+# Clé de chiffrement absente ou différente de celle qui a chiffré le secret.
+_UNAVAILABLE = (status.HTTP_503_SERVICE_UNAVAILABLE, "Second facteur momentanément indisponible")
+
+_ERRORS = retry_after(error_responses(*_REFUSALS.values(), _INVALID_CODE, _TOO_MANY_ATTEMPTS, _UNAVAILABLE))
 
 
 def _http_error(exc: Exception) -> HTTPException:
@@ -46,12 +45,11 @@ def _http_error(exc: Exception) -> HTTPException:
         code, message = _REFUSALS[exc.reason]
         return HTTPException(code, message)
     if isinstance(exc, service.InvalidCode):
-        return HTTPException(status.HTTP_401_UNAUTHORIZED, "Code invalide")
+        return HTTPException(*_INVALID_CODE)
     if isinstance(exc, service.TooManyAttempts):
-        return HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "Trop de tentatives, réessayez plus tard",
-                             headers={"Retry-After": str(exc.retry_after)})
+        return HTTPException(*_TOO_MANY_ATTEMPTS, headers={"Retry-After": str(exc.retry_after)})
     # MfaUnavailable, SecretUnreadable : configuration du serveur, pas une erreur de la personne.
-    return HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Second facteur momentanément indisponible")
+    return HTTPException(*_UNAVAILABLE)
 
 
 _HANDLED = (service.Refused, service.InvalidCode, service.TooManyAttempts, service.MfaUnavailable, SecretUnreadable)

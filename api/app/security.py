@@ -16,6 +16,7 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 from app.config import get_settings
 
 SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
+ORIGIN_REFUSED = (403, "Origine de la requête refusée")
 
 
 class OriginCheckMiddleware:
@@ -30,10 +31,11 @@ class OriginCheckMiddleware:
         if origin in get_settings().app_origins:
             await self.app(scope, receive, send)
             return
-        body = json.dumps({"detail": "Origine de la requête refusée"}).encode()
+        status, message = ORIGIN_REFUSED
+        body = json.dumps({"detail": message}).encode()
         await send({
             "type": "http.response.start",
-            "status": 403,
+            "status": status,
             "headers": [(b"content-type", b"application/json"), (b"content-length", str(len(body)).encode())],
         })
         await send({"type": "http.response.body", "body": body})
