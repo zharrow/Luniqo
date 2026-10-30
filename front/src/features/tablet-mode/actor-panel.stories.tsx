@@ -17,7 +17,7 @@ type Story = StoryObj<typeof meta>
 /** Fin de session en heure de Paris (09:32 UTC = 10:32 en heure d'hiver). */
 export const Identifie: Story = {
   play: async ({ args, canvas, userEvent }) => {
-    await expect(canvas.getByText(/identifié·e jusqu'à 10:32/)).toBeVisible()
+    await expect(canvas.getByText("Identifié·e jusqu'à 10:32")).toBeVisible()
     await userEvent.click(canvas.getByRole('button', { name: 'Terminer' }))
     await expect(args.onEnd).toHaveBeenCalled()
   },

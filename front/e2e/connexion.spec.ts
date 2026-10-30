@@ -149,6 +149,18 @@ test("tablette : enrôlée par la direction, puis PIN de l'employé", async ({ p
   expect(action).toMatchObject({ httpOnly: true, sameSite: 'Strict' })
   expect(await page.evaluate<string>('document.cookie')).not.toContain('luniqo_tablet')
 
+  // Pointage : arrivée de Léo, puis départ avec une personne autorisée.
+  // Nina est inscrite dans l'autre crèche : la tablette ne la montre pas.
+  await expect(page.getByRole('button', { name: /Nina/ })).toHaveCount(0)
+  await page.getByRole('button', { name: /Léo Garnier/ }).click()
+  await page.getByRole('button', { name: "Pointer l'arrivée" }).click()
+  await expect(page.getByText(/^Arrivée de Léo Garnier pointée à \d{2}:\d{2}\.$/)).toBeVisible()
+  await page.getByRole('button', { name: /Léo Garnier/ }).click()
+  await page.getByRole('radio', { name: /Alice G\./ }).check()
+  await page.getByRole('button', { name: 'Pointer le départ' }).click()
+  await expect(page.getByText(/^Départ de Léo Garnier pointé à \d{2}:\d{2}\.$/)).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Partis (1)' })).toBeVisible()
+
   await page.getByRole('button', { name: 'Terminer' }).click()
   await expect(page.getByRole('heading', { name: 'Qui êtes-vous ?' })).toBeVisible()
   expect(errors).toEqual([])

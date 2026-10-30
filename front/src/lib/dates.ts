@@ -7,6 +7,8 @@ const dateTime = new Intl.DateTimeFormat('fr-FR', {
 
 const date = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long', timeZone: 'Europe/Paris' })
 
+const time = new Intl.DateTimeFormat('fr-FR', { timeStyle: 'short', timeZone: 'Europe/Paris' })
+
 /** « 30 octobre 2026 à 10:27 » */
 export function formatDateTime(iso: string): string {
   return dateTime.format(new Date(iso))
@@ -15,4 +17,9 @@ export function formatDateTime(iso: string): string {
 /** « 30 octobre 2026 » */
 export function formatDate(iso: string): string {
   return date.format(new Date(iso))
+}
+
+/** « 10:27 » */
+export function formatTime(iso: string): string {
+  return time.format(new Date(iso))
 }
