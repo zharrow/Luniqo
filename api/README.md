@@ -60,7 +60,11 @@ sans mot de passe par passkey. Pas encore de données réelles
 | `POST /api/v2/tablet/children/{child_id}/departure` | Pointer le départ ; refusé si la personne n'est pas autorisée à venir chercher l'enfant |
 | `GET /api/v2/nurseries/{id}/attendance`, `…/attendance/present` | Présences d'un jour (`?day=`, aujourd'hui à Paris par défaut), enfants présents maintenant |
 | `GET /api/v2/nurseries/{id}/attendance/history` | Présences sur une période (`?from=&to=`, 7 derniers jours par défaut, 366 au plus), par jour puis heure d'arrivée |
-| `GET /api/v2/nurseries/{id}/attendance/history.csv` | Même historique en CSV pour un tableur (séparateur `;`, BOM UTF-8, heures de Paris, formules neutralisées, jamais en cache) |
+| `GET /api/v2/nurseries/{id}/attendance/history.csv` | Même historique en CSV pour un tableur (séparateur `;`, BOM UTF-8, heures de Paris, formules neutralisées, jamais en cache), avec une colonne « Corrigé » |
+| `POST /api/v2/nurseries/{id}/attendance` | Ajouter une présence oubliée (enfant, arrivée, départ et personnes facultatifs, motif de 5 à 500 caractères) (direction) |
+| `PATCH …/attendance/{attendance_id}` | Corriger une présence : heures, personne qui a amené ou cherché l'enfant (autorisée), motif obligatoire ; seuls les champs envoyés changent (direction) |
+| `POST …/attendance/{attendance_id}/cancel` | Annuler une présence pointée par erreur, avec motif ; elle disparaît, sa trace reste au journal (direction) |
+| `GET /api/v2/nurseries/{id}/attendance/corrections` | Journal des corrections sur une période (`?from=&to=`, jour de la présence corrigée) : auteur, heure, motif, valeurs avant et après (direction) |
 | `POST /api/v2/nurseries/{id}/guardians/{guardian_id}/invitation` | Inviter un responsable à créer son compte famille : lien à usage unique, 7 jours (direction) |
 | `POST /api/v2/invitations/lookup`, `POST /api/v2/invitations/accept` | Sans session : lire l'invitation, créer le compte (ou relier un compte famille existant) ; jeton dans le corps |
 | `GET /api/v2/family/children`, `GET /api/v2/family/children/{child_id}` | Parent connecté : ses enfants (autorité parentale requise), présence du jour, présences récentes (`?days=`, 62 au plus), contacts sans coordonnées |

@@ -7124,6 +7124,215 @@
             "webSession": []
           }
         ]
+      },
+      "post": {
+        "tags": [
+          "pointage"
+        ],
+        "summary": "Ajoute une présence oubliée sur la tablette (direction seulement, motif obligatoire)",
+        "description": "Ajoute une présence oubliée sur la tablette (direction seulement, motif obligatoire).",
+        "operationId": "add_presence_api_v2_nurseries__nursery_id__attendance_post",
+        "parameters": [
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PresenceCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentification requise",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Authentification requise": {
+                    "value": {
+                      "detail": "Authentification requise"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Cette personne n'est pas autorisée à venir chercher l'enfant : prévenir la direction ; Action non autorisée pour ce rôle ; Origine de la requête refusée ; Second facteur requis ; Seule la direction peut gérer cette crèche",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Cette personne n'est pas autorisée à venir chercher l'enfant : prévenir la direction": {
+                    "value": {
+                      "detail": "Cette personne n'est pas autorisée à venir chercher l'enfant : prévenir la direction"
+                    }
+                  },
+                  "Action non autorisée pour ce rôle": {
+                    "value": {
+                      "detail": "Action non autorisée pour ce rôle"
+                    }
+                  },
+                  "Origine de la requête refusée": {
+                    "value": {
+                      "detail": "Origine de la requête refusée"
+                    }
+                  },
+                  "Second facteur requis": {
+                    "value": {
+                      "detail": "Second facteur requis"
+                    }
+                  },
+                  "Seule la direction peut gérer cette crèche": {
+                    "value": {
+                      "detail": "Seule la direction peut gérer cette crèche"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Enfant introuvable dans cette crèche ; Crèche introuvable",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Enfant introuvable dans cette crèche": {
+                    "value": {
+                      "detail": "Enfant introuvable dans cette crèche"
+                    }
+                  },
+                  "Crèche introuvable": {
+                    "value": {
+                      "detail": "Crèche introuvable"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Enfant non attendu (suspendu, parti ou pas encore inscrit) ; Arrivée déjà pointée ; Présence de plus de 31 jours : elle ne se corrige plus ; Cette présence chevauche une autre présence de l'enfant ce jour-là",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Enfant non attendu (suspendu, parti ou pas encore inscrit)": {
+                    "value": {
+                      "detail": "Enfant non attendu (suspendu, parti ou pas encore inscrit)"
+                    }
+                  },
+                  "Arrivée déjà pointée": {
+                    "value": {
+                      "detail": "Arrivée déjà pointée"
+                    }
+                  },
+                  "Présence de plus de 31 jours : elle ne se corrige plus": {
+                    "value": {
+                      "detail": "Présence de plus de 31 jours : elle ne se corrige plus"
+                    }
+                  },
+                  "Cette présence chevauche une autre présence de l'enfant ce jour-là": {
+                    "value": {
+                      "detail": "Cette présence chevauche une autre présence de l'enfant ce jour-là"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Cette personne n'est pas un responsable de l'enfant ; Une personne venue chercher l'enfant suppose une heure de départ ; L'arrivée doit rester le jour de la présence ; Le départ précède l'arrivée ; Le départ doit être le jour de l'arrivée ; Une heure corrigée ne peut pas être dans le futur ; Une présence d'un jour passé doit avoir une heure de départ",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Cette personne n'est pas un responsable de l'enfant": {
+                    "value": {
+                      "detail": "Cette personne n'est pas un responsable de l'enfant"
+                    }
+                  },
+                  "Une personne venue chercher l'enfant suppose une heure de départ": {
+                    "value": {
+                      "detail": "Une personne venue chercher l'enfant suppose une heure de départ"
+                    }
+                  },
+                  "L'arrivée doit rester le jour de la présence": {
+                    "value": {
+                      "detail": "L'arrivée doit rester le jour de la présence"
+                    }
+                  },
+                  "Le départ précède l'arrivée": {
+                    "value": {
+                      "detail": "Le départ précède l'arrivée"
+                    }
+                  },
+                  "Le départ doit être le jour de l'arrivée": {
+                    "value": {
+                      "detail": "Le départ doit être le jour de l'arrivée"
+                    }
+                  },
+                  "Une heure corrigée ne peut pas être dans le futur": {
+                    "value": {
+                      "detail": "Une heure corrigée ne peut pas être dans le futur"
+                    }
+                  },
+                  "Une présence d'un jour passé doit avoir une heure de départ": {
+                    "value": {
+                      "detail": "Une présence d'un jour passé doit avoir une heure de départ"
+                    }
+                  }
+                },
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    },
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "webSession": []
+          }
+        ]
       }
     },
     "/api/v2/nurseries/{nursery_id}/attendance/present": {
@@ -7500,6 +7709,560 @@
                   "Second facteur requis": {
                     "value": {
                       "detail": "Second facteur requis"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Crèche introuvable",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Crèche introuvable": {
+                    "value": {
+                      "detail": "Crèche introuvable"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "La date de début suit la date de fin ; Période limitée à 366 jours par requête",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "La date de début suit la date de fin": {
+                    "value": {
+                      "detail": "La date de début suit la date de fin"
+                    }
+                  },
+                  "Période limitée à 366 jours par requête": {
+                    "value": {
+                      "detail": "Période limitée à 366 jours par requête"
+                    }
+                  }
+                },
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    },
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "webSession": []
+          }
+        ]
+      }
+    },
+    "/api/v2/nurseries/{nursery_id}/attendance/{attendance_id}": {
+      "patch": {
+        "tags": [
+          "pointage"
+        ],
+        "summary": "Corrige une présence",
+        "description": "Corrige une présence : départ oublié, heure erronée, personne qui a amené ou cherché l'enfant.\n\nSeuls les champs envoyés changent ; le jour de la présence, lui, ne change jamais.",
+        "operationId": "correct_presence_api_v2_nurseries__nursery_id__attendance__attendance_id__patch",
+        "parameters": [
+          {
+            "name": "attendance_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Attendance Id"
+            }
+          },
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PresenceUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentification requise",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Authentification requise": {
+                    "value": {
+                      "detail": "Authentification requise"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Cette personne n'est pas autorisée à venir chercher l'enfant : prévenir la direction ; Action non autorisée pour ce rôle ; Origine de la requête refusée ; Second facteur requis ; Seule la direction peut gérer cette crèche",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Cette personne n'est pas autorisée à venir chercher l'enfant : prévenir la direction": {
+                    "value": {
+                      "detail": "Cette personne n'est pas autorisée à venir chercher l'enfant : prévenir la direction"
+                    }
+                  },
+                  "Action non autorisée pour ce rôle": {
+                    "value": {
+                      "detail": "Action non autorisée pour ce rôle"
+                    }
+                  },
+                  "Origine de la requête refusée": {
+                    "value": {
+                      "detail": "Origine de la requête refusée"
+                    }
+                  },
+                  "Second facteur requis": {
+                    "value": {
+                      "detail": "Second facteur requis"
+                    }
+                  },
+                  "Seule la direction peut gérer cette crèche": {
+                    "value": {
+                      "detail": "Seule la direction peut gérer cette crèche"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Présence introuvable dans cette crèche ; Crèche introuvable",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Présence introuvable dans cette crèche": {
+                    "value": {
+                      "detail": "Présence introuvable dans cette crèche"
+                    }
+                  },
+                  "Crèche introuvable": {
+                    "value": {
+                      "detail": "Crèche introuvable"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Arrivée déjà pointée ; Présence de plus de 31 jours : elle ne se corrige plus ; Cette présence chevauche une autre présence de l'enfant ce jour-là",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Arrivée déjà pointée": {
+                    "value": {
+                      "detail": "Arrivée déjà pointée"
+                    }
+                  },
+                  "Présence de plus de 31 jours : elle ne se corrige plus": {
+                    "value": {
+                      "detail": "Présence de plus de 31 jours : elle ne se corrige plus"
+                    }
+                  },
+                  "Cette présence chevauche une autre présence de l'enfant ce jour-là": {
+                    "value": {
+                      "detail": "Cette présence chevauche une autre présence de l'enfant ce jour-là"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "La correction ne change rien ; L'heure d'arrivée ne peut pas être retirée ; Cette personne n'est pas un responsable de l'enfant ; Une personne venue chercher l'enfant suppose une heure de départ ; L'arrivée doit rester le jour de la présence ; Le départ précède l'arrivée ; Le départ doit être le jour de l'arrivée ; Une heure corrigée ne peut pas être dans le futur ; Une présence d'un jour passé doit avoir une heure de départ",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "La correction ne change rien": {
+                    "value": {
+                      "detail": "La correction ne change rien"
+                    }
+                  },
+                  "L'heure d'arrivée ne peut pas être retirée": {
+                    "value": {
+                      "detail": "L'heure d'arrivée ne peut pas être retirée"
+                    }
+                  },
+                  "Cette personne n'est pas un responsable de l'enfant": {
+                    "value": {
+                      "detail": "Cette personne n'est pas un responsable de l'enfant"
+                    }
+                  },
+                  "Une personne venue chercher l'enfant suppose une heure de départ": {
+                    "value": {
+                      "detail": "Une personne venue chercher l'enfant suppose une heure de départ"
+                    }
+                  },
+                  "L'arrivée doit rester le jour de la présence": {
+                    "value": {
+                      "detail": "L'arrivée doit rester le jour de la présence"
+                    }
+                  },
+                  "Le départ précède l'arrivée": {
+                    "value": {
+                      "detail": "Le départ précède l'arrivée"
+                    }
+                  },
+                  "Le départ doit être le jour de l'arrivée": {
+                    "value": {
+                      "detail": "Le départ doit être le jour de l'arrivée"
+                    }
+                  },
+                  "Une heure corrigée ne peut pas être dans le futur": {
+                    "value": {
+                      "detail": "Une heure corrigée ne peut pas être dans le futur"
+                    }
+                  },
+                  "Une présence d'un jour passé doit avoir une heure de départ": {
+                    "value": {
+                      "detail": "Une présence d'un jour passé doit avoir une heure de départ"
+                    }
+                  }
+                },
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    },
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "webSession": []
+          }
+        ]
+      }
+    },
+    "/api/v2/nurseries/{nursery_id}/attendance/{attendance_id}/cancel": {
+      "post": {
+        "tags": [
+          "pointage"
+        ],
+        "summary": "Retire une présence pointée par erreur (sur le mauvais enfant)",
+        "description": "Retire une présence pointée par erreur (sur le mauvais enfant). Le journal garde ce qu'elle contenait.",
+        "operationId": "cancel_presence_api_v2_nurseries__nursery_id__attendance__attendance_id__cancel_post",
+        "parameters": [
+          {
+            "name": "attendance_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Attendance Id"
+            }
+          },
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PresenceCancel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CorrectionOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentification requise",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Authentification requise": {
+                    "value": {
+                      "detail": "Authentification requise"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Action non autorisée pour ce rôle ; Origine de la requête refusée ; Second facteur requis ; Seule la direction peut gérer cette crèche",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Action non autorisée pour ce rôle": {
+                    "value": {
+                      "detail": "Action non autorisée pour ce rôle"
+                    }
+                  },
+                  "Origine de la requête refusée": {
+                    "value": {
+                      "detail": "Origine de la requête refusée"
+                    }
+                  },
+                  "Second facteur requis": {
+                    "value": {
+                      "detail": "Second facteur requis"
+                    }
+                  },
+                  "Seule la direction peut gérer cette crèche": {
+                    "value": {
+                      "detail": "Seule la direction peut gérer cette crèche"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Présence introuvable dans cette crèche ; Crèche introuvable",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Présence introuvable dans cette crèche": {
+                    "value": {
+                      "detail": "Présence introuvable dans cette crèche"
+                    }
+                  },
+                  "Crèche introuvable": {
+                    "value": {
+                      "detail": "Crèche introuvable"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Présence de plus de 31 jours : elle ne se corrige plus",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Présence de plus de 31 jours : elle ne se corrige plus": {
+                    "value": {
+                      "detail": "Présence de plus de 31 jours : elle ne se corrige plus"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "webSession": []
+          }
+        ]
+      }
+    },
+    "/api/v2/nurseries/{nursery_id}/attendance/corrections": {
+      "get": {
+        "tags": [
+          "pointage"
+        ],
+        "summary": "Journal des corrections des présences d'une période (jour de la présence), dans l'ordre où elles ont eu lieu",
+        "description": "Journal des corrections des présences d'une période (jour de la présence), dans l'ordre où elles ont eu lieu.",
+        "operationId": "attendance_corrections_api_v2_nurseries__nursery_id__attendance_corrections_get",
+        "parameters": [
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Premier jour (7 jours avant `to` par défaut)",
+              "title": "From"
+            },
+            "description": "Premier jour (7 jours avant `to` par défaut)"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Dernier jour (aujourd'hui à Paris par défaut)",
+              "title": "To"
+            },
+            "description": "Dernier jour (aujourd'hui à Paris par défaut)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CorrectionOut"
+                  },
+                  "title": "Response Attendance Corrections Api V2 Nurseries  Nursery Id  Attendance Corrections Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentification requise",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Authentification requise": {
+                    "value": {
+                      "detail": "Authentification requise"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Action non autorisée pour ce rôle ; Second facteur requis ; Seule la direction peut gérer cette crèche",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Action non autorisée pour ce rôle": {
+                    "value": {
+                      "detail": "Action non autorisée pour ce rôle"
+                    }
+                  },
+                  "Second facteur requis": {
+                    "value": {
+                      "detail": "Second facteur requis"
+                    }
+                  },
+                  "Seule la direction peut gérer cette crèche": {
+                    "value": {
+                      "detail": "Seule la direction peut gérer cette crèche"
                     }
                   }
                 },
@@ -10691,6 +11454,11 @@
             ],
             "title": "Picked Up By",
             "description": "Responsable venu chercher l'enfant"
+          },
+          "corrected": {
+            "type": "boolean",
+            "title": "Corrected",
+            "description": "Présence ajoutée ou corrigée par la direction (journal des corrections)"
           }
         },
         "type": "object",
@@ -10704,7 +11472,8 @@
           "dropped_off_by",
           "departed_at",
           "departure_by",
-          "picked_up_by"
+          "picked_up_by",
+          "corrected"
         ],
         "title": "AttendanceOut"
       },
@@ -11183,6 +11952,107 @@
             "code": "123456"
           }
         ]
+      },
+      "CorrectionKind": {
+        "type": "string",
+        "enum": [
+          "created",
+          "modified",
+          "cancelled"
+        ],
+        "title": "CorrectionKind"
+      },
+      "CorrectionOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "attendance_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attendance Id",
+            "description": "Null si la présence a été annulée"
+          },
+          "child_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Child Id"
+          },
+          "child_name": {
+            "type": "string",
+            "title": "Child Name"
+          },
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day",
+            "description": "Jour de la présence corrigée, à Paris"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/CorrectionKind",
+            "description": "created : présence ajoutée ; modified : corrigée ; cancelled : retirée (pointée par erreur)"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "corrected_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Corrected At"
+          },
+          "corrected_by": {
+            "type": "string",
+            "title": "Corrected By",
+            "description": "Membre de la direction qui a corrigé (nom complet)"
+          },
+          "before": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PresenceValues"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null pour une présence ajoutée"
+          },
+          "after": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PresenceValues"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null pour une présence annulée"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "attendance_id",
+          "child_id",
+          "child_name",
+          "day",
+          "kind",
+          "reason",
+          "corrected_at",
+          "corrected_by",
+          "before",
+          "after"
+        ],
+        "title": "CorrectionOut"
       },
       "DayPlan": {
         "properties": {
@@ -12764,6 +13634,106 @@
         ],
         "title": "PlannedTask"
       },
+      "PresenceCancel": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 5,
+            "title": "Reason",
+            "description": "Motif de la correction, 5 à 500 caractères (gardé dans le journal)"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "PresenceCancel",
+        "examples": [
+          {
+            "reason": "Pointée sur Léo au lieu d'Emma"
+          }
+        ]
+      },
+      "PresenceCreate": {
+        "properties": {
+          "child_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Child Id"
+          },
+          "arrived_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Arrived At",
+            "description": "Heure d'arrivée, avec son fuseau ; fixe le jour (à Paris)"
+          },
+          "departed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Departed At",
+            "description": "Heure de départ, le même jour"
+          },
+          "dropped_off_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dropped Off By",
+            "description": "Responsable qui a amené l'enfant"
+          },
+          "picked_up_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Picked Up By",
+            "description": "Responsable venu chercher l'enfant, autorisé pour lui (facultatif)"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 5,
+            "title": "Reason",
+            "description": "Motif de la correction, 5 à 500 caractères (gardé dans le journal)"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "child_id",
+          "arrived_at",
+          "reason"
+        ],
+        "title": "PresenceCreate",
+        "description": "Présence oubliée sur la tablette. Sans départ, seulement pour un enfant encore là aujourd'hui.",
+        "examples": [
+          {
+            "arrived_at": "2026-07-15T08:30:00+02:00",
+            "child_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+            "departed_at": "2026-07-15T17:45:00+02:00",
+            "reason": "Arrivée et départ oubliés sur la tablette"
+          }
+        ]
+      },
       "PresenceOut": {
         "properties": {
           "day": {
@@ -12808,6 +13778,133 @@
           "picked_up_by"
         ],
         "title": "PresenceOut"
+      },
+      "PresenceUpdate": {
+        "properties": {
+          "arrived_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Arrived At",
+            "description": "Nouvelle heure d'arrivée, le même jour"
+          },
+          "departed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Departed At",
+            "description": "Nouvelle heure de départ, ou null"
+          },
+          "dropped_off_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dropped Off By",
+            "description": "Responsable qui a amené l'enfant, ou null"
+          },
+          "picked_up_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Picked Up By",
+            "description": "Responsable venu chercher l'enfant, autorisé pour lui, ou null"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 5,
+            "title": "Reason",
+            "description": "Motif de la correction, 5 à 500 caractères (gardé dans le journal)"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "PresenceUpdate",
+        "description": "Seuls les champs envoyés changent. `departed_at` à null rouvre la présence (le jour même seulement).",
+        "examples": [
+          {
+            "departed_at": "2026-07-15T17:45:00+02:00",
+            "reason": "Départ oublié sur la tablette"
+          }
+        ]
+      },
+      "PresenceValues": {
+        "properties": {
+          "arrived_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Arrived At"
+          },
+          "departed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Departed At"
+          },
+          "dropped_off_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dropped Off By"
+          },
+          "picked_up_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Picked Up By"
+          }
+        },
+        "type": "object",
+        "required": [
+          "arrived_at",
+          "departed_at",
+          "dropped_off_by",
+          "picked_up_by"
+        ],
+        "title": "PresenceValues"
       },
       "RegistrationIn": {
         "properties": {

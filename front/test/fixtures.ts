@@ -137,6 +137,7 @@ const presence: Schemas['AttendanceOut'] = {
   departed_at: null,
   departure_by: null,
   picked_up_by: null,
+  corrected: false,
 }
 
 /** Présences du jour d'une crèche (`GET /api/v2/nurseries/{id}/attendance`), par heure d'arrivée. */
