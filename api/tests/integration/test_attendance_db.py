@@ -198,9 +198,9 @@ async def test_export_csv_des_presences(clients, world, clock, db):
     assert response.headers["content-disposition"] == 'attachment; filename="presences_2026-07-14_2026-07-16.csv"'
     assert response.headers["cache-control"] == "no-store"
     assert response.text.split("\r\n") == [
-        "\ufeffJour;Enfant;Arrivée;Arrivée pointée par;Amené·e par;Départ;Départ pointé par;Parti·e avec",
-        "15/07/2026;Léo Garnier;09:00;Lea T.;Alice G.;17:00;Lea T.;Alice G.",
-        "16/07/2026;'=Emma Lambert;09:00;Lea T.;;;;",
+        "\ufeffJour;Enfant;Arrivée;Arrivée pointée par;Amené·e par;Départ;Départ pointé par;Parti·e avec;Corrigé",
+        "15/07/2026;Léo Garnier;09:00;Lea T.;Alice G.;17:00;Lea T.;Alice G.;",
+        "16/07/2026;'=Emma Lambert;09:00;Lea T.;;;;;",
         "",
     ]
 

@@ -27,6 +27,7 @@ Chaque ligne cite son ticket Jira `LUN-<n>`.
 - Front v2 : l'employé choisit ou change son PIN de tablette depuis son accueil (saisi deux fois, confirmé par son mot de passe) ; un nouveau PIN débloque aussi un PIN bloqué. Jusqu'ici, aucun écran ne le permettait (LUN-119).
 - API : présences d'une crèche sur une période (`GET /api/v2/nurseries/{id}/attendance/history`, 7 derniers jours par défaut, 366 au plus) et leur export CSV pour un tableur (séparateur `;`, heures de Paris, formules neutralisées, jamais gardé en cache) (LUN-93).
 - Front v2 : historique des présences d'une crèche, depuis les présences du jour, pour la direction et les employés : période choisie par deux dates ou un raccourci (7 derniers jours, mois en cours, mois précédent), gardée dans l'adresse ; chiffres de la période, un tableau par jour, départs oubliés signalés « Départ non pointé » ; bouton « Exporter en CSV » qui télécharge le fichier de la période affichée, ou affiche le refus de l'API (LUN-92).
+- API : la direction corrige un pointage (heures, personne qui a amené ou cherché l'enfant), ajoute une présence oubliée ou annule une présence pointée sur le mauvais enfant, avec un motif obligatoire, sur les 31 derniers jours. Un départ oublié se ferme ainsi sans toucher à la base, et la tablette accepte de nouveau l'arrivée de l'enfant. Chaque correction est consignée dans un journal (auteur, heure, motif, avant et après) consultable sur une période ; les présences corrigées sont marquées, et l'export CSV gagne une colonne « Corrigé » (LUN-120).
 
 ### Modifié
 

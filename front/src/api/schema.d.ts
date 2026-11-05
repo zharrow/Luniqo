@@ -829,7 +829,11 @@ export interface paths {
          */
         get: operations["day_attendance_api_v2_nurseries__nursery_id__attendance_get"];
         put?: never;
-        post?: never;
+        /**
+         * Ajoute une présence oubliée sur la tablette (direction seulement, motif obligatoire)
+         * @description Ajoute une présence oubliée sur la tablette (direction seulement, motif obligatoire).
+         */
+        post: operations["add_presence_api_v2_nurseries__nursery_id__attendance_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -890,6 +894,68 @@ export interface paths {
          *     Séparateur « ; » et BOM UTF-8 : un tableur réglé en français l'ouvre avec ses accents. Heures en heure de Paris.
          */
         get: operations["attendance_history_csv_api_v2_nurseries__nursery_id__attendance_history_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/nurseries/{nursery_id}/attendance/{attendance_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Corrige une présence
+         * @description Corrige une présence : départ oublié, heure erronée, personne qui a amené ou cherché l'enfant.
+         *
+         *     Seuls les champs envoyés changent ; le jour de la présence, lui, ne change jamais.
+         */
+        patch: operations["correct_presence_api_v2_nurseries__nursery_id__attendance__attendance_id__patch"];
+        trace?: never;
+    };
+    "/api/v2/nurseries/{nursery_id}/attendance/{attendance_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Retire une présence pointée par erreur (sur le mauvais enfant)
+         * @description Retire une présence pointée par erreur (sur le mauvais enfant). Le journal garde ce qu'elle contenait.
+         */
+        post: operations["cancel_presence_api_v2_nurseries__nursery_id__attendance__attendance_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/nurseries/{nursery_id}/attendance/corrections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Journal des corrections des présences d'une période (jour de la présence), dans l'ordre où elles ont eu lieu
+         * @description Journal des corrections des présences d'une période (jour de la présence), dans l'ordre où elles ont eu lieu.
+         */
+        get: operations["attendance_corrections_api_v2_nurseries__nursery_id__attendance_corrections_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1431,6 +1497,11 @@ export interface components {
              * @description Responsable venu chercher l'enfant
              */
             picked_up_by: string | null;
+            /**
+             * Corrected
+             * @description Présence ajoutée ou corrigée par la direction (journal des corrections)
+             */
+            corrected: boolean;
         };
         /** BackupCodesOut */
         BackupCodesOut: {
@@ -1669,6 +1740,55 @@ export interface components {
              * @description Code TOTP (6 chiffres) ou code de secours (XXXX-XXXX-XXXX) ; espaces et tirets tolérés
              */
             code: string;
+        };
+        /**
+         * CorrectionKind
+         * @enum {string}
+         */
+        CorrectionKind: "created" | "modified" | "cancelled";
+        /** CorrectionOut */
+        CorrectionOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Attendance Id
+             * @description Null si la présence a été annulée
+             */
+            attendance_id: string | null;
+            /**
+             * Child Id
+             * Format: uuid
+             */
+            child_id: string;
+            /** Child Name */
+            child_name: string;
+            /**
+             * Day
+             * Format: date
+             * @description Jour de la présence corrigée, à Paris
+             */
+            day: string;
+            /** @description created : présence ajoutée ; modified : corrigée ; cancelled : retirée (pointée par erreur) */
+            kind: components["schemas"]["CorrectionKind"];
+            /** Reason */
+            reason: string;
+            /**
+             * Corrected At
+             * Format: date-time
+             */
+            corrected_at: string;
+            /**
+             * Corrected By
+             * @description Membre de la direction qui a corrigé (nom complet)
+             */
+            corrected_by: string;
+            /** @description Null pour une présence ajoutée */
+            before: components["schemas"]["PresenceValues"] | null;
+            /** @description Null pour une présence annulée */
+            after: components["schemas"]["PresenceValues"] | null;
         };
         /** DayPlan */
         DayPlan: {
@@ -2325,6 +2445,62 @@ export interface components {
             /** Instructions */
             instructions: string | null;
         };
+        /**
+         * PresenceCancel
+         * @example {
+         *       "reason": "Pointée sur Léo au lieu d'Emma"
+         *     }
+         */
+        PresenceCancel: {
+            /**
+             * Reason
+             * @description Motif de la correction, 5 à 500 caractères (gardé dans le journal)
+             */
+            reason: string;
+        };
+        /**
+         * PresenceCreate
+         * @description Présence oubliée sur la tablette. Sans départ, seulement pour un enfant encore là aujourd'hui.
+         * @example {
+         *       "arrived_at": "2026-07-15T08:30:00+02:00",
+         *       "child_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+         *       "departed_at": "2026-07-15T17:45:00+02:00",
+         *       "reason": "Arrivée et départ oubliés sur la tablette"
+         *     }
+         */
+        PresenceCreate: {
+            /**
+             * Child Id
+             * Format: uuid
+             */
+            child_id: string;
+            /**
+             * Arrived At
+             * Format: date-time
+             * @description Heure d'arrivée, avec son fuseau ; fixe le jour (à Paris)
+             */
+            arrived_at: string;
+            /**
+             * Departed At
+             * @description Heure de départ, le même jour
+             */
+            departed_at?: string | null;
+            /**
+             * Dropped Off By
+             * @description Responsable qui a amené l'enfant
+             */
+            dropped_off_by?: string | null;
+            /**
+             * Picked Up By
+             * @description Responsable venu chercher l'enfant, autorisé pour lui (facultatif)
+             */
+            picked_up_by?: string | null;
+            /**
+             * Reason
+             * @description Motif de la correction, 5 à 500 caractères (gardé dans le journal)
+             */
+            reason: string;
+        };
         /** PresenceOut */
         PresenceOut: {
             /**
@@ -2339,6 +2515,55 @@ export interface components {
             arrived_at: string;
             /** Departed At */
             departed_at: string | null;
+            /** Picked Up By */
+            picked_up_by: string | null;
+        };
+        /**
+         * PresenceUpdate
+         * @description Seuls les champs envoyés changent. `departed_at` à null rouvre la présence (le jour même seulement).
+         * @example {
+         *       "departed_at": "2026-07-15T17:45:00+02:00",
+         *       "reason": "Départ oublié sur la tablette"
+         *     }
+         */
+        PresenceUpdate: {
+            /**
+             * Arrived At
+             * @description Nouvelle heure d'arrivée, le même jour
+             */
+            arrived_at?: string | null;
+            /**
+             * Departed At
+             * @description Nouvelle heure de départ, ou null
+             */
+            departed_at?: string | null;
+            /**
+             * Dropped Off By
+             * @description Responsable qui a amené l'enfant, ou null
+             */
+            dropped_off_by?: string | null;
+            /**
+             * Picked Up By
+             * @description Responsable venu chercher l'enfant, autorisé pour lui, ou null
+             */
+            picked_up_by?: string | null;
+            /**
+             * Reason
+             * @description Motif de la correction, 5 à 500 caractères (gardé dans le journal)
+             */
+            reason: string;
+        };
+        /** PresenceValues */
+        PresenceValues: {
+            /**
+             * Arrived At
+             * Format: date-time
+             */
+            arrived_at: string;
+            /** Departed At */
+            departed_at: string | null;
+            /** Dropped Off By */
+            dropped_off_by: string | null;
             /** Picked Up By */
             picked_up_by: string | null;
         };
@@ -6394,6 +6619,77 @@ export interface operations {
             };
         };
     };
+    add_presence_api_v2_nurseries__nursery_id__attendance_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                nursery_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PresenceCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttendanceOut"];
+                };
+            };
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Cette personne n'est pas autorisée à venir chercher l'enfant : prévenir la direction ; Action non autorisée pour ce rôle ; Origine de la requête refusée ; Second facteur requis ; Seule la direction peut gérer cette crèche */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Enfant introuvable dans cette crèche ; Crèche introuvable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Enfant non attendu (suspendu, parti ou pas encore inscrit) ; Arrivée déjà pointée ; Présence de plus de 31 jours : elle ne se corrige plus ; Cette présence chevauche une autre présence de l'enfant ce jour-là */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Cette personne n'est pas un responsable de l'enfant ; Une personne venue chercher l'enfant suppose une heure de départ ; L'arrivée doit rester le jour de la présence ; Le départ précède l'arrivée ; Le départ doit être le jour de l'arrivée ; Une heure corrigée ne peut pas être dans le futur ; Une présence d'un jour passé doit avoir une heure de départ */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"] | components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     present_children_api_v2_nurseries__nursery_id__attendance_present_get: {
         parameters: {
             query?: never;
@@ -6550,6 +6846,213 @@ export interface operations {
                 };
             };
             /** @description Action non autorisée pour ce rôle ; Second facteur requis */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Crèche introuvable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description La date de début suit la date de fin ; Période limitée à 366 jours par requête */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"] | components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    correct_presence_api_v2_nurseries__nursery_id__attendance__attendance_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attendance_id: string;
+                nursery_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PresenceUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttendanceOut"];
+                };
+            };
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Cette personne n'est pas autorisée à venir chercher l'enfant : prévenir la direction ; Action non autorisée pour ce rôle ; Origine de la requête refusée ; Second facteur requis ; Seule la direction peut gérer cette crèche */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Présence introuvable dans cette crèche ; Crèche introuvable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Arrivée déjà pointée ; Présence de plus de 31 jours : elle ne se corrige plus ; Cette présence chevauche une autre présence de l'enfant ce jour-là */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description La correction ne change rien ; L'heure d'arrivée ne peut pas être retirée ; Cette personne n'est pas un responsable de l'enfant ; Une personne venue chercher l'enfant suppose une heure de départ ; L'arrivée doit rester le jour de la présence ; Le départ précède l'arrivée ; Le départ doit être le jour de l'arrivée ; Une heure corrigée ne peut pas être dans le futur ; Une présence d'un jour passé doit avoir une heure de départ */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"] | components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_presence_api_v2_nurseries__nursery_id__attendance__attendance_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attendance_id: string;
+                nursery_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PresenceCancel"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CorrectionOut"];
+                };
+            };
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Origine de la requête refusée ; Second facteur requis ; Seule la direction peut gérer cette crèche */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Présence introuvable dans cette crèche ; Crèche introuvable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Présence de plus de 31 jours : elle ne se corrige plus */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    attendance_corrections_api_v2_nurseries__nursery_id__attendance_corrections_get: {
+        parameters: {
+            query?: {
+                /** @description Premier jour (7 jours avant `to` par défaut) */
+                from?: string | null;
+                /** @description Dernier jour (aujourd'hui à Paris par défaut) */
+                to?: string | null;
+            };
+            header?: never;
+            path: {
+                nursery_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CorrectionOut"][];
+                };
+            };
+            /** @description Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Action non autorisée pour ce rôle ; Second facteur requis ; Seule la direction peut gérer cette crèche */
             403: {
                 headers: {
                     [name: string]: unknown;
