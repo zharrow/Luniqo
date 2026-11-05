@@ -20,6 +20,7 @@ import { Route as ConnexionActivationRouteImport } from './routes/connexion/acti
 import { Route as ConnexionSecondFacteurRouteImport } from './routes/connexion/second-facteur'
 import { Route as AppCrechesNurseryIdPresencesRouteImport } from './routes/_app/creches/$nurseryId/presences'
 import { Route as AppCrechesNurseryIdTablettesRouteImport } from './routes/_app/creches/$nurseryId/tablettes'
+import { Route as AppCrechesNurseryIdPresencesHistoriqueRouteImport } from './routes/_app/creches/$nurseryId/presences_.historique'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -77,6 +78,12 @@ const AppCrechesNurseryIdTablettesRoute =
     path: '/creches/$nurseryId/tablettes',
     getParentRoute: () => AppRouteRoute,
   } as any)
+const AppCrechesNurseryIdPresencesHistoriqueRoute =
+  AppCrechesNurseryIdPresencesHistoriqueRouteImport.update({
+    id: '/creches/$nurseryId/presences_/historique',
+    path: '/creches/$nurseryId/presences/historique',
+    getParentRoute: () => AppRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -89,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/connexion/': typeof ConnexionIndexRoute
   '/creches/$nurseryId/presences': typeof AppCrechesNurseryIdPresencesRoute
   '/creches/$nurseryId/tablettes': typeof AppCrechesNurseryIdTablettesRoute
+  '/creches/$nurseryId/presences/historique': typeof AppCrechesNurseryIdPresencesHistoriqueRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -100,6 +108,7 @@ export interface FileRoutesByTo {
   '/connexion': typeof ConnexionIndexRoute
   '/creches/$nurseryId/presences': typeof AppCrechesNurseryIdPresencesRoute
   '/creches/$nurseryId/tablettes': typeof AppCrechesNurseryIdTablettesRoute
+  '/creches/$nurseryId/presences/historique': typeof AppCrechesNurseryIdPresencesHistoriqueRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -114,6 +123,7 @@ export interface FileRoutesById {
   '/connexion/': typeof ConnexionIndexRoute
   '/_app/creches/$nurseryId/presences': typeof AppCrechesNurseryIdPresencesRoute
   '/_app/creches/$nurseryId/tablettes': typeof AppCrechesNurseryIdTablettesRoute
+  '/_app/creches/$nurseryId/presences_/historique': typeof AppCrechesNurseryIdPresencesHistoriqueRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -128,6 +138,7 @@ export interface FileRouteTypes {
     | '/connexion/'
     | '/creches/$nurseryId/presences'
     | '/creches/$nurseryId/tablettes'
+    | '/creches/$nurseryId/presences/historique'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/connexion'
     | '/creches/$nurseryId/presences'
     | '/creches/$nurseryId/tablettes'
+    | '/creches/$nurseryId/presences/historique'
   id:
     | '__root__'
     | '/'
@@ -152,6 +164,7 @@ export interface FileRouteTypes {
     | '/connexion/'
     | '/_app/creches/$nurseryId/presences'
     | '/_app/creches/$nurseryId/tablettes'
+    | '/_app/creches/$nurseryId/presences_/historique'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -240,6 +253,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCrechesNurseryIdTablettesRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/_app/creches/$nurseryId/presences_/historique': {
+      id: '/_app/creches/$nurseryId/presences_/historique'
+      path: '/creches/$nurseryId/presences/historique'
+      fullPath: '/creches/$nurseryId/presences/historique'
+      preLoaderRoute: typeof AppCrechesNurseryIdPresencesHistoriqueRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
   }
 }
 
@@ -248,6 +268,7 @@ interface AppRouteRouteChildren {
   AppMonPinRoute: typeof AppMonPinRoute
   AppCrechesNurseryIdPresencesRoute: typeof AppCrechesNurseryIdPresencesRoute
   AppCrechesNurseryIdTablettesRoute: typeof AppCrechesNurseryIdTablettesRoute
+  AppCrechesNurseryIdPresencesHistoriqueRoute: typeof AppCrechesNurseryIdPresencesHistoriqueRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
@@ -255,6 +276,8 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppMonPinRoute: AppMonPinRoute,
   AppCrechesNurseryIdPresencesRoute: AppCrechesNurseryIdPresencesRoute,
   AppCrechesNurseryIdTablettesRoute: AppCrechesNurseryIdTablettesRoute,
+  AppCrechesNurseryIdPresencesHistoriqueRoute:
+    AppCrechesNurseryIdPresencesHistoriqueRoute,
 }
 
 const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(

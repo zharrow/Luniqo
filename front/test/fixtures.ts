@@ -163,3 +163,38 @@ export const dayAttendance: Schemas['AttendanceOut'][] = [
     dropped_off_by: 'Sophie L.',
   },
 ]
+
+/**
+ * Présences d'une période (`GET …/attendance/history`), par jour puis par heure
+ * d'arrivée, vues le 30 octobre 2026 : le départ de Léo n'a pas été pointé le 28.
+ */
+export const periodAttendance: Schemas['AttendanceOut'][] = [
+  {
+    ...presence,
+    id: '00000000-0000-4000-8000-0000000000c1',
+    day: '2026-10-28',
+    arrived_at: '2026-10-28T07:50:00Z',
+  },
+  {
+    ...presence,
+    id: '00000000-0000-4000-8000-0000000000c2',
+    day: '2026-10-29',
+    arrived_at: '2026-10-29T07:40:00Z',
+    departed_at: '2026-10-29T16:05:00Z',
+    departure_by: 'Inès M.',
+    picked_up_by: 'Alice G.',
+  },
+  {
+    ...presence,
+    id: '00000000-0000-4000-8000-0000000000c3',
+    child_id: '00000000-0000-4000-8000-0000000000d2',
+    child_name: 'Emma Lambert',
+    day: '2026-10-29',
+    arrived_at: '2026-10-29T08:15:00Z',
+    dropped_off_by: 'Sophie L.',
+    departed_at: '2026-10-29T15:30:00Z',
+    departure_by: 'Lucas B.',
+    picked_up_by: 'Sophie L.',
+  },
+  ...dayAttendance,
+]

@@ -1,5 +1,5 @@
 import { createFileRoute, Link, redirect } from '@tanstack/react-router'
-import { RefreshCw } from 'lucide-react'
+import { History, RefreshCw } from 'lucide-react'
 
 import { $api } from '@/api/client'
 import { Button } from '@/components/ui/button'
@@ -49,6 +49,14 @@ function PresencesPage() {
           <RefreshCw aria-hidden="true" />
           Actualiser
         </Button>
+        <Link
+          to="/creches/$nurseryId/presences/historique"
+          params={{ nurseryId }}
+          className="inline-flex min-h-11 items-center gap-2 text-primary underline underline-offset-4"
+        >
+          <History aria-hidden="true" className="size-4" />
+          Historique et export
+        </Link>
       </div>
       <DayBoard presences={presences.data} pending={presences.isPending} error={presences.error ?? nursery.error} />
     </div>

@@ -6,7 +6,7 @@ Elle ne parle qu'à l'API v2 ([api/](../api/README.md)), sur la même origine :
 le conteneur `front` de la pile Docker sert ses fichiers avec nginx, et la passerelle
 `web` relaie `/` vers lui et `/api/` vers l'API.
 
-État au 2026-10-30 : squelette, connexion avec second facteur
+État au 2026-11-05 : squelette, connexion avec second facteur
 (présentation d'un code, activation d'une application d'authentification,
 codes de secours), espace connecté avec la liste des crèches (LUN-107) ;
 tablettes d'une crèche pour la direction : enrôlement de l'appareil, liste,
@@ -14,7 +14,8 @@ révocation (LUN-87) ; mode tablette (`/tablette`, hors de l'espace connecté) :
 choix de l'employé et PIN sur un pavé à grands boutons (LUN-88), puis pointage
 des arrivées et départs des enfants (LUN-89) ; présences du jour d'une crèche pour
 la direction et les employés, relues toutes les 30 secondes (LUN-91) ; choix et
-changement du PIN de tablette par l'employé (LUN-119). La v1 reste en
+changement du PIN de tablette par l'employé (LUN-119) ; historique des présences
+sur une période et export CSV (LUN-92). La v1 reste en
 production jusqu'à la bascule, prévue quand la v2 sera complète.
 
 ## Lancer
@@ -101,6 +102,15 @@ route.
 `expect.element(…).toHaveTextContent(…)` de Vitest a échoué deux fois alors que le
 texte reçu, affiché dans l'erreur, était exactement l'attendu (cause non trouvée,
 2026-10-30). Utiliser plutôt `getByText(…)` limité à l'élément, puis `toBeVisible()`.
+
+Le nom accessible d'un titre est son texte, pas son rendu : une majuscule posée en
+CSS (`first-letter:uppercase`) n'y apparaît pas, et `getByRole('heading', { name })`
+ne le trouve pas. Mettre la majuscule dans le texte (LUN-92, 2026-11-05).
+
+Avec React Hook Form, l'option `values` n'a pas remis le formulaire de période à
+jour quand la période changeait dans l'adresse (React Compiler actif, cause non
+cherchée plus loin). Le formulaire est remonté avec une `key` tirée de la période,
+et part de `defaultValues` (LUN-92, 2026-11-05).
 
 ### shadcn/ui
 
