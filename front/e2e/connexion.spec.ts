@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises'
+
 import { expect, type Page, test } from '@playwright/test'
 
 import { totp } from './totp'
@@ -180,5 +182,31 @@ test('présences du jour : le pointage fait sur la tablette, vu depuis le web', 
   await expect(leo).toContainText('parti·e avec Alice G.')
   await expect(leo).toContainText('pointé par Lucas B.')
   await expect(page.getByText('Départs', { exact: true }).locator('xpath=following-sibling::dd')).toHaveText('1')
+  expect(errors).toEqual([])
+})
+
+test("historique des présences : la journée de Léo, puis l'export CSV téléchargé", async ({ page }) => {
+  const errors = watchConsole(page)
+  await page.goto('/connexion')
+  await login(page, 'employe@demo.test')
+  await page.getByRole('link', { name: 'Présences de Crèche Démo Nord' }).click()
+  await page.getByRole('link', { name: 'Historique et export' }).click()
+  await expect(page.getByRole('heading', { name: 'Historique des présences · Crèche Démo Nord' })).toBeVisible()
+  await expect(page.getByRole('button', { name: '7 derniers jours' })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('row', { name: /Léo Garnier/ })).toContainText('parti·e avec Alice G.')
+
+  // Vrai téléchargement : fichier de l'API, BOM et séparateur « ; », heures de Paris.
+  const download = page.waitForEvent('download')
+  await page.getByRole('button', { name: 'Exporter en CSV' }).click()
+  const file = await download
+  expect(file.suggestedFilename()).toMatch(/^presences_\d{4}-\d{2}-\d{2}_\d{4}-\d{2}-\d{2}\.csv$/)
+  const text = await readFile(await file.path(), 'utf-8')
+  expect(text.startsWith('\uFEFFJour;Enfant;Arrivée')).toBe(true)
+  expect(text).toMatch(/;Léo Garnier;\d{2}:\d{2};Lucas B\.;/)
+
+  // Mois précédent : période dans l'adresse, aucun pointage ce mois-là sur une pile neuve.
+  await page.getByRole('button', { name: 'Mois précédent' }).click()
+  await expect(page).toHaveURL(/\?du=\d{4}-\d{2}-01&au=\d{4}-\d{2}-\d{2}$/)
+  await expect(page.getByText('Aucune arrivée pointée sur cette période.')).toBeVisible()
   expect(errors).toEqual([])
 })
