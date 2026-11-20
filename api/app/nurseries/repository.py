@@ -12,12 +12,15 @@ from app.attendance.policy import CAN_ATTEND
 from app.auth.models import AppUser, UserRole
 from app.children.models import Child
 from app.nurseries.models import Nursery, NurseryAccess
+from app.nurseries.policy import OnboardingFacts, StaffAccess, Tablet
 from app.nurseries.schemas import NurserySummary
+from app.tablets.models import TabletDevice
 
 
 class NurseryRepository(Protocol):
     async def get(self, nursery_id: uuid.UUID) -> Nursery | None: ...
     async def get_summary(self, nursery_id: uuid.UUID, day: date) -> NurserySummary: ...
+    async def get_onboarding_facts(self, nursery_id: uuid.UUID) -> OnboardingFacts: ...
     async def list_for_enterprise(self, enterprise_id: uuid.UUID, *, include_inactive: bool) -> list[Nursery]: ...
     async def list_granted(self, user_id: uuid.UUID) -> list[Nursery]: ...
     async def is_granted(self, user_id: uuid.UUID, nursery_id: uuid.UUID) -> bool: ...
@@ -54,6 +57,25 @@ class SqlNurseryRepository:
             staff.scalar_subquery().label("staff"),
         ))).one()
         return NurserySummary(**row._mapping)
+
+    async def get_onboarding_facts(self, nursery_id: uuid.UUID) -> OnboardingFacts:
+        # Les faits bruts : les règles (employé actif, tablette valable, plus
+        # ancienne date) sont dans policy.py. Accès et tablettes d'une crèche
+        # restent peu nombreux ; les présences, elles, sont réduites en base.
+        accesses = await self.session.execute(
+            select(NurseryAccess.granted_at, AppUser.is_active)
+            .join(AppUser, AppUser.id == NurseryAccess.user_id)
+            .where(NurseryAccess.nursery_id == nursery_id, AppUser.role == UserRole.EMPLOYEE))
+        tablets = await self.session.execute(
+            select(TabletDevice.created_at, TabletDevice.expires_at, TabletDevice.revoked_at)
+            .where(TabletDevice.nursery_id == nursery_id, TabletDevice.revoked_at.is_(None)))
+        first_arrival = await self.session.scalar(
+            select(func.min(Attendance.arrived_at)).where(Attendance.nursery_id == nursery_id))
+        return OnboardingFacts(
+            accesses=[StaffAccess(granted_at, active) for granted_at, active in accesses],
+            tablets=[Tablet(created_at, expires_at, revoked_at) for created_at, expires_at, revoked_at in tablets],
+            first_arrival=first_arrival,
+        )
 
     async def list_for_enterprise(self, enterprise_id: uuid.UUID, *, include_inactive: bool) -> list[Nursery]:
         statement = select(Nursery).where(Nursery.enterprise_id == enterprise_id).order_by(Nursery.name)

@@ -20,6 +20,7 @@ import { Route as ConnexionIndexRouteImport } from './routes/connexion/index'
 import { Route as ConnexionActivationRouteImport } from './routes/connexion/activation'
 import { Route as ConnexionSecondFacteurRouteImport } from './routes/connexion/second-facteur'
 import { Route as AppBientotModuleRouteImport } from './routes/_app/bientot.$module'
+import { Route as AppCrechesNurseryIdMiseEnRouteRouteImport } from './routes/_app/creches/$nurseryId/mise-en-route'
 import { Route as AppCrechesNurseryIdPresencesRouteImport } from './routes/_app/creches/$nurseryId/presences'
 import { Route as AppCrechesNurseryIdTablettesRouteImport } from './routes/_app/creches/$nurseryId/tablettes'
 import { Route as AppCrechesNurseryIdBientotModuleRouteImport } from './routes/_app/creches/$nurseryId/bientot.$module'
@@ -79,6 +80,12 @@ const AppBientotModuleRoute = AppBientotModuleRouteImport.update({
   path: '/bientot/$module',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppCrechesNurseryIdMiseEnRouteRoute =
+  AppCrechesNurseryIdMiseEnRouteRouteImport.update({
+    id: '/creches/$nurseryId/mise-en-route',
+    path: '/creches/$nurseryId/mise-en-route',
+    getParentRoute: () => AppRouteRoute,
+  } as any)
 const AppCrechesNurseryIdPresencesRoute =
   AppCrechesNurseryIdPresencesRouteImport.update({
     id: '/creches/$nurseryId/presences',
@@ -115,6 +122,7 @@ export interface FileRoutesByFullPath {
   '/connexion/second-facteur': typeof ConnexionSecondFacteurRoute
   '/connexion/': typeof ConnexionIndexRoute
   '/bientot/$module': typeof AppBientotModuleRoute
+  '/creches/$nurseryId/mise-en-route': typeof AppCrechesNurseryIdMiseEnRouteRoute
   '/creches/$nurseryId/presences': typeof AppCrechesNurseryIdPresencesRoute
   '/creches/$nurseryId/tablettes': typeof AppCrechesNurseryIdTablettesRoute
   '/creches/$nurseryId/bientot/$module': typeof AppCrechesNurseryIdBientotModuleRoute
@@ -130,6 +138,7 @@ export interface FileRoutesByTo {
   '/connexion/second-facteur': typeof ConnexionSecondFacteurRoute
   '/connexion': typeof ConnexionIndexRoute
   '/bientot/$module': typeof AppBientotModuleRoute
+  '/creches/$nurseryId/mise-en-route': typeof AppCrechesNurseryIdMiseEnRouteRoute
   '/creches/$nurseryId/presences': typeof AppCrechesNurseryIdPresencesRoute
   '/creches/$nurseryId/tablettes': typeof AppCrechesNurseryIdTablettesRoute
   '/creches/$nurseryId/bientot/$module': typeof AppCrechesNurseryIdBientotModuleRoute
@@ -148,6 +157,7 @@ export interface FileRoutesById {
   '/connexion/second-facteur': typeof ConnexionSecondFacteurRoute
   '/connexion/': typeof ConnexionIndexRoute
   '/_app/bientot/$module': typeof AppBientotModuleRoute
+  '/_app/creches/$nurseryId/mise-en-route': typeof AppCrechesNurseryIdMiseEnRouteRoute
   '/_app/creches/$nurseryId/presences': typeof AppCrechesNurseryIdPresencesRoute
   '/_app/creches/$nurseryId/tablettes': typeof AppCrechesNurseryIdTablettesRoute
   '/_app/creches/$nurseryId/bientot/$module': typeof AppCrechesNurseryIdBientotModuleRoute
@@ -166,6 +176,7 @@ export interface FileRouteTypes {
     | '/connexion/second-facteur'
     | '/connexion/'
     | '/bientot/$module'
+    | '/creches/$nurseryId/mise-en-route'
     | '/creches/$nurseryId/presences'
     | '/creches/$nurseryId/tablettes'
     | '/creches/$nurseryId/bientot/$module'
@@ -181,6 +192,7 @@ export interface FileRouteTypes {
     | '/connexion/second-facteur'
     | '/connexion'
     | '/bientot/$module'
+    | '/creches/$nurseryId/mise-en-route'
     | '/creches/$nurseryId/presences'
     | '/creches/$nurseryId/tablettes'
     | '/creches/$nurseryId/bientot/$module'
@@ -198,6 +210,7 @@ export interface FileRouteTypes {
     | '/connexion/second-facteur'
     | '/connexion/'
     | '/_app/bientot/$module'
+    | '/_app/creches/$nurseryId/mise-en-route'
     | '/_app/creches/$nurseryId/presences'
     | '/_app/creches/$nurseryId/tablettes'
     | '/_app/creches/$nurseryId/bientot/$module'
@@ -290,6 +303,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppBientotModuleRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/_app/creches/$nurseryId/mise-en-route': {
+      id: '/_app/creches/$nurseryId/mise-en-route'
+      path: '/creches/$nurseryId/mise-en-route'
+      fullPath: '/creches/$nurseryId/mise-en-route'
+      preLoaderRoute: typeof AppCrechesNurseryIdMiseEnRouteRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/_app/creches/$nurseryId/presences': {
       id: '/_app/creches/$nurseryId/presences'
       path: '/creches/$nurseryId/presences'
@@ -326,6 +346,7 @@ interface AppRouteRouteChildren {
   AppMonPinRoute: typeof AppMonPinRoute
   AppReglagesRoute: typeof AppReglagesRoute
   AppBientotModuleRoute: typeof AppBientotModuleRoute
+  AppCrechesNurseryIdMiseEnRouteRoute: typeof AppCrechesNurseryIdMiseEnRouteRoute
   AppCrechesNurseryIdPresencesRoute: typeof AppCrechesNurseryIdPresencesRoute
   AppCrechesNurseryIdTablettesRoute: typeof AppCrechesNurseryIdTablettesRoute
   AppCrechesNurseryIdBientotModuleRoute: typeof AppCrechesNurseryIdBientotModuleRoute
@@ -337,6 +358,7 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppMonPinRoute: AppMonPinRoute,
   AppReglagesRoute: AppReglagesRoute,
   AppBientotModuleRoute: AppBientotModuleRoute,
+  AppCrechesNurseryIdMiseEnRouteRoute: AppCrechesNurseryIdMiseEnRouteRoute,
   AppCrechesNurseryIdPresencesRoute: AppCrechesNurseryIdPresencesRoute,
   AppCrechesNurseryIdTablettesRoute: AppCrechesNurseryIdTablettesRoute,
   AppCrechesNurseryIdBientotModuleRoute: AppCrechesNurseryIdBientotModuleRoute,

@@ -86,6 +86,8 @@ TAGS: list[dict[str, str]] = [
     {"name": "tablettes", "description": "Enrôlement des tablettes et sessions d'action par PIN."},
     {"name": "enfants et familles", "description": "Familles, enfants, responsables et leurs autorisations."},
     {"name": "pointage", "description": "Arrivées et départs pointés sur la tablette, suivi des présences."},
+    {"name": "transmissions", "description": "Transmissions de la journée sur un enfant, entre collègues "
+                                             "(pas d'information médicale)."},
     {"name": "ménage", "description": "Pièces, catalogue des tâches, fiche du jour, coches et historique."},
     {"name": "espace famille", "description": "Invitation des parents et consultation de leurs enfants."},
     {"name": "supervision", "description": "Sondes de l'exploitation."},

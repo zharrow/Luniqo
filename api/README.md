@@ -35,6 +35,7 @@ sans mot de passe par passkey. Pas encore de données réelles
 | `POST /api/v2/nurseries` | Créer une crèche dans son entreprise (direction) |
 | `GET /api/v2/nurseries/{id}` | Lire une crèche (404 si inexistante **ou** inaccessible) |
 | `GET /api/v2/nurseries/{id}/summary` | Résumé pour la direction et les employés ayant accès : `children` (statuts active et adaptation), `present` (arrivés sans départ aujourd'hui à Paris), `staff` (employés actifs avec accès) ; 404 si inexistante ou inaccessible |
+| `GET /api/v2/nurseries/{id}/onboarding` | Mise en route, direction de la crèche seulement (`ManagedNursery`) : `steps` = `staff`, `tablet`, `first_attendance`, chacun avec `achieved` et `achieved_at` (plus ancienne preuve encore valable ; règles dans `nurseries/policy.py`) ; 403 pour un employé, 404 si inexistante ou inaccessible |
 | `PATCH /api/v2/nurseries/{id}` | Modifier ou fermer une crèche (direction) |
 | `GET /api/v2/nurseries/{id}/staff` | Employés ayant accès à la crèche (direction) |
 | `PUT`, `DELETE /api/v2/nurseries/{id}/staff/{user_id}` | Accorder, retirer l'accès d'un employé de l'entreprise (direction) ; effet immédiat |
@@ -66,6 +67,8 @@ sans mot de passe par passkey. Pas encore de données réelles
 | `PATCH …/attendance/{attendance_id}` | Corriger une présence : heures, personne qui a amené ou cherché l'enfant (autorisée), motif obligatoire ; seuls les champs envoyés changent (direction) |
 | `POST …/attendance/{attendance_id}/cancel` | Annuler une présence pointée par erreur, avec motif ; elle disparaît, sa trace reste au journal (direction) |
 | `GET /api/v2/nurseries/{id}/attendance/corrections` | Journal des corrections sur une période (`?from=&to=`, jour de la présence corrigée) : auteur, heure, motif, valeurs avant et après (direction) |
+| `POST /api/v2/nurseries/{id}/children/{child_id}/notes` | Transmission sur un enfant de la crèche (`text`, 500 caractères au plus, espaces retirés) ; jour à Paris, heure et auteur fixés par le serveur ; pas d'information médicale (LUN-57) ; 404 `child_not_found` pour un enfant d'une autre crèche (direction et employés ayant accès) |
+| `GET /api/v2/nurseries/{id}/notes` | Transmissions d'un jour (`?day=`, aujourd'hui à Paris par défaut), les plus récentes d'abord (direction et employés ayant accès) |
 | `POST /api/v2/nurseries/{id}/guardians/{guardian_id}/invitation` | Inviter un responsable à créer son compte famille : lien à usage unique, 7 jours (direction) |
 | `POST /api/v2/invitations/lookup`, `POST /api/v2/invitations/accept` | Sans session : lire l'invitation, créer le compte (ou relier un compte famille existant) ; jeton dans le corps |
 | `GET /api/v2/family/children`, `GET /api/v2/family/children/{child_id}` | Parent connecté : ses enfants (autorité parentale requise), présence du jour, présences récentes (`?days=`, 62 au plus), contacts sans coordonnées |

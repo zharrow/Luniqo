@@ -36,6 +36,15 @@ export const nursery: Schemas['NurseryOut'] = {
 
 export const nurserySummary: Schemas['NurserySummary'] = { children: 12, present: 8, staff: 4 }
 
+/** Mise en route de la Crèche Démo Nord : 2 succès sur 3, sans pointage (LUN-128). */
+export const nurseryOnboarding: Schemas['NurseryOnboarding'] = {
+  steps: [
+    { milestone: 'staff', achieved: true, achieved_at: '2026-11-03T09:00:00Z' },
+    { milestone: 'tablet', achieved: true, achieved_at: '2026-11-04T08:30:00Z' },
+    { milestone: 'first_attendance', achieved: false, achieved_at: null },
+  ],
+}
+
 /** Tablette de la Crèche Démo Nord, vue depuis la tablette elle-même (`GET /api/v2/tablet`). */
 export const tabletInfo: Schemas['TabletInfo'] = {
   tablet_id: '00000000-0000-4000-8000-0000000000a1',
@@ -164,6 +173,37 @@ export const dayAttendance: Schemas['AttendanceOut'][] = [
     arrived_at: '2026-10-30T08:20:00Z',
     arrival_by: 'Inès M.',
     dropped_off_by: 'Sophie L.',
+  },
+]
+
+/** Transmissions du 30 octobre 2026 (`GET /api/v2/nurseries/{id}/notes`), les plus récentes d'abord (LUN-146). */
+export const dayNotes: Schemas['NoteOut'][] = [
+  {
+    id: '00000000-0000-4000-8000-0000000000e3',
+    child_id: presence.child_id,
+    child_name: 'Léo Garnier',
+    day: '2026-10-30',
+    text: 'A bien mangé, sieste de 13 h à 15 h',
+    author: 'Inès M.',
+    created_at: '2026-10-30T14:05:00Z',
+  },
+  {
+    id: '00000000-0000-4000-8000-0000000000e2',
+    child_id: '00000000-0000-4000-8000-0000000000d2',
+    child_name: 'Emma Lambert',
+    day: '2026-10-30',
+    text: 'Un peu fatiguée, à dire aux parents',
+    author: 'Lucas B.',
+    created_at: '2026-10-30T10:30:00Z',
+  },
+  {
+    id: '00000000-0000-4000-8000-0000000000e1',
+    child_id: presence.child_id,
+    child_name: 'Léo Garnier',
+    day: '2026-10-30',
+    text: 'Arrivé de bonne humeur',
+    author: 'Lucas B.',
+    created_at: '2026-10-30T08:00:00Z',
   },
 ]
 

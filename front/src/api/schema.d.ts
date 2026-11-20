@@ -400,6 +400,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/nurseries/{nursery_id}/onboarding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Mise en route de la crèche, pour la direction
+         * @description Mise en route de la crèche, pour la direction : personnel, tablette, premier pointage.
+         *
+         *     Chaque succès est daté de sa plus ancienne preuve encore valable et se perd
+         *     si sa condition disparaît (employé parti, tablette révoquée ou expirée).
+         */
+        get: operations["get_nursery_onboarding_api_v2_nurseries__nursery_id__onboarding_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/nurseries/{nursery_id}/staff": {
         parameters: {
             query?: never;
@@ -981,6 +1004,49 @@ export interface paths {
          * @description Journal des corrections des présences d'une période (jour de la présence), dans l'ordre où elles ont eu lieu.
          */
         get: operations["attendance_corrections_api_v2_nurseries__nursery_id__attendance_corrections_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/nurseries/{nursery_id}/children/{child_id}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Note une transmission sur un enfant de la crèche (repas, sieste, humeur, ce qu'il faut dire aux parents)
+         * @description Note une transmission sur un enfant de la crèche (repas, sieste, humeur, ce qu'il faut dire aux parents).
+         *
+         *     L'heure, le jour (à Paris) et l'auteur sont fixés par le serveur. Pas d'information médicale
+         *     (allergies, traitements) : les données de santé relèvent de LUN-57.
+         */
+        post: operations["add_note_api_v2_nurseries__nursery_id__children__child_id__notes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/nurseries/{nursery_id}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Transmissions d'un jour de la crèche (aujourd'hui à Paris par défaut), de la plus récente à la plus ancienne
+         * @description Transmissions d'un jour de la crèche (aujourd'hui à Paris par défaut), de la plus récente à la plus ancienne.
+         */
+        get: operations["day_notes_api_v2_nurseries__nursery_id__notes_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2302,6 +2368,59 @@ export interface components {
             backup_codes_remaining: number;
         };
         /**
+         * Milestone
+         * @description Étapes de la mise en route, dans l'ordre où la direction les franchit d'habitude.
+         * @enum {string}
+         */
+        Milestone: "staff" | "tablet" | "first_attendance";
+        /**
+         * NoteCreate
+         * @example {
+         *       "text": "A bien mangé, sieste de 13 h à 15 h"
+         *     }
+         */
+        NoteCreate: {
+            /**
+             * Text
+             * @description Transmission, 500 caractères au plus, espaces retirés. Pas d'information médicale (allergies, traitements) : les données de santé relèvent de LUN-57.
+             */
+            text: string;
+        };
+        /** NoteOut */
+        NoteOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Child Id
+             * Format: uuid
+             */
+            child_id: string;
+            /** Child Name */
+            child_name: string;
+            /**
+             * Day
+             * Format: date
+             * @description Jour de la transmission, à Paris
+             */
+            day: string;
+            /** Text */
+            text: string;
+            /**
+             * Author
+             * @description Auteur au moment de l'écriture (prénom et initiale)
+             */
+            author: string;
+            /**
+             * Created At
+             * Format: date-time
+             * @description Heure du serveur à l'écriture
+             */
+            created_at: string;
+        };
+        /**
          * NurseryCreate
          * @example {
          *       "address": "1 rue de l'Exemple",
@@ -2328,6 +2447,35 @@ export interface components {
             email?: string | null;
             /** Capacity */
             capacity: number;
+        };
+        /**
+         * NurseryOnboarding
+         * @description Mise en route de la crèche : un succès par étape, recalculé à chaque lecture (LUN-128).
+         * @example {
+         *       "steps": [
+         *         {
+         *           "achieved": true,
+         *           "achieved_at": "2026-11-03T09:00:00Z",
+         *           "milestone": "staff"
+         *         },
+         *         {
+         *           "achieved": true,
+         *           "achieved_at": "2026-11-04T08:30:00Z",
+         *           "milestone": "tablet"
+         *         },
+         *         {
+         *           "achieved": false,
+         *           "milestone": "first_attendance"
+         *         }
+         *       ]
+         *     }
+         */
+        NurseryOnboarding: {
+            /**
+             * Steps
+             * @description Une étape par succès, toujours dans le même ordre
+             */
+            steps: components["schemas"]["OnboardingStepOut"][];
         };
         /** NurseryOut */
         NurseryOut: {
@@ -2409,6 +2557,18 @@ export interface components {
             capacity?: number | null;
             /** Is Active */
             is_active?: boolean | null;
+        };
+        /** OnboardingStepOut */
+        OnboardingStepOut: {
+            /** @description staff : un employé actif a accès ; tablet : une tablette ni révoquée ni expirée ; first_attendance : une présence enregistrée */
+            milestone: components["schemas"]["Milestone"];
+            /** Achieved */
+            achieved: boolean;
+            /**
+             * Achieved At
+             * @description Plus ancienne preuve encore valable ; null si non obtenu
+             */
+            achieved_at: string | null;
         };
         /**
          * PasskeyNameIn
@@ -5246,6 +5406,73 @@ export interface operations {
             };
         };
     };
+    get_nursery_onboarding_api_v2_nurseries__nursery_id__onboarding_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                nursery_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NurseryOnboarding"];
+                };
+            };
+            /** @description `auth_required` : Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description `manager_required` : Seule la direction peut gérer cette crèche ; `mfa_required` : Second facteur requis ; `role_refused` : Action non autorisée pour ce rôle */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description `nursery_not_found` : Crèche introuvable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description `validation_error` : Certains champs sont invalides. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description `internal_error` : Une erreur est survenue de notre côté. Réessayez dans un instant ; si elle revient, donnez la référence à la crèche. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     list_nursery_staff_api_v2_nurseries__nursery_id__staff_get: {
         parameters: {
             query?: never;
@@ -7723,6 +7950,148 @@ export interface operations {
                 };
             };
             /** @description `period_inverted` : La date de début suit la date de fin ; `period_too_long` : Période limitée à 366 jours par requête ; `validation_error` : Certains champs sont invalides. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description `internal_error` : Une erreur est survenue de notre côté. Réessayez dans un instant ; si elle revient, donnez la référence à la crèche. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    add_note_api_v2_nurseries__nursery_id__children__child_id__notes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                child_id: string;
+                nursery_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoteCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoteOut"];
+                };
+            };
+            /** @description `auth_required` : Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description `mfa_required` : Second facteur requis ; `origin_refused` : Origine de la requête refusée ; `role_refused` : Action non autorisée pour ce rôle */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description `child_not_found` : Enfant introuvable dans cette crèche ; `nursery_not_found` : Crèche introuvable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description `validation_error` : Certains champs sont invalides. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description `internal_error` : Une erreur est survenue de notre côté. Réessayez dans un instant ; si elle revient, donnez la référence à la crèche. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    day_notes_api_v2_nurseries__nursery_id__notes_get: {
+        parameters: {
+            query?: {
+                /** @description Jour à Paris ; aujourd'hui par défaut */
+                day?: string | null;
+            };
+            header?: never;
+            path: {
+                nursery_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoteOut"][];
+                };
+            };
+            /** @description `auth_required` : Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description `mfa_required` : Second facteur requis ; `role_refused` : Action non autorisée pour ce rôle */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description `nursery_not_found` : Crèche introuvable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description `validation_error` : Certains champs sont invalides. */
             422: {
                 headers: {
                     [name: string]: unknown;

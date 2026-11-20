@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { ClipboardList, KeyRound, Tablet } from 'lucide-react'
+import { ClipboardList, KeyRound, Tablet, Trophy } from 'lucide-react'
 
 import { $api } from '@/api/client'
 import { NurseryList } from '@/features/nurseries/nursery-list'
@@ -46,15 +46,26 @@ function HomePage() {
                   Présences
                 </Link>
                 {session.role === 'owner' && (
-                  <Link
-                    to="/creches/$nurseryId/tablettes"
-                    params={{ nurseryId: nursery.id }}
-                    aria-label={`Tablettes de ${nursery.name}`}
-                    className={LINK}
-                  >
-                    <Tablet aria-hidden="true" className="size-4" />
-                    Tablettes
-                  </Link>
+                  <>
+                    <Link
+                      to="/creches/$nurseryId/tablettes"
+                      params={{ nurseryId: nursery.id }}
+                      aria-label={`Tablettes de ${nursery.name}`}
+                      className={LINK}
+                    >
+                      <Tablet aria-hidden="true" className="size-4" />
+                      Tablettes
+                    </Link>
+                    <Link
+                      to="/creches/$nurseryId/mise-en-route"
+                      params={{ nurseryId: nursery.id }}
+                      aria-label={`Mise en route de ${nursery.name}`}
+                      className={LINK}
+                    >
+                      <Trophy aria-hidden="true" className="size-4" />
+                      Mise en route
+                    </Link>
+                  </>
                 )}
               </div>
             )}

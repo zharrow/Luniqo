@@ -10,6 +10,7 @@ from datetime import date
 
 from app.auth.models import AppUser, UserRole
 from app.nurseries.models import Nursery, NurseryAccess
+from app.nurseries.policy import OnboardingFacts
 from app.nurseries.schemas import NurserySummary
 from tests.auth.fakes import InMemoryAuthRepository
 
@@ -21,6 +22,7 @@ class InMemoryNurseryRepository:
         self.accesses: dict[tuple[uuid.UUID, uuid.UUID], NurseryAccess] = {}
         self.commits = 0
         self.summaries: dict[tuple[uuid.UUID, date], NurserySummary] = {}
+        self.onboarding: dict[uuid.UUID, OnboardingFacts] = {}
 
     def _users(self) -> list[AppUser]:
         return list(self.auth.users.values())
@@ -30,6 +32,9 @@ class InMemoryNurseryRepository:
 
     async def get_summary(self, nursery_id: uuid.UUID, day: date) -> NurserySummary:
         return self.summaries.get((nursery_id, day), NurserySummary(children=0, present=0, staff=0))
+
+    async def get_onboarding_facts(self, nursery_id: uuid.UUID) -> OnboardingFacts:
+        return self.onboarding.get(nursery_id, OnboardingFacts(accesses=[], tablets=[], first_arrival=None))
 
     async def list_for_enterprise(self, enterprise_id: uuid.UUID, *, include_inactive: bool) -> list[Nursery]:
         return sorted((n for n in self.nurseries.values()

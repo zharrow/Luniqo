@@ -11,7 +11,17 @@ from app.auth.models import UserRole
 from app.errors import ApiError, ErrorSpec, required_field
 from app.nurseries.dependencies import ManagedNursery, NurseryRepositoryDep, OwnerUser, ReadableNursery, StaffUser
 from app.nurseries.models import Nursery, NurseryAccess
-from app.nurseries.schemas import EmployeeOut, NurseryCreate, NurseryOut, NurserySummary, NurseryUpdate, StaffOut
+from app.nurseries.policy import achievements
+from app.nurseries.schemas import (
+    EmployeeOut,
+    NurseryCreate,
+    NurseryOnboarding,
+    NurseryOut,
+    NurserySummary,
+    NurseryUpdate,
+    OnboardingStepOut,
+    StaffOut,
+)
 from app.openapi import error_responses
 
 router = APIRouter(prefix="/api/v2", tags=["crèches"])
@@ -55,6 +65,19 @@ async def get_nursery_summary(context: ReadableNursery, repo: NurseryRepositoryD
     les employés actifs ayant un accès à cette crèche.
     """
     return await repo.get_summary(context.nursery.id, local_day(now))
+
+
+@router.get("/nurseries/{nursery_id}/onboarding")
+async def get_nursery_onboarding(context: ManagedNursery, repo: NurseryRepositoryDep, now: NowDep) -> NurseryOnboarding:
+    """Mise en route de la crèche, pour la direction : personnel, tablette, premier pointage.
+
+    Chaque succès est daté de sa plus ancienne preuve encore valable et se perd
+    si sa condition disparaît (employé parti, tablette révoquée ou expirée).
+    """
+    facts = await repo.get_onboarding_facts(context.nursery.id)
+    return NurseryOnboarding(steps=[
+        OnboardingStepOut(milestone=a.milestone, achieved=a.achieved, achieved_at=a.achieved_at)
+        for a in achievements(facts, now)])
 
 
 @router.patch("/nurseries/{nursery_id}")
