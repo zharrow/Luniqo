@@ -1,11 +1,13 @@
-import { createFileRoute, Link, redirect } from '@tanstack/react-router'
-import { History, RefreshCw } from 'lucide-react'
+import { createFileRoute, redirect } from '@tanstack/react-router'
+import { RefreshCw } from 'lucide-react'
 
 import { $api } from '@/api/client'
 import { Button } from '@/components/ui/button'
 import { AddPresence, CorrectPresence } from '@/features/attendance/corrections'
 import { DayBoard } from '@/features/attendance/day-board'
-import { formatTime, todayInParis } from '@/lib/dates'
+import { RouterLink } from '@/features/shell/app-shell'
+import { PageHeader } from '@/features/shell/page-header'
+import { formatLongDay, formatTime, todayInParis } from '@/lib/dates'
 import { retryFailed } from '@/lib/retry-failed'
 
 /** Présences du jour d'une crèche, pour la direction et les employés qui y ont accès. */
@@ -33,19 +35,21 @@ function PresencesPage() {
 
   return (
     <div className="grid gap-6">
-      <div className="grid gap-1">
-        <Link to="/accueil" className="text-sm text-primary underline underline-offset-4">
-          Vos crèches
-        </Link>
-        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-          <h1 className="text-2xl font-semibold">
-            Présences du jour{nursery.data === undefined ? '' : ` · ${nursery.data.name}`}
-          </h1>
-          {manager && nursery.isSuccess && presences.isSuccess && (
+      <PageHeader
+        title="Présences"
+        kicker={formatLongDay(today)}
+        breadcrumb={nursery.data === undefined ? ['Présences'] : [nursery.data.name, 'Présences']}
+        link={RouterLink}
+        actions={
+          manager && nursery.isSuccess && presences.isSuccess ? (
             <AddPresence nurseryId={nurseryId} today={today} defaultDay={today} />
-          )}
-        </div>
-      </div>
+          ) : undefined
+        }
+        tabs={[
+          { label: "Aujourd'hui", href: `/creches/${nurseryId}/presences`, current: true },
+          { label: 'Historique', href: `/creches/${nurseryId}/presences/historique`, current: false },
+        ]}
+      />
       <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
         {presences.dataUpdatedAt > 0 && (
           <span aria-live="polite">Mis à jour à {formatTime(new Date(presences.dataUpdatedAt).toISOString())}</span>
@@ -59,14 +63,6 @@ function PresencesPage() {
           <RefreshCw aria-hidden="true" />
           Actualiser
         </Button>
-        <Link
-          to="/creches/$nurseryId/presences/historique"
-          params={{ nurseryId }}
-          className="inline-flex min-h-11 items-center gap-2 text-primary underline underline-offset-4"
-        >
-          <History aria-hidden="true" className="size-4" />
-          Historique et export
-        </Link>
       </div>
       <DayBoard
         presences={presences.data}

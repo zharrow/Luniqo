@@ -91,7 +91,7 @@ describe('connexion', () => {
 
     await screen.getByLabelText('Code à 6 chiffres ou code de secours').fill('123456')
     await screen.getByRole('button', { name: 'Valider' }).click()
-    await expect.element(screen.getByRole('heading', { name: 'Bonjour Camille' })).toBeVisible()
+    await expect.element(screen.getByRole('heading', { name: 'Accueil', level: 1 })).toBeVisible()
     await expect.element(screen.getByText('Crèche Démo Nord')).toBeVisible()
   })
 

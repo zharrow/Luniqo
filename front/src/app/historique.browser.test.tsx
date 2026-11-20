@@ -49,6 +49,7 @@ describe('historique des présences', () => {
     const asked: ReturnType<typeof periodOf>[] = []
     worker.use(
       http.get('/api/v2/auth/me', () => HttpResponse.json(employee)),
+      http.get('/api/v2/nurseries', () => HttpResponse.json([nursery])),
       http.get(`/api/v2/nurseries/${nursery.id}`, () => HttpResponse.json(nursery)),
       http.get(`/api/v2/nurseries/${nursery.id}/attendance`, () => HttpResponse.json([])),
       http.get(HISTORY, ({ request }) => {
@@ -57,11 +58,10 @@ describe('historique des présences', () => {
       }),
     )
     const { screen } = await start(`/creches/${nursery.id}/presences`)
-    await screen.getByRole('link', { name: 'Historique et export' }).click()
+    await screen.getByRole('link', { name: 'Historique' }).click()
 
-    await expect
-      .element(screen.getByRole('heading', { name: 'Historique des présences · Crèche Démo Nord' }))
-      .toBeVisible()
+    await expect.element(screen.getByRole('heading', { name: 'Présences', level: 1 })).toBeVisible()
+    await expect.element(screen.getByRole('link', { name: 'Historique' })).toHaveAttribute('aria-current', 'page')
     // Même période par défaut que l'API, calculée sur le jour de Paris.
     // Le titre vient de la crèche, déjà en cache : la requête de l'historique peut arriver juste après.
     await expect.poll(() => asked).toEqual([lastDays(todayInParis())])

@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query'
-import { createFileRoute, Link, redirect } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { Download } from 'lucide-react'
 import { z } from 'zod'
 
@@ -14,7 +14,9 @@ import { downloadAttendanceCsv } from '@/features/attendance/export-csv'
 import { HistoryBoard } from '@/features/attendance/history-board'
 import { lastDays, type Period, periodError } from '@/features/attendance/period'
 import { PeriodForm } from '@/features/attendance/period-form'
-import { formatDay, todayInParis } from '@/lib/dates'
+import { RouterLink } from '@/features/shell/app-shell'
+import { PageHeader } from '@/features/shell/page-header'
+import { formatDay, formatLongDay, todayInParis } from '@/lib/dates'
 import { retryFailed } from '@/lib/retry-failed'
 
 // Période dans l'adresse : un historique se garde en favori et se partage. Une valeur mal formée est ignorée.
@@ -74,18 +76,16 @@ function HistoryPage() {
 
   return (
     <div className="grid gap-6">
-      <div className="grid gap-1">
-        <Link
-          to="/creches/$nurseryId/presences"
-          params={{ nurseryId }}
-          className="text-sm text-primary underline underline-offset-4"
-        >
-          Présences du jour
-        </Link>
-        <h1 className="text-2xl font-semibold">
-          Historique des présences{nursery.data === undefined ? '' : ` · ${nursery.data.name}`}
-        </h1>
-      </div>
+      <PageHeader
+        title="Présences"
+        kicker={formatLongDay(today)}
+        breadcrumb={nursery.data === undefined ? ['Présences'] : [nursery.data.name, 'Présences']}
+        link={RouterLink}
+        tabs={[
+          { label: "Aujourd'hui", href: `/creches/${nurseryId}/presences`, current: false },
+          { label: 'Historique', href: `/creches/${nurseryId}/presences/historique`, current: true },
+        ]}
+      />
       <PeriodForm key={`${period.from}_${period.to}`} period={period} today={today} onChange={show} />
       {invalid !== null ? (
         <FormError message={invalid} />

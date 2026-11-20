@@ -43,7 +43,7 @@ describe('présences du jour', () => {
     await expect.element(screen.getByRole('link', { name: 'Tablettes de Crèche Démo Nord' })).not.toBeInTheDocument()
     await screen.getByRole('link', { name: 'Présences de Crèche Démo Nord' }).click()
 
-    await expect.element(screen.getByRole('heading', { name: 'Présences du jour · Crèche Démo Nord' })).toBeVisible()
+    await expect.element(screen.getByRole('heading', { name: 'Présences', level: 1 })).toBeVisible()
     await expect.element(screen.getByRole('row', { name: /Emma Lambert/ })).toBeVisible()
     await expect.element(screen.getByText(/^Mis à jour à \d{2}:\d{2}$/)).toBeVisible()
     expect(screen.getByRole('button', { name: /^Corriger la présence/ }).elements()).toHaveLength(0)
@@ -159,6 +159,8 @@ describe('présences du jour', () => {
     let reachable = false
     worker.use(
       http.get('/api/v2/auth/me', () => HttpResponse.json(employee)),
+      // Le cadre relit la liste des crèches : coupée comme le reste tant que le serveur est injoignable.
+      http.get('/api/v2/nurseries', () => (reachable ? HttpResponse.json([nursery]) : networkError())),
       http.get(`/api/v2/nurseries/${nursery.id}`, () => HttpResponse.json(nursery)),
       http.get(`/api/v2/nurseries/${nursery.id}/attendance`, () =>
         reachable ? HttpResponse.json(dayAttendance) : networkError(),

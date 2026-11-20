@@ -39,17 +39,28 @@ async function expectSummary(page: Page, name: string, children: number, present
 
 test.describe.configure({ mode: 'serial' })
 
+/** Onglets de la page (Aujourd'hui, Historique) : le nom seul serait ambigu avec le menu. */
+const subpages = (page: Page) => page.getByRole('navigation', { name: 'Sous-pages' })
+
+/** La déconnexion vit dans le menu du compte. */
+async function logout(page: Page) {
+  await page.getByRole('button', { name: /Mon compte/ }).click()
+  await page.getByRole('button', { name: 'Se déconnecter' }).click()
+}
+
 // Codes de secours de la direction, montrés à l'activation : les parcours suivants s'en servent.
 let backupCodes: string[] = []
 
-test('employé : connexion puis ses crèches, sans second facteur', async ({ page }) => {
+test('employé : connexion puis ses crèches, sans second facteur', async ({ page }, testInfo) => {
   const errors = watchConsole(page)
   await page.goto('/accueil')
   await expect(page).toHaveURL(/\/connexion\?redirect=%2Faccueil/)
   await login(page, 'employe@demo.test')
-  await expect(page.getByRole('heading', { name: 'Bonjour Lucas' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Ma journée', level: 1 })).toBeVisible()
   await expect(page.getByText('Crèche Démo Nord')).toBeVisible()
   await expectSummary(page, 'Crèche Démo Nord', 3, 0, 1)
+  await page.setViewportSize({ width: 1280, height: 800 })
+  await page.screenshot({ path: testInfo.outputPath('ma-journee-1280x800.png') })
   // L'employé n'a accès qu'à sa crèche : l'isolation vient de l'API.
   await expect(page.getByText('Micro-crèche Démo Sud')).toHaveCount(0)
   expect(errors).toEqual([])
@@ -75,8 +86,10 @@ test("direction : activation de l'application d'authentification, puis second fa
   await expect(page.getByRole('list', { name: 'Codes de secours' }).getByRole('listitem')).toHaveCount(10)
   backupCodes = await page.getByRole('list', { name: 'Codes de secours' }).getByRole('listitem').allTextContents()
   await page.getByRole('button', { name: "J'ai noté mes codes" }).click()
-  await expect(page.getByRole('heading', { name: 'Bonjour Camille' })).toBeVisible()
-  await expect(page.getByText('Micro-crèche Démo Sud')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Accueil', level: 1 })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Micro-crèche Démo Sud' })).toBeVisible()
+  await page.setViewportSize({ width: 1280, height: 800 })
+  await page.screenshot({ path: testInfo.outputPath('accueil-direction-1280x800.png') })
   await page.setViewportSize({ width: 800, height: 600 })
   await expectSummary(page, 'Crèche Démo Nord', 3, 0, 1)
   await expectSummary(page, 'Micro-crèche Démo Sud', 1, 0, 1)
@@ -84,13 +97,13 @@ test("direction : activation de l'application d'authentification, puis second fa
   await page.screenshot({ path: testInfo.outputPath('accueil-800x600.png'), fullPage: true })
 
   // Connexion suivante : le code est demandé.
-  await page.getByRole('button', { name: 'Se déconnecter' }).click()
+  await logout(page)
   await login(page, 'direction@demo.test')
   await expect(page.getByRole('heading', { name: 'Second facteur' })).toBeVisible()
   // Pas suivant : le code du pas courant vient de servir à l'activation (rejeu refusé).
   await page.getByLabel('Code à 6 chiffres ou code de secours').fill(totp(secret, 1))
   await page.getByRole('button', { name: 'Valider' }).click()
-  await expect(page.getByRole('heading', { name: 'Bonjour Camille' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Accueil', level: 1 })).toBeVisible()
   expect(errors).toEqual([])
 })
 
@@ -104,7 +117,7 @@ test('direction : enrôlement de la tablette puis révocation', async ({ page, c
   await page.getByRole('button', { name: 'Valider' }).click()
 
   await page.getByRole('link', { name: 'Tablettes de Crèche Démo Nord' }).click()
-  await expect(page.getByRole('heading', { name: 'Tablettes de Crèche Démo Nord' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Tablettes', level: 1 })).toBeVisible()
   await page.getByLabel('Nom de la tablette').fill('Tablette du parcours e2e')
   await page.getByRole('button', { name: 'Enrôler cet appareil' }).click()
   await expect(page.getByText(/« Tablette du parcours e2e » est enrôlée sur cet appareil/)).toBeVisible()
@@ -147,7 +160,7 @@ test("tablette : enrôlée par la direction, puis PIN de l'employé", async ({ p
   await login(page, 'direction@demo.test')
   await page.getByLabel('Code à 6 chiffres ou code de secours').fill(backupCode ?? '')
   await page.getByRole('button', { name: 'Valider' }).click()
-  await expect(page.getByRole('heading', { name: 'Bonjour Camille' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Accueil', level: 1 })).toBeVisible()
   const nurseries = (await (await page.request.get('/api/v2/nurseries')).json()) as { id: string; name: string }[]
   const north = nurseries.find((nursery) => nursery.name === 'Crèche Démo Nord')
   const enrolled = await page.request.post(`/api/v2/nurseries/${north?.id ?? ''}/tablets`, {
@@ -155,7 +168,7 @@ test("tablette : enrôlée par la direction, puis PIN de l'employé", async ({ p
     headers: origin,
   })
   expect(enrolled.status()).toBe(201)
-  await page.getByRole('button', { name: 'Se déconnecter' }).click()
+  await logout(page)
 
   await page.goto('/tablette')
   await expect(page.getByRole('heading', { name: /Crèche Démo Nord/ })).toBeVisible()
@@ -194,7 +207,7 @@ test('présences du jour : le pointage fait sur la tablette, vu depuis le web', 
   await page.goto('/connexion')
   await login(page, 'employe@demo.test')
   await page.getByRole('link', { name: 'Présences de Crèche Démo Nord' }).click()
-  await expect(page.getByRole('heading', { name: 'Présences du jour · Crèche Démo Nord' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Présences', level: 1 })).toBeVisible()
 
   // Arrivée puis départ de Léo, pointés par Lucas sur la tablette au parcours précédent.
   const leo = page.getByRole('row', { name: /Léo Garnier/ })
@@ -211,8 +224,9 @@ test("historique des présences : la journée de Léo, puis l'export CSV téléc
   await page.goto('/connexion')
   await login(page, 'employe@demo.test')
   await page.getByRole('link', { name: 'Présences de Crèche Démo Nord' }).click()
-  await page.getByRole('link', { name: 'Historique et export' }).click()
-  await expect(page.getByRole('heading', { name: 'Historique des présences · Crèche Démo Nord' })).toBeVisible()
+  await subpages(page).getByRole('link', { name: 'Historique' }).click()
+  await expect(page.getByRole('heading', { name: 'Présences', level: 1 })).toBeVisible()
+  await expect(subpages(page).getByRole('link', { name: 'Historique' })).toHaveAttribute('aria-current', 'page')
   await expect(page.getByRole('button', { name: '7 derniers jours' })).toHaveAttribute('aria-pressed', 'true')
   await expect(page.getByRole('row', { name: /Léo Garnier/ })).toContainText('parti·e avec Alice G.')
 
@@ -243,7 +257,7 @@ test('direction : présence oubliée ajoutée, corrigée puis retirée, chaque �
   await page.getByLabel('Code à 6 chiffres ou code de secours').fill(backupCode ?? '')
   await page.getByRole('button', { name: 'Valider' }).click()
   await page.getByRole('link', { name: 'Présences de Crèche Démo Nord' }).click()
-  await page.getByRole('link', { name: 'Historique et export' }).click()
+  await subpages(page).getByRole('link', { name: 'Historique' }).click()
   await expect(page.getByRole('heading', { name: 'Journal des corrections' })).toBeVisible()
   await expect(page.getByText('Aucune correction sur cette période.')).toBeVisible()
 
@@ -290,10 +304,15 @@ test('direction : présence oubliée ajoutée, corrigée puis retirée, chaque �
   await expect(correction).toBeHidden()
   await expect(emma).toHaveCount(0)
   await expect(page.getByText(/^Présence retirée · Emma Lambert/)).toBeVisible()
-  await expect(page.getByRole('listitem').filter({ hasText: /^Présence/ })).toHaveCount(3)
+  await expect(
+    page
+      .getByRole('region', { name: 'Journal des corrections' })
+      .getByRole('listitem')
+      .filter({ hasText: /^Présence/ }),
+  ).toHaveCount(3)
 
   await page.setViewportSize({ width: 800, height: 600 })
-  await page.getByRole('link', { name: 'Présences du jour' }).click()
+  await subpages(page).getByRole('link', { name: "Aujourd'hui" }).click()
   const leo = page.getByRole('row', { name: /Léo Garnier/ })
   await expect(leo.getByRole('button', { name: /^Corriger la présence/ })).toBeVisible()
   await page.screenshot({ path: testInfo.outputPath('presences-du-jour.png'), fullPage: true })
