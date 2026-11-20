@@ -1,4 +1,5 @@
 import { ChevronDown } from 'lucide-react'
+import { useId } from 'react'
 
 export interface NurseryOption {
   id: string
@@ -23,6 +24,7 @@ function initials(name: string): string {
 }
 
 export function NurserySwitcher({ nurseries, current, showGroup, onSelect }: Props) {
+  const selectId = useId()
   if (nurseries.length === 0) return null
 
   const selected = nurseries.find((n) => n.id === current)
@@ -52,11 +54,11 @@ export function NurserySwitcher({ nurseries, current, showGroup, onSelect }: Pro
   return (
     <div className={`${frame} relative`}>
       {badgeEl}
-      <label htmlFor="nursery-switcher" className="sr-only">
+      <label htmlFor={selectId} className="sr-only">
         Crèche
       </label>
       <select
-        id="nursery-switcher"
+        id={selectId}
         value={current ?? ''}
         onChange={(event) => onSelect(event.target.value)}
         className="h-full min-w-0 flex-1 cursor-pointer appearance-none truncate bg-transparent pr-6 font-medium outline-none focus-visible:ring-2 focus-visible:ring-family-today"
