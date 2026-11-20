@@ -90,6 +90,8 @@ TAGS: list[dict[str, str]] = [
                                              "(pas d'information médicale)."},
     {"name": "ménage", "description": "Pièces, catalogue des tâches, fiche du jour, coches et historique."},
     {"name": "espace famille", "description": "Invitation des parents et consultation de leurs enfants."},
+    {"name": "à traiter", "description": "Ce qui demande un geste de la direction, toutes crèches confondues : "
+                                       "PIN bloqués, tablettes, départs non pointés, mises en route."},
     {"name": "supervision", "description": "Sondes de l'exploitation."},
 ]
 

@@ -30,6 +30,7 @@ from app.requests import RequestIdMiddleware, configure_logging
 from app.schemas import Health
 from app.security import OriginCheckMiddleware
 from app.tablets.router import router as tablets_router
+from app.todo.router import router as todo_router
 
 
 @asynccontextmanager
@@ -68,7 +69,8 @@ def create_app(settings: Settings) -> FastAPI:
     application.add_middleware(RequestIdMiddleware)
     errors.install(application)
     for router in (auth_router, mfa_router, passkeys_router, nurseries_router, tablets_router, children_router,
-                   attendance_router, notes_router, family_router, cleaning_router, accounts_router):
+                   attendance_router, notes_router, family_router, cleaning_router, accounts_router,
+                   todo_router):
         application.include_router(router)
     application.add_api_route(
         "/api/health", health, methods=["GET"], tags=["supervision"],
