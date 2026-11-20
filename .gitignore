@@ -56,3 +56,6 @@ __pycache__/
 
 # Arguments du TP Docker : aucun secret (le mot de passe est dans secrets/)
 !docker/.env
+
+# Captures de produits tiers pour les fiches de recherche (étude locale, jamais dans le dépôt public)
+docs/recherches/captures/
