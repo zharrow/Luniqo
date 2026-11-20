@@ -60,8 +60,8 @@ export function PageHeader({ title, kicker, breadcrumb, actions, tabs, link }: P
                   aria-current={tab.current ? 'page' : undefined}
                   className={
                     tab.current
-                      ? 'flex min-h-11 items-center border-b-[3px] border-[#2459d6] font-bold text-[#1e2430]'
-                      : 'flex min-h-11 items-center border-b-[3px] border-transparent font-medium text-[#5c6270] hover:text-[#1e2430]'
+                      ? 'flex min-h-11 items-center border-b-[3px] border-[#2459d6] font-bold text-[#1e2430] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#2459d6]'
+                      : 'flex min-h-11 items-center border-b-[3px] border-transparent font-medium text-[#5c6270] hover:text-[#1e2430] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#2459d6]'
                   }
                 >
                   {tab.label}

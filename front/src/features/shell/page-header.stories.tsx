@@ -28,7 +28,7 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 export const Complet: Story = {
-  play: async ({ canvas }) => {
+  play: async ({ canvas, userEvent }) => {
     await expect(canvas.getByRole('heading', { level: 1, name: 'Présences' })).toBeInTheDocument()
     await expect(canvas.getByText('Vendredi 20 novembre')).toBeInTheDocument()
     const crumbs = canvas.getByRole('navigation', { name: "Fil d'Ariane" })
@@ -39,6 +39,9 @@ export const Complet: Story = {
     await expect(canvas.getByRole('link', { name: "Aujourd'hui" })).toHaveAttribute('aria-current', 'page')
     await expect(canvas.getByRole('link', { name: 'Historique' })).not.toHaveAttribute('aria-current')
     await expect(canvas.getByRole('button', { name: 'Exporter' })).toBeInTheDocument()
+    await userEvent.tab()
+    await userEvent.tab()
+    await expect(canvas.getByRole('link', { name: "Aujourd'hui" })).toHaveFocus()
   },
 }
 
