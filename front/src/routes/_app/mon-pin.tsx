@@ -23,7 +23,7 @@ function MyPinPage() {
 
   return (
     <div className="grid max-w-md gap-6">
-      <PageHeader title="Mon compte" breadcrumb={['Mon compte', 'PIN de tablette']} link={RouterLink} />
+      <PageHeader title="Mon compte" breadcrumb={['Mon compte']} link={RouterLink} />
       <p className="text-muted-foreground">
         Sur la tablette de la crèche, vous choisissez votre nom puis tapez ce PIN pour pointer. Ne le communiquez à
         personne. Un nouveau PIN débloque aussi un PIN bloqué après trois erreurs.

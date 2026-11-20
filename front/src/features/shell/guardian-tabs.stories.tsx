@@ -21,6 +21,7 @@ export const Accueil: Story = {
     for (const a of links) await expect(a.getBoundingClientRect().height).toBeGreaterThanOrEqual(56)
     await expect(canvas.getByRole('link', { name: 'Accueil' })).toHaveAttribute('aria-current', 'page')
     await expect(canvas.getByRole('link', { name: 'Messages' })).not.toHaveAttribute('aria-current')
+    await expect(getComputedStyle(canvas.getByRole('link', { name: 'Accueil' })).borderTopWidth).toBe('3px')
   },
 }
 

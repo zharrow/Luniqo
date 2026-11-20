@@ -113,16 +113,26 @@ describe('direction', () => {
     await expect.element(menu.getByRole('link', { name: /^HACCP/ })).toHaveAttribute('aria-current', 'page')
   })
 
+  test('le groupe de la page courante reste ouvert malgré un repli retenu', async ({ worker }) => {
+    serve(worker, director, [nursery])
+    localStorage.setItem('luniqo.groupes', JSON.stringify(['today']))
+    await page.viewport(1280, 800)
+    const { screen } = await start(`/creches/${nursery.id}/presences`)
+    const menu = screen.getByRole('navigation', { name: 'Menu principal' })
+    await expect.element(menu.getByRole('button', { name: /Aujourd'hui/ })).toHaveAttribute('aria-expanded', 'true')
+    await expect.element(menu.getByRole('link', { name: 'Présences' })).toBeVisible()
+  })
+
   test('le menu masqué en grand écran le reste (choix retenu)', async ({ worker }) => {
     serve(worker, director, [nursery])
     await page.viewport(1280, 800)
     const { screen } = await start(`/creches/${nursery.id}/presences`)
-    await screen.getByRole('button', { name: 'Fermer le menu' }).click()
+    await screen.getByRole('button', { name: 'Masquer le menu' }).click()
     await expect.element(screen.getByRole('navigation', { name: 'Menu principal' })).not.toBeInTheDocument()
     expect(localStorage.getItem('luniqo.menu')).not.toBeNull()
     await screen.unmount()
     const again = (await start(`/creches/${nursery.id}/presences`)).screen
-    await expect.element(again.getByRole('button', { name: 'Ouvrir le menu' })).toBeVisible()
+    await expect.element(again.getByRole('button', { name: 'Afficher le menu' })).toBeVisible()
     await expect.element(again.getByRole('navigation', { name: 'Menu principal' })).not.toBeInTheDocument()
   })
 

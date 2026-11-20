@@ -1,4 +1,4 @@
-import { CircleHelp, LogOut, Menu, X } from 'lucide-react'
+import { CircleHelp, LogOut, Menu, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react'
 import { useId } from 'react'
 
 import { AnchorLink, type NavLinkComponent } from './nav-link'
@@ -44,7 +44,7 @@ export function AccountMenu({ user, onLogout, logoutPending }: AccountMenuProps)
       <div
         id={id}
         popover="auto"
-        className="m-0 w-64 rounded-lg border border-shell-border bg-white p-3 text-[#1e2430] shadow-sm [position-area:bottom_span-left]"
+        className="account-popover m-0 w-64 rounded-lg border border-shell-border bg-white p-3 text-[#1e2430] shadow-sm [position-area:bottom_span-left]"
       >
         <p className="text-sm font-bold">{user.name}</p>
         <p className="mb-3 text-xs text-[#5c6270]">{user.roleLabel}</p>
@@ -67,6 +67,8 @@ interface Props extends AccountMenuProps {
   onOpen: (href: string) => void
   onToggleMenu: () => void
   menuOpen: boolean
+  /** Menu latéral persistant (grand écran) : le bouton le masque ou l'affiche, au lieu de fermer un panneau. */
+  persistentMenu?: boolean
   link?: NavLinkComponent
 }
 
@@ -75,17 +77,25 @@ export function TopBar({
   onOpen,
   onToggleMenu,
   menuOpen,
+  persistentMenu = false,
   user,
   onLogout,
   logoutPending,
   link: Link = AnchorLink,
 }: Props) {
-  const Toggle = menuOpen ? X : Menu
+  const Toggle = persistentMenu ? (menuOpen ? PanelLeftClose : PanelLeftOpen) : menuOpen ? X : Menu
+  const toggleLabel = persistentMenu
+    ? menuOpen
+      ? 'Masquer le menu'
+      : 'Afficher le menu'
+    : menuOpen
+      ? 'Fermer le menu'
+      : 'Ouvrir le menu'
   return (
     <header className="flex h-16 items-center gap-3 border-b border-shell-border bg-shell px-4">
       <button
         type="button"
-        aria-label={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+        aria-label={toggleLabel}
         aria-expanded={menuOpen}
         onClick={onToggleMenu}
         className="grid size-11 place-items-center rounded-lg outline-none hover:bg-[#f3ede0] focus-visible:ring-2 focus-visible:ring-[#1e2430]"

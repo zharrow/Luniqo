@@ -23,8 +23,8 @@ export function GuardianTabs({ navigation, activeId, link: Link = AnchorLink }: 
               <Link
                 href={item.href}
                 aria-current={active ? 'page' : undefined}
-                className={`flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1e2430] ${
-                  active ? 'font-bold text-[#2459d6]' : 'text-[#3a4150]'
+                className={`flex min-h-14 flex-col border-t-[3px] items-center justify-center gap-0.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1e2430] ${
+                  active ? 'border-[#2459d6] font-bold text-[#2459d6]' : 'border-transparent text-[#3a4150]'
                 }`}
               >
                 <Icon aria-hidden="true" className="size-6" />

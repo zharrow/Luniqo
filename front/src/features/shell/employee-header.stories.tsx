@@ -10,7 +10,7 @@ const meta = {
   args: {
     navigation: navigationFor('employee', 'n1'),
     activeId: 'accueil',
-    user: { name: 'Nina Lopez', roleLabel: 'Employée' },
+    user: { name: 'Nina Lopez', roleLabel: 'Équipe' },
     onLogout: fn(),
     logoutPending: false,
   },

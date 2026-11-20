@@ -17,7 +17,7 @@ import { AccountMenu, TopBar } from './top-bar'
 
 const ROLE_LABELS: Record<Session['role'], string> = {
   owner: 'Direction',
-  employee: 'Employée',
+  employee: 'Équipe',
   guardian: 'Parent',
   developer: 'Éditeur',
 }
@@ -92,6 +92,8 @@ function useCollapsedGroups(navigation: Navigation, activeId: string | null) {
   const activeFamily = navigation.groups.find((g) => g.items.some((i) => i.id === activeId))?.family
   const collapsed = new Set(base.filter((family) => family !== activeFamily))
   const toggle = (family: FamilyId) => {
+    // Le groupe de la page courante reste ouvert : son bouton ne change rien.
+    if (family === activeFamily) return
     const next = base.includes(family) ? base.filter((f) => f !== family) : [...base, family]
     setChosen(next)
     writeStorage(GROUPS_KEY, JSON.stringify(next))
@@ -316,6 +318,7 @@ function ManagerShell({
             onOpen={onOpen}
             onToggleMenu={onToggleMenu}
             menuOpen={wide ? !hidden : overlay}
+            persistentMenu={wide}
             user={user}
             onLogout={onLogout}
             logoutPending={logoutPending}

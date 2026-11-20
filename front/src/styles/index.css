@@ -97,6 +97,13 @@
   --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
+/* Sans ancrage CSS (position-area), le menu du compte s'ouvre en haut à droite plutôt qu'en haut à gauche. */
+@supports not (position-area: bottom) {
+  .account-popover {
+    inset: 4rem 1rem auto auto;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
