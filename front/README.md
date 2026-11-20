@@ -78,6 +78,34 @@ Imports à sens unique, vérifiés par ESLint : `components`, `lib` et `api` ne
 dépendent d'aucun domaine ; un domaine n'importe ni un autre domaine ni une
 route.
 
+## Cadre de l'application
+
+Tout l'espace connecté (`routes/_app/`) est enveloppé par `features/shell/`
+(LUN-150). Le cadre dépend du rôle : direction et éditeur ont une barre du haut
+(logo, crèche courante, recherche d'écran, menu du compte) et un menu latéral
+rangé par usage (Aujourd'hui, Enfants, Équipe, Lieux et hygiène, Gestion) ;
+l'employée a un en-tête simple avec ses entrées ; le parent a un en-tête et des
+onglets, fixés en bas sous 768 px. Recherche et justification :
+[docs/recherches/cadre-navigation-2026-11-20.md](../docs/recherches/cadre-navigation-2026-11-20.md)
+et [spécification](../docs/superpowers/specs/2026-11-20-cadre-front-v2-design.md).
+
+- **Une seule table de navigation** : `features/shell/navigation.ts`. Menu,
+  recherche d'écran, onglets du parent et pages « bientôt » la lisent toutes ;
+  la visibilité par rôle y est déclarée une fois (testée dans `navigation.test.ts`).
+- **Ajouter un écran** : créer sa route, puis ajouter son entrée dans
+  `navigation.ts` (ou, si l'entrée existe déjà comme « bientôt », la remplacer :
+  son `href` réel et sans l'indicateur). Rien d'autre à toucher dans le cadre.
+- **Pages « bientôt »** : les modules annoncés mais absents mènent à
+  `/bientot/$module` (`coming-soon.tsx`) ; `/reglages` est une page de même
+  nature. Elles disparaissent avec l'écran réel.
+- **Crèche courante** : `current-nursery.ts` (choix gardé dans le navigateur,
+  lu dans un `try`, repli sûr si le stockage est refusé) ; « Tout le groupe »
+  n'existe que pour la direction ayant plusieurs crèches, sur l'accueil.
+- **Pas de Popover, DropdownMenu ni Dialog de Radix** : ils injectent une
+  balise `<style>` refusée par la CSP. Menu du compte : `popover` natif ;
+  menu latéral replié : superposition en état React ; fenêtres : `<dialog>`.
+- Chaque page place son titre dans `PageHeader` (titre, onglets, actions).
+
 ## Règles
 
 - **Le contrat de l'API fait foi.** Types générés depuis le schéma OpenAPI ;
