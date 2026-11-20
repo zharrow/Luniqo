@@ -1,6 +1,8 @@
 /*
  * Thème « Douceur Professionnelle » de Luniqo, repris des jetons de la v1
- * (app/globals.css) au format attendu par shadcn/ui. Contrastes visés : WCAG 2.2 AA.
+ * (app/globals.css) au format attendu par shadcn/ui, avec la palette du cadre E
+ * (LUN-150) : fonds chauds, bleu primaire et une couleur par famille de navigation.
+ * Contrastes visés : WCAG 2.2 AA.
  */
 @import 'tailwindcss';
 @import 'tw-animate-css';
@@ -8,27 +10,46 @@
 @import '@fontsource-variable/dm-sans';
 
 :root {
-  --background: oklch(0.98 0.005 270);
-  --foreground: oklch(0.25 0.02 260);
+  --background: #fbf8f2;
+  --foreground: #1e2430;
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.25 0.02 260);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.25 0.02 260);
   /* Bleu pastel foncé : texte blanc lisible sur les boutons. */
-  --primary: oklch(0.55 0.15 250);
+  --primary: #2459d6;
   --primary-foreground: oklch(1 0 0);
   /* Rose pastel : chaleur, petite enfance. */
   --secondary: oklch(0.92 0.03 350);
   --secondary-foreground: oklch(0.35 0.05 350);
   --muted: oklch(0.94 0.01 270);
-  --muted-foreground: oklch(0.45 0.02 260);
+  --muted-foreground: #5c6270;
   /* Lavande. */
   --accent: oklch(0.92 0.04 290);
   --accent-foreground: oklch(0.3 0.03 260);
   --destructive: oklch(0.55 0.2 25);
-  --border: oklch(0.88 0.02 270);
-  --input: oklch(0.88 0.02 270);
-  --ring: oklch(0.55 0.15 250);
+  --border: #ebe4d6;
+  --input: #ebe4d6;
+  --ring: #2459d6;
+  /* Cadre : fond du menu et bordures. */
+  --shell: #fffdf8;
+  --shell-border: #ebe4d6;
+  /* Familles de navigation : fond plein, encre, teinte. */
+  --family-today: #2459d6;
+  --family-today-ink: #1a3f99;
+  --family-today-tint: #eaf0fd;
+  --family-children: #c2452b;
+  --family-children-ink: #8e2f1c;
+  --family-children-tint: #fdece7;
+  --family-team: #6d45c4;
+  --family-team-ink: #4a2c8f;
+  --family-team-tint: #efe9fb;
+  --family-places: #0b7a70;
+  --family-places-ink: #0b5e56;
+  --family-places-tint: #e1f5f2;
+  --family-admin: #8f6400;
+  --family-admin-ink: #6b4e00;
+  --family-admin-tint: #fff5d1;
   --radius: 1rem;
   --font-sans: 'DM Sans Variable';
 }
@@ -52,6 +73,23 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-shell: var(--shell);
+  --color-shell-border: var(--shell-border);
+  --color-family-today: var(--family-today);
+  --color-family-today-ink: var(--family-today-ink);
+  --color-family-today-tint: var(--family-today-tint);
+  --color-family-children: var(--family-children);
+  --color-family-children-ink: var(--family-children-ink);
+  --color-family-children-tint: var(--family-children-tint);
+  --color-family-team: var(--family-team);
+  --color-family-team-ink: var(--family-team-ink);
+  --color-family-team-tint: var(--family-team-tint);
+  --color-family-places: var(--family-places);
+  --color-family-places-ink: var(--family-places-ink);
+  --color-family-places-tint: var(--family-places-tint);
+  --color-family-admin: var(--family-admin);
+  --color-family-admin-ink: var(--family-admin-ink);
+  --color-family-admin-tint: var(--family-admin-tint);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
