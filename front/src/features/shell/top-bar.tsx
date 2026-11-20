@@ -35,7 +35,8 @@ export function AccountMenu({ user, onLogout, logoutPending }: AccountMenuProps)
         >
           {initials(user.name)}
         </span>
-        <span className="hidden flex-col leading-tight sm:flex">
+        <span className="sr-only">Mon compte, </span>
+        <span className="flex flex-col leading-tight max-sm:sr-only">
           <span className="text-sm font-bold text-[#1e2430]">{user.name}</span>
           <span className="text-xs text-[#5c6270]">{user.roleLabel}</span>
         </span>

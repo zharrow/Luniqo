@@ -25,7 +25,7 @@ export const Direction: Story = {
   play: async ({ canvas, userEvent, args }) => {
     await expect(canvas.getByRole('link', { name: 'Aide' })).toHaveAttribute('href', '/bientot/aide')
     await expect(canvas.getAllByText('Direction')[0]).toBeInTheDocument()
-    await userEvent.click(canvas.getByRole('button', { name: /Inès Haddad/ }))
+    await userEvent.click(canvas.getByRole('button', { name: /Mon compte/ }))
     const logout = await canvas.findByRole('button', { name: 'Se déconnecter' })
     await expect(logout).toBeVisible()
     await userEvent.click(logout)
@@ -52,7 +52,20 @@ export const MenuFerme: Story = {
 export const Deconnexion: Story = {
   args: { logoutPending: true },
   play: async ({ canvas, userEvent }) => {
-    await userEvent.click(canvas.getByRole('button', { name: /Inès Haddad/ }))
+    await userEvent.click(canvas.getByRole('button', { name: /Mon compte/ }))
     await expect(await canvas.findByRole('button', { name: 'Se déconnecter' })).toBeDisabled()
+  },
+}
+
+export const EtroitMobile: Story = {
+  decorators: [
+    (Story) => (
+      <div style={{ width: 375 }}>
+        <Story />
+      </div>
+    ),
+  ],
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: /Mon compte, Inès Haddad/ })).toBeInTheDocument()
   },
 }
