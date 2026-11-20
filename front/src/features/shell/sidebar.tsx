@@ -1,7 +1,7 @@
 import { ChevronDown } from 'lucide-react'
 import type { ReactNode } from 'react'
 
-import logo from '@/assets/luniqo-logo.png'
+import { LogoMark } from './creature'
 import type { FamilyId } from './families'
 import { AnchorLink, type NavLinkComponent } from './nav-link'
 import type { NavItem, Navigation } from './navigation'
@@ -80,7 +80,7 @@ export function Sidebar({
       className="flex h-full flex-col gap-4 overflow-y-auto border-r border-shell-border bg-shell p-3"
     >
       <div className="flex items-center gap-2 px-1 pt-1">
-        <img src={logo} alt="" className="size-8" />
+        <LogoMark size={32} />
         <span className="text-lg font-bold text-[#1e2430]">Luniqo</span>
       </div>
       {switcher}

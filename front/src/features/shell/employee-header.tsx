@@ -1,7 +1,7 @@
 import { CircleHelp } from 'lucide-react'
 import type { ReactNode } from 'react'
 
-import logo from '@/assets/luniqo-logo.png'
+import { LogoMark } from './creature'
 import { AnchorLink, type NavLinkComponent } from './nav-link'
 import type { Navigation } from './navigation'
 import { AccountMenu } from './top-bar'
@@ -27,7 +27,10 @@ export function EmployeeHeader({
 }: Props) {
   return (
     <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-shell-border bg-shell px-4 py-2">
-      <img src={logo} alt="Luniqo" className="size-8" />
+      <span className="flex items-center gap-2">
+        <LogoMark size={32} />
+        <span className="text-lg font-bold text-[#1e2430]">Luniqo</span>
+      </span>
       {switcher}
       <nav aria-label="Menu principal" className="flex flex-1 flex-wrap items-center gap-1">
         {navigation.flat.map((item) => {
