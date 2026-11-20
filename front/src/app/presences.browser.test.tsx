@@ -36,6 +36,7 @@ describe('présences du jour', () => {
       http.get('/api/v2/nurseries', () => HttpResponse.json([nursery])),
       http.get(`/api/v2/nurseries/${nursery.id}/summary`, () => HttpResponse.json(nurserySummary)),
       http.get(`/api/v2/nurseries/${nursery.id}`, () => HttpResponse.json(nursery)),
+      http.get(`/api/v2/nurseries/${nursery.id}/notes`, () => HttpResponse.json([])),
       http.get(`/api/v2/nurseries/${nursery.id}/attendance`, () => HttpResponse.json(dayAttendance)),
     )
     const { screen } = await start('/accueil')
@@ -57,6 +58,7 @@ describe('présences du jour', () => {
     worker.use(
       http.get('/api/v2/auth/me', () => HttpResponse.json({ ...owner, mfa: 'verified' })),
       http.get(base, () => HttpResponse.json(nursery)),
+      http.get(`${base}/notes`, () => HttpResponse.json([])),
       http.get(`${base}/attendance`, () => HttpResponse.json([presence])),
       http.get(`${base}/children/${emmaDetail.id}`, () => HttpResponse.json(emmaDetail)),
       http.patch(`${base}/attendance/${presence.id}`, async ({ request }) => {
@@ -89,6 +91,7 @@ describe('présences du jour', () => {
     worker.use(
       http.get('/api/v2/auth/me', () => HttpResponse.json({ ...owner, mfa: 'verified' })),
       http.get(base, () => HttpResponse.json(nursery)),
+      http.get(`${base}/notes`, () => HttpResponse.json([])),
       http.get(`${base}/attendance`, () => HttpResponse.json(added ? [presence] : [])),
       http.get(`${base}/children`, () => HttpResponse.json(nurseryChildren)),
       http.get(`${base}/children/${emmaDetail.id}`, () => HttpResponse.json(emmaDetail)),
@@ -120,6 +123,7 @@ describe('présences du jour', () => {
     worker.use(
       http.get('/api/v2/auth/me', () => HttpResponse.json(employee)),
       http.get(`/api/v2/nurseries/${nursery.id}`, () => reply(apiErrors.nurseryNotFound())),
+      http.get(`/api/v2/nurseries/${nursery.id}/notes`, () => HttpResponse.json([])),
       http.get(`/api/v2/nurseries/${nursery.id}/attendance`, () => reply(apiErrors.nurseryNotFound())),
     )
     const { screen } = await start(`/creches/${nursery.id}/presences`)
@@ -136,6 +140,7 @@ describe('présences du jour', () => {
     worker.use(
       http.get('/api/v2/auth/me', () => HttpResponse.json(employee)),
       http.get(`/api/v2/nurseries/${nursery.id}`, () => HttpResponse.json(nursery)),
+      http.get(`/api/v2/nurseries/${nursery.id}/notes`, () => HttpResponse.json([])),
       http.get(`/api/v2/nurseries/${nursery.id}/attendance`, () => {
         attempts += 1
         return down ? reply(failure) : HttpResponse.json(dayAttendance)
@@ -160,6 +165,7 @@ describe('présences du jour', () => {
     worker.use(
       http.get('/api/v2/auth/me', () => HttpResponse.json(employee)),
       http.get(`/api/v2/nurseries/${nursery.id}`, () => HttpResponse.json(nursery)),
+      http.get(`/api/v2/nurseries/${nursery.id}/notes`, () => HttpResponse.json([])),
       http.get(`/api/v2/nurseries/${nursery.id}/attendance`, () =>
         reachable ? HttpResponse.json(dayAttendance) : networkError(),
       ),
@@ -181,6 +187,7 @@ describe('présences du jour', () => {
     worker.use(
       http.get('/api/v2/auth/me', () => HttpResponse.json(employee)),
       http.get(`/api/v2/nurseries/${nursery.id}`, () => HttpResponse.json(nursery)),
+      http.get(`/api/v2/nurseries/${nursery.id}/notes`, () => HttpResponse.json([])),
       http.get(`/api/v2/nurseries/${nursery.id}/attendance`, () => HttpResponse.json(dayAttendance)),
     )
     const { screen } = await start(`/creches/${nursery.id}/presences`)
@@ -205,6 +212,7 @@ describe('présences du jour', () => {
       http.get(`/api/v2/nurseries/${nursery.id}`, () =>
         HttpResponse.json(apiErrors.nurseryNotFound().body, { status: 404, headers: { 'X-Request-ID': 'ref-404' } }),
       ),
+      http.get(`/api/v2/nurseries/${nursery.id}/notes`, () => HttpResponse.json([])),
       http.get(`/api/v2/nurseries/${nursery.id}/attendance`, () =>
         HttpResponse.json(apiErrors.nurseryNotFound().body, { status: 404, headers: { 'X-Request-ID': 'ref-404' } }),
       ),

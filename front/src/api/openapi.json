@@ -11129,6 +11129,353 @@
         ]
       }
     },
+    "/api/v2/nurseries/{nursery_id}/children/{child_id}/notes": {
+      "post": {
+        "tags": [
+          "transmissions"
+        ],
+        "summary": "Note une transmission sur un enfant de la crèche (repas, sieste, humeur, ce qu'il faut dire aux parents)",
+        "description": "Note une transmission sur un enfant de la crèche (repas, sieste, humeur, ce qu'il faut dire aux parents).\n\nL'heure, le jour (à Paris) et l'auteur sont fixés par le serveur. Pas d'information médicale\n(allergies, traitements) : les données de santé relèvent de LUN-57.",
+        "operationId": "add_note_api_v2_nurseries__nursery_id__children__child_id__notes_post",
+        "parameters": [
+          {
+            "name": "child_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Child Id"
+            }
+          },
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoteCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoteOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`auth_required` : Authentification requise",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "auth_required": {
+                    "summary": "Authentification requise",
+                    "value": {
+                      "detail": "Authentification requise",
+                      "code": "auth_required"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`mfa_required` : Second facteur requis ; `origin_refused` : Origine de la requête refusée ; `role_refused` : Action non autorisée pour ce rôle",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "mfa_required": {
+                    "summary": "Second facteur requis",
+                    "value": {
+                      "detail": "Second facteur requis",
+                      "code": "mfa_required"
+                    }
+                  },
+                  "origin_refused": {
+                    "summary": "Origine de la requête refusée",
+                    "value": {
+                      "detail": "Origine de la requête refusée",
+                      "code": "origin_refused"
+                    }
+                  },
+                  "role_refused": {
+                    "summary": "Action non autorisée pour ce rôle",
+                    "value": {
+                      "detail": "Action non autorisée pour ce rôle",
+                      "code": "role_refused"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`child_not_found` : Enfant introuvable dans cette crèche ; `nursery_not_found` : Crèche introuvable",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "child_not_found": {
+                    "summary": "Enfant introuvable dans cette crèche",
+                    "value": {
+                      "detail": "Enfant introuvable dans cette crèche",
+                      "code": "child_not_found"
+                    }
+                  },
+                  "nursery_not_found": {
+                    "summary": "Crèche introuvable",
+                    "value": {
+                      "detail": "Crèche introuvable",
+                      "code": "nursery_not_found"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`validation_error` : Certains champs sont invalides.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "validation_error": {
+                    "summary": "Certains champs sont invalides.",
+                    "value": {
+                      "detail": "Certains champs sont invalides.",
+                      "code": "validation_error",
+                      "fields": {
+                        "name": "Ne peut pas être vide"
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal_error` : Une erreur est survenue de notre côté. Réessayez dans un instant ; si elle revient, donnez la référence à la crèche.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "internal_error": {
+                    "summary": "Une erreur est survenue de notre côté. Réessayez dans un instant ; si elle revient, donnez la référence à la crèche.",
+                    "value": {
+                      "detail": "Une erreur est survenue de notre côté. Réessayez dans un instant ; si elle revient, donnez la référence à la crèche.",
+                      "code": "internal_error",
+                      "request_id": "6f1c0b0e9d2a4c5183e7a1b2c3d4e5f6"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "webSession": []
+          }
+        ]
+      }
+    },
+    "/api/v2/nurseries/{nursery_id}/notes": {
+      "get": {
+        "tags": [
+          "transmissions"
+        ],
+        "summary": "Transmissions d'un jour de la crèche (aujourd'hui à Paris par défaut), de la plus récente à la plus ancienne",
+        "description": "Transmissions d'un jour de la crèche (aujourd'hui à Paris par défaut), de la plus récente à la plus ancienne.",
+        "operationId": "day_notes_api_v2_nurseries__nursery_id__notes_get",
+        "parameters": [
+          {
+            "name": "nursery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nursery Id"
+            }
+          },
+          {
+            "name": "day",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Jour à Paris ; aujourd'hui par défaut",
+              "title": "Day"
+            },
+            "description": "Jour à Paris ; aujourd'hui par défaut"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NoteOut"
+                  },
+                  "title": "Response Day Notes Api V2 Nurseries  Nursery Id  Notes Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`auth_required` : Authentification requise",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "auth_required": {
+                    "summary": "Authentification requise",
+                    "value": {
+                      "detail": "Authentification requise",
+                      "code": "auth_required"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`mfa_required` : Second facteur requis ; `role_refused` : Action non autorisée pour ce rôle",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "mfa_required": {
+                    "summary": "Second facteur requis",
+                    "value": {
+                      "detail": "Second facteur requis",
+                      "code": "mfa_required"
+                    }
+                  },
+                  "role_refused": {
+                    "summary": "Action non autorisée pour ce rôle",
+                    "value": {
+                      "detail": "Action non autorisée pour ce rôle",
+                      "code": "role_refused"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`nursery_not_found` : Crèche introuvable",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "nursery_not_found": {
+                    "summary": "Crèche introuvable",
+                    "value": {
+                      "detail": "Crèche introuvable",
+                      "code": "nursery_not_found"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`validation_error` : Certains champs sont invalides.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "validation_error": {
+                    "summary": "Certains champs sont invalides.",
+                    "value": {
+                      "detail": "Certains champs sont invalides.",
+                      "code": "validation_error",
+                      "fields": {
+                        "name": "Ne peut pas être vide"
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal_error` : Une erreur est survenue de notre côté. Réessayez dans un instant ; si elle revient, donnez la référence à la crèche.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "internal_error": {
+                    "summary": "Une erreur est survenue de notre côté. Réessayez dans un instant ; si elle revient, donnez la référence à la crèche.",
+                    "value": {
+                      "detail": "Une erreur est survenue de notre côté. Réessayez dans un instant ; si elle revient, donnez la référence à la crèche.",
+                      "code": "internal_error",
+                      "request_id": "6f1c0b0e9d2a4c5183e7a1b2c3d4e5f6"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "webSession": []
+          }
+        ]
+      }
+    },
     "/api/v2/nurseries/{nursery_id}/guardians/{guardian_id}/invitation": {
       "post": {
         "tags": [
@@ -16885,6 +17232,77 @@
         "title": "Milestone",
         "description": "Étapes de la mise en route, dans l'ordre où la direction les franchit d'habitude."
       },
+      "NoteCreate": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Text",
+            "description": "Transmission, 500 caractères au plus, espaces retirés. Pas d'information médicale (allergies, traitements) : les données de santé relèvent de LUN-57."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "NoteCreate",
+        "examples": [
+          {
+            "text": "A bien mangé, sieste de 13 h à 15 h"
+          }
+        ]
+      },
+      "NoteOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "child_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Child Id"
+          },
+          "child_name": {
+            "type": "string",
+            "title": "Child Name"
+          },
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day",
+            "description": "Jour de la transmission, à Paris"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "author": {
+            "type": "string",
+            "title": "Author",
+            "description": "Auteur au moment de l'écriture (prénom et initiale)"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Heure du serveur à l'écriture"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "child_id",
+          "child_name",
+          "day",
+          "text",
+          "author",
+          "created_at"
+        ],
+        "title": "NoteOut"
+      },
       "NurseryCreate": {
         "properties": {
           "name": {
@@ -19087,6 +19505,10 @@
     {
       "name": "pointage",
       "description": "Arrivées et départs pointés sur la tablette, suivi des présences."
+    },
+    {
+      "name": "transmissions",
+      "description": "Transmissions de la journée sur un enfant, entre collègues (pas d'information médicale)."
     },
     {
       "name": "ménage",

@@ -50,6 +50,7 @@ describe('historique des présences', () => {
     worker.use(
       http.get('/api/v2/auth/me', () => HttpResponse.json(employee)),
       http.get(`/api/v2/nurseries/${nursery.id}`, () => HttpResponse.json(nursery)),
+      http.get(`/api/v2/nurseries/${nursery.id}/notes`, () => HttpResponse.json([])),
       http.get(`/api/v2/nurseries/${nursery.id}/attendance`, () => HttpResponse.json([])),
       http.get(HISTORY, ({ request }) => {
         asked.push(periodOf(request))

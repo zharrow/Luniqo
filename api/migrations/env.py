@@ -12,6 +12,7 @@ import app.children.models  # noqa: F401
 import app.cleaning.models  # noqa: F401
 import app.family.models  # noqa: F401
 import app.mfa.models  # noqa: F401
+import app.notes.models  # noqa: F401
 import app.nurseries.models  # noqa: F401
 import app.passkeys.models  # noqa: F401
 import app.tablets.models  # noqa: F401

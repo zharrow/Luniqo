@@ -5,6 +5,7 @@ import { $api } from '@/api/client'
 import { Button } from '@/components/ui/button'
 import { AddPresence, CorrectPresence } from '@/features/attendance/corrections'
 import { DayBoard } from '@/features/attendance/day-board'
+import { DayNotes } from '@/features/notes/day-notes'
 import { formatTime, todayInParis } from '@/lib/dates'
 import { retryFailed } from '@/lib/retry-failed'
 
@@ -75,6 +76,14 @@ function PresencesPage() {
         onRetry={retryFailed(presences, nursery)}
         action={manager ? (presence) => <CorrectPresence nurseryId={nurseryId} presence={presence} /> : undefined}
       />
+      {presences.isSuccess && (
+        <section aria-labelledby="transmissions" className="grid gap-3">
+          <h2 id="transmissions" className="text-lg font-medium">
+            Transmissions du jour
+          </h2>
+          <DayNotes nurseryId={nurseryId} presences={presences.data} />
+        </section>
+      )}
     </div>
   )
 }

@@ -23,6 +23,7 @@ from app.config import Settings, get_settings
 from app.db import SessionDep, get_engine
 from app.family.router import router as family_router
 from app.mfa.router import router as mfa_router
+from app.notes.router import router as notes_router
 from app.nurseries.router import router as nurseries_router
 from app.passkeys.router import router as passkeys_router
 from app.requests import RequestIdMiddleware, configure_logging
@@ -67,7 +68,7 @@ def create_app(settings: Settings) -> FastAPI:
     application.add_middleware(RequestIdMiddleware)
     errors.install(application)
     for router in (auth_router, mfa_router, passkeys_router, nurseries_router, tablets_router, children_router,
-                   attendance_router, family_router, cleaning_router, accounts_router):
+                   attendance_router, notes_router, family_router, cleaning_router, accounts_router):
         application.include_router(router)
     application.add_api_route(
         "/api/health", health, methods=["GET"], tags=["supervision"],

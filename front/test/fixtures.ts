@@ -176,6 +176,37 @@ export const dayAttendance: Schemas['AttendanceOut'][] = [
   },
 ]
 
+/** Transmissions du 30 octobre 2026 (`GET /api/v2/nurseries/{id}/notes`), les plus récentes d'abord (LUN-146). */
+export const dayNotes: Schemas['NoteOut'][] = [
+  {
+    id: '00000000-0000-4000-8000-0000000000e3',
+    child_id: presence.child_id,
+    child_name: 'Léo Garnier',
+    day: '2026-10-30',
+    text: 'A bien mangé, sieste de 13 h à 15 h',
+    author: 'Inès M.',
+    created_at: '2026-10-30T14:05:00Z',
+  },
+  {
+    id: '00000000-0000-4000-8000-0000000000e2',
+    child_id: '00000000-0000-4000-8000-0000000000d2',
+    child_name: 'Emma Lambert',
+    day: '2026-10-30',
+    text: 'Un peu fatiguée, à dire aux parents',
+    author: 'Lucas B.',
+    created_at: '2026-10-30T10:30:00Z',
+  },
+  {
+    id: '00000000-0000-4000-8000-0000000000e1',
+    child_id: presence.child_id,
+    child_name: 'Léo Garnier',
+    day: '2026-10-30',
+    text: 'Arrivé de bonne humeur',
+    author: 'Lucas B.',
+    created_at: '2026-10-30T08:00:00Z',
+  },
+]
+
 /**
  * Présences d'une période (`GET …/attendance/history`), par jour puis par heure
  * d'arrivée, vues le 30 octobre 2026 : le départ de Léo n'a pas été pointé le 28.

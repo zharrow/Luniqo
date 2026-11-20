@@ -71,6 +71,7 @@ describe('résumés sur l’accueil', () => {
       http.get(`/api/v2/nurseries/${nursery.id}/summary`, () => HttpResponse.json(nurserySummary)),
       http.get(`/api/v2/nurseries/${south.id}/summary`, () => reply(apiErrors.unavailable())),
       http.get(`/api/v2/nurseries/${south.id}`, () => HttpResponse.json(south)),
+      http.get(`/api/v2/nurseries/${south.id}/notes`, () => HttpResponse.json([])),
       http.get(`/api/v2/nurseries/${south.id}/attendance`, () => HttpResponse.json(dayAttendance)),
     )
     const screen = await start()
