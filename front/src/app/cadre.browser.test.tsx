@@ -254,20 +254,23 @@ describe('employée', () => {
 })
 
 describe('parent', () => {
-  test('cinq onglets, en bas de l’écran du téléphone, sans masquer le contenu', async ({ worker }) => {
-    worker.use(http.get('/api/v2/auth/me', () => HttpResponse.json(guardian)))
-    await page.viewport(375, 700)
-    const { screen } = await start('/accueil')
-    const tabs = screen.getByRole('navigation', { name: 'Menu principal' })
-    await expect.element(tabs.getByRole('link', { name: 'Accueil' })).toHaveAttribute('aria-current', 'page')
-    expect(tabs.element().querySelectorAll('a')).toHaveLength(5)
-    const bar = tabs.element().getBoundingClientRect()
-    expect(Math.abs(bar.bottom - window.innerHeight)).toBeLessThanOrEqual(1)
-    const main = document.getElementById('contenu')
-    expect(main).not.toBeNull()
-    expect(Number.parseFloat(getComputedStyle(main as HTMLElement).paddingBottom)).toBeGreaterThanOrEqual(bar.height)
-    noHorizontalScroll()
-  })
+  // 700 px : au-dessus du palier sm (640 px), sous md (768 px) où la barre reste fixée en bas.
+  for (const width of [375, 700]) {
+    test(`cinq onglets, en bas de l’écran en ${width} px, sans masquer le contenu`, async ({ worker }) => {
+      worker.use(http.get('/api/v2/auth/me', () => HttpResponse.json(guardian)))
+      await page.viewport(width, 700)
+      const { screen } = await start('/accueil')
+      const tabs = screen.getByRole('navigation', { name: 'Menu principal' })
+      await expect.element(tabs.getByRole('link', { name: 'Accueil' })).toHaveAttribute('aria-current', 'page')
+      expect(tabs.element().querySelectorAll('a')).toHaveLength(5)
+      const bar = tabs.element().getBoundingClientRect()
+      expect(Math.abs(bar.bottom - window.innerHeight)).toBeLessThanOrEqual(1)
+      const main = document.getElementById('contenu')
+      expect(main).not.toBeNull()
+      expect(Number.parseFloat(getComputedStyle(main as HTMLElement).paddingBottom)).toBeGreaterThanOrEqual(bar.height)
+      noHorizontalScroll()
+    })
+  }
 })
 
 describe('pages « bientôt »', () => {

@@ -166,8 +166,9 @@ export function AppShell({ session, onLogout, logoutPending, children }: AppShel
     />
   ) : undefined
 
-  const main = (extra = '') => (
-    <main id="contenu" tabIndex={-1} className={`mx-auto w-full max-w-6xl min-w-0 p-4 outline-none sm:p-6 ${extra}`}>
+  // Largeur et marges en un seul jeu de classes : deux classes rivales s'ordonnent selon le CSS produit, pas selon l'appel.
+  const main = (layout = 'max-w-6xl p-4 sm:p-6') => (
+    <main id="contenu" tabIndex={-1} className={`mx-auto w-full min-w-0 outline-none ${layout}`}>
       {children}
     </main>
   )
@@ -201,7 +202,7 @@ export function AppShell({ session, onLogout, logoutPending, children }: AppShel
         </header>
         <GuardianTabs navigation={navigation} activeId={activeId} link={RouterLink} />
         {/* Sous 768 px, les onglets sont fixés en bas : la fin du contenu reste visible au-dessus. */}
-        {main('max-md:pb-[calc(3.5rem_+_1rem_+_env(safe-area-inset-bottom))] max-w-3xl')}
+        {main('max-w-3xl px-4 pt-4 pb-[calc(3.5rem_+_1rem_+_env(safe-area-inset-bottom))] sm:px-6 sm:pt-6 md:pb-6')}
       </div>
     )
   }
