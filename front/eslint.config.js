@@ -56,10 +56,15 @@ export default defineConfig([
       '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
       // Gestionnaires d'événements écrits en flèche courte : onClick={() => mutation.mutate()}.
       '@typescript-eslint/no-confusing-void-expression': ['error', { ignoreArrowShorthand: true }],
-      // Le routeur interrompt une navigation en levant redirect(), qui n'est pas une Error.
+      // Le routeur interrompt une navigation en levant redirect() ou notFound(), qui ne sont pas des Error.
       '@typescript-eslint/only-throw-error': [
         'error',
-        { allow: [{ from: 'package', package: '@tanstack/router-core', name: 'Redirect' }] },
+        {
+          allow: [
+            { from: 'package', package: '@tanstack/router-core', name: 'Redirect' },
+            { from: 'package', package: '@tanstack/router-core', name: 'NotFoundError' },
+          ],
+        },
       ],
     },
   },

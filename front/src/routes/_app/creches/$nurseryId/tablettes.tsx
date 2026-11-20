@@ -1,13 +1,13 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { createFileRoute, Link, redirect } from '@tanstack/react-router'
-import { CircleCheck, LogOut } from 'lucide-react'
+import { createFileRoute, redirect } from '@tanstack/react-router'
+import { CircleCheck } from 'lucide-react'
 
 import { $api } from '@/api/client'
 import { errorMessage, fieldErrorsOf } from '@/api/errors'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { useLogout } from '@/features/auth/use-logout'
+import { RouterLink } from '@/features/shell/app-shell'
+import { PageHeader } from '@/features/shell/page-header'
 import { EnrollForm } from '@/features/tablets/enroll-form'
 import { TabletList } from '@/features/tablets/tablet-list'
 import { formatDate } from '@/lib/dates'
@@ -28,7 +28,6 @@ function TabletsPage() {
   const { nurseryId } = Route.useParams()
   const params = { params: { path: { nursery_id: nurseryId } } }
   const queryClient = useQueryClient()
-  const logout = useLogout()
 
   const nursery = $api.useQuery('get', '/api/v2/nurseries/{nursery_id}', params)
   const tablets = $api.useQuery('get', TABLETS, params)
@@ -40,14 +39,11 @@ function TabletsPage() {
 
   return (
     <div className="grid gap-6">
-      <div className="grid gap-1">
-        <Link to="/accueil" className="text-sm text-primary underline underline-offset-4">
-          Vos crèches
-        </Link>
-        <h1 className="text-2xl font-semibold">
-          Tablettes{nursery.data === undefined ? '' : ` de ${nursery.data.name}`}
-        </h1>
-      </div>
+      <PageHeader
+        title="Tablettes"
+        breadcrumb={nursery.data === undefined ? ['Tablettes'] : [nursery.data.name, 'Tablettes']}
+        link={RouterLink}
+      />
 
       <Card>
         <CardHeader>
@@ -57,24 +53,13 @@ function TabletsPage() {
         </CardHeader>
         <CardContent className="grid gap-4">
           {enroll.isSuccess ? (
-            <>
-              <Alert>
-                <CircleCheck aria-hidden="true" />
-                <AlertDescription>
-                  « {enroll.data.label} » est enrôlée sur cet appareil jusqu&apos;au{' '}
-                  {formatDate(enroll.data.expires_at)}. Déconnectez-vous pour la laisser aux employés.
-                </AlertDescription>
-              </Alert>
-              <Button
-                size="lg"
-                className="h-11 justify-self-start"
-                onClick={() => logout.mutate({})}
-                disabled={logout.isPending}
-              >
-                <LogOut aria-hidden="true" />
-                Se déconnecter
-              </Button>
-            </>
+            <Alert>
+              <CircleCheck aria-hidden="true" />
+              <AlertDescription>
+                « {enroll.data.label} » est enrôlée sur cet appareil jusqu&apos;au {formatDate(enroll.data.expires_at)}.
+                Déconnectez-vous depuis le menu du compte pour la laisser aux employés.
+              </AlertDescription>
+            </Alert>
           ) : (
             <EnrollForm
               onSubmit={(body) => enroll.mutate({ ...params, body })}

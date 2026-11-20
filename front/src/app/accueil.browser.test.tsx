@@ -80,6 +80,6 @@ describe('résumés sur l’accueil', () => {
     await expect.element(northCard.getByText('12', { exact: true })).toBeVisible()
     await expect.element(southCard.getByRole('alert').getByText('Impossible de charger le résumé.')).toBeVisible()
     await southCard.getByRole('link', { name: `Présences de ${south.name}` }).click()
-    await expect.element(screen.getByRole('heading', { name: `Présences du jour · ${south.name}` })).toBeVisible()
+    await expect.element(screen.getByRole('heading', { name: 'Présences', level: 1 })).toBeVisible()
   })
 })

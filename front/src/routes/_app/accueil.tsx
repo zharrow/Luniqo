@@ -4,6 +4,8 @@ import { ClipboardList, KeyRound, Tablet, Trophy } from 'lucide-react'
 import { $api } from '@/api/client'
 import { NurseryList } from '@/features/nurseries/nursery-list'
 import { NurserySummary } from '@/features/nurseries/nursery-summary'
+import { RouterLink } from '@/features/shell/app-shell'
+import { PageHeader } from '@/features/shell/page-header'
 
 export const Route = createFileRoute('/_app/accueil')({
   component: HomePage,
@@ -20,7 +22,7 @@ function HomePage() {
 
   return (
     <div className="grid gap-6">
-      <h1 className="text-2xl font-semibold">Bonjour {session.first_name}</h1>
+      <PageHeader title={session.role === 'employee' ? 'Ma journée' : 'Accueil'} link={RouterLink} />
       {isStaff && (
         <section aria-labelledby="creches" className="grid gap-3">
           <h2 id="creches" className="text-lg font-medium">

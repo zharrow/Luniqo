@@ -37,7 +37,7 @@ describe('tablettes', () => {
     const { screen } = await start('/accueil')
     await screen.getByRole('link', { name: 'Tablettes de Crèche Démo Nord' }).click()
 
-    await expect.element(screen.getByRole('heading', { name: 'Tablettes de Crèche Démo Nord' })).toBeVisible()
+    await expect.element(screen.getByRole('heading', { name: 'Tablettes', level: 1 })).toBeVisible()
     await expect.element(screen.getByText('Aucune tablette enrôlée pour cette crèche.')).toBeVisible()
 
     await screen.getByLabelText('Nom de la tablette').fill("Tablette de l'entrée")
@@ -52,7 +52,9 @@ describe('tablettes', () => {
     expect(sent).toEqual({ label: "Tablette de l'entrée" })
     // Liste relue après l'enrôlement.
     await expect.element(screen.getByRole('heading', { name: "Tablette de l'entrée" })).toBeVisible()
-    await expect.element(screen.getByRole('button', { name: 'Se déconnecter' }).first()).toBeVisible()
+    // La déconnexion vit dans le menu du compte, plus dans la page.
+    await screen.getByRole('button', { name: /Mon compte/ }).click()
+    await expect.element(screen.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
   })
 
   test('direction : révocation confirmée, liste relue', async ({ worker }) => {
@@ -96,7 +98,7 @@ describe('tablettes', () => {
       http.get(`/api/v2/nurseries/${nursery.id}/summary`, () => HttpResponse.json(nurserySummary)),
     )
     const { app, screen } = await start(`/creches/${nursery.id}/tablettes`)
-    await expect.element(screen.getByRole('heading', { name: 'Bonjour Lucas' })).toBeVisible()
+    await expect.element(screen.getByRole('heading', { name: 'Ma journée', level: 1 })).toBeVisible()
     expect(app.router.state.location.pathname).toBe('/accueil')
     await expect.element(screen.getByText('Crèche Démo Nord')).toBeVisible()
     await expect.element(screen.getByRole('link', { name: /Tablettes/ })).not.toBeInTheDocument()

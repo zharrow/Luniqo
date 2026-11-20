@@ -27,7 +27,7 @@ describe('PIN de tablette', () => {
     )
     const { screen } = await start('/accueil')
     await screen.getByRole('link', { name: 'Choisir ou changer mon PIN de tablette' }).click()
-    await expect.element(screen.getByRole('heading', { name: 'Mon PIN de tablette' })).toBeVisible()
+    await expect.element(screen.getByRole('heading', { name: 'Mon compte', level: 1 })).toBeVisible()
 
     await screen.getByLabelText('Nouveau PIN (4 chiffres)').fill('4826')
     await screen.getByLabelText('Nouveau PIN, une seconde fois').fill('4826')
@@ -82,7 +82,7 @@ describe('PIN de tablette', () => {
       http.get(`/api/v2/nurseries/${nursery.id}/summary`, () => HttpResponse.json(nurserySummary)),
     )
     const { app, screen } = await start('/mon-pin')
-    await expect.element(screen.getByRole('heading', { name: 'Bonjour Camille' })).toBeVisible()
+    await expect.element(screen.getByRole('heading', { name: 'Accueil', level: 1 })).toBeVisible()
     expect(app.router.state.location.pathname).toBe('/accueil')
     await expect
       .element(screen.getByRole('link', { name: 'Choisir ou changer mon PIN de tablette' }))

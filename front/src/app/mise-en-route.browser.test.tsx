@@ -47,7 +47,8 @@ describe('mise en route d’une crèche (LUN-128)', () => {
     }
 
     await first.getByRole('link', { name: 'Aller aux présences du jour' }).click()
-    await expect.element(screen.getByRole('heading', { name: `Présences du jour · ${nursery.name}` })).toBeVisible()
+    await expect.element(screen.getByRole('heading', { level: 1, name: 'Présences' })).toBeVisible()
+    await expect.element(screen.getByRole('navigation', { name: "Fil d'Ariane" }).getByText(nursery.name)).toBeVisible()
   })
 
   test('une panne de l’API : message, puis « Réessayer » recharge la progression', async ({ worker }) => {
@@ -85,7 +86,7 @@ describe('mise en route d’une crèche (LUN-128)', () => {
       }),
     )
     const screen = await start(`/creches/${nursery.id}/mise-en-route`)
-    await expect.element(screen.getByRole('heading', { name: `Bonjour ${employee.first_name}` })).toBeVisible()
+    await expect.element(screen.getByRole('heading', { level: 1, name: 'Ma journée' })).toBeVisible()
     await expect.element(screen.getByRole('link', { name: `Présences de ${nursery.name}` })).toBeVisible()
     await expect.element(screen.getByRole('link', { name: `Mise en route de ${nursery.name}` })).not.toBeInTheDocument()
     expect(asked).toBe(false)
