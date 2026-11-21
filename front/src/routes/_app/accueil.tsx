@@ -6,6 +6,9 @@ import { NurseryList } from '@/features/nurseries/nursery-list'
 import { NurserySummary } from '@/features/nurseries/nursery-summary'
 import { RouterLink } from '@/features/shell/app-shell'
 import { PageHeader } from '@/features/shell/page-header'
+import { ToDoSection, useToDo } from '@/features/todo/todo-section'
+import { toDoTitle } from '@/features/todo/todo-text'
+import { formatLongDay, todayInParis } from '@/lib/dates'
 
 export const Route = createFileRoute('/_app/accueil')({
   component: HomePage,
@@ -18,15 +21,24 @@ const LINK = 'inline-flex min-h-11 items-center gap-2 text-primary underline und
 function HomePage() {
   const { session } = Route.useRouteContext()
   const isStaff = STAFF_ROLES.has(session.role)
+  const isOwner = session.role === 'owner'
   const nurseries = $api.useQuery('get', '/api/v2/nurseries', {}, { enabled: isStaff })
+  // Même requête que la section « À traiter » : lue une fois, partagée par le titre.
+  const toDo = useToDo(isOwner)
+  const total = toDo.data?.total ?? 0
 
   return (
     <div className="grid gap-6">
-      <PageHeader title={session.role === 'employee' ? 'Ma journée' : 'Accueil'} link={RouterLink} />
+      <PageHeader
+        title={session.role === 'employee' ? 'Ma journée' : isOwner && total > 0 ? toDoTitle(total) : 'Accueil'}
+        kicker={isOwner ? formatLongDay(todayInParis()) : undefined}
+        link={RouterLink}
+      />
+      {isOwner && <ToDoSection link={RouterLink} />}
       {isStaff && (
         <section aria-labelledby="creches" className="grid gap-3">
           <h2 id="creches" className="text-lg font-medium">
-            Vos crèches
+            {isOwner ? 'Vos crèches maintenant' : 'Vos crèches'}
           </h2>
           <NurseryList
             nurseries={nurseries.data}
@@ -45,7 +57,7 @@ function HomePage() {
                   <ClipboardList aria-hidden="true" className="size-4" />
                   Présences
                 </Link>
-                {session.role === 'owner' && (
+                {isOwner && (
                   <>
                     <Link
                       to="/creches/$nurseryId/tablettes"
