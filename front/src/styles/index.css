@@ -104,6 +104,42 @@
   }
 }
 
+/* Personnage (LUN-151) : un petit saut à l'apparition, une seule fois, puis immobile (WCAG 2.2.2).
+   Classe et images clés ici, aucun style injecté (CSP). Le logo ne saute pas. */
+@keyframes creature-hop {
+  0% {
+    transform: translateY(0) scaleY(1);
+  }
+  18% {
+    transform: translateY(0) scaleY(0.92);
+  }
+  42% {
+    transform: translateY(-14%) scaleY(1.04);
+  }
+  66% {
+    transform: translateY(0) scaleY(0.96);
+  }
+  82% {
+    transform: translateY(-3%) scaleY(1);
+  }
+  100% {
+    transform: translateY(0) scaleY(1);
+  }
+}
+
+.creature-hop {
+  animation: creature-hop 1.2s ease-out 1 both;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+/* Rien ne bouge quand la personne demande moins de mouvement (WCAG 2.3.3). */
+@media (prefers-reduced-motion: reduce) {
+  .creature-hop {
+    animation: none;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
