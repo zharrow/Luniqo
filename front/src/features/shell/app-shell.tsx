@@ -4,8 +4,8 @@ import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } fro
 import { version } from '../../../package.json'
 import { $api } from '@/api/client'
 import type { Session } from '@/api/types'
-import logo from '@/assets/luniqo-logo.png'
 import { readRememberedNursery, rememberNursery, resolveNurseryId, switchTarget } from './current-nursery'
+import { LogoMark } from './creature'
 import { EmployeeHeader } from './employee-header'
 import { FAMILIES, type FamilyId } from './families'
 import { GuardianTabs } from './guardian-tabs'
@@ -198,7 +198,7 @@ export function AppShell({ session, onLogout, logoutPending, children }: AppShel
       <div className="min-h-svh">
         <SkipLink />
         <header className="flex h-16 items-center gap-3 border-b border-shell-border bg-shell px-4">
-          <img src={logo} alt="" className="size-8" />
+          <LogoMark size={32} />
           <span className="flex-1 text-lg font-bold text-[#1e2430]">Luniqo</span>
           <AccountMenu user={user} onLogout={onLogout} logoutPending={logoutPending} />
         </header>
