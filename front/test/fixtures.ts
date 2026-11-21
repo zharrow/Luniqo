@@ -355,3 +355,75 @@ export const corrections: Schemas['CorrectionOut'][] = [
     after: null,
   },
 ]
+
+/** Instant fixe des éléments « À traiter » : samedi 21 novembre 2026, 10 h à Paris (LUN-154). */
+export const TODO_NOW = new Date('2026-11-21T09:00:00Z')
+
+const sud = { nursery_id: '00000000-0000-4000-8000-0000000000c2', nursery_name: 'Micro-crèche Démo Sud' }
+
+/** Un élément de chaque genre, dans l'ordre de l'API (LUN-153), plus deux pour dépasser 5 lignes. */
+export const toDoItems: Schemas['ToDoItem'][] = [
+  {
+    kind: 'pin_locked',
+    nursery_id: nursery.id,
+    nursery_name: nursery.name,
+    subject_id: employee.id,
+    subject_name: 'Lucas Bernard',
+    since: '2026-11-20T07:42:00Z',
+    day: null,
+  },
+  {
+    kind: 'tablet_expired',
+    nursery_id: sud.nursery_id,
+    nursery_name: sud.nursery_name,
+    subject_id: '00000000-0000-4000-8000-0000000000b2',
+    subject_name: 'Tablette du dortoir',
+    since: '2026-11-10T09:00:00Z',
+    day: null,
+  },
+  {
+    kind: 'departure_missing',
+    nursery_id: nursery.id,
+    nursery_name: nursery.name,
+    subject_id: '00000000-0000-4000-8000-0000000000d1',
+    subject_name: 'Léo Garnier',
+    since: '2026-11-20T07:18:00Z',
+    day: '2026-11-20',
+  },
+  {
+    kind: 'departure_missing',
+    nursery_id: sud.nursery_id,
+    nursery_name: sud.nursery_name,
+    subject_id: '00000000-0000-4000-8000-0000000000d3',
+    subject_name: 'Nina Roche',
+    since: '2026-11-17T07:55:00Z',
+    day: '2026-11-17',
+  },
+  {
+    kind: 'tablet_expiring',
+    nursery_id: nursery.id,
+    nursery_name: nursery.name,
+    subject_id: '00000000-0000-4000-8000-0000000000b1',
+    subject_name: 'Tablette de l’entrée',
+    since: '2026-11-24T09:00:00Z',
+    day: null,
+  },
+  {
+    kind: 'onboarding_incomplete',
+    nursery_id: sud.nursery_id,
+    nursery_name: sud.nursery_name,
+    subject_id: sud.nursery_id,
+    subject_name: sud.nursery_name,
+    since: '2026-11-01T09:00:00Z',
+    day: null,
+  },
+  {
+    kind: 'onboarding_incomplete',
+    nursery_id: nursery.id,
+    nursery_name: nursery.name,
+    subject_id: nursery.id,
+    subject_name: nursery.name,
+    since: '2026-11-02T09:00:00Z',
+    day: null,
+  },
+]

@@ -4,6 +4,9 @@ import { expect, type Page, test } from '@playwright/test'
 
 import { totp } from './totp'
 
+/** Titre de l'accueil de la direction : « Accueil », ou « N choses à régler » (LUN-154). */
+const OWNER_HOME = /^(Accueil|\d+ choses? à régler)$/
+
 // Comptes de démonstration créés par le seed de l'API (api/app/seed.py), données fictives.
 const password = process.env.E2E_PASSWORD ?? ''
 test.skip(password === '', 'E2E_PASSWORD absent : mot de passe des comptes de démonstration (API_SEED_DEMO_PASSWORD).')
@@ -86,7 +89,11 @@ test("direction : activation de l'application d'authentification, puis second fa
   await expect(page.getByRole('list', { name: 'Codes de secours' }).getByRole('listitem')).toHaveCount(10)
   backupCodes = await page.getByRole('list', { name: 'Codes de secours' }).getByRole('listitem').allTextContents()
   await page.getByRole('button', { name: "J'ai noté mes codes" }).click()
-  await expect(page.getByRole('heading', { name: 'Accueil', level: 1 })).toBeVisible()
+  // Pile neuve : aucune tablette, donc deux mises en route à terminer (LUN-154).
+  await expect(page.getByRole('heading', { name: '2 choses à régler', level: 1 })).toBeVisible()
+  const toDo = page.getByRole('region', { name: 'À traiter' })
+  await expect(toDo.getByRole('link', { name: /Mise en route à terminer, Crèche Démo Nord/ })).toBeVisible()
+  await expect(toDo.getByRole('link', { name: /Mise en route à terminer, Micro-crèche Démo Sud/ })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Micro-crèche Démo Sud' })).toBeVisible()
   await page.setViewportSize({ width: 1280, height: 800 })
   await page.screenshot({ path: testInfo.outputPath('accueil-direction-1280x800.png') })
@@ -103,7 +110,7 @@ test("direction : activation de l'application d'authentification, puis second fa
   // Pas suivant : le code du pas courant vient de servir à l'activation (rejeu refusé).
   await page.getByLabel('Code à 6 chiffres ou code de secours').fill(totp(secret, 1))
   await page.getByRole('button', { name: 'Valider' }).click()
-  await expect(page.getByRole('heading', { name: 'Accueil', level: 1 })).toBeVisible()
+  await expect(page.getByRole('heading', { name: OWNER_HOME, level: 1 })).toBeVisible()
   expect(errors).toEqual([])
 })
 
@@ -160,7 +167,7 @@ test("tablette : enrôlée par la direction, puis PIN de l'employé", async ({ p
   await login(page, 'direction@demo.test')
   await page.getByLabel('Code à 6 chiffres ou code de secours').fill(backupCode ?? '')
   await page.getByRole('button', { name: 'Valider' }).click()
-  await expect(page.getByRole('heading', { name: 'Accueil', level: 1 })).toBeVisible()
+  await expect(page.getByRole('heading', { name: OWNER_HOME, level: 1 })).toBeVisible()
   const nurseries = (await (await page.request.get('/api/v2/nurseries')).json()) as { id: string; name: string }[]
   const north = nurseries.find((nursery) => nursery.name === 'Crèche Démo Nord')
   const enrolled = await page.request.post(`/api/v2/nurseries/${north?.id ?? ''}/tablets`, {
@@ -177,6 +184,34 @@ test("tablette : enrôlée par la direction, puis PIN de l'employé", async ({ p
   await page.getByRole('button', { name: 'Lucas B.' }).click()
   await page.getByLabel('PIN de Lucas B.').fill('1357')
   await expect(page.getByRole('alert')).toHaveText('PIN incorrect')
+
+  // Trois erreurs bloquent le PIN ; la direction le débloque depuis « À traiter » (LUN-154).
+  await page.getByLabel('PIN de Lucas B.').fill('1358')
+  await expect(page.getByRole('alert')).toHaveText('PIN incorrect')
+  await page.getByLabel('PIN de Lucas B.').fill('1359')
+  await expect(page.getByText('PIN bloqué : la direction le débloque')).toBeVisible()
+  const unlockCode = backupCodes.shift()
+  expect(unlockCode).toBeDefined()
+  const ownerContext = await browser.newContext({ baseURL })
+  const owner = await ownerContext.newPage()
+  const ownerErrors = watchConsole(owner)
+  await owner.goto('/connexion')
+  await login(owner, 'direction@demo.test')
+  await owner.getByLabel('Code à 6 chiffres ou code de secours').fill(unlockCode ?? '')
+  await owner.getByRole('button', { name: 'Valider' }).click()
+  const locked = owner
+    .getByRole('region', { name: 'À traiter' })
+    .getByRole('listitem')
+    .filter({ hasText: 'PIN bloqué' })
+  await expect(locked).toContainText('Lucas Bernard ne peut plus s’identifier sur la tablette')
+  await expect(locked).toContainText('Crèche Démo Nord')
+  await locked.getByRole('button', { name: 'Débloquer le PIN de Lucas Bernard' }).click()
+  await expect(locked).toHaveCount(0)
+  expect(ownerErrors).toEqual([])
+  await ownerContext.close()
+
+  await page.reload()
+  await page.getByRole('button', { name: 'Lucas B.' }).click()
   await page.getByLabel('PIN de Lucas B.').fill('4826')
   await expect(page.getByRole('heading', { name: 'Bonjour Lucas B.' })).toBeVisible()
 
@@ -199,7 +234,8 @@ test("tablette : enrôlée par la direction, puis PIN de l'employé", async ({ p
 
   await page.getByRole('button', { name: 'Terminer' }).click()
   await expect(page.getByRole('heading', { name: 'Qui êtes-vous ?' })).toBeVisible()
-  expect(errors).toEqual([])
+  // Le navigateur journalise la 423 du troisième PIN faux, provoquée exprès ci-dessus.
+  expect(errors.filter((error) => !error.includes('423 (Locked)'))).toEqual([])
 })
 
 test('présences du jour : le pointage fait sur la tablette, vu depuis le web', async ({ page }) => {
