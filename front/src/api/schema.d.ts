@@ -1476,6 +1476,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/to-do": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ce qui demande un geste de la direction, dans toutes ses crèches actives ou dans l'une d'elles
+         * @description Ce qui demande un geste de la direction, dans toutes ses crèches actives ou dans l'une d'elles.
+         *
+         *     PIN bloqués, tablettes expirées, départs non pointés des 31 derniers jours,
+         *     tablettes qui expirent dans 7 jours, mises en route incomplètes : dans cet
+         *     ordre, puis du plus ancien au plus récent. Une crèche fermée n'a rien à
+         *     traiter (liste vide si elle est demandée). Réservée à la direction ; une
+         *     crèche d'une autre entreprise répond 404, comme une crèche inexistante.
+         */
+        get: operations["list_to_do_api_v2_to_do_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/health": {
         parameters: {
             query?: never;
@@ -3345,6 +3371,89 @@ export interface components {
             instructions?: string | null;
             /** Is Active */
             is_active?: boolean | null;
+        };
+        /** ToDoItem */
+        ToDoItem: {
+            /** @description pin_locked : PIN d'un employé bloqué ; tablet_expired : tablette expirée depuis 30 jours au plus ; departure_missing : présence d'un jour passé sans départ (31 jours au plus) ; tablet_expiring : tablette qui expire dans 7 jours au plus ; onboarding_incomplete : mise en route de la crèche incomplète */
+            kind: components["schemas"]["ToDoKind"];
+            /**
+             * Nursery Id
+             * Format: uuid
+             */
+            nursery_id: string;
+            /** Nursery Name */
+            nursery_name: string;
+            /**
+             * Subject Id
+             * Format: uuid
+             * @description Employé (pin_locked), tablette (tablet_*), enfant (departure_missing) ou crèche (onboarding_incomplete)
+             */
+            subject_id: string;
+            /**
+             * Subject Name
+             * @description Nom complet de l'employé ou de l'enfant, nom de la tablette ou de la crèche
+             */
+            subject_name: string;
+            /**
+             * Since
+             * Format: date-time
+             * @description UTC. Blocage du PIN, expiration de la tablette (à venir pour tablet_expiring), arrivée de l'enfant, ou création de la crèche
+             */
+            since: string;
+            /**
+             * Day
+             * @description Jour de la présence à Paris (departure_missing) ; null sinon
+             */
+            day: string | null;
+        };
+        /**
+         * ToDoKind
+         * @description Genres, du plus urgent au moins urgent : l'ordre de déclaration est l'ordre d'affichage.
+         * @enum {string}
+         */
+        ToDoKind: "pin_locked" | "tablet_expired" | "departure_missing" | "tablet_expiring" | "onboarding_incomplete";
+        /**
+         * ToDoList
+         * @description Éléments à traiter, du plus urgent au moins urgent, puis du plus ancien au plus récent.
+         * @example {
+         *       "items": [
+         *         {
+         *           "kind": "pin_locked",
+         *           "nursery_id": "0b6f1c1e-6d1c-4f3a-9a52-2f1d7c9e0a11",
+         *           "nursery_name": "Les Lucioles",
+         *           "since": "2026-11-19T07:42:00Z",
+         *           "subject_id": "5d2e8a40-1b7c-4e0f-8c3d-6a9b2e1f4c77",
+         *           "subject_name": "Camille Exemple"
+         *         },
+         *         {
+         *           "day": "2026-11-18",
+         *           "kind": "departure_missing",
+         *           "nursery_id": "0b6f1c1e-6d1c-4f3a-9a52-2f1d7c9e0a11",
+         *           "nursery_name": "Les Lucioles",
+         *           "since": "2026-11-18T07:15:00Z",
+         *           "subject_id": "9c4a2b10-3e5d-4f6a-8b7c-1d2e3f4a5b66",
+         *           "subject_name": "Léo Fictif"
+         *         },
+         *         {
+         *           "kind": "tablet_expiring",
+         *           "nursery_id": "0b6f1c1e-6d1c-4f3a-9a52-2f1d7c9e0a11",
+         *           "nursery_name": "Les Lucioles",
+         *           "since": "2026-11-24T09:00:00Z",
+         *           "subject_id": "e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a55",
+         *           "subject_name": "Tablette de l'entrée"
+         *         }
+         *       ],
+         *       "total": 3
+         *     }
+         */
+        ToDoList: {
+            /** Items */
+            items: components["schemas"]["ToDoItem"][];
+            /**
+             * Total
+             * @description Nombre d'éléments (tous renvoyés : la liste n'est pas paginée)
+             */
+            total: number;
         };
         /**
          * TokenIn
@@ -9737,6 +9846,74 @@ export interface operations {
                 headers: {
                     /** @description Secondes à attendre avant de réessayer */
                     "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description `internal_error` : Une erreur est survenue de notre côté. Réessayez dans un instant ; si elle revient, donnez la référence à la crèche. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    list_to_do_api_v2_to_do_get: {
+        parameters: {
+            query?: {
+                /** @description Limiter la liste à cette crèche ; toutes les crèches de la direction sinon */
+                nursery_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ToDoList"];
+                };
+            };
+            /** @description `auth_required` : Authentification requise */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description `mfa_required` : Second facteur requis ; `role_refused` : Action non autorisée pour ce rôle */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description `nursery_not_found` : Crèche introuvable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description `validation_error` : Certains champs sont invalides. */
+            422: {
+                headers: {
                     [name: string]: unknown;
                 };
                 content: {
